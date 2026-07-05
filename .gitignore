@@ -1,3 +1,12 @@
 # Raw datasets downloaded by capstone-chapter notebooks (large binaries; the
 # notebook re-downloads them automatically from their public source on demand).
 ch16_data/
+
+# Per-chapter .idx files: every chapter loads makeidx (so \index{} works when
+# compiled standalone), but only main.tex actually calls \printindex, so a
+# standalone chapter compile produces an unused .idx byproduct. main.idx/
+# main.ind/main.ilg (the real, printed index) are intentionally NOT ignored.
+chapter*.idx
+
+# SyncTeX editor-sync byproducts (regenerated per-machine/editor; not build output anyone else needs).
+*.synctex.gz
