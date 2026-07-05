@@ -1,0 +1,3 @@
+# Raw datasets downloaded by capstone-chapter notebooks (large binaries; the
+# notebook re-downloads them automatically from their public source on demand).
+ch16_data/
