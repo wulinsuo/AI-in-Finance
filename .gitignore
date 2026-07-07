@@ -3,9 +3,9 @@
 ch16_data/
 
 # Per-chapter .idx files: every chapter loads makeidx (so \index{} works when
-# compiled standalone), but only main.tex actually calls \printindex, so a
-# standalone chapter compile produces an unused .idx byproduct. main.idx/
-# main.ind/main.ilg (the real, printed index) are intentionally NOT ignored.
+# compiled standalone), but only ai_in_finance.tex actually calls \printindex, so a
+# standalone chapter compile produces an unused .idx byproduct. ai_in_finance.idx/
+# ai_in_finance.ind/ai_in_finance.ilg (the real, printed index) are intentionally NOT ignored.
 chapter*.idx
 
 # SyncTeX editor-sync byproducts (regenerated per-machine/editor; not build output anyone else needs).

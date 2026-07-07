@@ -1,0 +1,231 @@
+\documentclass{book}
+\usepackage[margin=1in]{geometry}
+\usepackage{tikz}
+\usetikzlibrary{positioning,matrix,fit}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{draftwatermark}
+
+\definecolor{coverbg}{HTML}{0B1F3A}
+\definecolor{coveraccent}{HTML}{C9A227}
+
+\SetWatermarkText{Wulin.Suo@Queensu.ca}
+\SetWatermarkScale{1.4}
+\SetWatermarkColor{gray!35}
+\SetWatermarkAngle{45}
+
+\usepackage{subfiles}
+
+\usepackage{tocloft}
+\setlength{\cftsecnumwidth}{3.2em}
+\setlength{\cftsubsecnumwidth}{4.2em}
+
+\usepackage{makeidx}
+\makeindex
+
+\begin{document}
+
+\frontmatter
+
+\SetWatermarkText{}
+\begin{titlepage}
+\thispagestyle{empty}
+\begin{tikzpicture}[remember picture,overlay]
+  \fill[coverbg] (current page.south west) rectangle (current page.north east);
+
+  \draw[coveraccent,line width=1pt] ([xshift=1.6cm,yshift=-3.0cm]current page.north west) -- ([xshift=-1.6cm,yshift=-3.0cm]current page.north east);
+  \draw[coveraccent,line width=1pt] ([xshift=1.6cm,yshift=3.0cm]current page.south west) -- ([xshift=-1.6cm,yshift=3.0cm]current page.south east);
+
+  \node at ([yshift=-6.1cm]current page.north) {
+    \begin{tikzpicture}
+      \draw[coveraccent,line width=1.1pt] (0,0) circle (1.05cm);
+      \draw[coveraccent,line width=1pt] (-0.62,-0.38) -- (-0.22,0.12) -- (0.16,-0.14) -- (0.58,0.46);
+      \fill[white] (-0.62,-0.38) circle (2.0pt);
+      \fill[white] (-0.22,0.12) circle (2.0pt);
+      \fill[white] (0.16,-0.14) circle (2.0pt);
+      \fill[white] (0.58,0.46) circle (2.0pt);
+    \end{tikzpicture}
+  };
+
+  \node at ([yshift=-9.3cm]current page.north) {\fontsize{32}{38}\selectfont\bfseries\color{white} AI in Finance};
+
+  \draw[coveraccent,line width=0.9pt] ([yshift=-10.55cm,xshift=-2.5cm]current page.north) -- ([yshift=-10.55cm,xshift=2.5cm]current page.north);
+
+  \node[align=center,text width=13cm] at ([yshift=-11.7cm]current page.north) {\Large\color{white!85} Finance for Engineers, Scientists, and Data Scientists};
+
+  \node[align=center] at ([yshift=-19.4cm]current page.north) {\Large\bfseries\color{white} W.\ Suo};
+  \node[align=center] at ([yshift=-20.5cm]current page.north) {\large\color{coveraccent} Draft Manuscript \quad \textbullet \quad \today};
+
+  \node[align=center] at ([yshift=-23.6cm]current page.north) {\small\color{white!55} \copyright\ Wulin Suo};
+\end{tikzpicture}
+\end{titlepage}
+\SetWatermarkText{Wulin.Suo@Queensu.ca}
+
+\thispagestyle{empty}
+\vspace*{\fill}
+\noindent Copyright \copyright\ \the\year{} Wulin Suo. All rights reserved.
+
+\noindent This is a draft manuscript. No part of this work may be reproduced, distributed, or transmitted in any form or by any means without the prior written permission of the author, except for brief quotations in a review.
+
+\noindent Contact: Wulin.Suo@Queensu.ca
+\vspace*{\fill}
+\clearpage
+
+\tableofcontents
+
+\mainmatter
+\subfile{chapter1}
+\subfile{chapter2}
+\subfile{chapter3}
+\subfile{chapter4}
+\subfile{chapter5}
+\subfile{chapter6}
+\subfile{chapter7}
+\subfile{chapter8}
+\subfile{chapter9}
+\subfile{chapter10}
+\subfile{chapter11}
+\subfile{chapter12}
+\subfile{chapter13}
+\subfile{chapter14}
+\subfile{chapter15}
+\subfile{chapter16}
+\subfile{chapter17}
+
+\backmatter
+
+\clearpage
+\addcontentsline{toc}{chapter}{Bibliography}
+\chapter*{Bibliography}
+\markboth{BIBLIOGRAPHY}{BIBLIOGRAPHY}
+
+Every chapter's own ``Further Reading'' section lists sources with a short note on how each connects to that chapter's material. This appendix consolidates all of them into a single alphabetized list, without the per-chapter annotations, as a stand-alone bibliography a reader can consult directly; several sources are cited in more than one chapter and appear here only once. Full author names, publishers, editions, and (for articles) volume/issue/page numbers were added by verifying each source rather than guessing; a handful of entries for which no single edition, page range, or exact date could be confirmed with confidence are given in the fullest form that could be verified, without an invented specific detail.
+
+\begin{itemize}
+    \item Aldridge, I., \emph{High-Frequency Trading: A Practical Guide to Algorithmic Strategies and Trading Systems}, 2nd ed., Wiley, Hoboken, NJ, 2013.
+    \item Almgren, R., and N. Chriss, ``Optimal Execution of Portfolio Transactions,'' \emph{Journal of Risk}, vol. 3, no. 2, 2001, pp. 5--39.
+    \item Ang, A., \emph{Asset Management: A Systematic Approach to Factor Investing}, Oxford University Press, New York, 2014.
+    \item Appel, G., \emph{Technical Analysis: Power Tools for Active Investors}, Financial Times Prentice Hall, Upper Saddle River, NJ, 2005.
+    \item Avellaneda, M., and S. Stoikov, ``High-Frequency Trading in a Limit Order Book,'' \emph{Quantitative Finance}, vol. 8, no. 3, 2008, pp. 217--224.
+    \item Barocas, S., M. Hardt, and A. Narayanan, \emph{Fairness and Machine Learning: Limitations and Opportunities}, MIT Press, Cambridge, MA, 2023.
+    \item Basel Committee on Banking Supervision, \emph{Basel III: A Global Regulatory Framework for More Resilient Banks and Banking Systems}, Bank for International Settlements, Basel, Switzerland, December 2010 (rev.\ June 2011).
+    \item Black, F., and R. Litterman, ``Global Portfolio Optimization,'' \emph{Financial Analysts Journal}, vol. 48, no. 5, 1992, pp. 28--43.
+    \item Board of Governors of the Federal Reserve System and Office of the Comptroller of the Currency, \emph{Supervisory Guidance on Model Risk Management}, SR 11-7, April 4, 2011.
+    \item Bodie, Z., A. Kane, and A. Marcus, \emph{Investments}, 13th ed., McGraw Hill, New York, 2024.
+    \item Bollinger, J. A., \emph{Bollinger on Bollinger Bands}, McGraw-Hill, New York, 2001.
+    \item Bolton, R. J., and D. J. Hand, ``Statistical Fraud Detection: A Review,'' \emph{Statistical Science}, vol. 17, no. 3, 2002, pp. 235--255.
+    \item Brealey, R. A., S. C. Myers, F. Allen, and A. Edmans, \emph{Principles of Corporate Finance}, 15th ed., McGraw Hill, New York, 2025.
+    \item Bruun \& Hjejle, \emph{Report on the Non-Resident Portfolio at Danske Bank's Estonian Branch}, law firm report commissioned by Danske Bank A/S, September 2018.
+    \item Budish, E., P. Cramton, and J. Shim, ``The High-Frequency Trading Arms Race: Frequent Batch Auctions as a Market Design Response,'' \emph{Quarterly Journal of Economics}, vol. 130, no. 4, 2015, pp. 1547--1621.
+    \item Buolamwini, J., and T. Gebru, ``Gender Shades: Intersectional Accuracy Disparities in Commercial Gender Classification,'' \emph{Proceedings of Machine Learning Research}, vol. 81, 2018, pp. 77--91.
+    \item Campbell, J. Y., A. W. Lo, and A. C. MacKinlay, \emph{The Econometrics of Financial Markets}, Princeton University Press, Princeton, NJ, 1997.
+    \item Chan, E. P., \emph{Algorithmic Trading: Winning Strategies and Their Rationale}, Wiley, Hoboken, NJ, 2013.
+    \item Chan, E. P., \emph{Machine Trading: Deploying Computer Algorithms to Conquer the Markets}, Wiley, Hoboken, NJ, 2017.
+    \item Chawla, N. V., K. W. Bowyer, L. O. Hall, and W. P. Kegelmeyer, ``SMOTE: Synthetic Minority Over-sampling Technique,'' \emph{Journal of Artificial Intelligence Research}, vol. 16, 2002, pp. 321--357.
+    \item Chen, T., and C. Guestrin, ``XGBoost: A Scalable Tree Boosting System,'' \emph{Proceedings of the 22nd ACM SIGKDD International Conference on Knowledge Discovery and Data Mining}, 2016, pp. 785--794.
+    \item Chen, T., S. Kornblith, M. Norouzi, and G. Hinton, ``A Simple Framework for Contrastive Learning of Visual Representations,'' \emph{Proceedings of the 37th International Conference on Machine Learning}, PMLR vol. 119, 2020, pp. 1597--1607.
+    \item Chouldechova, A., ``Fair Prediction with Disparate Impact: A Study of Bias in Recidivism Prediction Instruments,'' \emph{Big Data}, vol. 5, no. 2, 2017, pp. 153--163.
+    \item Consumer Financial Protection Bureau, ``CFPB Announces First No-Action Letter to Upstart Network,'' press release, September 14, 2017.
+    \item Counts, L., ``How Hedge Funds Use Satellite Images to Beat Wall Street, and Main Street,'' UC Berkeley Haas Newsroom, May 28, 2019 (reporting on research co-authored by Panos N. Patatoukas and Zsolt Katona).
+    \item Cristianini, N., and J. Shawe-Taylor, \emph{An Introduction to Support Vector Machines and Other Kernel-based Learning Methods}, Cambridge University Press, Cambridge, UK, 2000.
+    \item Crouhy, M., D. Galai, and R. Mark, \emph{The Essentials of Risk Management}, 2nd ed., McGraw-Hill, New York, 2014.
+    \item D'Acunto, F., N. Prabhala, and A. G. Rossi, ``The Promises and Pitfalls of Robo-Advising,'' \emph{The Review of Financial Studies}, vol. 32, no. 5, 2019, pp. 1983--2020.
+    \item Damodaran, A., \emph{Investment Valuation: Tools and Techniques for Determining the Value of Any Asset}, 3rd ed., Wiley, Hoboken, NJ, 2012.
+    \item Doshi-Velez, F., and B. Kim, ``Towards a Rigorous Science of Interpretable Machine Learning,'' arXiv:1702.08608, 2017.
+    \item Dosovitskiy, A., L. Beyer, A. Kolesnikov, D. Weissenborn, X. Zhai, T. Unterthiner, M. Dehghani, M. Minderer, G. Heigold, S. Gelly, J. Uszkoreit, and N. Houlsby, ``An Image Is Worth 16x16 Words: Transformers for Image Recognition at Scale,'' \emph{International Conference on Learning Representations}, 2021.
+    \item Dua, D., and C. Graff, \emph{UCI Machine Learning Repository}, University of California, Irvine, School of Information and Computer Sciences, 2019.
+    \item Engle, R. F., ``Autoregressive Conditional Heteroscedasticity with Estimates of the Variance of United Kingdom Inflation,'' \emph{Econometrica}, vol. 50, no. 4, 1982, pp. 987--1007.
+    \item Engle, R. F., and C. W. J. Granger, ``Co-integration and Error Correction: Representation, Estimation, and Testing,'' \emph{Econometrica}, vol. 55, no. 2, 1987, pp. 251--276.
+    \item Fabozzi, F. J., \emph{Fixed Income Analysis}, 2nd ed., CFA Institute Investment Series, Wiley, Hoboken, NJ, 2007.
+    \item Fama, E. F., and K. R. French, ``Common Risk Factors in the Returns on Stocks and Bonds,'' \emph{Journal of Financial Economics}, vol. 33, no. 1, 1993, pp. 3--56.
+    \item Feng, C., and S. Fay, ``An Empirical Investigation of Forward-Looking Retailer Performance Using Parking Lot Traffic Data Derived from Satellite Imagery,'' \emph{Journal of Retailing}, vol. 98, no. 4, 2022, pp. 633--646.
+    \item Financial Action Task Force (FATF), \emph{International Standards on Combating Money Laundering and the Financing of Terrorism \& Proliferation: The FATF Recommendations}, FATF, Paris, May 2012.
+    \item Goodfellow, I., Y. Bengio, and A. Courville, \emph{Deep Learning}, MIT Press, Cambridge, MA, 2016.
+    \item Goodfellow, I., J. Shlens, and C. Szegedy, ``Explaining and Harnessing Adversarial Examples,'' \emph{International Conference on Learning Representations}, 2015.
+    \item Goodfellow, I., J. Pouget-Abadie, M. Mirza, B. Xu, D. Warde-Farley, S. Ozair, A. Courville, and Y. Bengio, ``Generative Adversarial Networks,'' \emph{Communications of the ACM}, vol. 63, no. 11, 2020, pp. 139--144.
+    \item Grinold, R. C., and R. N. Kahn, \emph{Active Portfolio Management: A Quantitative Approach for Producing Superior Returns and Controlling Risk}, 2nd ed., McGraw-Hill, New York, 2000.
+    \item Guéant, O., C.-A. Lehalle, and J. Fernandez-Tapia, ``Dealing with the Inventory Risk: A Solution to the Market Making Problem,'' \emph{Mathematics and Financial Economics}, vol. 7, no. 4, 2013, pp. 477--507.
+    \item Hamilton, J. D., \emph{Time Series Analysis}, Princeton University Press, Princeton, NJ, 1994.
+    \item Harris, L., \emph{Trading and Exchanges: Market Microstructure for Practitioners}, Oxford University Press, New York, 2003.
+    \item Hastie, T., R. Tibshirani, and J. Friedman, \emph{The Elements of Statistical Learning: Data Mining, Inference, and Prediction}, 2nd ed., Springer, New York, 2009.
+    \item He, K., X. Zhang, S. Ren, and J. Sun, ``Deep Residual Learning for Image Recognition,'' \emph{2016 IEEE Conference on Computer Vision and Pattern Recognition}, 2016, pp. 770--778.
+    \item Hilpisch, Y., \emph{Python for Algorithmic Trading: From Idea to Cloud Deployment}, O'Reilly Media, Sebastopol, CA, 2020.
+    \item Hilpisch, Y., \emph{Python for Finance: Mastering Data-Driven Finance}, 2nd ed., O'Reilly Media, Sebastopol, CA, 2018.
+    \item Hinton, G. E., and R. R. Salakhutdinov, ``Reducing the Dimensionality of Data with Neural Networks,'' \emph{Science}, vol. 313, no. 5786, 2006, pp. 504--507.
+    \item Ho, J., A. Jain, and P. Abbeel, ``Denoising Diffusion Probabilistic Models,'' \emph{Advances in Neural Information Processing Systems 33}, 2020, pp. 6840--6851.
+    \item Hochreiter, S., and J. Schmidhuber, ``Long Short-Term Memory,'' \emph{Neural Computation}, vol. 9, no. 8, 1997, pp. 1735--1780.
+    \item Hull, J. C., \emph{Options, Futures, and Other Derivatives}, 11th ed., Pearson, New York, 2022.
+    \item Hull, J. C., \emph{Risk Management and Financial Institutions}, 6th ed., Wiley, Hoboken, NJ, 2023.
+    \item Hyndman, R. J., and G. Athanasopoulos, \emph{Forecasting: Principles and Practice}, 3rd ed., OTexts, Melbourne, Australia, 2021.
+    \item Institute of Internal Auditors, \emph{The IIA's Three Lines Model: An Update of the Three Lines of Defense}, Institute of Internal Auditors, Lake Mary, FL, 2020.
+    \item Jain, S., and B. C. Wallace, ``Attention is not Explanation,'' \emph{Proceedings of the 2019 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies}, 2019, pp. 3543--3556.
+    \item James, G., D. Witten, T. Hastie, R. Tibshirani, and J. Taylor, \emph{An Introduction to Statistical Learning: with Applications in Python}, Springer, New York, 2023.
+    \item Jorion, P., \emph{Value at Risk: The New Benchmark for Managing Financial Risk}, 3rd ed., McGraw-Hill, New York, 2007.
+    \item Jurafsky, D., and J. H. Martin, \emph{Speech and Language Processing: An Introduction to Natural Language Processing, Computational Linguistics, and Speech Recognition}, 3rd ed.\ (online draft), Stanford University.
+    \item Katona, Z., M. O. Painter, P. N. Patatoukas, and J. Zeng, ``On the Capital Market Consequences of Big Data: Evidence from Outer Space,'' \emph{Journal of Financial and Quantitative Analysis}, vol. 60, no. 2, 2025, pp. 551--579.
+    \item Kipf, T. N., and M. Welling, ``Semi-Supervised Classification with Graph Convolutional Networks,'' \emph{International Conference on Learning Representations}, 2017.
+    \item Kissell, R., \emph{The Science of Algorithmic Trading and Portfolio Management}, Academic Press, Amsterdam, 2013.
+    \item Klein, J. P., and M. L. Moeschberger, \emph{Survival Analysis: Techniques for Censored and Truncated Data}, 2nd ed., Springer, New York, 2003.
+    \item Kleinberg, J., S. Mullainathan, and M. Raghavan, ``Inherent Trade-Offs in the Fair Determination of Risk Scores,'' \emph{8th Innovations in Theoretical Computer Science Conference}, LIPIcs vol. 67, article 43, 2017.
+    \item Kolanovic, M., and R. T. Krishnamachari, ``Big Data and AI Strategies: Machine Learning and Alternative Data Approach to Investing,'' J.P.\ Morgan, Global Quantitative \& Derivatives Strategy, May 2017.
+    \item Kusner, M. J., J. R. Loftus, C. Russell, and R. Silva, ``Counterfactual Fairness,'' \emph{Advances in Neural Information Processing Systems 30}, 2017, pp. 4066--4076.
+    \item Kyle, A. S., ``Continuous Auctions and Insider Trading,'' \emph{Econometrica}, vol. 53, no. 6, 1985, pp. 1315--1335.
+    \item LeCun, Y., Y. Bengio, and G. Hinton, ``Deep Learning,'' \emph{Nature}, vol. 521, no. 7553, 2015, pp. 436--444.
+    \item Lewis, M., \emph{Flash Boys: A Wall Street Revolt}, W.W. Norton \& Company, New York, 2014.
+    \item Lewis, P., E. Perez, A. Piktus, F. Petroni, V. Karpukhin, N. Goyal, H. Küttler, M. Lewis, W. Yih, T. Rocktäschel, S. Riedel, and D. Kiela, ``Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks,'' \emph{Advances in Neural Information Processing Systems 33}, 2020, pp. 9459--9474.
+    \item Li, F., ``The Information Content of Forward-Looking Statements in Corporate Filings---A Na\"ive Bayesian Machine Learning Approach,'' \emph{Journal of Accounting Research}, vol. 48, no. 5, 2010, pp. 1049--1102.
+    \item Loughran, T., and B. McDonald, ``When Is a Liability Not a Liability? Textual Analysis, Dictionaries, and 10-Ks,'' \emph{Journal of Finance}, vol. 66, no. 1, 2011, pp. 35--65.
+    \item Lundberg, S. M., and S.-I. Lee, ``A Unified Approach to Interpreting Model Predictions,'' \emph{Advances in Neural Information Processing Systems 30}, 2017, pp. 4765--4774.
+    \item Markowitz, H., ``Portfolio Selection,'' \emph{Journal of Finance}, vol. 7, no. 1, 1952, pp. 77--91.
+    \item McDonald, R. L., \emph{Derivatives Markets}, 3rd ed., Pearson, Boston, 2012.
+    \item McKinney, W., \emph{Python for Data Analysis}, 3rd ed., O'Reilly Media, Sebastopol, CA, 2022.
+    \item McNeil, A. J., R. Frey, and P. Embrechts, \emph{Quantitative Risk Management: Concepts, Techniques and Tools}, rev.\ ed., Princeton University Press, Princeton, NJ, 2015.
+    \item Menkveld, A. J., ``High-Frequency Trading and the New Market Makers,'' \emph{Journal of Financial Markets}, vol. 16, no. 4, 2013, pp. 712--740.
+    \item Michaud, R. O., and R. O. Michaud, \emph{Efficient Asset Management: A Practical Guide to Stock Portfolio Optimization and Asset Allocation}, 2nd ed., Oxford University Press, New York, 2008.
+    \item Mikolov, T., K. Chen, G. Corrado, and J. Dean, ``Efficient Estimation of Word Representations in Vector Space,'' arXiv:1301.3781, 2013.
+    \item Molnar, C., \emph{Interpretable Machine Learning: A Guide for Making Black Box Models Explainable}, 2nd ed., christophm.github.io/interpretable-ml-book, 2022.
+    \item Morgan Stanley, ``Key Milestone in Innovation Journey with OpenAI'' and ``Launch of AI @ Morgan Stanley Debrief'' (press releases).
+    \item Murphy, K. P., \emph{Machine Learning: A Probabilistic Perspective}, MIT Press, Cambridge, MA, 2012.
+    \item National Institute of Standards and Technology, \emph{Artificial Intelligence Risk Management Framework (AI RMF 1.0)}, NIST AI 100-1, U.S. Department of Commerce, January 2023.
+    \item New York State Department of Financial Services, \emph{Report on Apple Card Investigation}, March 2021.
+    \item Niculescu-Mizil, A., and R. Caruana, ``Predicting Good Probabilities with Supervised Learning,'' \emph{Proceedings of the 22nd International Conference on Machine Learning}, 2005, pp. 625--632.
+    \item O'Hara, M., \emph{Market Microstructure Theory}, Blackwell Publishers, Cambridge, MA, 1995.
+    \item O'Hara, M., ``High Frequency Market Microstructure,'' \emph{Journal of Financial Economics}, vol. 116, no. 2, 2015, pp. 257--270.
+    \item Ouyang, L., J. Wu, X. Jiang, D. Almeida, C. Wainwright, P. Mishkin, C. Zhang, S. Agarwal, K. Slama, A. Ray, J. Schulman, J. Hilton, F. Kelton, L. Miller, M. Simens, A. Askell, P. Welinder, P. Christiano, J. Leike, and R. Lowe, ``Training Language Models to Follow Instructions with Human Feedback,'' \emph{Advances in Neural Information Processing Systems 35}, 2022, pp. 27730--27744.
+    \item Palepu, K. G., P. M. Healy, and E. Peek, \emph{Business Analysis and Valuation: IFRS Edition}, Cengage Learning EMEA.
+    \item Pan, S. J., and Q. Yang, ``A Survey on Transfer Learning,'' \emph{IEEE Transactions on Knowledge and Data Engineering}, vol. 22, no. 10, 2010, pp. 1345--1359.
+    \item Patterson, S., \emph{Dark Pools: The Rise of the Machine Traders and the Rigging of the U.S. Stock Market}, Crown Business, New York, 2012.
+    \item Penman, S. H., \emph{Financial Statement Analysis and Security Valuation}, 5th ed., McGraw-Hill, New York, 2013.
+    \item Provost, F., and T. Fawcett, \emph{Data Science for Business: What You Need to Know about Data Mining and Data-Analytic Thinking}, O'Reilly Media, Sebastopol, CA, 2013.
+    \item Ribeiro, M. T., S. Singh, and C. Guestrin, ```Why Should I Trust You?': Explaining the Predictions of Any Classifier,'' \emph{Proceedings of the 22nd ACM SIGKDD International Conference on Knowledge Discovery and Data Mining}, 2016, pp. 1135--1144.
+    \item Saunders, A., and L. Allen, \emph{Credit Risk Management In and Out of the Financial Crisis: New Approaches to Value at Risk and Other Paradigms}, 3rd ed., Wiley, Hoboken, NJ, 2010.
+    \item Shapley, L. S., ``A Value for $n$-Person Games,'' in \emph{Contributions to the Theory of Games (AM-28), Volume II}, H.\,W.\ Kuhn and A.\,W.\ Tucker, eds., Annals of Mathematics Studies no. 28, Princeton University Press, Princeton, NJ, 1953, pp. 307--318.
+    \item Sharpe, W. F., ``Capital Asset Prices: A Theory of Market Equilibrium under Conditions of Risk,'' \emph{Journal of Finance}, vol. 19, no. 3, 1964, pp. 425--442.
+    \item Shazeer, N., A. Mirhoseini, K. Maziarz, A. Davis, Q. Le, G. Hinton, and J. Dean, ``Outrageously Large Neural Networks: The Sparsely-Gated Mixture-of-Experts Layer,'' \emph{International Conference on Learning Representations}, 2017.
+    \item Shleifer, A., \emph{Inefficient Markets: An Introduction to Behavioral Finance}, Oxford University Press, Oxford, 2000.
+    \item Sims, C. A., ``Macroeconomics and Reality,'' \emph{Econometrica}, vol. 48, no. 1, 1980, pp. 1--48.
+    \item Sundararajan, M., A. Taly, and Q. Yan, ``Axiomatic Attribution for Deep Networks,'' \emph{Proceedings of the 34th International Conference on Machine Learning}, PMLR vol. 70, 2017, pp. 3319--3328.
+    \item Tsay, R. S., \emph{Analysis of Financial Time Series}, 3rd ed., Wiley, Hoboken, NJ, 2010.
+    \item Turpin, M., J. Michael, E. Perez, and S. R. Bowman, ``Language Models Don't Always Say What They Think: Unfaithful Explanations in Chain-of-Thought Prompting,'' \emph{Advances in Neural Information Processing Systems 36}, 2023.
+    \item U.S. Financial Crimes Enforcement Network (FinCEN), \emph{Bank Secrecy Act Regulations and Guidance}, U.S. Department of the Treasury.
+    \item U.S. Securities and Exchange Commission, \emph{A Plain English Handbook: How to Create Clear SEC Disclosure Documents}, August 1998.
+    \item U.S. Securities and Exchange Commission, \emph{Regulation NMS}, Release No.\ 34-51808, File No.\ S7-10-04, 2005.
+    \item U.S. Securities and Exchange Commission, ``Schwab Subsidiaries Misled Robo-Adviser Clients about Absence of Hidden Fees,'' press release 2022-104, June 13, 2022.
+    \item U.S. Securities and Exchange Commission and Commodity Futures Trading Commission, \emph{Findings Regarding the Market Events of May 6, 2010: Report of the Staffs of the CFTC and SEC to the Joint Advisory Committee on Emerging Regulatory Issues}, Washington, DC, September 30, 2010.
+    \item UCI Machine Learning Repository, \emph{Default of Credit Card Clients Data Set}, University of California, Irvine.
+    \item Ustun, B., A. Spangher, and Y. Liu, ``Actionable Recourse in Linear Classification,'' \emph{Proceedings of the Conference on Fairness, Accountability, and Transparency}, 2019, pp. 10--19.
+    \item VanderPlas, J., \emph{Python Data Science Handbook: Essential Tools for Working with Data}, 2nd ed., O'Reilly Media, Sebastopol, CA, 2022.
+    \item Vaswani, A., N. Shazeer, N. Parmar, J. Uszkoreit, L. Jones, A. N. Gomez, {\L}. Kaiser, and I. Polosukhin, ``Attention Is All You Need,'' \emph{Advances in Neural Information Processing Systems 30}, 2017, pp. 5998--6008.
+    \item Wei, J., X. Wang, D. Schuurmans, M. Bosma, B. Ichter, F. Xia, E. Chi, Q. Le, and D. Zhou, ``Chain-of-Thought Prompting Elicits Reasoning in Large Language Models,'' \emph{Advances in Neural Information Processing Systems 35}, 2022, pp. 24824--24837.
+    \item Wu, S., O. Irsoy, S. Lu, V. Dabravolski, M. Dredze, S. Gehrmann, P. Kambadur, D. Rosenberg, and G. Mann, ``BloombergGPT: A Large Language Model for Finance,'' arXiv:2303.17564, 2023.
+    \item Yao, S., J. Zhao, D. Yu, N. Du, I. Shafran, K. Narasimhan, and Y. Cao, ``ReAct: Synergizing Reasoning and Acting in Language Models,'' \emph{International Conference on Learning Representations}, 2023.
+    \item Yeh, I.-C., and C.-H. Lien, ``The Comparisons of Data Mining Techniques for the Predictive Accuracy of Probability of Default of Credit Card Clients,'' \emph{Expert Systems with Applications}, vol. 36, no. 2, 2009, pp. 2473--2480.
+\end{itemize}
+
+\clearpage
+\addcontentsline{toc}{chapter}{Index}
+\printindex
+
+\end{document}
