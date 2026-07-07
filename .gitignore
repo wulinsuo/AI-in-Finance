@@ -1,7 +1,8 @@
-# LaTeX build output (regenerate with pdflatex/makeindex rather than committing it;
-# see CLAUDE.md's "Compiling chapters" and "The subject index" sections).
+# LaTeX build output, except the compiled PDFs themselves, which are committed
+# on purpose so the book is readable without a LaTeX toolchain (see CLAUDE.md's
+# "Compiling chapters" and "The subject index" sections). Regenerate these with
+# pdflatex/makeindex rather than hand-editing them.
 *.aux
-*.pdf
 *.toc
 *.idx
 *.ind
