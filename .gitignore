@@ -1,12 +1,18 @@
+# LaTeX build output (regenerate with pdflatex/makeindex rather than committing it;
+# see CLAUDE.md's "Compiling chapters" and "The subject index" sections).
+*.aux
+*.pdf
+*.toc
+*.idx
+*.ind
+*.ilg
+*.log
+*.dvi
+*.out
+
 # Raw datasets downloaded by capstone-chapter notebooks (large binaries; the
 # notebook re-downloads them automatically from their public source on demand).
 ch16_data/
-
-# Per-chapter .idx files: every chapter loads makeidx (so \index{} works when
-# compiled standalone), but only ai_in_finance.tex actually calls \printindex, so a
-# standalone chapter compile produces an unused .idx byproduct. ai_in_finance.idx/
-# ai_in_finance.ind/ai_in_finance.ilg (the real, printed index) are intentionally NOT ignored.
-chapter*.idx
 
 # SyncTeX editor-sync byproducts (regenerated per-machine/editor; not build output anyone else needs).
 *.synctex.gz
