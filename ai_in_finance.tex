@@ -6,6 +6,9 @@
 \usepackage{amssymb}
 \usepackage{booktabs}
 \usepackage{graphicx}
+\usepackage{array}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\usepackage{url}
 \usepackage{draftwatermark}
 
 \definecolor{coverbg}{HTML}{0B1F3A}
@@ -21,6 +24,7 @@
 \usepackage{tocloft}
 \setlength{\cftsecnumwidth}{3.2em}
 \setlength{\cftsubsecnumwidth}{4.2em}
+\setlength{\cftchapnumwidth}{6.5em}
 
 \usepackage{makeidx}
 \makeindex
@@ -94,6 +98,9 @@
 \subfile{chapter16}
 \subfile{chapter17}
 
+\addtocontents{toc}{\string\renewcommand{\string\cftchappresnum}{Appendix }}
+\subfile{appendix_datasets}
+
 \backmatter
 
 \clearpage
@@ -140,8 +147,10 @@ Every chapter's own ``Further Reading'' section lists sources with a short note 
     \item Engle, R. F., and C. W. J. Granger, ``Co-integration and Error Correction: Representation, Estimation, and Testing,'' \emph{Econometrica}, vol. 55, no. 2, 1987, pp. 251--276.
     \item Fabozzi, F. J., \emph{Fixed Income Analysis}, 2nd ed., CFA Institute Investment Series, Wiley, Hoboken, NJ, 2007.
     \item Fama, E. F., and K. R. French, ``Common Risk Factors in the Returns on Stocks and Bonds,'' \emph{Journal of Financial Economics}, vol. 33, no. 1, 1993, pp. 3--56.
+    \item Federal Reserve Bank of St. Louis, \emph{FRED API Documentation}, fred.stlouisfed.org.
     \item Feng, C., and S. Fay, ``An Empirical Investigation of Forward-Looking Retailer Performance Using Parking Lot Traffic Data Derived from Satellite Imagery,'' \emph{Journal of Retailing}, vol. 98, no. 4, 2022, pp. 633--646.
     \item Financial Action Task Force (FATF), \emph{International Standards on Combating Money Laundering and the Financing of Terrorism \& Proliferation: The FATF Recommendations}, FATF, Paris, May 2012.
+    \item French, K. R., \emph{Data Library}, Tuck School of Business, Dartmouth College, mba.tuck.dartmouth.edu.
     \item Goodfellow, I., Y. Bengio, and A. Courville, \emph{Deep Learning}, MIT Press, Cambridge, MA, 2016.
     \item Goodfellow, I., J. Shlens, and C. Szegedy, ``Explaining and Harnessing Adversarial Examples,'' \emph{International Conference on Learning Representations}, 2015.
     \item Goodfellow, I., J. Pouget-Abadie, M. Mirza, B. Xu, D. Warde-Farley, S. Ozair, A. Courville, and Y. Bengio, ``Generative Adversarial Networks,'' \emph{Communications of the ACM}, vol. 63, no. 11, 2020, pp. 139--144.
@@ -164,6 +173,7 @@ Every chapter's own ``Further Reading'' section lists sources with a short note 
     \item James, G., D. Witten, T. Hastie, R. Tibshirani, and J. Taylor, \emph{An Introduction to Statistical Learning: with Applications in Python}, Springer, New York, 2023.
     \item Jorion, P., \emph{Value at Risk: The New Benchmark for Managing Financial Risk}, 3rd ed., McGraw-Hill, New York, 2007.
     \item Jurafsky, D., and J. H. Martin, \emph{Speech and Language Processing: An Introduction to Natural Language Processing, Computational Linguistics, and Speech Recognition}, 3rd ed.\ (online draft), Stanford University.
+    \item Kaggle, \emph{Datasets and Public API Documentation}, kaggle.com.
     \item Katona, Z., M. O. Painter, P. N. Patatoukas, and J. Zeng, ``On the Capital Market Consequences of Big Data: Evidence from Outer Space,'' \emph{Journal of Financial and Quantitative Analysis}, vol. 60, no. 2, 2025, pp. 551--579.
     \item Kipf, T. N., and M. Welling, ``Semi-Supervised Classification with Graph Convolutional Networks,'' \emph{International Conference on Learning Representations}, 2017.
     \item Kissell, R., \emph{The Science of Algorithmic Trading and Portfolio Management}, Academic Press, Amsterdam, 2013.
@@ -176,6 +186,7 @@ Every chapter's own ``Further Reading'' section lists sources with a short note 
     \item Lewis, M., \emph{Flash Boys: A Wall Street Revolt}, W.W. Norton \& Company, New York, 2014.
     \item Lewis, P., E. Perez, A. Piktus, F. Petroni, V. Karpukhin, N. Goyal, H. Küttler, M. Lewis, W. Yih, T. Rocktäschel, S. Riedel, and D. Kiela, ``Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks,'' \emph{Advances in Neural Information Processing Systems 33}, 2020, pp. 9459--9474.
     \item Li, F., ``The Information Content of Forward-Looking Statements in Corporate Filings---A Na\"ive Bayesian Machine Learning Approach,'' \emph{Journal of Accounting Research}, vol. 48, no. 5, 2010, pp. 1049--1102.
+    \item LOBSTER, \emph{Limit Order Book Data Documentation}, lobsterdata.com.
     \item Loughran, T., and B. McDonald, ``When Is a Liability Not a Liability? Textual Analysis, Dictionaries, and 10-Ks,'' \emph{Journal of Finance}, vol. 66, no. 1, 2011, pp. 35--65.
     \item Lundberg, S. M., and S.-I. Lee, ``A Unified Approach to Interpreting Model Predictions,'' \emph{Advances in Neural Information Processing Systems 30}, 2017, pp. 4765--4774.
     \item Markowitz, H., ``Portfolio Selection,'' \emph{Journal of Finance}, vol. 7, no. 1, 1952, pp. 77--91.
@@ -211,6 +222,7 @@ Every chapter's own ``Further Reading'' section lists sources with a short note 
     \item Turpin, M., J. Michael, E. Perez, and S. R. Bowman, ``Language Models Don't Always Say What They Think: Unfaithful Explanations in Chain-of-Thought Prompting,'' \emph{Advances in Neural Information Processing Systems 36}, 2023.
     \item U.S. Financial Crimes Enforcement Network (FinCEN), \emph{Bank Secrecy Act Regulations and Guidance}, U.S. Department of the Treasury.
     \item U.S. Securities and Exchange Commission, \emph{A Plain English Handbook: How to Create Clear SEC Disclosure Documents}, August 1998.
+    \item U.S. Securities and Exchange Commission, \emph{EDGAR Application Programming Interfaces}, sec.gov.
     \item U.S. Securities and Exchange Commission, \emph{Regulation NMS}, Release No.\ 34-51808, File No.\ S7-10-04, 2005.
     \item U.S. Securities and Exchange Commission, ``Schwab Subsidiaries Misled Robo-Adviser Clients about Absence of Hidden Fees,'' press release 2022-104, June 13, 2022.
     \item U.S. Securities and Exchange Commission and Commodity Futures Trading Commission, \emph{Findings Regarding the Market Events of May 6, 2010: Report of the Staffs of the CFTC and SEC to the Joint Advisory Committee on Emerging Regulatory Issues}, Washington, DC, September 30, 2010.
