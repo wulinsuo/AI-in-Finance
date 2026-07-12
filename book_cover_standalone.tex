@@ -1,0 +1,39 @@
+\documentclass[12pt]{article}
+\usepackage[paperwidth=12cm,paperheight=18cm,margin=0cm]{geometry}
+\usepackage{tikz}
+\usepackage{xcolor}
+\pagestyle{empty}
+
+\definecolor{coverbg}{HTML}{0B1F3A}
+\definecolor{coveraccent}{HTML}{C9A227}
+
+\begin{document}
+\begin{tikzpicture}[remember picture,overlay]
+  \fill[coverbg] (current page.south west) rectangle (current page.north east);
+
+  \draw[coveraccent,line width=0.9pt] ([xshift=1.0cm,yshift=-1.3cm]current page.north west) -- ([xshift=-1.0cm,yshift=-1.3cm]current page.north east);
+  \draw[coveraccent,line width=0.9pt] ([xshift=1.0cm,yshift=1.3cm]current page.south west) -- ([xshift=-1.0cm,yshift=1.3cm]current page.south east);
+
+  \node at ([yshift=-2.75cm]current page.north) {
+    \begin{tikzpicture}
+      \draw[coveraccent,line width=1.0pt] (0,0) circle (0.72cm);
+      \draw[coveraccent,line width=0.9pt] (-0.42,-0.26) -- (-0.15,0.08) -- (0.11,-0.10) -- (0.40,0.32);
+      \fill[white] (-0.42,-0.26) circle (1.5pt);
+      \fill[white] (-0.15,0.08) circle (1.5pt);
+      \fill[white] (0.11,-0.10) circle (1.5pt);
+      \fill[white] (0.40,0.32) circle (1.5pt);
+    \end{tikzpicture}
+  };
+
+  \node at ([yshift=-4.75cm]current page.north) {\fontsize{27}{32}\selectfont\bfseries\color{white} AI in Finance};
+
+  \draw[coveraccent,line width=0.8pt] ([yshift=-5.55cm,xshift=-1.7cm]current page.north) -- ([yshift=-5.55cm,xshift=1.7cm]current page.north);
+
+  \node[align=center] at ([yshift=-6.75cm]current page.north) {\large\color{white!85} Finance for Engineers,\\ \color{white!85} Scientists, and Data Scientists};
+
+  \node[align=center] at ([yshift=-10.8cm]current page.north) {\Large\bfseries\color{white} W.\ Suo};
+  \node[align=center] at ([yshift=-11.55cm]current page.north) {\small\color{coveraccent} Smith School of Business \ \textbullet\ \ Queen's University};
+
+  \node[align=center] at ([yshift=-14.5cm]current page.north) {\footnotesize\color{white!55} \copyright\ Wulin Suo};
+\end{tikzpicture}
+\end{document}
