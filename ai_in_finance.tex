@@ -80,6 +80,52 @@
 
 \tableofcontents
 
+\clearpage
+\addcontentsline{toc}{chapter}{Preface}
+\chapter*{Preface}
+\markboth{PREFACE}{PREFACE}
+
+Artificial intelligence is now embedded in nearly every corner of the financial industry: credit decisions, fraud alerts, trade execution, risk limits, portfolio construction, and increasingly the generative tools analysts use to read a filing or draft a note. The people building and overseeing these systems are disproportionately trained in mathematics, statistics, physics, computer science, and engineering, not finance. They can derive a gradient, debug a training loop, and reason about a covariance matrix without much trouble. What they often lack, at least at first, is the financial vocabulary and institutional context that turns a model into something a bank, a fund, or a regulator can actually use, and use responsibly. This book is written to close that gap.
+
+\section*{Who This Book Is For}
+
+I have written this book for readers who are already comfortable with quantitative reasoning and, ideally, with basic Python, but who have limited exposure to finance and economics: graduate students and advanced undergraduates in engineering, the physical sciences, statistics, and computer science; practicing data scientists and machine learning engineers moving into a financial role; and anyone building a career on the specific combination of skills this book covers. No prior finance coursework is assumed. Chapter 3 introduces financial markets and institutions from first principles, and every subsequent chapter builds forward from there, so a reader with no finance background at all should be able to start at Chapter 1 and never feel lost.
+
+\section*{How This Book Is Organized}
+
+The eighteen chapters are ordered by dependency, not by alphabetical convenience or topical grouping. Chapter 2 teaches the Python tools, NumPy, pandas, scikit-learn, matplotlib, that nearly every later chapter's worked examples rely on, so it comes before those chapters need it rather than after. Chapter 3's markets and institutions precede Chapter 4's financial statements, and Chapter 4's statements feed directly into Chapter 5's valuation and asset-pricing models, which in turn recur throughout the risk, portfolio, and credit chapters that follow. Machine learning fundamentals (Chapter 6) are introduced once, in depth, and then reused, not re-taught, in every later chapter that needs a regression, a classifier, or a neural network: fraud scoring, credit scoring, algorithmic trading signals, natural language processing, and the explainability methods of Chapter 16 all build on that same foundation rather than each inventing their own. Chapter 17 closes the methods sequence with reinforcement learning, built on the trading and portfolio machinery of Chapters 10 through 12, immediately before Chapter 18's capstone puts every method in the book to work on one real dataset. This ordering was arrived at, in part, by actually running the companion notebooks end to end and discovering where an earlier draft asked a chapter to use a tool it had not yet been taught.
+
+Every chapter follows the same shape: an introduction, several sections of exposition built around at least one fully worked numerical example a reader can check by hand, a discussion of the practical challenges and limitations specific to that chapter's topic, and a closing sequence of Key Takeaways, Suggested Exercises, and Further Reading pointing to the standard textbooks and original papers behind the chapter's material. Each chapter is sized for roughly a ninety-minute class session, so the book can serve as the backbone of a one-semester course, taught roughly one chapter per week, exactly as it can serve a reader working through it independently at their own pace. Two appendices follow the eighteen chapters: a catalog of real financial datasets and APIs for readers who want to extend the book's examples with real data of their own, and a glossary of finance and trading terms for readers who hit an unfamiliar term before the chapter that formally introduces it.
+
+Real, named case studies are woven throughout rather than confined to a single chapter: the 1998 collapse of Long-Term Capital Management, the 2008 financial crisis and the Gaussian copula's role in mispricing CDO risk, the 2010 Flash Crash, the 2012 Knight Capital trading malfunction, the Danske Bank Estonia money-laundering scandal, the 2016 Bitfinex exchange hack and the blockchain forensics that traced its proceeds to a 2022 U.S. Department of Justice seizure, the 2019 Apple Card gender-bias controversy, and the SEC's 2022 settlement with Schwab over undisclosed robo-advisor cash allocations, among others. These are real events with real consequences, included because the lesson a formula teaches in the abstract is rarely the lesson a genuine failure teaches in practice. Chapter 18's capstone case study goes further still, working a real, publicly available consumer-credit dataset end to end, undocumented category codes, class imbalance, model comparison, calibration, explainability, and fairness auditing included, using nothing invented for the occasion.
+
+\section*{The Companion Notebooks}
+
+Every worked numerical example in this book has a companion Jupyter notebook that reproduces it in Python, one notebook per chapter, 
+using ordinary, widely available libraries rather than anything exotic. Every notebook was actually executed, and its printed output, 
+not a hand-derived approximation of it, is what the chapter text reports; where the two disagreed during drafting, the notebook's output 
+was treated as the source of truth and the prose was corrected to match. The companion notebooks, along with the \LaTeX{} source for 
+this book itself, are available at:
+
+\begin{center}
+\url{https://github.com/wulinsuo/AI-in-Finance}
+\end{center}
+
+I encourage readers to run each notebook alongside the corresponding chapter, change an input or two, and see what happens; a formula becomes far more trustworthy once you have watched it respond correctly to a change you made yourself.
+
+\section*{A Note on the Draft}
+
+This is a work in progress, and the watermark on every page is there to say so honestly rather than to discourage reading. 
+I am continuing to expand, correct, and refine the material, and I welcome corrections, questions, and suggestions from 
+readers at the address below. If you find an error, a stale cross-reference, or a passage that would benefit from a clearer example, 
+I would genuinely like to hear about it.
+
+\vspace{1em}
+\noindent Wulin Suo\\
+Smith School of Business \\
+Queen's University\\
+Wulin.Suo@Queensu.ca
+
 \mainmatter
 \subfile{chapter1}
 \subfile{chapter2}
@@ -98,9 +144,11 @@
 \subfile{chapter15}
 \subfile{chapter16}
 \subfile{chapter17}
+\subfile{chapter18}
 
 \addtocontents{toc}{\string\renewcommand{\string\cftchappresnum}{Appendix }}
 \subfile{appendix_datasets}
+\subfile{appendix_glossary}
 
 \backmatter
 
@@ -112,6 +160,8 @@
 Every chapter's own ``Further Reading'' section lists sources with a short note on how each connects to that chapter's material. This appendix consolidates all of them into a single alphabetized list, without the per-chapter annotations, as a stand-alone bibliography a reader can consult directly; several sources are cited in more than one chapter and appear here only once. Full author names, publishers, editions, and (for articles) volume/issue/page numbers were added by verifying each source rather than guessing; a handful of entries for which no single edition, page range, or exact date could be confirmed with confidence are given in the fullest form that could be verified, without an invented specific detail.
 
 \begin{itemize}
+    \item Abbeel, P., and A. Y. Ng, ``Apprenticeship Learning via Inverse Reinforcement Learning,'' \emph{Proceedings of the Twenty-First International Conference on Machine Learning}, 2004, pp. 1--8.
+    \item Adams, H., N. Zinsmeister, and D. Robinson, ``Uniswap v2 Core,'' 2020. Available at: \url{https://uniswap.org/whitepaper.pdf}.
     \item Aldridge, I., \emph{High-Frequency Trading: A Practical Guide to Algorithmic Strategies and Trading Systems}, 2nd ed., Wiley, Hoboken, NJ, 2013.
     \item Almgren, R., and N. Chriss, ``Optimal Execution of Portfolio Transactions,'' \emph{Journal of Risk}, vol. 3, no. 2, 2001, pp. 5--39.
     \item Ang, A., \emph{Asset Management: A Systematic Approach to Factor Investing}, Oxford University Press, New York, 2014.
@@ -119,6 +169,7 @@ Every chapter's own ``Further Reading'' section lists sources with a short note 
     \item Avellaneda, M., and S. Stoikov, ``High-Frequency Trading in a Limit Order Book,'' \emph{Quantitative Finance}, vol. 8, no. 3, 2008, pp. 217--224.
     \item Barocas, S., M. Hardt, and A. Narayanan, \emph{Fairness and Machine Learning: Limitations and Opportunities}, MIT Press, Cambridge, MA, 2023.
     \item Basel Committee on Banking Supervision, \emph{Basel III: A Global Regulatory Framework for More Resilient Banks and Banking Systems}, Bank for International Settlements, Basel, Switzerland, December 2010 (rev.\ June 2011).
+    \item Berg, F., J. F. Kölbel, and R. Rigobon, ``Aggregate Confusion: The Divergence of ESG Ratings,'' \emph{Review of Finance}, vol. 26, no. 6, 2022, pp. 1315--1344.
     \item Black, F., and R. Litterman, ``Global Portfolio Optimization,'' \emph{Financial Analysts Journal}, vol. 48, no. 5, 1992, pp. 28--43.
     \item Board of Governors of the Federal Reserve System and Office of the Comptroller of the Currency, \emph{Supervisory Guidance on Model Risk Management}, SR 11-7, April 4, 2011.
     \item Bodie, Z., A. Kane, and A. Marcus, \emph{Investments}, 13th ed., McGraw Hill, New York, 2024.
@@ -189,6 +240,7 @@ Every chapter's own ``Further Reading'' section lists sources with a short note 
     \item Lewis, M., \emph{Flash Boys: A Wall Street Revolt}, W.W. Norton \& Company, New York, 2014.
     \item Lewis, P., E. Perez, A. Piktus, F. Petroni, V. Karpukhin, N. Goyal, H. Küttler, M. Lewis, W. Yih, T. Rocktäschel, S. Riedel, and D. Kiela, ``Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks,'' \emph{Advances in Neural Information Processing Systems 33}, 2020, pp. 9459--9474.
     \item Li, F., ``The Information Content of Forward-Looking Statements in Corporate Filings---A Na\"ive Bayesian Machine Learning Approach,'' \emph{Journal of Accounting Research}, vol. 48, no. 5, 2010, pp. 1049--1102.
+    \item Litterman, R., and J. Scheinkman, ``Common Factors Affecting Bond Returns,'' \emph{Journal of Fixed Income}, vol. 1, no. 1, 1991, pp. 54--61.
     \item LOBSTER, \emph{Limit Order Book Data Documentation}, lobsterdata.com.
     \item Loughran, T., and B. McDonald, ``When Is a Liability Not a Liability? Textual Analysis, Dictionaries, and 10-Ks,'' \emph{Journal of Finance}, vol. 66, no. 1, 2011, pp. 35--65.
     \item Lundberg, S. M., and S.-I. Lee, ``A Unified Approach to Interpreting Model Predictions,'' \emph{Advances in Neural Information Processing Systems 30}, 2017, pp. 4765--4774.
@@ -196,13 +248,17 @@ Every chapter's own ``Further Reading'' section lists sources with a short note 
     \item McDonald, R. L., \emph{Derivatives Markets}, 3rd ed., Pearson, Boston, 2012.
     \item McKinney, W., \emph{Python for Data Analysis}, 3rd ed., O'Reilly Media, Sebastopol, CA, 2022.
     \item McNeil, A. J., R. Frey, and P. Embrechts, \emph{Quantitative Risk Management: Concepts, Techniques and Tools}, rev.\ ed., Princeton University Press, Princeton, NJ, 2015.
+    \item Meiklejohn, S., M. Pomarole, G. Jordan, K. Levchenko, D. McCoy, G. M. Voelker, and S. Savage, ``A Fistful of Bitcoins: Characterizing Payments Among Men with No Names,'' \emph{Proceedings of the 2013 Internet Measurement Conference}, 2013, pp. 127--140.
     \item Menkveld, A. J., ``High-Frequency Trading and the New Market Makers,'' \emph{Journal of Financial Markets}, vol. 16, no. 4, 2013, pp. 712--740.
     \item Michaud, R. O., and R. O. Michaud, \emph{Efficient Asset Management: A Practical Guide to Stock Portfolio Optimization and Asset Allocation}, 2nd ed., Oxford University Press, New York, 2008.
     \item Mikolov, T., K. Chen, G. Corrado, and J. Dean, ``Efficient Estimation of Word Representations in Vector Space,'' arXiv:1301.3781, 2013.
+    \item Mnih, V., K. Kavukcuoglu, D. Silver, A. A. Rusu, J. Veness, M. G. Bellemare, A. Graves, M. Riedmiller, A. K. Fidjeland, G. Ostrovski, et al., ``Human-Level Control through Deep Reinforcement Learning,'' \emph{Nature}, vol. 518, 2015, pp. 529--533.
     \item Molnar, C., \emph{Interpretable Machine Learning: A Guide for Making Black Box Models Explainable}, 2nd ed., christophm.github.io/interpretable-ml-book, 2022.
     \item Morgan Stanley, ``Key Milestone in Innovation Journey with OpenAI'' and ``Launch of AI @ Morgan Stanley Debrief'' (press releases).
     \item Murphy, K. P., \emph{Machine Learning: A Probabilistic Perspective}, MIT Press, Cambridge, MA, 2012.
     \item National Institute of Standards and Technology, \emph{Artificial Intelligence Risk Management Framework (AI RMF 1.0)}, NIST AI 100-1, U.S. Department of Commerce, January 2023.
+    \item Nevmyvaka, Y., Y. Feng, and M. Kearns, ``Reinforcement Learning for Optimized Trade Execution,'' \emph{Proceedings of the 23rd International Conference on Machine Learning}, 2006, pp. 673--680.
+    \item Network for Greening the Financial System (NGFS), \emph{NGFS Climate Scenarios for Central Banks and Supervisors}, Banque de France, Paris, 2023.
     \item New York State Department of Financial Services, \emph{Report on Apple Card Investigation}, March 2021.
     \item Niculescu-Mizil, A., and R. Caruana, ``Predicting Good Probabilities with Supervised Learning,'' \emph{Proceedings of the 22nd International Conference on Machine Learning}, 2005, pp. 625--632.
     \item O'Hara, M., \emph{Market Microstructure Theory}, Blackwell Publishers, Cambridge, MA, 1995.
@@ -216,12 +272,14 @@ Every chapter's own ``Further Reading'' section lists sources with a short note 
     \item Ribeiro, M. T., S. Singh, and C. Guestrin, ```Why Should I Trust You?': Explaining the Predictions of Any Classifier,'' \emph{Proceedings of the 22nd ACM SIGKDD International Conference on Knowledge Discovery and Data Mining}, 2016, pp. 1135--1144.
     \item Roll, R., ``A Simple Implicit Measure of the Effective Bid-Ask Spread in an Efficient Market,'' \emph{Journal of Finance}, vol. 39, no. 4, 1984, pp. 1127--1139.
     \item Saunders, A., and L. Allen, \emph{Credit Risk Management In and Out of the Financial Crisis: New Approaches to Value at Risk and Other Paradigms}, 3rd ed., Wiley, Hoboken, NJ, 2010.
+    \item Schulman, J., F. Wolski, P. Dhariwal, A. Radford, and O. Klimov, ``Proximal Policy Optimization Algorithms,'' arXiv:1707.06347, 2017.
     \item Shapley, L. S., ``A Value for $n$-Person Games,'' in \emph{Contributions to the Theory of Games (AM-28), Volume II}, H.\,W.\ Kuhn and A.\,W.\ Tucker, eds., Annals of Mathematics Studies no. 28, Princeton University Press, Princeton, NJ, 1953, pp. 307--318.
     \item Sharpe, W. F., ``Capital Asset Prices: A Theory of Market Equilibrium under Conditions of Risk,'' \emph{Journal of Finance}, vol. 19, no. 3, 1964, pp. 425--442.
     \item Shazeer, N., A. Mirhoseini, K. Maziarz, A. Davis, Q. Le, G. Hinton, and J. Dean, ``Outrageously Large Neural Networks: The Sparsely-Gated Mixture-of-Experts Layer,'' \emph{International Conference on Learning Representations}, 2017.
     \item Shleifer, A., \emph{Inefficient Markets: An Introduction to Behavioral Finance}, Oxford University Press, Oxford, 2000.
     \item Sims, C. A., ``Macroeconomics and Reality,'' \emph{Econometrica}, vol. 48, no. 1, 1980, pp. 1--48.
     \item Sundararajan, M., A. Taly, and Q. Yan, ``Axiomatic Attribution for Deep Networks,'' \emph{Proceedings of the 34th International Conference on Machine Learning}, PMLR vol. 70, 2017, pp. 3319--3328.
+    \item Sutton, R. S., and A. G. Barto, \emph{Reinforcement Learning: An Introduction}, 2nd ed., MIT Press, Cambridge, MA, 2018.
     \item Tsay, R. S., \emph{Analysis of Financial Time Series}, 3rd ed., Wiley, Hoboken, NJ, 2010.
     \item Turpin, M., J. Michael, E. Perez, and S. R. Bowman, ``Language Models Don't Always Say What They Think: Unfaithful Explanations in Chain-of-Thought Prompting,'' \emph{Advances in Neural Information Processing Systems 36}, 2023.
     \item U.S. Financial Crimes Enforcement Network (FinCEN), \emph{Bank Secrecy Act Regulations and Guidance}, U.S. Department of the Treasury.
