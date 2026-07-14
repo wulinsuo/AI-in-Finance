@@ -1,0 +1,266 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs}
+\usepackage{hyperref}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{proposition}{Proposition}
+\newtheorem{corollary}{Corollary}
+\newtheorem{lemma}{Lemma}
+\theoremstyle{remark}
+\newtheorem*{remark}{Remark}
+\theoremstyle{definition}
+\newtheorem*{example}{Example}
+
+\title{The Kelly Criterion: A Complete Mathematical Argument}
+\author{Wulin Suo}
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent This note derives the Kelly criterion from first principles: why a repeatable favorable bet raises a sizing question that expected value alone cannot answer, why that question is governed by a geometric rather than an arithmetic average, how the optimal fraction $f^{*}=p-q/b$ falls out of a single first-order condition, why that fraction is a strict global maximum, and why maximizing it is equivalent to maximizing expected logarithmic wealth. It closes with a worked numerical example, the standard practical refinement (fractional Kelly), and a brief remark connecting the discrete betting problem to its continuous-time, mean-variance analog.
+\end{abstract}
+
+\section{The Problem: Sizing a Repeated Favorable Bet}
+\label{sec:setup}
+
+Consider a bet that can be repeated indefinitely under identical conditions. On each trial, the bettor wins with probability $p\in(0,1)$, in which case a dollar wagered returns $b>0$ dollars of profit (net odds of $b$ to $1$), or loses with probability $q=1-p$, in which case the full amount wagered is forfeited. The expected profit per dollar wagered on a single trial is
+\begin{equation}
+E[R] = pb - q,
+\label{eq:edge}
+\end{equation}
+where $R$ denotes the net return per dollar wagered. If $E[R]>0$ the bet has positive edge and is worth taking at least once; if $E[R]\le 0$ no amount of clever sizing can make repeating it profitable, and the analysis below will confirm this as a special case rather than assume it.
+
+Positive edge answers \emph{whether} to take the bet. It does not answer a second, sharper question that only arises because the bet is \emph{repeatable}: what fraction $f\in[0,1]$ of current wealth should be wagered on each trial? Wagering a fixed dollar amount is not the relevant choice, since wealth itself changes from trial to trial as a result of previous outcomes; the only sizing rule that is consistent across trials of arbitrary length is one expressed as a fraction of whatever wealth is on hand at the time of the bet. Sections~\ref{sec:dynamics}--\ref{sec:properties} show that this fraction has a unique, calculable optimum, and that both extremes, $f=0$ and $f=1$, are strictly dominated by it.
+
+\section{Wealth Dynamics Under Repeated Fractional Betting}
+\label{sec:dynamics}
+
+Let $W_0>0$ be initial wealth, and suppose the bettor wagers a constant fraction $f\in[0,1)$ of current wealth on each of $n$ independent, identically distributed trials. Wealth evolves multiplicatively:
+\begin{equation}
+W_k =
+\begin{cases}
+W_{k-1}(1+bf) & \text{with probability } p \quad \text{(win)}, \\[2pt]
+W_{k-1}(1-f) & \text{with probability } q \quad \text{(loss)},
+\end{cases}
+\qquad k=1,\dots,n.
+\label{eq:recursion}
+\end{equation}
+Unrolling the recursion,
+\begin{equation}
+W_n = W_0 \prod_{k=1}^{n} M_k, \qquad M_k \in \{1+bf,\; 1-f\},
+\label{eq:product}
+\end{equation}
+where $M_k$ is the per-trial wealth multiplier. This product structure, not the sign or magnitude of $E[R]$ alone, is the entire reason the sizing question is nontrivial: a single trial's expected value is an \emph{arithmetic} average over outcomes, and it is exactly the right criterion for deciding whether to take the bet once. But wealth carried across $n$ repetitions is a \emph{product} of $n$ multipliers, not a sum of $n$ increments, and quantities built by repeated multiplication are governed by their geometric mean, not their arithmetic one. Section~\ref{sec:growth} makes this precise; the short version is that a single sufficiently damaging multiplier (a large loss) can outweigh many favorable ones no matter how positive $E[R]$ looks in isolation, so a bet size that raises the arithmetic average of outcomes can simultaneously drive long-run wealth toward zero.
+
+\section{The Long-Run Growth Rate}
+\label{sec:growth}
+
+Taking logarithms converts the product in Equation~\eqref{eq:product} into a sum, which is where the law of large numbers can be applied directly:
+\begin{equation}
+\ln\!\left(\frac{W_n}{W_0}\right) = \sum_{k=1}^{n} \ln M_k = \sum_{k=1}^{n} X_k,
+\qquad X_k \in \{\ln(1+bf),\; \ln(1-f)\}.
+\label{eq:logsum}
+\end{equation}
+The $X_k$ are independent and identically distributed with finite mean (both possible values are finite real numbers for $f\in[0,1)$), so the Strong Law of Large Numbers applies directly.
+
+\begin{proposition}[Almost-sure growth rate]
+\label{prop:sllna}
+Define
+\begin{equation}
+g(f) \;=\; E[X_k] \;=\; p\ln(1+bf) + q\ln(1-f).
+\label{eq:gdef}
+\end{equation}
+Then, with probability one,
+\begin{equation}
+\lim_{n\to\infty} \frac{1}{n}\ln\!\left(\frac{W_n}{W_0}\right) = g(f).
+\label{eq:sllna}
+\end{equation}
+\end{proposition}
+\begin{proof}
+Immediate from the Strong Law of Large Numbers applied to the i.i.d.\ sequence $\{X_k\}$ in Equation~\eqref{eq:logsum}, which has finite mean $g(f)$ for any fixed $f\in[0,1)$.
+\end{proof}
+
+Equation~\eqref{eq:sllna} says that $W_n \approx W_0\, e^{n g(f)}$ for large $n$: the bettor's wealth grows (or shrinks) at an asymptotically exponential rate governed entirely by $g(f)$. This licenses the reformulation that drives the rest of this note: \emph{maximizing long-run wealth is equivalent to maximizing $g(f)$}. The following corollary states the operational content of this equivalence more sharply than the growth-rate statement alone.
+
+\begin{corollary}[Pathwise dominance]
+\label{cor:dominance}
+Let $f_1,f_2\in[0,1)$ with $g(f_1) > g(f_2)$, and let $W_n(f_1)$, $W_n(f_2)$ denote the wealth paths generated by the same sequence of trial outcomes under fractions $f_1$ and $f_2$ respectively. Then, with probability one,
+\begin{equation}
+\frac{W_n(f_1)}{W_n(f_2)} \longrightarrow \infty \qquad \text{as } n\to\infty.
+\end{equation}
+\end{corollary}
+\begin{proof}
+By Proposition~\ref{prop:sllna}, $\frac{1}{n}\ln[W_n(f_1)/W_n(f_2)] \to g(f_1)-g(f_2) > 0$ almost surely, so $\ln[W_n(f_1)/W_n(f_2)] \to \infty$ almost surely, which is equivalent to the stated limit.
+\end{proof}
+
+Corollary~\ref{cor:dominance} is the actual force of the Kelly argument: the fraction that maximizes $g(f)$ does not merely have a higher \emph{expected} terminal wealth than any other fixed fraction (a weaker, purely distributional claim, and one that a risk-averse investor could reasonably discount); it eventually accumulates \emph{more wealth on almost every sample path}, a pathwise, not merely average-case, statement. This is why the argument below proceeds by maximizing $g(f)$ rather than by any appeal to risk preferences.
+
+\section{Deriving the Kelly Fraction}
+\label{sec:derivation}
+
+\begin{theorem}[The Kelly fraction]
+\label{thm:kelly}
+The function $g(f) = p\ln(1+bf) + q\ln(1-f)$ is strictly concave on $f\in(-1/b,\,1)$, and its unique maximizer on that interval is
+\begin{equation}
+f^{*} = p - \frac{q}{b}.
+\label{eq:kellyformula}
+\end{equation}
+\end{theorem}
+\begin{proof}
+Differentiating,
+\begin{equation}
+g'(f) = \frac{pb}{1+bf} - \frac{q}{1-f}, \qquad
+g''(f) = -\frac{pb^2}{(1+bf)^2} - \frac{q}{(1-f)^2}.
+\label{eq:derivatives}
+\end{equation}
+Since $p,q,b>0$, both terms of $g''(f)$ are strictly negative throughout $(-1/b,1)$, so $g$ is strictly concave there; a strictly concave function has at most one critical point, and that point, if it lies in the domain, is the unique global maximizer.
+
+Setting $g'(f)=0$:
+\begin{equation}
+\frac{pb}{1+bf} = \frac{q}{1-f}
+\;\;\Longleftrightarrow\;\;
+pb(1-f) = q(1+bf)
+\;\;\Longleftrightarrow\;\;
+pb - q = bf(p+q).
+\end{equation}
+Since $p+q=1$, this reduces to $pb-q = bf$, i.e., $f = (pb-q)/b = p - q/b$, establishing Equation~\eqref{eq:kellyformula}.
+\end{proof}
+
+\begin{corollary}[Sign of the Kelly fraction tracks the sign of the edge]
+\label{cor:sign}
+$f^{*}>0$ if and only if $E[R] = pb-q>0$ (Equation~\eqref{eq:edge}); that is, the Kelly criterion recommends a strictly positive bet exactly when the underlying bet has strictly positive expected value per dollar wagered. If $E[R]\le 0$, the unconstrained formula in Equation~\eqref{eq:kellyformula} gives $f^{*}\le 0$, which is outside the model's domain of a genuine wager; the correct interpretation is $f^{*}=0$ (do not bet), since $g$ is strictly decreasing on $[0,1)$ whenever $g'(0)=pb-q\le 0$ (a direct consequence of $g''<0$).
+\end{corollary}
+
+\begin{corollary}[The Kelly fraction never exceeds one]
+\label{cor:bounded}
+Whenever $q>0$ (the bet carries genuine risk of loss), $f^{*}=p-q/b<1$ for every $b>0$, so the formula never recommends wagering the entire bankroll.
+\end{corollary}
+\begin{proof}
+$f^*<1 \iff p-1 < q/b \iff -q<q/b \iff -qb<q \iff -q(b+1)<0$, which holds for any $q>0,\,b>0$.
+\end{proof}
+
+\section{Properties of the Growth-Rate Function}
+\label{sec:properties}
+
+Three further facts about $g(f)$ make precise why both under-betting and over-betting are costly, not merely suboptimal.
+
+\begin{proposition}[No betting, no growth]
+$g(0) = p\ln 1 + q \ln 1 = 0$.
+\end{proposition}
+
+This is the formal statement of "betting too little leaves genuine edge on the table": at $f=0$, wealth neither grows nor shrinks, regardless of how favorable the underlying bet is. Combined with Corollary~\ref{cor:sign}, whenever the edge is positive, $g'(0)=pb-q>0$, so $g$ is strictly increasing at $f=0$; since $g$ is concave with a unique interior maximizer $f^*$, this forces $g(f^*)>g(0)=0$. A positive-edge bet, sized correctly, therefore produces strictly positive long-run growth, and any fraction strictly between $0$ and the point where $g$ next crosses zero also produces positive, if suboptimal, growth.
+
+\begin{proposition}[Full betting causes almost-sure ruin]
+\label{prop:ruin}
+$\displaystyle\lim_{f\to 1^{-}} g(f) = -\infty$.
+\end{proposition}
+\begin{proof}
+As $f\to1^-$, $\ln(1-f)\to-\infty$ while $q>0$ is fixed, so $q\ln(1-f)\to-\infty$; the remaining term $p\ln(1+bf)$ is bounded on $[0,1]$, so the sum diverges to $-\infty$.
+\end{proof}
+
+Proposition~\ref{prop:ruin} is the sharpest statement in this note: wagering the entire bankroll on every trial produces an almost-sure growth rate of $-\infty$, i.e., wealth converges to zero with probability one, \emph{regardless of how favorable the bet is}, as long as $q>0$. This is not a claim about risk aversion or variance; it follows purely from Proposition~\ref{prop:sllna} and the fact that a single loss at $f=1$ multiplies wealth by exactly zero, an outcome that occurs with probability one eventually across infinitely many trials, and from which no subsequent win can recover (zero times any finite multiplier remains zero).
+
+\section{Worked Numerical Example}
+\label{sec:example}
+
+Take an even-money bet ($b=1$) with a $60\%$ win probability ($p=0.6$, $q=0.4$). Equation~\eqref{eq:edge} gives $E[R] = 0.6(1)-0.4 = 0.2>0$, confirming positive edge, and Equation~\eqref{eq:kellyformula} gives
+\begin{equation}
+f^{*} = 0.6 - \frac{0.4}{1} = 0.2.
+\end{equation}
+Table~\ref{tab:growth} evaluates $g(f) = 0.6\ln(1+f) + 0.4\ln(1-f)$ at several candidate fractions.
+
+\begin{table}[htbp]
+\centering
+\caption{Long-run growth rate $g(f)$ for an even-money, $60\%$-favorable bet}
+\label{tab:growth}
+\begin{tabular}{@{}lr@{}}
+\toprule
+Fraction wagered $f$ & Growth rate $g(f)$ \\
+\midrule
+$0.0$ & $0.0000$ \\
+$0.1$ & $0.0150$ \\
+$0.2\;(=f^{*})$ & $0.0201$ \\
+$0.3$ & $0.0147$ \\
+$0.4$ & $-0.0024$ \\
+$0.5$ & $-0.0340$ \\
+$0.6$ & $-0.0845$ \\
+$0.8$ & $-0.2911$ \\
+$1.0$ & $-\infty$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Three features of Table~\ref{tab:growth} are worth naming explicitly. First, $g$ rises from $0$ at $f=0$ to a maximum of approximately $0.0201$ at $f^{*}=0.2$, exactly as Corollary~\ref{cor:sign} and Theorem~\ref{thm:kelly} predict. Second, $g$ turns negative between $f=0.3$ and $f=0.4$ (the exact root is $f\approx0.3894$): wagering roughly $39\%$ or more of wealth on every repetition of this bet, despite its favorable odds, produces a strategy that is mathematically certain to lose money in the long run. Third, wagering half of wealth ($f=0.5$) already gives $g(0.5)\approx-0.0340<0$, and $f=1$ gives $g=-\infty$, i.e., certain ruin, confirming Proposition~\ref{prop:ruin} concretely: an investor who evaluates only this single bet's positive expected value, without solving the sizing problem, can easily choose a fraction that guarantees eventual bankruptcy.
+
+\section{Equivalence to Log-Utility Maximization}
+\label{sec:logutility}
+
+The function maximized in Section~\ref{sec:derivation}, $g(f) = E[\ln(1+fR)]$ where $R$ is the per-dollar net return of a single trial, is exactly the expected value of $\ln(W_1/W_0)$, the logarithm of wealth after one round. Maximizing $g(f)$ is therefore identical to choosing the bet size that maximizes the expected utility of an investor with logarithmic utility, $U(W) = \ln W$. This is not a coincidence but the reason the Kelly criterion is often called the \emph{growth-optimal} or \emph{log-optimal} strategy.
+
+\begin{remark}[Why log utility is not an arbitrary modeling choice here]
+Corollary~\ref{cor:dominance} shows that the growth-optimal strategy accumulates more wealth than any other fixed-fraction strategy on almost every sample path, a fact that holds regardless of whether the bettor's own risk preferences happen to coincide with logarithmic utility. This pathwise-dominance result is due to Kelly (1956) and was formalized by Breiman (1961), who proved that, among strategies whose bet fraction may depend on the outcome probabilities but not on the realized wealth path, the Kelly strategy asymptotically outperforms any other essentially different strategy with probability one. The role of $\ln(\cdot)$ here is therefore a consequence of the multiplicative wealth dynamics in Equation~\eqref{eq:product}, via the Strong Law of Large Numbers, rather than an assumption about how the bettor subjectively values wealth.
+\end{remark}
+
+\section{A General Formulation}
+\label{sec:general}
+
+The binary win/loss bet of Section~\ref{sec:setup} is a special case of a more general problem: given any random per-dollar net return $R$ with $E[R]>0$ and $1+fR>0$ almost surely, choose $f$ to maximize
+\begin{equation}
+g(f) = E[\ln(1+fR)].
+\label{eq:general_g}
+\end{equation}
+Differentiating under the expectation (justified when $R$ has finite second moment and $f$ stays away from the boundary of the feasible region) gives the first-order condition
+\begin{equation}
+g'(f) = E\!\left[\frac{R}{1+fR}\right] = 0.
+\label{eq:general_foc}
+\end{equation}
+Substituting the two-point distribution of Section~\ref{sec:setup}, $R=b$ with probability $p$ and $R=-1$ with probability $q$, into Equation~\eqref{eq:general_foc} reproduces $g'(f) = pb/(1+bf) - q/(1-f) = 0$, recovering Equation~\eqref{eq:derivatives} exactly. Equation~\eqref{eq:general_g} is strictly concave in $f$ whenever $R$ is not almost surely zero, by the same argument as Theorem~\ref{thm:kelly} (the second derivative $-E[R^2/(1+fR)^2]$ is strictly negative), so the general problem also has a unique maximizer wherever it lies in the feasible region.
+
+\begin{remark}[Continuous-time and mean-variance analog]
+\label{rem:continuous}
+For returns that are small relative to $1$ (as is typical for a single period of a continuously-traded asset rather than a discrete gamble), a second-order Taylor expansion of the objective in Equation~\eqref{eq:general_g} gives $\ln(1+fR) \approx fR - \tfrac{1}{2}f^2R^2$, so
+\begin{equation}
+g(f) \;\approx\; f\,E[R] - \tfrac{1}{2}f^2 E[R^2] \;\approx\; f\mu - \tfrac{1}{2}f^2\sigma^2,
+\end{equation}
+where $\mu=E[R]$ and $\sigma^2=\mathrm{Var}(R)$ (the approximation $E[R^2]\approx\sigma^2$ holds when $\mu$ is small relative to $\sigma$, the usual regime for short-horizon returns). Maximizing this quadratic in $f$ gives
+\begin{equation}
+f^{*} \;\approx\; \frac{\mu}{\sigma^2},
+\end{equation}
+the continuous-time growth-optimal (Merton) portfolio fraction for an investor with logarithmic utility, and the same quantity that appears, restated in a mean-variance rather than a growth-rate framework, in the portfolio construction and leverage discussions elsewhere in this book. The discrete Kelly fraction of Theorem~\ref{thm:kelly} and the continuous-time fraction $\mu/\sigma^2$ are therefore the same optimization problem viewed at two different time resolutions, connected by the same Taylor expansion that turns a log-return objective into a mean-variance one.
+\end{remark}
+
+\section{Practical Refinement: Fractional Kelly}
+\label{sec:fractional}
+
+Because $g$ is concave with $g'(f^{*})=0$, its behavior near $f^*$ is locally quadratic:
+\begin{equation}
+g(f) \;\approx\; g(f^{*}) + \tfrac{1}{2}g''(f^{*})\,(f-f^{*})^2,
+\label{eq:quadapprox}
+\end{equation}
+so a bet sized at some fraction $c\,f^{*}$ of the full Kelly fraction, for $c\in(0,1)$, sacrifices growth rate only \emph{quadratically} in $(1-c)$, while the size of each individual wager, and with it the bettor's exposure to any single adverse outcome, scales down \emph{linearly} in $c$. This asymmetry is the mathematical basis for the common practitioner heuristic of betting a fraction of the full Kelly amount (``half-Kelly,'' $c=0.5$, being the most common choice) as insurance against estimation error in $p$ and $b$, which in practice are never known with certainty.
+
+In the running numerical example (Table~\ref{tab:growth}), half-Kelly means wagering $f=0.1$ instead of $f^{*}=0.2$. Exact computation gives $g(0.1) \approx 0.01504$ against $g(0.2)\approx0.02014$, a ratio of
+\begin{equation}
+\frac{g(0.1)}{g(0.2)} \approx 0.747,
+\end{equation}
+so halving the bet size here still captures roughly $74.7\%$ of the maximum achievable growth rate, while roughly halving the size, and therefore the typical drawdown, of any single adverse trial. This tradeoff, most of the growth for a fraction of the risk, is the reason fractional Kelly is standard practice wherever the model's inputs ($p$ and $b$, or $\mu$ and $\sigma^2$ in the continuous analog) are themselves estimated rather than known exactly.
+
+\section{Summary}
+\label{sec:summary}
+
+A repeatable favorable bet raises a sizing question that a single bet's expected value cannot answer, because wealth compounds across repetitions and is therefore governed by a geometric, not arithmetic, average (Sections~\ref{sec:setup}--\ref{sec:growth}). The fraction of wealth that maximizes the long-run almost-sure growth rate, $f^{*}=p-q/b$, follows from a single first-order condition on a strictly concave objective (Section~\ref{sec:derivation}), is strictly positive exactly when the bet has positive edge, and is always strictly less than one (Section~\ref{sec:properties}). Betting more than this amount reduces long-run growth even though every individual bet retains positive expected value, and betting the entire bankroll on every trial produces almost-sure ruin regardless of how favorable the bet is (Proposition~\ref{prop:ruin}). Maximizing this growth rate is equivalent to maximizing expected log wealth, a consequence of the multiplicative wealth dynamics rather than an assumption about risk preferences (Section~\ref{sec:logutility}), and it generalizes beyond binary bets to any return distribution, recovering the classical mean-variance-style fraction $\mu/\sigma^2$ as the small-return limit of the same problem (Section~\ref{sec:general}). Because the inputs $p$ and $b$ are estimated rather than known in any real application, practitioners typically wager a fraction of $f^{*}$ (Section~\ref{sec:fractional}), trading a small, quadratic sacrifice in growth rate for a proportionally larger reduction in exposure to estimation error.
+
+\section*{References}
+\begin{itemize}
+\item Kelly, J. L. (1956). ``A New Interpretation of Information Rate.'' \textit{Bell System Technical Journal}, 35(4), 917--926.
+\item Breiman, L. (1961). ``Optimal Gambling Systems for Favorable Games.'' \textit{Proceedings of the Fourth Berkeley Symposium on Mathematical Statistics and Probability}, 1, 65--78.
+\item Thorp, E. O. (1971). ``Portfolio Choice and the Kelly Criterion.'' \textit{Proceedings of the Business and Economics Section of the American Statistical Association}, 215--224.
+\item MacLean, L. C., Thorp, E. O., and Ziemba, W. T., eds. (2011). \textit{The Kelly Capital Growth Investment Criterion: Theory and Practice}. World Scientific.
+\item Cover, T. M., and Thomas, J. A. (2006). \textit{Elements of Information Theory}, 2nd ed., Chapter 6 (``Gambling and Data Compression''). Wiley-Interscience.
+\end{itemize}
+
+\end{document}
