@@ -21,7 +21,7 @@
 \maketitle
 
 \begin{abstract}
-\noindent This note derives the Kelly criterion from first principles: why a repeatable favorable bet raises a sizing question that expected value alone cannot answer, why that question is governed by a geometric rather than an arithmetic average, how the optimal fraction $f^{*}=p-q/b$ falls out of a single first-order condition, why that fraction is a strict global maximum, and why maximizing it is equivalent to maximizing expected logarithmic wealth. It closes with a worked numerical example, the standard practical refinement (fractional Kelly), and a brief remark connecting the discrete betting problem to its continuous-time, mean-variance analog.
+\noindent This note derives the Kelly criterion from first principles: why a repeatable favorable bet raises a sizing question that expected value alone cannot answer, why that question is governed by a geometric rather than an arithmetic average, how the optimal fraction $f^{*}=p-q/b$ falls out of a single first-order condition, why that fraction is a strict global maximum, and why maximizing it is equivalent to maximizing expected logarithmic wealth. It also treats the case where a loss costs only a fraction of the amount wagered rather than the full stake, showing that the resulting Kelly fraction $f_\ell^{*}=p/\ell-q/b$ can rationally exceed one, i.e., can recommend leverage, a possibility the all-or-nothing model rules out entirely. It closes with a worked numerical example, the standard practical refinement (fractional Kelly), and a brief remark connecting the discrete betting problem to its continuous-time, mean-variance analog.
 \end{abstract}
 
 \section{The Problem: Sizing a Repeated Favorable Bet}
@@ -164,6 +164,103 @@ As $f\to1^-$, $\ln(1-f)\to-\infty$ while $q>0$ is fixed, so $q\ln(1-f)\to-\infty
 
 Proposition~\ref{prop:ruin} is the sharpest statement in this note: wagering the entire bankroll on every trial produces an almost-sure growth rate of $-\infty$, i.e., wealth converges to zero with probability one, \emph{regardless of how favorable the bet is}, as long as $q>0$. This is not a claim about risk aversion or variance; it follows purely from Proposition~\ref{prop:sllna} and the fact that a single loss at $f=1$ multiplies wealth by exactly zero, an outcome that occurs with probability one eventually across infinitely many trials, and from which no subsequent win can recover (zero times any finite multiplier remains zero).
 
+\section{Partial Losses: When a Loss Costs Less Than the Full Wager}
+\label{sec:partial-loss}
+
+Section~\ref{sec:setup}'s model assumes a loss forfeits the \emph{entire} amount wagered, which is the right description of a coin-flip casino bet but a poor description of most real trading and investment decisions: a stock position that moves against an investor rarely falls to exactly zero, and many losing trades are closed at a stop-loss well short of a full wipeout. This section relaxes that assumption and shows that doing so changes not just the numbers but a structural conclusion of Section~\ref{sec:properties}: full-Kelly sizing can rationally exceed $100\%$ of wealth, i.e., can recommend leverage, once losses are no longer total.
+
+\subsection{The Modified Model}
+
+Suppose that, as before, a fraction $f$ of wealth is wagered on each trial, winning with probability $p$ and returning $b$ dollars of profit per dollar wagered, but that a loss (probability $q=1-p$) now costs only a fraction $\ell \in (0,1]$ of the amount wagered rather than the full amount; $\ell=1$ recovers Section~\ref{sec:setup}'s original model exactly. Wealth now evolves as
+\begin{equation}
+W_k = \begin{cases} W_{k-1}(1+bf) & \text{with probability } p, \\ W_{k-1}(1-\ell f) & \text{with probability } q, \end{cases}
+\label{eq:partial-recursion}
+\end{equation}
+and, by the same argument as Proposition~\ref{prop:sllna}, the long-run almost-sure growth rate is
+\begin{equation}
+g_\ell(f) = p\ln(1+bf) + q\ln(1-\ell f),
+\label{eq:partial-g}
+\end{equation}
+defined for $f$ in the wider interval $(-1/b,\, 1/\ell)$: since a loss no longer costs the full wager, wealth remains positive after a loss even for some $f>1$, provided $\ell f<1$.
+
+\subsection{The Modified Kelly Fraction}
+
+\begin{theorem}[Kelly fraction with partial losses]
+\label{thm:kelly-partial}
+$g_\ell(f)$ is strictly concave on $(-1/b, 1/\ell)$, and its unique maximizer is
+\begin{equation}
+f_\ell^{*} = \frac{p}{\ell} - \frac{q}{b}.
+\label{eq:kelly-partial-formula}
+\end{equation}
+\end{theorem}
+\begin{proof}
+Exactly the argument of Theorem~\ref{thm:kelly}, with $\ell$ in place of $1$ throughout. Differentiating,
+\begin{equation*}
+g_\ell'(f) = \frac{pb}{1+bf} - \frac{q\ell}{1-\ell f}, \qquad
+g_\ell''(f) = -\frac{pb^2}{(1+bf)^2} - \frac{q\ell^2}{(1-\ell f)^2} < 0,
+\end{equation*}
+so $g_\ell$ is strictly concave throughout $(-1/b,1/\ell)$. Setting $g_\ell'(f)=0$: $pb(1-\ell f) = q\ell(1+bf) \iff pb - q\ell = \ell f (pb+qb) = \ell b f$, using $p+q=1$, which rearranges to Equation~\eqref{eq:kelly-partial-formula}.
+\end{proof}
+
+\begin{corollary}[Recovering the original formula]
+Setting $\ell=1$ in Equation~\eqref{eq:kelly-partial-formula} recovers $f^{*}=p-q/b$, Theorem~\ref{thm:kelly}'s original result.
+\end{corollary}
+
+\begin{corollary}[A softer edge condition]
+\label{cor:partial-edge}
+$f_\ell^{*}>0$ if and only if $pb>q\ell$, a strictly weaker requirement than the original edge condition $pb>q$ (Corollary~\ref{cor:sign}) whenever $\ell<1$: softening the downside makes a smaller probability edge sufficient to justify a positive bet.
+\end{corollary}
+
+\begin{corollary}[Kelly can recommend leverage]
+\label{cor:partial-leverage}
+$f_\ell^{*}>1$ if and only if
+\begin{equation}
+\ell < \frac{pb}{b+q}.
+\label{eq:leverage-threshold}
+\end{equation}
+\end{corollary}
+\begin{proof}
+$f_\ell^*>1 \iff p/\ell - q/b > 1 \iff p/\ell > (b+q)/b \iff \ell < pb/(b+q)$, using $\ell,b>0$.
+\end{proof}
+
+Corollary~\ref{cor:partial-leverage} is the qualitatively new result of this section. Under Section~\ref{sec:setup}'s original all-or-nothing loss assumption, Corollary~\ref{cor:bounded} proved $f^{*}<1$ always, so full-Kelly sizing never recommends wagering more than $100\%$ of wealth. Once losses are only partial, that bound no longer holds: for $\ell$ below the threshold in Equation~\eqref{eq:leverage-threshold}, growth-optimal sizing recommends $f_\ell^{*}>1$, i.e., borrowing to wager more than current wealth. This matches a familiar fact about growth-optimal investing that a naive reading of Section~\ref{sec:setup}'s coin-flip model would miss entirely: a diversified equity position essentially never loses its full value in one period, so a Kelly-consistent investor holding such a position can rationally use leverage, exactly the qualitative behavior of the continuous-time fraction $\mu/\sigma^2$ in Remark~\ref{rem:continuous}, which places no ceiling at $f=1$ either.
+
+The location of ruin shifts correspondingly. Because $\ln(1-\ell f)\to-\infty$ only as $f\to (1/\ell)^{-}$, the growth rate $g_\ell(f)$ now diverges to $-\infty$ at $f=1/\ell$ rather than at $f=1$: ruin still occurs at exactly the fraction that loses $100\%$ of wealth in a single bad trial, $\ell f=1$, but that fraction is now $1/\ell\ge 1$ rather than fixed at $1$. A short calculation confirms $f_\ell^{*}<1/\ell$ always (when $q>0$), by the identical argument as Corollary~\ref{cor:bounded}, so the modified Kelly fraction remains a strict interior maximizer regardless of how small $\ell$ is.
+
+This model is also exactly the two-point special case of Section~\ref{sec:general}'s general formulation, with per-dollar net return $R=b$ on a win and $R=-\ell$ on a loss rather than $R=-1$; substituting this distribution into the first-order condition of Equation~\eqref{eq:general_foc} reproduces $g_\ell'(f)=0$ above directly.
+
+\subsection{Worked Numerical Example}
+\label{sec:partial-example}
+
+Return to the even-money, $60\%$-favorable bet of Section~\ref{sec:example} ($p=0.6$, $q=0.4$, $b=1$), but now suppose a loss costs only half the amount wagered, $\ell=0.5$. Equation~\eqref{eq:kelly-partial-formula} gives
+\begin{equation*}
+f_{0.5}^{*} = \frac{0.6}{0.5} - \frac{0.4}{1} = 1.2 - 0.4 = 0.8,
+\end{equation*}
+four times the original $f^{*}=0.2$: softening the loss to half the wager makes it optimal to wager $80\%$ of wealth rather than $20\%$. Table~\ref{tab:partial-growth} evaluates $g_{0.5}(f) = 0.6\ln(1+f) + 0.4\ln(1-0.5f)$ at several fractions, alongside the leveraged case $\ell=0.3$, for which Equation~\eqref{eq:leverage-threshold}'s threshold, $pb/(b+q) = 0.6/1.4 \approx 0.4286$, exceeds $\ell$: since $0.3<0.4286$, Corollary~\ref{cor:partial-leverage} predicts $f_{0.3}^{*}>1$, and indeed $f_{0.3}^{*} = 0.6/0.3 - 0.4 = 1.6$, a levered position of $160\%$ of wealth.
+
+\begin{table}[htbp]
+\centering
+\caption{Growth rate $g_\ell(f)$ for the $60\%$-favorable, even-money bet under two partial-loss fractions}
+\label{tab:partial-growth}
+\begin{tabular}{@{}lrr@{}}
+\toprule
+Fraction wagered $f$ & $g_{0.5}(f)$, $\ell=0.5$ & $g_{0.3}(f)$, $\ell=0.3$ \\
+\midrule
+$0.0$ & $0.0000$ & $0.0000$ \\
+$0.4$ & $0.1126$ & $0.1508$ \\
+$0.8\;(=f_{0.5}^{*})$ & $0.1483$ & $0.2429$ \\
+$1.0$ & $0.1386$ & $0.2732$ \\
+$1.2$ & $0.1066$ & $0.2946$ \\
+$1.6\;(=f_{0.3}^{*})$ & $-0.0705$ & $0.3117$ \\
+$2.0\;(=1/\ell \text{ for } \ell=0.5)$ & $-\infty$ & $0.2927$ \\
+$3.0$ & --- & $-0.0893$ \\
+$3.\overline{3}\;(=1/\ell \text{ for } \ell=0.3)$ & --- & $-\infty$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Three comparisons are worth making against Table~\ref{tab:growth}. First, both the optimal fraction and the maximum achievable growth rate increase as $\ell$ falls: $g_{1.0}(f^{*})\approx0.0201 < g_{0.5}(f_{0.5}^{*})\approx0.1483 < g_{0.3}(f_{0.3}^{*})\approx0.3117$, confirming the intuitive claim of Corollary~\ref{cor:partial-edge} that a softer downside makes the same win probability and payoff strictly more valuable to exploit. Second, at $f=1.6$, the fraction that is optimal under $\ell=0.3$ is already past the point of negative growth under $\ell=0.5$ ($g_{0.5}(1.6)\approx-0.0705<0$): the same wagered fraction can be prudent or ruinous purely depending on how large a loss actually costs, underscoring that $f^{*}$ is never a property of the win probability and payoff alone. Third, ruin occurs at $f=2.0$ under $\ell=0.5$ and only at $f=3.\overline{3}$ under $\ell=0.3$, illustrating Corollary~\ref{cor:partial-leverage}'s point directly: the levered position $f_{0.3}^{*}=1.6$ that is growth-optimal under $\ell=0.3$ would itself be a step toward ruin under the harsher $\ell=0.5$ loss assumption, a reminder that leverage recommended by a Kelly calculation is only ever as safe as the loss-severity assumption feeding it.
+
 \section{Worked Numerical Example}
 \label{sec:example}
 
@@ -252,7 +349,7 @@ so halving the bet size here still captures roughly $74.7\%$ of the maximum achi
 \section{Summary}
 \label{sec:summary}
 
-A repeatable favorable bet raises a sizing question that a single bet's expected value cannot answer, because wealth compounds across repetitions and is therefore governed by a geometric, not arithmetic, average (Sections~\ref{sec:setup}--\ref{sec:growth}). The fraction of wealth that maximizes the long-run almost-sure growth rate, $f^{*}=p-q/b$, follows from a single first-order condition on a strictly concave objective (Section~\ref{sec:derivation}), is strictly positive exactly when the bet has positive edge, and is always strictly less than one (Section~\ref{sec:properties}). Betting more than this amount reduces long-run growth even though every individual bet retains positive expected value, and betting the entire bankroll on every trial produces almost-sure ruin regardless of how favorable the bet is (Proposition~\ref{prop:ruin}). Maximizing this growth rate is equivalent to maximizing expected log wealth, a consequence of the multiplicative wealth dynamics rather than an assumption about risk preferences (Section~\ref{sec:logutility}), and it generalizes beyond binary bets to any return distribution, recovering the classical mean-variance-style fraction $\mu/\sigma^2$ as the small-return limit of the same problem (Section~\ref{sec:general}). Because the inputs $p$ and $b$ are estimated rather than known in any real application, practitioners typically wager a fraction of $f^{*}$ (Section~\ref{sec:fractional}), trading a small, quadratic sacrifice in growth rate for a proportionally larger reduction in exposure to estimation error.
+A repeatable favorable bet raises a sizing question that a single bet's expected value cannot answer, because wealth compounds across repetitions and is therefore governed by a geometric, not arithmetic, average (Sections~\ref{sec:setup}--\ref{sec:growth}). The fraction of wealth that maximizes the long-run almost-sure growth rate, $f^{*}=p-q/b$, follows from a single first-order condition on a strictly concave objective (Section~\ref{sec:derivation}), is strictly positive exactly when the bet has positive edge, and is always strictly less than one (Section~\ref{sec:properties}). Betting more than this amount reduces long-run growth even though every individual bet retains positive expected value, and betting the entire bankroll on every trial produces almost-sure ruin regardless of how favorable the bet is (Proposition~\ref{prop:ruin}). When a loss costs only a fraction $\ell$ of the amount wagered rather than the full stake, the Kelly fraction becomes $f_\ell^{*}=p/\ell-q/b$ (Section~\ref{sec:partial-loss}), which can exceed one whenever $\ell<pb/(b+q)$: growth-optimal sizing can rationally recommend leverage once losses are no longer total, a possibility the all-or-nothing model excludes by construction. Maximizing this growth rate is equivalent to maximizing expected log wealth, a consequence of the multiplicative wealth dynamics rather than an assumption about risk preferences (Section~\ref{sec:logutility}), and it generalizes beyond binary bets to any return distribution, recovering the classical mean-variance-style fraction $\mu/\sigma^2$ as the small-return limit of the same problem (Section~\ref{sec:general}). Because the inputs $p$ and $b$ are estimated rather than known in any real application, practitioners typically wager a fraction of $f^{*}$ (Section~\ref{sec:fractional}), trading a small, quadratic sacrifice in growth rate for a proportionally larger reduction in exposure to estimation error.
 
 \section*{References}
 \begin{itemize}

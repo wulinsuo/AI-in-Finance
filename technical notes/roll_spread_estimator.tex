@@ -1,0 +1,225 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs}
+\usepackage{hyperref}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{proposition}{Proposition}
+\newtheorem{corollary}{Corollary}
+\newtheorem{lemma}{Lemma}
+\theoremstyle{remark}
+\newtheorem*{remark}{Remark}
+\theoremstyle{definition}
+\newtheorem*{example}{Example}
+\newtheorem*{assumption}{Assumption}
+
+\title{Roll's (1984) Implied Spread Estimator: A Complete Derivation}
+\author{Wulin Suo}
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent This note derives Roll's (1984) implied bid-ask spread estimator, $\text{Spread} \approx 2\sqrt{-\text{Cov}(\Delta P_t, \Delta P_{t-1})}$, quoted without derivation in Section 3.8 of the main text. Starting from two primitive assumptions, an efficient price that follows a random walk and a constant half-spread applied symmetrically around it according to the direction of the arriving order, it shows that observed price changes follow an MA(1) process, derives the exact first-order autocovariance $-s^2/4$ that this induces, proves that all higher-order autocovariances vanish, and shows that the induced first-lag autocorrelation is bounded between $-1/2$ and $0$. It closes with a worked numerical example that recovers a known spread from simulated trade-and-quote data, and a discussion of the model's assumptions, its best-known practical failure mode (a positive sample covariance, which renders the estimator undefined), and the microstructure models developed later in this book that relax those assumptions.
+\end{abstract}
+
+\section{The Problem: Inferring a Spread Without Seeing the Order Book}
+\label{sec:setup}
+
+Section 3.8 of the main text lists three components of the bid-ask spread, order-processing cost, inventory-holding cost, and adverse-selection cost, and observes that a market maker's true cost of making a market cannot be read directly off a single quoted spread if that spread itself compensates for several distinct risks at once. A more basic measurement problem precedes that decomposition, however: an analyst who has access only to a time series of \emph{transaction prices}, not to the underlying quotes themselves, cannot observe the spread directly at all. Historical tick data, retail brokerage records, and many academic datasets report trade prices without the corresponding bid and ask, so a purely price-based estimator of the effective spread has genuine practical value.
+
+Roll's (1984) insight is that a spread leaves a statistical fingerprint on transaction prices even when it cannot be observed directly: because trades alternate, unpredictably, between execution at the bid and execution at the ask, this \emph{bid-ask bounce} pushes observed prices away from and back toward the underlying fundamental value on a trade-by-trade basis, and this bouncing is more than transient noise, it induces a precise, calculable negative autocorrelation in the series of observed price changes, even when the fundamental value itself does nothing but follow a pure random walk with no serial dependence whatsoever. Section~\ref{sec:model} makes this idea precise; Section~\ref{sec:derivation} shows exactly how much negative autocorrelation a spread of a given size induces, which is the calculation that inverts to give the estimator quoted in the main text.
+
+\section{The Model: An Efficient Price and a Bid-Ask Bounce}
+\label{sec:model}
+
+Let $m_t$ denote the (unobserved) efficient, or fundamental, price at time $t$, the price that would prevail if every trade occurred at fair value with no transaction cost. Roll's first assumption is that this fundamental price follows a random walk:
+\begin{assumption}[Efficient price dynamics]
+\label{ass:rw}
+$m_t = m_{t-1} + \epsilon_t$, where $\{\epsilon_t\}$ is a sequence of mean-zero, serially uncorrelated public information shocks with $\mathrm{Var}(\epsilon_t) = \sigma_\epsilon^2$.
+\end{assumption}
+This is simply the efficient-markets hypothesis already invoked elsewhere in the main text: absent trading frictions, price changes reflect only the arrival of new public information, which by definition cannot be forecast from the past.
+
+The observed transaction price $P_t$, however, is not $m_t$ itself; every trade executes at the bid or at the ask, never exactly at the unobservable fundamental value in between.
+\begin{assumption}[Bid-ask bounce]
+\label{ass:bounce}
+$P_t = m_t + \dfrac{s}{2}\,Q_t$, where $s>0$ is the constant (dollar) bid-ask spread and $Q_t \in \{+1,-1\}$ indicates the direction of the trade at time $t$: $Q_t=+1$ if the trade is buyer-initiated and executes at the ask, $m_t + s/2$, and $Q_t=-1$ if it is seller-initiated and executes at the bid, $m_t - s/2$.
+\end{assumption}
+\begin{assumption}[Trade-direction process]
+\label{ass:direction}
+$\{Q_t\}$ is an i.i.d.\ sequence with $\Pr(Q_t=+1)=\Pr(Q_t=-1)=1/2$, so $E[Q_t]=0$ and $\mathrm{Var}(Q_t)=1$, and $\{Q_t\}$ is independent of $\{\epsilon_t\}$ at all leads and lags.
+\end{assumption}
+
+Assumption~\ref{ass:direction} is the model's most restrictive simplification, and Section~\ref{sec:discussion} returns to exactly what breaks when it fails, but it captures a specific, deliberately narrow idea: whether the next trade happens to arrive from a buyer or a seller is, in this model, a coin flip uncorrelated with anything else in the system, including the information shocks that move the fundamental price and every past or future trade direction. Under this assumption, the spread contributes nothing to expected returns, $E[Q_t]=0$, and every dollar of spread paid is pure transaction cost with no directional bias; its entire statistical signature is in the variance and covariance structure of prices, not their mean.
+
+\section{Deriving the Autocovariance of Price Changes}
+\label{sec:derivation}
+
+Combining Assumptions~\ref{ass:rw}--\ref{ass:direction}, the observed price change from one trade to the next is
+\begin{equation}
+\Delta P_t \;=\; P_t - P_{t-1} \;=\; (m_t - m_{t-1}) + \frac{s}{2}(Q_t - Q_{t-1}) \;=\; \epsilon_t + \frac{s}{2}(Q_t - Q_{t-1}).
+\label{eq:deltap}
+\end{equation}
+Equation~\eqref{eq:deltap} already contains the entire mechanism: an observed price change is the sum of a genuine, unpredictable fundamental innovation $\epsilon_t$ and a bounce term that depends on \emph{two} consecutive trade directions, $Q_t$ and $Q_{t-1}$. It is exactly this overlap, the bounce term in $\Delta P_t$ shares $Q_{t-1}$ with the bounce term in $\Delta P_{t-1}$, that generates the autocorrelation Roll's estimator exploits.
+
+\begin{theorem}[Autocovariance structure of observed price changes]
+\label{thm:autocov}
+Under Assumptions~\ref{ass:rw}--\ref{ass:direction},
+\begin{align}
+\mathrm{Var}(\Delta P_t) &= \sigma_\epsilon^2 + \frac{s^2}{2}, \label{eq:var} \\
+\mathrm{Cov}(\Delta P_t, \Delta P_{t-1}) &= -\frac{s^2}{4}, \label{eq:cov1} \\
+\mathrm{Cov}(\Delta P_t, \Delta P_{t-k}) &= 0 \qquad \text{for every integer } k\ge 2. \label{eq:cov2}
+\end{align}
+\end{theorem}
+\begin{proof}
+Write $\Delta P_t = \epsilon_t + \tfrac{s}{2}(Q_t-Q_{t-1})$ and $\Delta P_{t-k} = \epsilon_{t-k} + \tfrac{s}{2}(Q_{t-k}-Q_{t-k-1})$ for $k\ge0$ ($k=0$ recovers $\mathrm{Var}(\Delta P_t)$ as the $k=0$ case of the covariance). By Assumption~\ref{ass:direction}, $\{Q_t\}$ is independent of $\{\epsilon_t\}$ at every lead and lag, so every cross term between an $\epsilon$ and a $Q$ vanishes in expectation, and by Assumption~\ref{ass:rw}, $\{\epsilon_t\}$ is serially uncorrelated, so $\mathrm{Cov}(\epsilon_t,\epsilon_{t-k})=0$ for $k\ge1$ and $\mathrm{Var}(\epsilon_t)=\sigma_\epsilon^2$. It follows that
+\begin{equation}
+\mathrm{Cov}(\Delta P_t,\Delta P_{t-k}) \;=\; \mathbf{1}\{k=0\}\,\sigma_\epsilon^2 \;+\; \frac{s^2}{4}\,\mathrm{Cov}\big(Q_t-Q_{t-1},\,Q_{t-k}-Q_{t-k-1}\big).
+\label{eq:reduce}
+\end{equation}
+Expand the remaining covariance using bilinearity:
+\begin{align}
+\mathrm{Cov}(Q_t-Q_{t-1},\,Q_{t-k}-Q_{t-k-1}) \;=\;& \mathrm{Cov}(Q_t,Q_{t-k}) - \mathrm{Cov}(Q_t,Q_{t-k-1}) \notag \\
+&- \mathrm{Cov}(Q_{t-1},Q_{t-k}) + \mathrm{Cov}(Q_{t-1},Q_{t-k-1}).
+\label{eq:expand}
+\end{align}
+Since $\{Q_t\}$ is i.i.d.\ with $\mathrm{Var}(Q_t)=1$ (Assumption~\ref{ass:direction}), $\mathrm{Cov}(Q_i,Q_j) = \mathbf{1}\{i=j\}$ for any indices $i,j$. Evaluate Equation~\eqref{eq:expand} at each value of $k$:
+
+\emph{Case $k=0$ (the variance).} The four indices in Equation~\eqref{eq:expand} are $(t,t),(t,t-1),(t-1,t),(t-1,t-1)$, giving $1 - 0 - 0 + 1 = 2$. Equation~\eqref{eq:reduce} then gives $\mathrm{Var}(\Delta P_t) = \sigma_\epsilon^2 + \tfrac{s^2}{4}(2) = \sigma_\epsilon^2 + \tfrac{s^2}{2}$, which is Equation~\eqref{eq:var}.
+
+\emph{Case $k=1$.} The four indices are $(t,t-1),(t,t-2),(t-1,t-1),(t-1,t-2)$, giving $0 - 0 + 1 + 0 = 1$. Equation~\eqref{eq:reduce} then gives $\mathrm{Cov}(\Delta P_t,\Delta P_{t-1}) = 0 + \tfrac{s^2}{4}(1)\cdot(-1)$; the factor of $-1$ is worth making explicit rather than absorbing silently: the third term of Equation~\eqref{eq:expand} at $k=1$ is $-\mathrm{Cov}(Q_{t-1},Q_{t-k}) = -\mathrm{Cov}(Q_{t-1},Q_{t-1}) = -1$, and it is the \emph{only} nonzero term, so the bracket in Equation~\eqref{eq:expand} evaluates to $-1$, not $+1$. Hence $\mathrm{Cov}(\Delta P_t,\Delta P_{t-1}) = \tfrac{s^2}{4}(-1) = -\tfrac{s^2}{4}$, which is Equation~\eqref{eq:cov1}.
+
+\emph{Case $k\ge2$.} The four index pairs in Equation~\eqref{eq:expand} are $(t,t-k)$, $(t,t-k-1)$, $(t-1,t-k)$, $(t-1,t-k-1)$. Since $k\ge2$, every one of these pairs has distinct indices ($t\ne t-k$ because $k\ge2>0$, and likewise for the other three), so each covariance is $0$ and the bracket is identically $0$. Equation~\eqref{eq:reduce} then gives $\mathrm{Cov}(\Delta P_t,\Delta P_{t-k})=0$, which is Equation~\eqref{eq:cov2}.
+\end{proof}
+
+Theorem~\ref{thm:autocov} says something sharper than the single formula quoted in the main text: observed price changes, despite being built from a genuine random walk plus i.i.d.\ noise, behave exactly like a first-order moving-average, $\mathrm{MA}(1)$, process, nonzero autocorrelation at lag $1$ and \emph{exactly} zero at every longer lag. This is precisely the class of process Chapter 7 introduces in its own treatment of time series models, and Roll's model is a fully worked, economically motivated example of how such a structure can arise mechanically from market microstructure alone, with no genuine predictability in the fundamental price whatsoever, an illustration of the same warning the main text draws from it: a statistically significant autocorrelation in price data is not automatically evidence of exploitable predictability.
+
+\section{The Spread Estimator}
+\label{sec:estimator}
+
+Theorem~\ref{thm:autocov} is stated in terms of the true, population autocovariance; inverting Equation~\eqref{eq:cov1} for $s$ gives the estimator itself.
+
+\begin{corollary}[Roll's implied spread]
+\label{cor:roll}
+Under Assumptions~\ref{ass:rw}--\ref{ass:direction}, whenever $\mathrm{Cov}(\Delta P_t,\Delta P_{t-1}) < 0$,
+\begin{equation}
+s = 2\sqrt{-\mathrm{Cov}(\Delta P_t,\Delta P_{t-1})}.
+\label{eq:rollformula}
+\end{equation}
+\end{corollary}
+\begin{proof}
+Equation~\eqref{eq:cov1} gives $\mathrm{Cov}(\Delta P_t,\Delta P_{t-1}) = -s^2/4$, so $s^2 = -4\,\mathrm{Cov}(\Delta P_t,\Delta P_{t-1})$. Since $s>0$ by definition (Assumption~\ref{ass:bounce}), taking the positive square root gives Equation~\eqref{eq:rollformula}; the right-hand side is real precisely when $\mathrm{Cov}(\Delta P_t,\Delta P_{t-1})<0$.
+\end{proof}
+
+Equation~\eqref{eq:rollformula} is a population identity; the estimator actually used in practice replaces the true, unobservable autocovariance with its sample analog. Given a sample of $n+1$ transaction prices $P_0,\dots,P_n$ and the resulting $n$ price changes $\Delta P_1,\dots,\Delta P_n$,
+\begin{equation}
+\hat\gamma_1 = \frac{1}{n-1}\sum_{t=2}^{n} (\Delta P_t - \overline{\Delta P})(\Delta P_{t-1}-\overline{\Delta P}), \qquad \hat s = 2\sqrt{\max(0,\,-\hat\gamma_1)},
+\label{eq:sampleestimator}
+\end{equation}
+a direct method-of-moments estimator: Assumptions~\ref{ass:rw}--\ref{ass:direction} imply a single population moment condition, Equation~\eqref{eq:cov1}, and Equation~\eqref{eq:sampleestimator} simply solves the corresponding sample moment condition for $s$. The $\max(0,\cdot)$ is not a cosmetic safeguard; Section~\ref{sec:discussion} discusses what it means, and how often it binds in practice, in more detail.
+
+\begin{proposition}[The induced autocorrelation is bounded between $-1/2$ and $0$]
+\label{prop:bound}
+Let
+\begin{equation*}
+\rho_1 \;=\; \frac{\mathrm{Cov}(\Delta P_t,\Delta P_{t-1})}{\mathrm{Var}(\Delta P_t)}
+\end{equation*}
+denote the first-lag autocorrelation of observed price changes implied by the model. Then, for every $\sigma_\epsilon^2>0$ and $s>0$,
+\begin{equation}
+-\frac{1}{2} < \rho_1 < 0.
+\label{eq:rhobound}
+\end{equation}
+\end{proposition}
+\begin{proof}
+By Equations~\eqref{eq:var} and~\eqref{eq:cov1},
+\begin{equation}
+\rho_1 = \frac{-s^2/4}{\sigma_\epsilon^2 + s^2/2} = -\frac{1}{4\sigma_\epsilon^2/s^2 + 2}.
+\end{equation}
+Since $\sigma_\epsilon^2>0$ and $s^2>0$, the denominator $4\sigma_\epsilon^2/s^2+2$ is a strictly positive number strictly greater than $2$, so $\rho_1$ is strictly negative (giving the right-hand inequality in Equation~\eqref{eq:rhobound}) and strictly greater than $-1/2$ (giving the left-hand inequality, attained only in the limit $\sigma_\epsilon^2/s^2\to0$).
+\end{proof}
+
+Proposition~\ref{prop:bound} is a useful diagnostic in its own right: bid-ask bounce, acting alone under this model, can never generate a first-lag autocorrelation in transaction price changes more negative than $-1/2$, and it approaches that bound only when the spread is large relative to genuine fundamental volatility (a thinly traded, wide-spread security) rather than the reverse. An empirical first-lag autocorrelation close to $-1/2$ is therefore a signal that spread costs, not fundamental news, dominate the observed variance of trade-to-trade price changes.
+
+\section{Worked Numerical Example}
+\label{sec:example}
+
+Consider a stock with a true, constant spread of $s=0.10$ (ten cents) and fundamental innovation variance $\sigma_\epsilon^2 = 0.0009$ (i.e., a fundamental-value standard deviation of $3$ cents per trade), so that, by Equation~\eqref{eq:var}, the true variance of observed price changes is $\mathrm{Var}(\Delta P_t) = 0.0009 + 0.10^2/2 = 0.0059$, and by Equation~\eqref{eq:cov1}, the true first-lag autocovariance is $\mathrm{Cov}(\Delta P_t,\Delta P_{t-1}) = -0.10^2/4 = -0.0025$. Table~\ref{tab:sim} lists eleven simulated transaction prices generated exactly from Assumptions~\ref{ass:rw}--\ref{ass:direction}: a fundamental price random walk $m_t$ with the $\epsilon_t$ shown, a trade-direction draw $Q_t$, and the resulting observed price $P_t = m_t + (s/2)Q_t$.
+
+\begin{table}[htbp]
+\centering
+\caption{Eleven simulated trades under Roll's model, $s=0.10$}
+\label{tab:sim}
+\begin{tabular}{@{}rrrrrr@{}}
+\toprule
+$t$ & $\epsilon_t$ & $m_t$ & $Q_t$ & $P_t$ & $\Delta P_t$ \\
+\midrule
+0 & --      & $50.00$ & $+1$ & $50.05$ & --       \\
+1 & $+0.02$ & $50.02$ & $-1$ & $49.97$ & $-0.08$  \\
+2 & $-0.01$ & $50.01$ & $-1$ & $49.96$ & $-0.01$  \\
+3 & $+0.03$ & $50.04$ & $+1$ & $50.09$ & $+0.13$  \\
+4 & $-0.02$ & $50.02$ & $+1$ & $50.07$ & $-0.02$  \\
+5 & $+0.01$ & $50.03$ & $-1$ & $49.98$ & $-0.09$  \\
+6 & $-0.03$ & $50.00$ & $+1$ & $50.05$ & $+0.07$  \\
+7 & $+0.02$ & $50.02$ & $-1$ & $49.97$ & $-0.08$  \\
+8 & $-0.01$ & $50.01$ & $+1$ & $50.06$ & $+0.09$  \\
+9 & $+0.02$ & $50.03$ & $-1$ & $49.98$ & $-0.08$  \\
+10 & $-0.02$ & $50.01$ & $+1$ & $50.06$ & $+0.08$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The ten resulting price changes have sample mean $\overline{\Delta P} = 0.001$ and sample variance $\widehat{\mathrm{Var}}(\Delta P_t) \approx 0.00712$ (somewhat above the true $0.0059$, an ordinary consequence of estimating a variance from only ten observations). Applying Equation~\eqref{eq:sampleestimator} to the nine consecutive pairs $(\Delta P_2,\Delta P_1),\dots,(\Delta P_{10},\Delta P_9)$ gives a sample first-order autocovariance of $\hat\gamma_1 \approx -0.003779$, and therefore
+\begin{equation}
+\hat s = 2\sqrt{-(-0.003779)} = 2\sqrt{0.003779} \approx 2(0.0615) \approx \$0.123,
+\end{equation}
+recovering the correct order of magnitude of the true ten-cent spread, off by about $2.3$ cents, from only ten transactions and entirely without ever observing a single posted bid or ask quote. The gap between $\$0.123$ and the true $\$0.10$ is itself instructive rather than a flaw in the calculation: Corollary~\ref{cor:roll} is exact only in population, and a sample autocovariance computed from nine pairs of observations is a genuinely noisy estimate of that population quantity, exactly the kind of small-sample sampling error Section~\ref{sec:discussion} returns to. What the estimate does capture reliably is the mechanism itself: the alternating pattern visible by eye in the $\Delta P_t$ column of Table~\ref{tab:sim}, roughly every other price change reversing the sign of the one before it, is exactly the bid-ask bounce Assumption~\ref{ass:bounce} builds in, and Equation~\eqref{eq:rollformula} reads the size of the spread directly off the strength of that alternation, with a precision that improves, like any moment-based estimator, as the sample of trades grows.
+
+\section{Discussion: Assumptions, Failure Modes, and Later Refinements}
+\label{sec:discussion}
+
+\subsection{The undefined-estimator problem}
+Corollary~\ref{cor:roll} requires $\mathrm{Cov}(\Delta P_t,\Delta P_{t-1})<0$, and the theory guarantees this only for the \emph{population} covariance under Assumptions~\ref{ass:rw}--\ref{ass:direction}. A finite sample can easily produce a nonnegative sample covariance $\hat\gamma_1 \ge 0$, either from ordinary sampling error in a short or lightly traded series, or because one of the model's assumptions genuinely fails, most commonly serial correlation in trade direction itself (Assumption~\ref{ass:direction}): momentum-driven order flow, in which a buy is more likely to be followed by another buy, works in the opposite direction from the pure bid-ask bounce term and can push the sample autocovariance toward, or past, zero. Equation~\eqref{eq:sampleestimator}'s $\max(0,\cdot)$ reflects the most common practical convention, treating an estimated spread as zero (or, equivalently, the estimate as missing) whenever this occurs, rather than mechanically returning a nonsensical complex or negative value from the raw formula. Harris (1990) studies exactly how often this happens and how the estimator behaves statistically once it does, and finds it to be far from a rare edge case in real, high-frequency data.
+
+\subsection{What Assumption~\ref{ass:direction} rules out by construction}
+Assumption~\ref{ass:direction} states that trade direction is an i.i.d.\ coin flip, independent of the information shocks $\epsilon_t$ at every lead and lag. This is precisely what makes the model tractable, Theorem~\ref{thm:autocov}'s clean $\mathrm{MA}(1)$ result depends on it directly, but it also assumes away the entire adverse-selection component of the spread that Section 3.8 of the main text lists alongside order-processing and inventory-holding costs: an informed trader who buys \emph{because} she knows $\epsilon_t$ is about to be revealed as positive induces exactly the kind of $Q_t$-$\epsilon_t$ dependence Assumption~\ref{ass:direction} rules out, and a market maker who rationally widens the quoted spread in anticipation of such trading is responding to a risk this model has no mechanism to represent at all. This is not a flaw specific to Roll's model so much as the reason later chapters introduce purpose-built alternatives: Glosten and Milgrom's (1985) sequential-trade model and the probability-of-informed-trading (PIN) framework built on it, both taken up in Chapter 12 alongside Kyle's (1985) continuous-time analog, model adverse selection directly, at the cost of requiring inputs, the probability that any given trader is informed, that Roll's estimator never needs at all.
+
+\subsection{What the constant-spread assumption rules out}
+Assumption~\ref{ass:bounce} also holds $s$ fixed across the entire sample. A real spread widens around earnings announcements, macroeconomic releases, and periods of unusually high volatility, exactly the inventory-holding and adverse-selection channels Section 3.8 discusses, so an $s$ estimated by Corollary~\ref{cor:roll} over a window spanning such an event is better read as an average effective spread over the window than as the spread prevailing at any single moment within it.
+
+\section{Extensions in the Literature}
+\label{sec:extensions}
+
+Roll's original insight is simple and elegant, but it is also deliberately narrow. The literature has therefore extended it in several directions that preserve the central idea of inferring spread costs from price autocorrelation while relaxing one of the model's restrictive assumptions.
+
+\subsection{Finite-sample and statistical refinements}
+Harris (1990) studies the estimator's small-sample behavior in detail. A major practical issue is that the sample autocovariance can be positive by chance, in which case the estimator is undefined in its raw form. This has motivated explicit treatment of the estimator as a noisy moment-based statistic and the use of truncation or alternative inference procedures when the empirical covariance is nonnegative.
+
+\subsection{Adverse-selection and informed-trading models}
+The clean Roll setup assumes that trade direction is i.i.d. and independent of information. That assumption rules out the possibility that some trades are informed and therefore carry information about the next price move. Glosten and Milgrom (1985) and Kyle (1985) relax this by modeling trading as a sequential process in which informed traders and liquidity traders interact. These models are more realistic when spread costs reflect adverse selection, but they require richer inputs such as the probability that a given trade is informed.
+
+\subsection{Time-varying and state-dependent spreads}
+A second extension is to allow the spread itself to vary over time. In practice, spreads widen around announcements, in periods of high volatility, and in less liquid markets. A constant-spread Roll estimate is therefore best interpreted as a window-average effective spread, not as the spread prevailing at every instant in the sample. Later work therefore introduces state-dependent or time-varying spread specifications that better fit such episodes.
+
+\subsection{Spread decomposition and richer microstructure models}
+A third line of work seeks to decompose the observed spread into its economic components, such as order-processing costs, inventory-holding costs, and adverse-selection costs. These models do not replace Roll's estimator in the same simple way, but they explain why a single observed spread may reflect several different economic mechanisms at once. Hasbrouck's empirical market-microstructure work is a natural reference point for this broader perspective.
+
+\subsection{High-frequency and quote-augmented methods}
+In high-frequency applications, the basic Roll formula is often supplemented by additional information from the limit order book, quote revisions, and trade-by-trade conditioning. These refinements are useful when the simple autocovariance-based estimate is too noisy or when the data contain strong order-flow persistence, short-lived volatility bursts, or other microstructure effects not captured by the original model.
+
+\section{Summary}
+\label{sec:summary}
+
+An analyst with access only to a series of transaction prices, and no visibility into the underlying bid and ask quotes, can still recover the effective spread, because a constant half-spread applied according to the direction of each arriving trade leaves a specific, calculable fingerprint on the covariance structure of observed price changes even when the underlying efficient price follows a pure, unpredictable random walk (Sections~\ref{sec:model}--\ref{sec:derivation}). That fingerprint is a first-order moving-average structure: exactly $-s^2/4$ autocovariance at lag one (Equation~\eqref{eq:cov1}) and exactly zero at every longer lag (Equation~\eqref{eq:cov2}), which inverts directly to Roll's (1984) estimator, $s = 2\sqrt{-\mathrm{Cov}(\Delta P_t,\Delta P_{t-1})}$ (Corollary~\ref{cor:roll}), and which bounds the induced first-lag autocorrelation between $0$ and $-1/2$ regardless of the spread's size (Proposition~\ref{prop:bound}). A worked simulation recovers a known ten-cent spread to within about two cents from only ten trades, the residual gap being ordinary small-sample noise in the sample autocovariance rather than any bias in the formula itself (Section~\ref{sec:example}). The estimator's two costs are the price of its simplicity: a nonnegative sample covariance, which arises whenever fundamental-price serial correlation is genuinely negative to begin with, more often than a small-sample intuition would suggest, and an assumption of independent, unpredictable trade direction that assumes away the adverse-selection cost Section 3.8 lists as one of the spread's three economic components, exactly the cost the sequential-trade and PIN models of Chapter 12 are built to capture instead (Section~\ref{sec:discussion}).
+
+\section*{References}
+\begin{itemize}
+\item Roll, R. (1984). ``A Simple Implicit Measure of the Effective Bid-Ask Spread in an Efficient Market.'' \textit{Journal of Finance}, 39(4), 1127--1139.
+\item Harris, L. (1990). ``Statistical Properties of the Roll Serial Covariance Bid/Ask Spread Estimator.'' \textit{Journal of Finance}, 45(2), 579--590.
+\item Glosten, L. R., and Milgrom, P. R. (1985). ``Bid, Ask and Transaction Prices in a Specialist Market with Heterogeneously Informed Traders.'' \textit{Journal of Financial Economics}, 14(1), 71--100.
+\item Kyle, A. S. (1985). ``Continuous Auctions and Insider Trading.'' \textit{Econometrica}, 53(6), 1315--1335.
+\item Hasbrouck, J. (2007). \textit{Empirical Market Microstructure: The Institutions, Economics, and Econometrics of Securities Trading}. Oxford University Press.
+\end{itemize}
+
+\end{document}

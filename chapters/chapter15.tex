@@ -1,0 +1,521 @@
+\documentclass[../ai_in_finance]{subfiles}
+\usepackage[margin=1in]{geometry}
+\usepackage{tikz}
+\usetikzlibrary{positioning,matrix,fit}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{booktabs}
+\usepackage{draftwatermark}
+
+\SetWatermarkText{Wulin.Suo@Queensu.ca}
+\SetWatermarkScale{1.4}
+\SetWatermarkColor{gray!35}
+\SetWatermarkAngle{45}
+
+\usepackage{makeidx}
+\makeindex
+
+\begin{document}
+
+\chapter{Alternative Data and Deep Learning in Finance}
+
+\section{Introduction}
+
+Chapter 1 introduced a table of the major categories of financial data this book draws on, and set aside one row, alternative data, non-traditional sources such as satellite imagery, web traffic, or shipping data that proxy for economic activity, for this chapter. Chapter 3 noted that large asset managers already parse filings and calls faster than human analysts; this chapter turns to data sources that did not exist, in usable form, a generation ago, and to the deep learning architectures built to extract signal from them. Chapter 4 observed that alternative data can supplement the delayed, discretionary numbers in financial statements; Chapter 6 introduced the feedforward neural network and its forward pass; Chapter 14 developed the transformer architecture\index{transformer architecture} for text. This chapter extends the neural network toolkit to two more data shapes, grid-structured images and ordered sequences, and works through the full pipeline from raw alternative data to a usable financial signal, while treating the biases specific to this kind of data as a first-class topic rather than an afterthought.
+
+Twelve worked examples run through the chapter, each computed in Python first and reproduced exactly in the companion notebook: a subscription cost-benefit calculation weighing a data vendor's licensing cost against the expected trading edge it buys; a simple regression of a retailer's revenue growth on a satellite-derived parking-lot car-count proxy; a multi-source regression that combines that satellite proxy with web-traffic and card-transaction growth into an earnings-surprise signal, evaluated the way Chapter 11 evaluates any trading strategy; a direct comparison of that signal built the naive way versus the way that respects real-world data-delivery lag; a peer-relative normalization of the same satellite proxy against a sector benchmark; a hand-computed two-dimensional convolution over a stylized satellite image patch; a hand-computed recurrent neural network\index{recurrent neural network (RNN)} forward pass over a short sequence of web-traffic readings; a hand-computed autoencoder\index{autoencoder} reconstruction used to flag a data-quality anomaly; and, going a level deeper still, a transfer-learning fine-tuning step, a graph neural network\index{graph neural network (GNN)} update over a shell-company network, a cross-attention fusion of three data modalities into one representation, and a contrastive-pretraining probability calculation showing how a labeled-data-free encoder learns to tell same-image crops apart from different-image crops.
+
+This chapter's structure mirrors the arc of a real alternative-data project, and is worth previewing before working through the details. It begins where any such project begins, deciding what alternative data even is and how a fund acquires and evaluates it (Sections~\ref{sec:alt-data-sources} and~\ref{sec:vendor-ecosystem}), before turning to the analytics itself: a single-source regression, a multi-source signal, the point-in-time discipline that keeps that signal honest, and the seasonal and peer-relative adjustments that make raw readings usable in the first place (Sections~\ref{sec:satellite-example} through~\ref{sec:altdata-feature-engineering}). It then turns to the deep learning architectures that extract features from raw images and sequences rather than from a vendor's already-processed number (Section~\ref{sec:nn-structured-unstructured}), the data-quality and governance problems specific to this kind of data (Section~\ref{sec:alt-data-quality}), and a set of more advanced architectures, transfer learning, graph neural networks, cross-attention fusion, and contrastive pretraining, that represent where the field is moving beyond the basics (Section~\ref{sec:advanced-altdata}). A real-world case vignette and a closing set of challenges tie the chapter's techniques back to the genuine economic and regulatory stakes of using data that, in most cases, did not exist in usable form before this decade.
+
+\section{What Counts as Alternative Data}\index{What Counts as Alternative Data}
+\label{sec:alt-data-sources}
+
+Alternative data, in financial industry usage, means any data source used to inform an investment or credit decision that falls outside the traditional trio of market data, fundamental data, and macroeconomic data (Chapter 1's Table 1.6). The term is a moving target: yesterday's alternative data becomes today's mainstream input once enough market participants adopt it, so the boundary is defined by current practice rather than any fixed technical property. Table~\ref{tab:alt_data_sources} catalogues the categories most widely used in practice.
+
+\begin{table}[htbp]
+\centering
+\caption{Major categories of alternative data}
+\label{tab:alt_data_sources}
+\begin{tabular}{p{2.6cm}p{6.2cm}p{5.4cm}}
+\toprule
+Category & Examples & Typical financial use \\
+\midrule
+Satellite and aerial imagery & Parking-lot car counts, crop health indices, oil-storage tank levels, construction progress & Retail sales nowcasting, commodity supply estimation, real-estate tracking \\
+Web and app data & Website traffic, app downloads and reviews, job postings, e-commerce pricing & Revenue nowcasting, hiring-trend and competitive signals \\
+Transaction and card-panel data & Aggregated, anonymized consumer card-spending panels & Same-store sales nowcasting ahead of earnings \\
+Geolocation and foot traffic & Mobile-device location pings at store or venue locations & Foot-traffic proxies for retail, dining, and travel \\
+Shipping and logistics & Vessel-tracking (AIS) data, port congestion, rail and truck telemetry & Commodity flow and trade-volume forecasting \\
+Social and search data & Social-media posts, review platforms, search-trend indices & Consumer-sentiment and brand-momentum signals \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Two properties distinguish alternative data from the data types earlier chapters used. First, it usually arrives already partially processed by a vendor, a satellite imagery provider sells car counts, not raw pixels, so the modeler inherits whatever assumptions and errors are baked into that proprietary processing step, typically without visibility into it. Second, it is available at a frequency and granularity, individual stores, individual weeks, that traditional fundamental data (quarterly, firm-level) simply does not offer, which is precisely why it is valuable: it lets an analyst estimate a firm's performance before the firm itself reports it.
+
+\section{The Alternative-Data Vendor Ecosystem}\index{Alternative-Data Vendor Ecosystem}
+\label{sec:vendor-ecosystem}
+
+Unlike the market and fundamental data of Chapters 2 through 5, which arrive through well-established exchange feeds and regulatory filings, alternative data is procured through a comparatively young and heterogeneous vendor market, and how a fund evaluates and integrates a vendor matters almost as much as the underlying data source itself. A typical procurement process runs through several stages. First, a fund identifies a candidate hypothesis, does satellite-derived parking-lot data actually predict Cascade's revenue, and requests a trial dataset covering a historical period the vendor already has on file. Second, the fund backtests that trial data against known, already-reported outcomes, exactly the exercise Section~\ref{sec:satellite-example} works through by hand, before paying for a live subscription; a vendor unwilling to provide a meaningful historical trial, or one whose trial-period performance does not hold up when checked, is a warning sign rather than a mere inconvenience. Third, if the trial is convincing, the fund negotiates a licensing agreement that specifies not just price but exclusivity (is this data available to other subscribers, and how many), delivery latency (Section~\ref{sec:alt-data-quality} returns to why this matters enormously), and historical backfill (how far back the vendor can provide data, which determines how much history is available for the fund's own model validation).
+
+This procurement cycle is itself a source of adverse selection\index{Adverse Selection} worth naming directly: a vendor has every incentive to showcase the historical period and the subset of covered firms where its data performed best, since that is what sells subscriptions, so a trial dataset's strong backtested performance is not automatically evidence that the data will perform as well in the future or across firms the trial period did not happen to include, a version of the multiple-testing concern Chapter 6 raised about a researcher's own model search, now applied to a vendor's marketing rather than a researcher's specification search.
+
+A subscription decision ultimately comes down to a cost-benefit calculation, whether the expected trading edge, scaled to the capital actually deployed on it, exceeds the data's licensing cost. Suppose a fund would deploy a \$50 million position whenever Section~\ref{sec:alt-data-pipeline}'s signal fires long, which happened in five of the eight quarters in Table~\ref{tab:multisource_signal}, and that the signal's incremental edge over an unconditional baseline is the 0.54 percentage points computed there (the 0.88\% average return on signaled quarters minus the 0.34\% average return across all quarters). With four earnings releases per year and a $5/8$ signal frequency, the fund expects roughly $4 \times 5/8 = 2.5$ signaled events annually, for an expected incremental profit of $\$50\text{M} \times 0.54\% \times 2.5 \approx \$678{,}000$ per year. Against Section~\ref{sec:case-vignette-satellite}'s subscription-cost range, a satellite feed at \$250,000 per year plus a smaller web and card-panel bundle at \$150,000 per year, total data costs of \$400,000, the net expected benefit is roughly \$278,000 per year, a genuine but modest edge once data costs are netted out, and one that Section~\ref{sec:alt-data-quality} warns will shrink further as more funds license the same feeds and compete the edge away.
+
+This same arithmetic underlies a build-versus-buy decision many larger funds eventually face: once expected trading volume across many similar signals is large enough, building an in-house satellite-analytics or web-scraping team, rather than paying a vendor's margin on top of the same underlying imagery or logs, can be cheaper in the long run, at the cost of taking on the computer-vision and data-engineering work Section~\ref{sec:nn-structured-unstructured} describes directly rather than buying an already-processed feature. Smaller funds typically lack the scale to justify this fixed cost and remain vendor customers indefinitely, one more way, alongside Section~\ref{sec:case-vignette-satellite}'s subscription-cost figures, that alternative data's advantages concentrate among larger, better-resourced market participants.
+
+\section{A Worked Example: Satellite Imagery and Retailer Revenue}\index{Satellite Imagery and Retailer Revenue}
+\label{sec:satellite-example}
+
+Suppose a hypothetical home-improvement retailer, Cascade Home\index{Cascade Home \& Garden} \& Garden, is followed by a data vendor that counts cars in a representative sample of its store parking lots from satellite imagery, in the manner Section~\ref{sec:case-vignette-satellite} describes being done for real retailers since 2010. Table~\ref{tab:satellite_regression} lists eight quarters of year-over-year car-count growth alongside Cascade's subsequently reported year-over-year revenue growth.
+
+\begin{table}[htbp]
+\centering
+\caption{Satellite car-count growth and Cascade's reported revenue growth, by quarter}
+\label{tab:satellite_regression}
+\begin{tabular}{lcc}
+\toprule
+Quarter & Car-count growth (\%) & Revenue growth (\%) \\
+\midrule
+Q1 & 2.1 & 1.5 \\
+Q2 & $-1.5$ & $-0.3$ \\
+Q3 & 4.8 & 4.5 \\
+Q4 & 0.6 & 1.0 \\
+Q5 & 6.2 & 4.0 \\
+Q6 & $-3.0$ & $-1.0$ \\
+Q7 & 3.5 & 3.8 \\
+Q8 & 1.0 & $-0.2$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Fitting the simple regression $\text{Revenue growth} = \alpha + \beta\,(\text{Car-count growth})$ by ordinary least squares, following Chapter 6's Section 6.4 method, gives $\bar x = 1.7125$, $\bar y = 1.6625$, $S_{xy} = \sum(x_i - \bar x)(y_i - \bar y) = 34.09625$, $S_{xx} = \sum(x_i-\bar x)^2 = 52.24875$, so $\hat\beta = S_{xy}/S_{xx} = 0.6528$ and $\hat\alpha = \bar y - \hat\beta \bar x = 0.5446$. The fitted line, $\widehat{\text{Revenue growth}} = 0.5446 + 0.6528\,(\text{Car-count growth})$, achieves $R^2 = 0.870$, car-count growth alone explains 87\% of the quarter-to-quarter variation in Cascade's revenue growth in this sample, genuinely strong for a single proxy variable, but, consistent with this book's practice of not overstating a model's fit, still leaves 13\% of the variation unexplained. Suppose satellite data for a ninth quarter arrives showing 5.0\% car-count growth, three weeks before Cascade's earnings release. The regression predicts $\widehat{\text{Revenue growth}} = 0.5446 + 0.6528(5.0) = 3.809\%$, a concrete, tradeable estimate of a number the market will not see officially for three more weeks.
+
+\section{Combining Alternative Data Sources: A Multi-Source Earnings Signal}\index{Combining Alternative Data Sources: A Multi-Source Earnings Signal}
+\label{sec:alt-data-pipeline}
+
+A single alternative data source is rarely used alone in practice; a real alternative-data desk combines several sources into one model, both to average out any single source's idiosyncratic noise and to capture aspects of a firm's business a single proxy misses. Figure~\ref{fig:altdata_pipeline} sketches the resulting pipeline.
+
+\begin{figure}[htbp]
+    \centering
+    \begin{tikzpicture}[>=latex,thick,node distance=0.7cm]
+        \node[draw,rounded corners,minimum width=1.8cm,minimum height=0.9cm,align=center,font=\scriptsize] (raw) {Raw Alt Data\\(Image, Web, Card)};
+        \node[draw,rounded corners,minimum width=1.9cm,minimum height=0.9cm,right=of raw,align=center,font=\scriptsize] (feat) {Feature\\Extraction\\(CNN/Aggregate)};
+        \node[draw,rounded corners,minimum width=1.7cm,minimum height=0.9cm,right=of feat,align=center,font=\scriptsize] (align) {Temporal\\Alignment};
+        \node[draw,rounded corners,minimum width=1.9cm,minimum height=0.9cm,right=of align,align=center,font=\scriptsize] (fuse) {Fusion with\\Fundamentals};
+        \node[draw,rounded corners,minimum width=1.7cm,minimum height=0.9cm,right=of fuse,align=center,font=\scriptsize] (sig) {Model /\\Signal};
+        \draw[->] (raw) -- (feat);
+        \draw[->] (feat) -- (align);
+        \draw[->] (align) -- (fuse);
+        \draw[->] (fuse) -- (sig);
+    \end{tikzpicture}
+    \caption{The alternative-data pipeline this chapter develops. Feature extraction (Section~\ref{sec:nn-structured-unstructured}) and temporal alignment (Section~\ref{sec:alt-data-quality}) are where most alternative-data projects actually fail.}
+    \label{fig:altdata_pipeline}
+\end{figure}
+
+Extending Section~\ref{sec:satellite-example}'s example, suppose Cascade is also tracked by a web-traffic vendor (year-over-year growth in visits to Cascade's e-commerce site) and a card-panel vendor (year-over-year growth in aggregated card spending at Cascade's stores). Table~\ref{tab:multisource_signal} lists all three alternative-data growth rates alongside the resulting earnings surprise, actual revenue growth minus the analyst consensus estimate available at the time, and Cascade's stock return on the earnings-announcement day.
+
+\begin{table}[htbp]
+\centering
+\small
+\caption{Multi-source alternative data, earnings surprise, and next-day return, by quarter}
+\label{tab:multisource_signal}
+\begin{tabular}{lccccccc}
+\toprule
+Quarter & Car (\%) & Web (\%) & Card (\%) & Surprise (\%) & Fitted (\%) & Signal & Return (\%) \\
+\midrule
+Q1 & 2.1 & 3.0 & 1.5 & 0.5 & 0.48 & Long & 1.1 \\
+Q2 & $-1.5$ & $-0.5$ & $-1.0$ & $-1.3$ & $-1.08$ & Flat & $-0.6$ \\
+Q3 & 4.8 & 5.5 & 3.0 & 2.5 & 1.95 & Long & 2.0 \\
+Q4 & 0.6 & 1.5 & 0.8 & 0.0 & $-0.44$ & Flat & 0.3 \\
+Q5 & 6.2 & 4.0 & 4.5 & 2.0 & 2.46 & Long & $-0.4$ \\
+Q6 & $-3.0$ & $-2.0$ & $-1.8$ & $-1.5$ & $-1.92$ & Flat & $-1.4$ \\
+Q7 & 3.5 & 2.5 & 2.0 & 2.3 & 1.66 & Long & 1.5 \\
+Q8 & 1.0 & 2.0 & 0.5 & $-0.3$ & 0.18 & Long & 0.2 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Regressing surprise on the three alternative-data growth rates by ordinary least squares, using the normal equations
+\begin{equation*}
+\hat\beta = (X^\top X)^{-1}X^\top y,
+\end{equation*}
+with $X$'s columns an intercept, car-count growth, web-traffic growth, and card growth, gives
+\begin{equation*}
+\hat\beta = (-0.291,\ 1.092,\ -0.113,\ -0.792), \qquad R^2 = 0.837.
+\end{equation*}
+The negative coefficient on card growth is not a mistake: with car-count and web-traffic growth already in the regression, card growth's own explanatory power is largely redundant with theirs, and its small residual coefficient partly offsets collinear noise the other two variables share, a common occurrence when several correlated proxies for the same underlying quantity are entered into one regression together, and a reminder that individual coefficients in a multi-source model should not be read as clean, isolated effects the way Chapter 6's Section 6.4 single-variable coefficient can be. Column ``Fitted'' reports each quarter's fitted surprise from this regression, and column ``Signal'' converts a positive fitted surprise into a long position taken ahead of the earnings release (flat otherwise), the same logic Chapter 14's Section 14.5 applied to a sentiment score. Five of the eight quarters signal long; of those, four (Q1, Q3, Q7, Q8) are followed by a positive next-day return and one (Q5) by a negative return despite a strongly positive fitted surprise, an 80\% hit rate. The signaled quarters average a 0.88\% next-day return versus 0.34\% across all eight quarters, a real edge, but, exactly as Chapter 6 and Chapter 14's Section 14.5 both emphasize, a probabilistic one: Q5's miss shows that even a well-fitted, multi-source alternative-data model does not eliminate the risk that a single quarter's price reaction depends on something the data could not capture, guidance issued alongside the earnings release, for instance. A ninth quarter with car, web, and card growth of 5.0\%, 4.5\%, and 3.5\% respectively yields a fitted surprise of
+\begin{equation*}
+-0.291 + 1.092(5.0) - 0.113(4.5) - 0.792(3.5) = 1.888\%,
+\end{equation*}
+again a tradeable estimate available before the official release.
+
+\section{Point-in-Time Alignment and the Cost of Look-Ahead Bias}\index{Point-in-Time Alignment and the Cost of Look-Ahead Bias}
+\label{sec:point-in-time}
+
+Section~\ref{sec:alt-data-pipeline}'s regression silently assumed that all three growth rates for a given quarter were genuinely available before that quarter's earnings release. In reality, a card-panel vendor's data is typically delayed: the panel for a given quarter is often not fully assembled and delivered to subscribers until well after that quarter's earnings have already been reported, because the underlying card issuers themselves need time to compile and anonymize transaction records. A backtest that uses the current quarter's card figure as if it had been available in time, when in fact only the prior quarter's card figure would genuinely have been in hand, is committing look-ahead bias, using information the backtest could not actually have had.
+
+To see how much this matters, refit Section~\ref{sec:alt-data-pipeline}'s regression on quarters Q2 through Q8 (seven quarters, dropping Q1 since it has no prior quarter to lag from) two ways. The naive version uses each quarter's own, contemporaneous card growth, exactly as before:
+\begin{align*}
+\hat\beta_{\text{naive}} &= (-0.290,\ 1.102,\ -0.119,\ -0.802), & R^2 &= 0.837,
+\end{align*}
+with four quarters signaling long (Q3, Q5, Q7, Q8) and a 75\% hit rate. The realistic version instead uses, for each quarter, the card growth reported one quarter earlier, the figure that would genuinely have been available before that quarter's earnings release:
+\begin{align*}
+\hat\beta_{\text{realistic}} &= (0.251,\ 0.424,\ -0.100,\ -0.286), & R^2 &= 0.873,
+\end{align*}
+but Q8 no longer signals long once the lag is respected, leaving only three quarters (Q3, Q5, Q7) with a 66.7\% hit rate, and a higher average return (1.03\% versus 0.83\%) on that smaller, more selective set of trades.
+
+The lesson is not that the lagged, realistic version is simply worse, its $R^2$ is actually higher and its average signaled return is larger, but that it is a \emph{different} model making \emph{different} trading decisions than the naive version, on the very same underlying quarters. A backtest run on the naive, contemporaneous-card version would report performance for trades the fund could never actually have placed, since the card data those trades depend on was not yet in hand, regardless of whether that misspecified backtest happens to look better or worse than the honest one. This is why Section~\ref{sec:alt-data-quality} treats delivery lag as a data-quality issue rather than a mere modeling nuance: the direction of the resulting bias is not predictable in general, but the fact that ignoring real-world delivery timing invalidates the backtest as a measure of tradeable performance is completely general, and point-in-time data discipline, using, for every historical date, only the data vintage that would genuinely have been available on that date, is the standard defense against it.
+
+\section{Feature Engineering for Alternative Data}\index{Feature Engineering for Alternative Data}
+\label{sec:altdata-feature-engineering}
+
+Raw alternative-data readings, like the raw market and fundamental data of Chapters 2 through 4, are rarely used exactly as delivered; Section~\ref{sec:point-in-time} addressed when a reading becomes usable, and this section addresses what should be done to it before it is usable at all.
+
+\textbf{Seasonal adjustment.} Web traffic, foot traffic, and card-transaction volumes all carry strong calendar effects, day-of-week patterns, holiday spikes, and back-to-school or year-end shopping seasons, that have nothing to do with a firm's underlying performance. Comparing a raw reading against the same period one year earlier, exactly what year-over-year growth rates such as Section~\ref{sec:satellite-example}'s car-count growth already do, removes most of this seasonality automatically, provided the calendar aligns cleanly (a retailer's Thanksgiving week, for instance, falls on a different date each year, which can distort a naive year-over-year comparison unless the alignment is done by trading day or holiday-relative position rather than by calendar date).
+
+\textbf{Peer-relative normalization.} A retailer's car-count or web-traffic growth reflects both firm-specific performance and sector-wide conditions, gasoline prices, general consumer spending, weather, that affect every retailer in the sector simultaneously. Subtracting a sector-average benchmark from a firm's own reading isolates the firm-specific component a stock-picking strategy actually cares about. Suppose sector-average car-count growth for Cascade's peer group across the same eight quarters of Table~\ref{tab:satellite_regression} is $(1.0, -0.5, 2.0, 0.3, 2.5, -1.0, 1.5, 0.5)$; subtracting it from Cascade's own car-count growth gives a peer-adjusted series $(1.1, -1.0, 2.8, 0.3, 3.7, -2.0, 2.0, 0.5)$. Refitting Section~\ref{sec:satellite-example}'s regression with this peer-adjusted series as the predictor gives $\hat\beta = 1.064$, $\hat\alpha = 0.678$, and $R^2 = 0.867$, essentially unchanged from the raw series' $R^2 = 0.870$. In this particular sample sector-wide movements were fairly small relative to Cascade's own idiosyncratic variation, so peer-adjustment does not change the fit much here, but the adjustment matters far more in a period when the whole sector moves together, a broad consumer-spending downturn, a fuel-price spike depressing driving-based foot traffic sector-wide, where an un-adjusted signal would mistake a sector-wide move for firm-specific news.
+
+\section{Neural Networks for Structured and Unstructured Data}\index{Neural Networks for Structured and Unstructured Data}
+\label{sec:nn-structured-unstructured}
+
+Section~\ref{sec:satellite-example} treated the vendor's car count as a finished number, but the vendor itself had to produce that count from raw satellite pixels, and Section~\ref{sec:alt-data-pipeline}'s web-traffic and card figures likewise start from raw logs or transaction records. Chapter 6 introduced the feedforward network, in which every input feeds every hidden unit with its own independent weight; that architecture ignores two kinds of structure alternative data routinely has, the two-dimensional grid structure of an image and the ordered, sequential structure of a time-stamped log, and specialized architectures were developed to exploit each, alongside a third architecture that needs no labeled target at all.
+
+\subsection*{Convolutional Neural Networks for Grid-Structured Data}\index{Convolutional Neural Networks for Grid-Structured Data}
+
+A convolutional neural network\index{convolutional neural network (CNN)} (CNN) exploits the fact that a useful pattern in an image, a car's outline, an edge, a texture, can appear anywhere in the frame, so instead of learning a separate weight for every pixel-hidden-unit pair as a feedforward network would, a CNN learns a small filter (or kernel) and slides it across the entire image, reusing the same weights at every position. This weight sharing is what makes CNNs practical for images: a $1000\times1000$-pixel satellite tile has a million pixels, far too many for a feedforward network's per-pixel weights to be learned from any realistic training set, but a $2\times2$ filter has only four weights to learn regardless of image size.
+
+Consider a stylized $4\times4$ satellite image patch of a single parking lot, with pixel intensities between 0 (dark asphalt) and 1 (a car's bright roof), containing two clusters of parked cars in opposite corners:
+\begin{equation*}
+I = \begin{pmatrix} 0.1 & 0.1 & 0.8 & 0.9 \\ 0.1 & 0.1 & 0.9 & 0.8 \\ 0.7 & 0.8 & 0.1 & 0.1 \\ 0.8 & 0.9 & 0.1 & 0.1 \end{pmatrix}.
+\end{equation*}
+Convolving this image with a $2\times2$ averaging filter 
+$$K = \begin{pmatrix}0.25 & 0.25\\ 0.25 & 0.25\end{pmatrix}$$ 
+at stride 1 (sliding the filter one pixel at a time, computing the elementwise product with each $2\times2$ patch and summing) produces a $3\times3$ feature map. The top-left entry, for instance, averages the patch 
+$$\begin{pmatrix}0.1&0.1\\0.1&0.1\end{pmatrix}$$ 
+to $0.1$; the entry one column to the right averages 
+$$\begin{pmatrix}0.1&0.8\\0.1&0.9\end{pmatrix}$$ 
+to $(0.1+0.8+0.1+0.9)/4 = 0.475$. Carrying this out for all nine positions gives
+\begin{equation*}
+\text{Feature map} = \begin{pmatrix} 0.100 & 0.475 & 0.850 \\ 0.425 & 0.475 & 0.475 \\ 0.800 & 0.475 & 0.100 \end{pmatrix}.
+\end{equation*}
+The two corner entries where a car cluster sits, $0.850$ (top right) and $0.800$ (bottom left), stand out clearly above the two empty corners, both $0.100$, and above the mixed-boundary middle entries, which is exactly what this filter is designed to do: highlight regions of concentrated brightness. A real, trained CNN learns many such filters simultaneously (edge detectors, corner detectors, texture detectors), stacks several convolutional layers so that later layers respond to increasingly complex combinations of earlier layers' features, and typically applies a ReLU activation and a pooling step (taking, say, the maximum of each $2\times2$ block of the feature map) after each convolution, reducing the map's size while keeping its strongest responses, before finally feeding the result into feedforward layers of the kind Chapter 6 described to produce a single number, an estimated car count.
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[font=\scriptsize]
+    \matrix (img) [matrix of nodes, nodes={draw,minimum size=0.8cm,anchor=center}, column sep=-\pgflinewidth, row sep=-\pgflinewidth] {
+        0.1 & 0.1 & 0.8 & 0.9 \\
+        0.1 & 0.1 & 0.9 & 0.8 \\
+        0.7 & 0.8 & 0.1 & 0.1 \\
+        0.8 & 0.9 & 0.1 & 0.1 \\
+    };
+    \node[above=0.15cm of img.north] {\normalsize $4\times4$ image patch $I$};
+
+    \matrix (fmap) [matrix of nodes, nodes={draw,minimum size=0.8cm,anchor=center}, column sep=-\pgflinewidth, row sep=-\pgflinewidth, right=3.4cm of img] {
+        0.100 & 0.475 & 0.850 \\
+        0.425 & 0.475 & 0.475 \\
+        0.800 & 0.475 & 0.100 \\
+    };
+    \node[above=0.15cm of fmap.north] {\normalsize $3\times3$ feature map};
+
+    \node[draw=blue,thick,fit=(img-1-1)(img-2-2),inner sep=1pt] (patchA) {};
+    \node[draw=orange,thick,fit=(img-1-2)(img-2-3),inner sep=1pt] (patchB) {};
+    \node[draw=blue,thick,fit=(fmap-1-1),inner sep=1pt] (outA) {};
+    \node[draw=orange,thick,fit=(fmap-1-2),inner sep=1pt] (outB) {};
+
+    \draw[->,blue,thick] (patchA.east) to[bend left=15] (outA.west);
+    \draw[->,orange,thick] (patchB.east) to[bend left=25] (outB.west);
+\end{tikzpicture}
+\caption{Sliding a $2\times2$ averaging filter across the $4\times4$ satellite patch $I$ at stride 1. The blue-highlighted patch (the top-left $2\times2$ block) averages to $0.100$; sliding the filter one column right, the orange-highlighted patch averages to $0.475$, the two feature-map entries worked out in the text. Repeating this for all nine filter positions produces the full $3\times3$ feature map, with the two car-cluster corners ($0.850$, $0.800$) standing out clearly from the two empty corners (both $0.100$).}
+\label{fig:cnn_convolution}
+\end{figure}
+
+Stacking convolutional layers naively, however, runs into a practical training problem once a network gets deep: gradients computed by backpropagation\index{backpropagation} (Chapter 6) must flow back through every layer, and in a sufficiently deep plain CNN they can shrink toward zero long before reaching the earliest layers, leaving those layers essentially untrained, the vanishing-gradient problem\index{Vanishing-Gradient Problem}. The architecture that made very deep CNNs practical, the residual network\index{residual network (ResNet)} (ResNet), addresses this with a simple structural change: each block adds a shortcut connection carrying the block's input directly to its output, so the block only has to learn a residual adjustment on top of what already passed through unchanged, rather than having to learn the entire transformation from scratch, letting gradients flow through the shortcut even when a particular block's own learned transformation contributes little. This is the same practical instinct as Chapter 10's shrinkage-based portfolio methods, do not force a model to learn from nothing what could instead be inherited or only mildly adjusted, applied to network depth rather than portfolio weights.
+
+\subsection*{Recurrent Neural Networks for Sequential Data}\index{Recurrent Neural Networks for Sequential Data}
+
+A recurrent neural network (RNN) addresses the opposite kind of structure: an ordered sequence, such as several successive weeks of web-traffic readings, in which the order itself carries information a feedforward network, which treats its inputs as an unordered set of features, would discard. An RNN processes a sequence one step at a time, maintaining a hidden state $h_t$ that is passed forward and updated at every step,
+\begin{equation*}
+h_t = \tanh(w_x x_t + w_h h_{t-1} + b),
+\end{equation*}
+so that $h_t$ is, in principle, a function of every input the network has seen so far, $x_1, \ldots, x_t$, not just the current one, giving the network a form of memory that Chapter 7's autoregressive and GARCH recursions share in spirit, each also defines a current value as a function of a prior state plus new information, but that Chapter 6's feedforward network has no analogue for.
+
+Suppose Cascade's e-commerce site shows three successive weekly readings of normalized web-traffic growth in the final three weeks before its next earnings release, $x_1 = 0.5$, $x_2 = -0.2$, $x_3 = 0.9$, and a single-hidden-unit RNN with weights $w_x = 0.6$, $w_h = 0.4$, $b = 0.1$, and initial hidden state $h_0 = 0$. Step by step:
+\begin{align*}
+h_1 &= \tanh(0.6(0.5) + 0.4(0) + 0.1) = \tanh(0.400) = 0.3799, \\
+h_2 &= \tanh(0.6(-0.2) + 0.4(0.3799) + 0.1) = \tanh(0.13196) = 0.1312, \\
+h_3 &= \tanh(0.6(0.9) + 0.4(0.1312) + 0.1) = \tanh(0.69248) = 0.5996.
+\end{align*}
+Notice that $h_2$ is small, close to zero, not because $x_2$ was extreme (it was mildly negative) but because it also carries a damped memory of $h_1$; the hidden state genuinely blends past and present rather than reacting to the latest input alone. Passing the final hidden state through an output layer, $\hat y = \sigma(w_y h_3 + b_y)$ with $w_y = 1.2$ and $b_y = -0.3$, gives $\hat y = \sigma(1.2(0.5996) - 0.3) = \sigma(0.4195) = 0.6034$, which might, for instance, be interpreted as a 60.3\% estimated probability that Cascade's upcoming quarter shows accelerating (rather than decelerating) revenue growth. Figure~\ref{fig:rnn_unrolled} unrolls this same computation across its three time steps, making explicit how each hidden state depends on both the current input and the previous hidden state.
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[>=latex,thick,
+    state/.style={draw,circle,minimum size=1.5cm,align=center,font=\small},
+    inputnode/.style={draw,circle,minimum size=1.2cm,align=center,font=\small}]
+    \node[state] (h0) at (0,0) {$h_0$\\$=0$};
+    \node[state] (h1) at (3.3,0) {$h_1$\\$=0.3799$};
+    \node[state] (h2) at (6.6,0) {$h_2$\\$=0.1312$};
+    \node[state] (h3) at (9.9,0) {$h_3$\\$=0.5996$};
+    \node[state] (y) at (13.2,0) {$\hat y$\\$=0.6034$};
+
+    \node[inputnode] (x1) at (3.3,2.6) {$x_1$\\$=0.5$};
+    \node[inputnode] (x2) at (6.6,2.6) {$x_2$\\$=-0.2$};
+    \node[inputnode] (x3) at (9.9,2.6) {$x_3$\\$=0.9$};
+
+    \draw[->] (h0) -- node[above,font=\scriptsize]{$w_h=0.4$} (h1);
+    \draw[->] (h1) -- node[above,font=\scriptsize]{$w_h=0.4$} (h2);
+    \draw[->] (h2) -- node[above,font=\scriptsize]{$w_h=0.4$} (h3);
+    \draw[->] (h3) -- node[above,font=\scriptsize]{$w_y=1.2$} (y);
+
+    \draw[->] (x1) -- node[right,font=\scriptsize]{$w_x=0.6$} (h1);
+    \draw[->] (x2) -- node[right,font=\scriptsize]{$w_x=0.6$} (h2);
+    \draw[->] (x3) -- node[right,font=\scriptsize]{$w_x=0.6$} (h3);
+
+    \node[font=\scriptsize,below=0.3cm of h1]{bias $b=0.1$};
+    \node[font=\scriptsize,below=0.3cm of h2]{bias $b=0.1$};
+    \node[font=\scriptsize,below=0.3cm of h3]{bias $b=0.1$};
+    \node[font=\scriptsize,below=0.3cm of y]{bias $b_y=-0.3$};
+\end{tikzpicture}
+\caption{The single-hidden-unit RNN unrolled across its three time steps. Each hidden state $h_t$ combines the current input $x_t$ (weight $w_x$) with the previous hidden state $h_{t-1}$ (weight $w_h$) and a bias, then applies $\tanh$; the final hidden state $h_3$ feeds a sigmoid output layer producing $\hat y \approx 0.603$, matching the worked example in the text.}
+\label{fig:rnn_unrolled}
+\end{figure}
+
+In practice, a plain RNN's memory decays quickly over long sequences, since each step multiplies the running influence of an early input by another factor less than one, a limitation addressed by the long short-term memory\index{long short-term memory (LSTM)} (LSTM) architecture. An LSTM maintains a separate cell state $c_t$, alongside the hidden state, updated as 
+$$c_t = f_t \odot c_{t-1} + i_t \odot \tilde c_t,$$
+where 
+$$f_t = \sigma(W_f[h_{t-1},x_t] + b_f)$$ 
+is a forget gate controlling how much of the previous cell state to retain, 
+$$i_t = \sigma(W_i[h_{t-1},x_t]+b_i)$$ 
+is an input gate controlling how much of a new candidate value $\tilde c_t$ to admit, and $\odot$ denotes elementwise multiplication; a third, output gate 
+$$o_t = \sigma(W_o[h_{t-1},x_t]+b_o)$$ then controls how much of $c_t$ is exposed as the hidden state 
+$$h_t = o_t \odot \tanh(c_t).$$
+ Because the cell state's update is additive rather than the plain RNN's fully multiplicative recursion, a forget gate near 1 lets information pass across many more time steps largely undamped, directly addressing the memory-decay limitation the single-unit example above illustrates, at the cost of three times as many weights to learn as the plain recurrent unit.
+
+A worked numerical example makes this concrete rather than leaving it as a qualitative claim. Applying a single-unit LSTM to the identical three-week input sequence used for the plain RNN above ($x_1=0.5$, $x_2=-0.2$, $x_3=0.9$, $h_0=0$, $c_0=0$), with illustrative gate weights $w_{f,h}=0.5$, $w_{f,x}=0.3$, $b_f=2.0$ (a deliberately large bias, chosen so the forget gate stays close to $1$ and the memory-retention effect is visible) and $w_{i,h}=w_{i,x}=w_{c,h}=w_{c,x}=w_{o,h}=w_{o,x}=0.5$ with all other biases at $0$, the first step gives
+\begin{align*}
+f_1 &= \sigma(2.15) = 0.8957, & i_1 &= \sigma(0.25) = 0.5622, & \tilde c_1 &= \tanh(0.25) = 0.2449, \\
+c_1 &= f_1(0) + i_1\tilde c_1 = 0.1377, & o_1 &= \sigma(0.25) = 0.5622, & h_1 &= o_1\tanh(c_1) = 0.0769.
+\end{align*}
+Continuing this recursion through the second and third steps gives
+\begin{align*}
+f_2 &= 0.8785, & c_2 &= 0.0912, & h_2 &= 0.0441, \\
+f_3 &= 0.9082, & c_3 &= 0.3537, & h_3 &= 0.2092;
+\end{align*}
+passing $h_3$ through the same output layer as the plain RNN example ($w_y=1.2$, $b_y=-0.3$) gives $\hat y=\sigma(1.2(0.2092)-0.3)=0.4878$.
+
+The forget gates $f_2=0.8785$ and $f_3=0.9082$ are the mechanism worth isolating: their product, $0.8785\times0.9082\approx0.7979$, is the fraction of the original cell state $c_1$ that survives, purely through the forget gate's own multiplicative decay, two additional time steps later, versus only $w_h^2=0.4^2=0.16$ for the plain RNN's equivalent two-step decay of its hidden state's direct dependence on $h_1$. Roughly $80\%$ of $c_1$'s information survives to $c_3$ in the LSTM, against roughly $16\%$ of the plain RNN's analogous quantity, a concrete, order-of-magnitude illustration of exactly the memory-decay fix the forget gate is designed to provide: not that information never decays in an LSTM, the forget gate is still strictly less than $1$, but that a well-trained forget gate can be pushed close enough to $1$ that memory persists over many more steps than a plain RNN's fixed recurrent weight allows. Figure~\ref{fig:lstm_cell} draws the first step of this same computation as a cell diagram, showing all four gates computed from the identical inputs before they combine into the new cell and hidden states.
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[>=latex,thick,node distance=1.0cm and 0.5cm,every node/.style={font=\small}]
+    \node[draw,rounded corners,align=center,minimum width=5.4cm] (inputs) at (4.5,4.6) {Inputs at $t=1$: $h_0=0$, $x_1=0.5$};
+    \node[draw,rounded corners,align=center,minimum width=2.0cm] (forget) at (0,2.3) {Forget gate\\$f_1=\sigma(2.15)$\\$=0.8957$};
+    \node[draw,rounded corners,align=center,minimum width=2.0cm] (input) at (3.0,2.3) {Input gate\\$i_1=\sigma(0.25)$\\$=0.5622$};
+    \node[draw,rounded corners,align=center,minimum width=2.0cm] (cand) at (6.0,2.3) {Candidate\\$\tilde c_1=\tanh(0.25)$\\$=0.2449$};
+    \node[draw,rounded corners,align=center,minimum width=2.0cm] (output) at (9.0,2.3) {Output gate\\$o_1=\sigma(0.25)$\\$=0.5622$};
+    \node[draw,rounded corners,align=center,minimum width=3.4cm] (cell) at (3.0,0) {New cell state\\$c_1=f_1c_0+i_1\tilde c_1=0.1377$};
+    \node[draw,rounded corners,align=center,minimum width=3.4cm] (hidden) at (9.0,0) {New hidden state\\$h_1=o_1\tanh(c_1)=0.0769$};
+    \draw[->] (inputs) -- (forget);
+    \draw[->] (inputs) -- (input);
+    \draw[->] (inputs) -- (cand);
+    \draw[->] (inputs) -- (output);
+    \draw[->] (forget) -- (cell);
+    \draw[->] (input) -- (cell);
+    \draw[->] (cand) -- (cell);
+    \draw[->] (output) -- (hidden);
+    \draw[->] (cell) -- (hidden);
+\end{tikzpicture}
+\caption{The LSTM cell's first time step, computed from the worked example in the text. All four gates, forget, input, candidate, and output, are computed from the same inputs $(h_0,x_1)$; the forget and input gates combine with the candidate value to produce the new cell state $c_1$, and the output gate then determines how much of $c_1$ (passed through $\tanh$) becomes the new hidden state $h_1$.}
+\label{fig:lstm_cell}
+\end{figure}
+
+\subsection*{Autoencoders for Unsupervised Anomaly Detection}\index{Autoencoders for Unsupervised Anomaly Detection}
+
+The CNN and RNN examples above are supervised, they are trained toward a known target, an estimated car count, a probability of accelerating growth. An autoencoder is trained without any label at all: it learns an encoder that compresses an input down to a small bottleneck representation and a decoder that reconstructs the original input from that bottleneck, with the reconstruction error itself as the only training signal. Once trained on typical, well-behaved data, an autoencoder reconstructs anomalous inputs poorly, since its bottleneck was never shaped to represent whatever made them unusual, which makes reconstruction error a natural anomaly score, extending Chapter 13's classification-based anomaly detection to a setting with no labeled examples of what an anomaly looks like.
+
+Consider a simple linear autoencoder, encoder weights $w = (0.5, 0.3, 0.2)$ applied to Table~\ref{tab:multisource_signal}'s three alternative-data growth rates $x = (\text{car}, \text{web}, \text{card})$ for each quarter, producing a single bottleneck code $z = w \cdot x$, and a tied-weight decoder that reconstructs $\hat x = z\, w$. For Q4, $x = (0.6, 1.5, 0.8)$, so $z = 0.5(0.6) + 0.3(1.5) + 0.2(0.8) = 0.91$, and $\hat x = 0.91(0.5, 0.3, 0.2) = (0.455, 0.273, 0.182)$, giving a reconstruction error $\sum(x_i - \hat x_i)^2 = (0.6-0.455)^2 + (1.5-0.273)^2 + (0.8-0.182)^2 = 1.909$. Carrying this out for all eight quarters and expressing each quarter's error relative to its own total energy $\sum x_i^2$ (so that quarters with naturally larger growth rates are not automatically flagged just for being larger) gives relative errors ranging from 39.5\% (Q7) to 58.7\% (Q4). Q4 stands out as the quarter whose alternative-data pattern the autoencoder reconstructs worst, not because its numbers are the largest in absolute terms, Q5's raw error of 30.9 is far larger, but because Q4's web-traffic growth (1.5\%) is unusually large relative to its car-count and card growth (0.6\% and 0.8\%), a pattern this particular bottleneck direction does not represent well. In practice, this would be exactly the kind of quarter a data-quality analyst should investigate first, is the web-traffic reading itself an error, a one-time promotional spike, or a genuine early signal the other two sources have not yet picked up, before that quarter's data is trusted in a downstream model.
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[>=latex,thick,
+    io/.style={draw,circle,minimum size=1.5cm,align=center,font=\small},
+    bottleneck/.style={draw,circle,minimum size=1.3cm,align=center,font=\small,fill=gray!15}]
+    \node[io] (xcar) at (0,2.4) {car\\$=0.6$};
+    \node[io] (xweb) at (0,0) {web\\$=1.5$};
+    \node[io] (xcard) at (0,-2.4) {card\\$=0.8$};
+
+    \node[bottleneck] (z) at (4.8,0) {$z$\\$=0.91$};
+
+    \node[io] (rcar) at (9.6,2.4) {$\hat{\text{car}}$\\$=0.455$};
+    \node[io] (rweb) at (9.6,0) {$\hat{\text{web}}$\\$=0.273$};
+    \node[io] (rcard) at (9.6,-2.4) {$\hat{\text{card}}$\\$=0.182$};
+
+    \draw[->] (xcar) -- node[above,sloped,font=\scriptsize]{$0.5$} (z);
+    \draw[->] (xweb) -- node[above,font=\scriptsize]{$0.3$} (z);
+    \draw[->] (xcard) -- node[below,sloped,font=\scriptsize]{$0.2$} (z);
+
+    \draw[->] (z) -- node[above,sloped,font=\scriptsize]{$0.5$} (rcar);
+    \draw[->] (z) -- node[above,font=\scriptsize]{$0.3$} (rweb);
+    \draw[->] (z) -- node[below,sloped,font=\scriptsize]{$0.2$} (rcard);
+
+    \node[font=\small,below=1.9cm of xcard]{Encoder input $x$};
+    \node[font=\small,below=1.9cm of z]{Bottleneck $z=w\cdot x$};
+    \node[font=\small,below=1.9cm of rcard]{Decoder output $\hat x = z\,w$};
+\end{tikzpicture}
+\caption{The linear autoencoder applied to Q4's three alternative-data growth rates. The encoder compresses $x=(0.6,1.5,0.8)$ to a single bottleneck value $z=0.91$ using tied weights $w=(0.5,0.3,0.2)$; the decoder reconstructs $\hat x=(0.455,0.273,0.182)$ from that single number using the same weights. The gap between $x$ and $\hat x$ is the reconstruction error that flags Q4 as anomalous.}
+\label{fig:autoencoder}
+\end{figure}
+
+\subsection*{Transformers as a Unifying Architecture}\index{Transformers as a Unifying Architecture}
+
+Chapter 14 developed the transformer architecture and its self-attention\index{self-attention} mechanism (Section 14.8) for text, where each token attends to every other token in a sequence. The same mechanism generalizes beyond text: a vision transformer (ViT)\index{Vision Transformer (ViT)} divides an image into fixed-size patches, treats each patch the way a transformer treats a word token, and applies self-attention across patches instead of convolution across pixels, letting a satellite image classifier weigh a distant part of the image against the current patch directly, something a CNN's local filters only do indirectly, through many stacked layers.
+
+The companion notebook makes this concrete by splitting the same $4\times4$ satellite image the CNN example convolved into four non-overlapping $2\times2$ patches, treating each as a token exactly as Chapter 14 treated a word, and computing scaled dot-product self-attention across them. Querying from patch 2 (the top-right car cluster, mean brightness $0.85$) against keys built from each patch's own brightness, patch 2 attends to itself with weight $0.6174$ and to patch 3 (the bottom-left car cluster, mean brightness $0.80$, diagonally the farthest patch in the image) with weight $0.3817$, while the two empty patches 1 and 4 (mean brightness $0.10$ each) receive a combined weight of only $0.001$. This is the claim above made numerical: patch 2's most relevant neighbor is patch 3, a content-similar patch on the opposite corner of the image, not either of the two empty patches nearer to it, and self-attention identifies that relevance in a single step rather than requiring several stacked convolutional layers to propagate information across that same distance. In current practice, CNNs remain common for smaller or highly structured image tasks (including much car-counting and object-detection work), while transformer-based architectures increasingly dominate both large-scale image classification and the web-traffic and card-transaction sequence modeling that once used RNNs, so that a single architectural family, self-attention, now spans text (Chapter 14), images, and sequences alike.
+
+\section{Data Quality, Bias, and Integration Challenges}\index{Data Quality, Bias, and Integration Challenges}
+\label{sec:alt-data-quality}
+
+Alternative data's advantages, frequency, granularity, and a genuine informational edge before official reporting, come with distinctive quality problems that do not have close analogues in the market and fundamental data earlier chapters used.
+
+\textbf{Coverage bias.} A satellite vendor can only cover stores it has usable imagery for, typically larger, freestanding locations with visible parking lots, so its car-count sample systematically underrepresents smaller-format or mall-based stores, and a model trained only on the covered subset may not generalize to a retailer's business as a whole.
+
+\textbf{Vendor black-box processing.} As Section~\ref{sec:alt-data-sources} noted, a vendor typically sells an already-processed feature, a car count, a traffic index, not raw pixels or logs, so an analyst inherits whatever computer-vision or aggregation errors are baked into that pipeline without being able to inspect or correct them directly; a vendor's undisclosed methodology change between periods can look, in the data, indistinguishable from a genuine change in the underlying business.
+
+\textbf{Delivery lag and look-ahead bias.} A backtest that assumes alternative data was available on the date it describes, rather than the (often later) date it was actually delivered to subscribers, silently uses information that would not have been tradeable in real time; Section~\ref{sec:alt-data-pipeline}'s multi-source signal, for instance, is only genuinely useful if all three data sources reach a trading desk before the earnings release they are meant to anticipate, not merely before the quarter ends.
+
+\textbf{Licensing cost and alpha decay.} High-quality alternative data is expensive, often licensed exclusively or semi-exclusively, and Section~\ref{sec:case-vignette-satellite}'s case documents a genuine 4-5\% informational edge around earnings from satellite car counts; as more funds license the same feed and trade on the same signal, that edge is competed away over time in exactly the way Chapter 6 described a known profitable pattern eroding once it becomes widely traded, so an alternative-data edge, like any other, has a shelf life.
+
+\textbf{Privacy and legal exposure.} Card-panel and geolocation data are aggregated and anonymized before sale, but reconstructing individual behavior from supposedly anonymized data has repeatedly proven possible in other domains, so a vendor's privacy practices, and a buyer's own legal exposure, are due-diligence questions that market and fundamental data never raised.
+
+\textbf{The line between alternative data and material non-public information is not always bright.} Card-panel and web-traffic vendors aggregate across many individual cardholders or visitors specifically so that no single company's non-public information is being sold, but the boundary is a matter of legal judgment rather than a fixed technical threshold, and a narrowly enough scoped feed, transaction data from only a handful of a firm's largest customers, say, can approach material non-public information even though it never touches the firm's own systems and no insider ever leaks anything, a genuinely new compliance risk that Chapter 13's insider-trading discussion, framed entirely around information leaking from inside a firm, did not anticipate.
+
+\section{Advanced Topics: Transfer Learning, Graphs, and Fusion}\index{Advanced Topics: Transfer Learning, Graphs, and Fusion}
+\label{sec:advanced-altdata}
+
+Three further techniques extend the neural network toolkit of Section~\ref{sec:nn-structured-unstructured} in directions that matter increasingly in real alternative-data practice: reusing an already-trained model instead of training from scratch, exploiting network structure between entities rather than treating each firm in isolation, and combining several data modalities into one representation.
+
+\subsection*{Transfer Learning: Fine-Tuning a Pretrained Vision Backbone}\index{Transfer Learning: Fine-Tuning a Pretrained Vision Backbone}
+
+Section~\ref{sec:alt-data-quality} noted that a newly available alternative-data feed typically has only a short history, too little, on its own, to train a large CNN's millions of weights from scratch. Transfer learning sidesteps this: a CNN already trained on a large, general image dataset (which has already learned generic filters for edges, textures, and shapes) is reused as a frozen feature extractor, and only a small final layer, mapping its output features to the task at hand, car count, cloud cover, construction status, is trained on the limited task-specific data available. Because the frozen backbone contributes no gradient updates, this final-layer training is a direct application of Chapter 6's gradient descent\index{gradient descent} to far fewer parameters than training a full network would require.
+
+Suppose a pretrained backbone, frozen, produces a two-dimensional feature vector $f = (0.7, 0.3)$ for a new satellite image patch, and the task is to fine-tune a final logistic layer, currently $w = (0.4, 0.4)$, $b = -0.1$, to predict whether the patch contains a car cluster (label $y=1$ for this patch). The current prediction is 
+$$\hat y = \sigma(w \cdot f + b) = \sigma(0.4(0.7) + 0.4(0.3) - 0.1) = \sigma(0.30) = 0.5744.$$ 
+Following Chapter 6's gradient descent update with learning rate $\eta = 0.5$, the gradient of the log-loss with respect to $w$ is 
+$$(\hat y - y)f = (0.5744-1)(0.7, 0.3) = (-0.298, -0.128),$$
+and with respect to $b$ is $\hat y - y = -0.426$, giving updated weights 
+$$w \leftarrow (0.4, 0.4) - 0.5(-0.298,-0.128) = (0.549, 0.464)$$ 
+and 
+$$b \leftarrow -0.1 - 0.5(-0.426) = 0.113.$$ 
+Recomputing the prediction with these updated weights gives 
+$$\hat y = \sigma(0.549(0.7) + 0.464(0.3) + 0.113) = \sigma(0.636) = 0.6539,$$ 
+closer to the true label of 1 after a single gradient step on a handful of parameters, illustrating why transfer learning lets a fund with only a few hundred labeled satellite patches still fine-tune a usable classifier, rather than needing the millions of labeled images a full CNN would require if trained from scratch.
+
+\subsection*{Graph Neural Networks for Ownership and Counterparty Networks}\index{Graph Neural Networks for Ownership and Counterparty Networks}
+
+Chapter 13 modeled a shell-company layering network as a static sequence of hops, one entity moving funds to the next. A graph neural network (GNN) treats such a network as a live computational structure: each node's representation is updated by aggregating its neighbors' representations, so that risk (or any other property) genuinely propagates through the network rather than being assessed for each entity in isolation, exactly the structure alternative data increasingly captures, common addresses, shared directors, correlated transaction timing, that a purely tabular model discards. A single GNN layer updates node $v$'s representation as 
+$$h_v = \sigma(w_1 x_v + w_2 \cdot \text{mean}_{u \in N(v)}(x_u) + b),$$
+where $N(v)$ is the set of $v$'s neighbors in the graph.
+
+Consider a four-node layering chain, $A \to B \to C \to D$, extending Chapter 13's shell-company example, with initial suspicion scores $x_A = 0.9$ (a flagged placement account), $x_B = 0.2$, $x_C = 0.1$, and $x_D = 0.05$ (an apparently unremarkable integration account), and neighbor sets 
+$$N(A)=\{B\},\ N(B)=\{A,C\},\ N(C)=\{B,D\},\  N(D)=\{C\}.$$
+ With weights $w_1=0.6$, $w_2=0.8$, $b=-0.05$, one round of mean-aggregation gives 
+$$h_B = \sigma\big(0.6(0.2) + 0.8\cdot\tfrac{0.9+0.1}{2} - 0.05\big) = \sigma(0.47) = 0.6154$$ and 
+$$h_C = \sigma\big(0.6(0.1) + 0.8\cdot\tfrac{0.2+0.05}{2} - 0.05\big) = \sigma(0.11) = 0.5275,$$ 
+compared to $h_A = \sigma(0.65) = 0.6570$ and $h_D = \sigma(0.06) = 0.5150$. Node B's updated score, 0.615, is far higher than its own raw feature of 0.2 would suggest, purely because it is one hop from the flagged account A, and even node C, two hops away, shows a modest elevation to 0.528 from a raw 0.1; a model that scored each account independently, the way Chapter 13's original logistic regression\index{logistic regression} did, would miss exactly this kind of network-propagated risk.
+
+\subsection*{Multi-Modal Fusion via Cross-Attention}\index{Multi-Modal Fusion via Cross-Attention}
+
+A single financial decision often draws on several alternative-data modalities at once, an image feature from Section~\ref{sec:nn-structured-unstructured}'s CNN, a sentiment embedding from Chapter 14's text pipeline, and a tabular alternative-data summary like Section~\ref{sec:alt-data-pipeline}'s regression inputs, and combining them well matters as much as extracting each one individually. Cross-attention, a direct extension of Chapter 14's self-attention mechanism (Section 14.8), treats one modality's representation as the query and the other modalities as key-value pairs to attend over: 
+$$\text{Attention}(Q,K,V) = \text{softmax}(QK^\top/\sqrt{d_k})V,$$ 
+exactly as before, but now fusing modalities instead of fusing word tokens.
+
+Suppose a tabular query vector $Q = (0.6, 0.8)$ (summarizing Cascade's alternative-data growth direction) attends over an image modality with key $K_{\text{img}} = (0.9, 0.1)$ and value $V_{\text{img}} = (0.7, 0.2)$, and a text-sentiment modality with key $K_{\text{txt}} = (0.2, 0.9)$ and value $V_{\text{txt}} = (-0.3, 0.6)$ (a mildly cautious sentiment reading). With $d_k = 2$, the scaled dot-product scores are 
+$$Q \cdot K_{\text{img}}/\sqrt{2} = 0.62/1.4142 = 0.4385$$ 
+and 
+$$Q \cdot K_{\text{txt}}/\sqrt{2} = 0.84/1.4142 = 0.5941;$$ 
+applying softmax gives attention weights $0.4612$ on the image modality and $0.5388$ on the text modality. The fused representation is 
+$$0.4612(0.7,0.2) + 0.5388(-0.3,0.6) = (0.161, 0.416),$$
+a single vector that leans slightly more on the cautious text signal than on the image signal, and that a downstream model, a trading rule in the spirit of Section~\ref{sec:alt-data-pipeline}, a credit decision, a fraud flag, can consume in place of either modality alone, without the analyst having to hand-specify how much weight each modality deserves.
+
+\subsection*{Self-Supervised Contrastive Pretraining}\index{Self-Supervised Contrastive Pretraining}
+
+Section~\ref{sec:advanced-altdata}'s transfer-learning example assumed a pretrained backbone was already available; contrastive pretraining is one common way such a backbone gets trained in the first place, without any human-provided labels at all, which matters enormously for satellite imagery, where labeled examples (this patch definitely contains three cars) are far scarcer than the raw imagery itself. The idea is to take two randomly augmented views of the same image, a small crop and rotation, say, and train the encoder so that these two views' embeddings are pulled close together (a positive pair), while embeddings of a different image are pushed apart (a negative pair), using only this relative structure, same image versus different image, as the training signal.
+
+Suppose an encoder produces embedding $a = (0.6, 0.8)$ for one crop of a satellite patch, $p = (0.55, 0.83)$ for a second, differently augmented crop of the \emph{same} patch, and $n = (0.1, 0.9)$ for a crop of a genuinely different patch. Using Chapter 14's cosine similarity (Section 14.7), $\cos(a,p) = 0.9983$ and $\cos(a,n) = 0.8614$, the same view of the same underlying scene is, as intended, geometrically closer than a different scene. A contrastive loss converts these similarities into a probability that the positive pair is correctly identified among the candidates, $\Pr(\text{positive}) = \exp(\cos(a,p)/\tau) / \big[\exp(\cos(a,p)/\tau) + \exp(\cos(a,n)/\tau)\big]$, a softmax over similarities exactly analogous to Section~\ref{sec:advanced-altdata}'s cross-attention softmax, with a temperature parameter $\tau$ controlling how sharply the model is pushed to separate positive from negative. With $\tau = 0.1$, $\Pr(\text{positive}) = e^{9.983}/(e^{9.983} + e^{8.614}) = 0.797$, already favoring the true positive pair well above chance (50\%) even before any training, and training drives this probability further toward 1 by adjusting the encoder's weights so that same-image crops end up even closer together, and different-image crops even farther apart, than they start. Once trained this way on a large, unlabeled archive of satellite imagery, the resulting encoder is exactly the frozen backbone Section~\ref{sec:advanced-altdata}'s transfer-learning example fine-tuned with only a handful of labeled examples, closing the loop between this chapter's two ways of coping with scarce alternative-data labels.
+
+\section{Case Vignette: Satellite Imagery and the Rise of Alternative Data}\index{Satellite Imagery and the Rise of Alternative Data}
+\label{sec:case-vignette-satellite}
+
+The parking-lot car-count example this chapter has used throughout is not hypothetical in its origins. In 2009, brothers Tom and Alex Diamond conceived the idea of counting cars in retailer parking lots from satellite imagery to anticipate revenue, and founded RS Metrics\index{RS Metrics} to sell the resulting data, beginning with car counts at McDonald's locations and later covering Lowe's, Home Depot, and dozens of other retailers. The approach reached wider attention in 2010, when UBS analyst Neil Currie purchased parking-lot counts for 100 Walmart store locations and published them ahead of Walmart's earnings release, an early, public demonstration that satellite-derived alternative data could anticipate a reported number before the company itself disclosed it. A later academic study using RS Metrics imagery from 2011 to 2017, covering 44 major U.S. retailers including Walmart, Target, Costco, and Whole Foods, confirmed that year-over-year change in parking-lot car counts reliably predicts quarterly sales, and quantified the resulting informational edge at 4\% to 5\% in the three trading days surrounding a quarterly earnings announcement, a substantial return for such a short window, corroborating this chapter's own worked example (Section~\ref{sec:satellite-example}) at genuinely large scale. A separate study of the same satellite coverage's introduction across retailers found that its capital-market effects went beyond simply rewarding the funds that subscribed to it: retailers who gained satellite coverage subsequently saw more informed short-selling activity, less-informed individual investor buying, and lower stock liquidity around their earnings reports, evidence that unequal access to alternative data can widen the information gap between sophisticated and ordinary investors without necessarily making prices more accurate any faster, precisely the access-asymmetry concern Section~\ref{sec:alt-data-quality} raises about licensing cost and exclusivity.
+
+Satellite-derived alternative data extends well beyond retail. Orbital Insight\index{Orbital Insight} built a comparable business around commodity markets: by measuring the shadows cast by the floating roofs used on many crude-oil storage tanks, a floating roof sits directly atop the stored oil and its height reveals how full the tank is, the firm estimates inventory levels across more than 27,000 tanks worldwide, work that, during the demand shock of the early 2020s pandemic period, revealed global storage utilization running at roughly 55\% of an estimated six-billion-barrel total capacity, a supply-side data point no single government agency could have produced as quickly. Today, satellite-based financial data services are estimated to generate over \$500 million in annual revenue, within a broader alternative-data market Wall Street is estimated to spend roughly \$3 billion on annually, and a single institutional satellite subscription can run from \$50,000 to \$500,000 per year, underscoring Section~\ref{sec:alt-data-quality}'s point that this edge is available primarily to well-capitalized participants able to pay for exclusive or near-exclusive access.
+
+\section{Challenges in Alternative Data and Deep Learning in Finance}
+
+Several challenges recur across this chapter's techniques and connect directly to themes from earlier chapters.
+
+\textbf{A short history limits statistical confidence.} Section~\ref{sec:satellite-example} and Section~\ref{sec:alt-data-pipeline} fit regressions on only eight quarters, two years of data, because that is genuinely all the history a newly available alternative-data feed typically has; Chapter 6's warnings about overfitting\index{overfitting} with few observations relative to model complexity apply with particular force here, since a vendor's dataset is often too new to have lived through a full economic cycle.
+
+\textbf{Non-stationarity compounds with vendor changes.} Chapter 6 noted that financial relationships can shift as markets evolve; alternative data adds a second source of instability on top of that, a vendor can silently change its imagery source, its computer-vision model, or its store coverage, so a model's apparent degradation may reflect a data-generating-process change at the vendor rather than a change in the underlying financial relationship.
+
+\textbf{Deep architectures trade interpretability for representational power.} A CNN's learned filters and an RNN's hidden state are far less directly interpretable than the single regression coefficient of Section~\ref{sec:satellite-example}, a tension Chapter 16 develops in depth, and one that matters more, not less, once a model's input is something as opaque to manual review as a stack of satellite pixels.
+
+\textbf{Integration is usually the hard part, not modeling.} As Section~\ref{sec:alt-data-quality} emphasized, aligning several data sources in time and by firm identity, and confirming each was genuinely available before, not after, the date being modeled, typically consumes more effort in a real alternative-data project than fitting the model itself, the reverse of the balance in the market-data-only settings of Chapters 10 and 11.
+
+\textbf{Cost and exclusivity concentrate the advantage.} Section~\ref{sec:case-vignette-satellite}'s subscription costs mean alternative data's edge accrues disproportionately to well-resourced funds able to license multiple exclusive feeds, an access asymmetry with no real counterpart in the publicly available market and fundamental data most of this book has used.
+
+\textbf{Model risk governance now has to reach the vendor, not just the model.} Chapter 13's three-lines-of-defense framework was built to validate a single model's inputs, outputs, and ongoing performance; an alternative-data pipeline like Section~\ref{sec:alt-data-pipeline}'s adds an entire additional layer that framework must now cover, the vendor relationship itself, since a governed model's validation is only as good as the vendor's coverage, delivery timing, and processing methodology sitting upstream of it, none of which the fund directly controls or, in most cases, can fully observe.
+
+\section{Key Takeaways}
+
+Alternative data, satellite imagery, web traffic, card-transaction panels, and the like, fills the row Chapter 1's data-ecosystem table reserved for it: non-traditional sources that proxy for economic activity ahead of its official reporting. Section~\ref{sec:satellite-example} showed that even a single such proxy, satellite-derived parking-lot car counts, can explain a large share (87\% in the chapter's worked example) of a retailer's quarterly revenue variation, and Section~\ref{sec:alt-data-pipeline} showed that combining several sources into one regression produces a genuinely useful, if imperfect (an 80\% hit rate, not 100\%), earnings-surprise signal in the same trading-signal-evaluation framework Chapter 11 established. Before any of this modeling happens, Section~\ref{sec:altdata-feature-engineering} showed that raw alternative-data readings typically need seasonal adjustment and peer-relative normalization to isolate firm-specific signal from calendar effects and sector-wide movements. Extracting such signals from raw alternative data, rather than from a vendor's already-processed number, requires neural network architectures beyond Chapter 6's plain feedforward network: convolutional neural networks (Section~\ref{sec:nn-structured-unstructured}) exploit an image's grid structure through weight-shared filters, recurrent neural networks exploit a sequence's ordering through a hidden state carried from step to step, and transformer-based self-attention, introduced for text in Chapter 14, increasingly unifies both roles. None of this changes the fact, developed in Section~\ref{sec:alt-data-quality} and the chapter's closing challenges, that alternative data carries its own distinctive quality problems, coverage bias, vendor black-box processing, look-ahead bias from delivery lag, and cost-driven alpha decay, that a modeler must treat as seriously as the modeling itself, a lesson this chapter's case vignette on satellite-derived retail and commodity data illustrated at real-world scale. Section~\ref{sec:point-in-time} showed concretely that respecting real-world data-delivery lag changes which trades a model actually recommends, not merely how good its backtest looks, and Section~\ref{sec:nn-structured-unstructured}'s autoencoder showed that the same deep learning toolkit that extracts a signal can also be turned, unsupervised, on the data itself to flag a quarter worth double-checking before it is trusted. Section~\ref{sec:advanced-altdata} went one level deeper still: transfer learning lets a CNN's frozen, already-learned features be fine-tuned on a small alternative-data sample rather than requiring millions of labeled images, contrastive pretraining shows how that frozen backbone can itself be trained with no labels at all, graph neural networks let risk propagate across a network of related entities the way Chapter 13's static layering chain could only describe, not compute, and cross-attention, the same mechanism Chapter 14 used to fuse word tokens, fuses image, text, and tabular alternative-data modalities into one representation without an analyst having to hand-specify how much each deserves.
+
+\section{Suggested Exercises}
+
+\begin{enumerate}
+    \item Using Section~\ref{sec:satellite-example}'s method, refit the regression after adding a ninth quarter with car-count growth of $-2.0\%$ and revenue growth of $-1.5\%$, and report the new slope, intercept, and $R^2$.
+    \item Explain, using Table~\ref{tab:satellite_regression}, why an $R^2$ of 0.870 from a single alternative-data proxy is considered strong in this context, contrasting it with Chapter 6's discussion of low signal-to-noise ratios in financial prediction generally.
+    \item Using Section~\ref{sec:alt-data-pipeline}'s fitted coefficients, compute the predicted surprise for a tenth quarter with car, web, and card growth of $-2.0\%$, $-1.0\%$, and $-1.5\%$ respectively, and state whether the resulting signal is long or flat.
+    \item Explain, using Q5 in Table~\ref{tab:multisource_signal}, why a strongly positive fitted surprise (2.46\%) can still be followed by a negative next-day return ($-0.4\%$), and describe one piece of earnings-day information the alternative-data model in this chapter cannot capture.
+    \item Using Section~\ref{sec:nn-structured-unstructured}'s convolution example, recompute the $3\times3$ feature map using a $2\times2$ filter of all $0.5$s instead of all $0.25$s, and explain how the result relates to the original feature map.
+    \item Using the same convolution example, apply $2\times2$ max pooling (taking the maximum of each non-overlapping $2\times2$ block) to the original $3\times3$ feature map's top-left $2\times2$ block, and state the resulting pooled value.
+    \item Using Section~\ref{sec:nn-structured-unstructured}'s RNN example, recompute $h_1$, $h_2$, and $h_3$ if $w_h$ is increased from 0.4 to 0.8 (holding $w_x$, $b$, and the inputs fixed), and explain in words how a larger $w_h$ changes how much the hidden state is influenced by earlier time steps versus the current input.
+    \item Explain, in a short paragraph, why a convolutional neural network's weight sharing makes it far more practical than a plain feedforward network for a $1000\times1000$-pixel satellite image, referencing the parameter-count argument in Section~\ref{sec:nn-structured-unstructured}.
+    \item Using this chapter's case vignette, explain why the 2010 UBS Walmart parking-lot report is a natural precedent for Section~\ref{sec:satellite-example}'s worked example, and describe, in your own words, why the same informational edge tends to shrink as more funds license the same data source.
+    \item Pick two of the data-quality issues in Section~\ref{sec:alt-data-quality} and describe a concrete scenario, not already used in the text, in which that issue could cause an alternative-data-based trading or credit model to fail despite technically correct code.
+    \item Compare this chapter's satellite car-count regression (Section~\ref{sec:satellite-example}) to Chapter 5's binomial and Black-Scholes-Merton\index{Black-Scholes-Merton Model} option-pricing models in terms of what each treats as the source of uncertainty, and explain why alternative-data models are typically evaluated by out-of-sample predictive accuracy rather than by no-arbitrage argument.
+    \item Using Section~\ref{sec:point-in-time}'s method, explain in your own words why the realistic, lagged-card model's higher $R^2$ (0.873 versus 0.837) does not mean it is simply the better trading model, referencing the difference in which quarters each version actually signals.
+    \item Using Section~\ref{sec:altdata-feature-engineering}'s method, recompute the peer-adjusted regression's slope and $R^2$ if the sector-average car-count growth for Q5 is revised from 2.5\% to 5.0\% (a sector-wide surge that quarter), holding all other quarters fixed, and explain why the peer-adjusted model's $R^2$ falls even though Cascade's own reported revenue growth has not changed.
+    \item A vendor offers a trial dataset covering only the three quarters (of Table~\ref{tab:multisource_signal}) in which its data predicted the following quarter's earnings surprise correctly. Using Section~\ref{sec:vendor-ecosystem}'s discussion, explain what is wrong with evaluating the vendor's data quality using only this trial.
+    \item Using Section~\ref{sec:vendor-ecosystem}'s cost-benefit method, recompute the expected net annual benefit if the fund can only deploy a \$20 million position per signaled event (instead of \$50 million), holding the signal frequency, edge, and data costs fixed, and state whether the subscription is still worth its \$400,000 annual cost.
+    \item Using Section~\ref{sec:nn-structured-unstructured}'s autoencoder example, compute the reconstruction error and relative error for Q2 ($\text{car}=-1.5$, $\text{web}=-0.5$, $\text{card}=-1.0$) using the same encoder/decoder weights $w=(0.5,0.3,0.2)$, and state whether Q2 would be flagged ahead of Q7 (relative error 39.5\%) for data-quality review.
+    \item Using Section~\ref{sec:advanced-altdata}'s transfer-learning example, perform a second gradient-descent step starting from the updated weights $w=(0.549,0.464)$, $b=0.113$, and report the new prediction, confirming that it continues to move toward the true label of 1.
+    \item Using Section~\ref{sec:advanced-altdata}'s graph neural network example, compute $h_A$ and $h_D$'s updated scores using the same weights, and explain, using the network's chain structure $A \to B \to C \to D$, why $h_D$'s score barely moves from its raw feature while $h_B$'s moves substantially.
+    \item Using Section~\ref{sec:advanced-altdata}'s cross-attention example, recompute the fused output if the text modality's key becomes $K_{\text{txt}} = (0.8, 0.2)$ (a much less distinctive key vector, more similar to $K_{\text{img}}$), and explain in words why the two attention weights move closer to 50/50.
+    \item Explain, in a short paragraph, why a graph neural network's mean-aggregation step (Section~\ref{sec:advanced-altdata}) is a more direct computational analogue of ``guilt by association'' than Chapter 13's original, per-account fraud-scoring logistic regression.
+    \item Using Section~\ref{sec:advanced-altdata}'s contrastive-pretraining example, recompute $\Pr(\text{positive})$ if the temperature $\tau$ is raised from 0.1 to 1.0 (holding the two cosine similarities fixed), and explain in words why a higher temperature makes the model's implied preference for the true positive pair less extreme.
+    \item Using Section~\ref{sec:nn-structured-unstructured}'s LSTM worked example, recompute the forget gate $f_1$ and the resulting fraction of $c_1$ surviving to $c_3$ (that is, $f_2\times f_3$) if the forget-gate bias $b_f$ were $0.5$ instead of $2.0$, holding every other weight fixed, and explain why a smaller bias makes the LSTM behave more like the plain RNN example earlier in this section.
+    \item Explain, in your own words, why the plain RNN's memory-decay problem is a consequence of its hidden state being fully overwritten by a multiplicative recursion at every step, while the LSTM's cell state update is additive, and describe what would happen to the LSTM's own memory retention if its forget gate were trained to a value close to $0$ instead of close to $1$.
+\end{enumerate}
+
+\section{Further Reading}
+
+\begin{itemize}
+    \item Berkeley Haas School of Business, ``How Hedge Funds Use Satellite Images to Beat Wall Street, and Main Street.'' A research summary of the RS Metrics parking-lot car-count studies underlying Section~\ref{sec:satellite-example} and this chapter's case vignette.
+    \item Katona, Painter, Patatoukas, and Zeng, ``On the Capital Market Consequences of Big Data: Evidence from Outer Space,'' \emph{Journal of Financial and Quantitative Analysis}. The academic study of RS Metrics satellite imagery (2011-2017, 44 U.S. retailers) quantifying the earnings-window informational edge discussed in Section~\ref{sec:case-vignette-satellite}.
+    \item Feng and Fay, ``An Empirical Investigation of Forward-Looking Retailer Performance Using Parking Lot Traffic Data Derived from Satellite Imagery,'' \emph{Journal of Retailing}. A complementary study of satellite-derived parking-lot data's power to predict retailer sales, underlying Section~\ref{sec:satellite-example}'s worked example.
+    \item LeCun, Bengio, and Hinton, ``Deep Learning,'' \emph{Nature}. A survey covering convolutional and recurrent neural network architectures underlying Section~\ref{sec:nn-structured-unstructured}.
+    \item Goodfellow, Bengio, and Courville, \emph{Deep Learning}. A comprehensive textbook treatment of convolution, recurrence, and the attention mechanisms Chapter 14 and Section~\ref{sec:nn-structured-unstructured} both draw on.
+    \item Hochreiter and Schmidhuber, ``Long Short-Term Memory,'' \emph{Neural Computation}. The original paper introducing the LSTM architecture mentioned as an extension of Section~\ref{sec:nn-structured-unstructured}'s plain recurrent network.
+    \item Dosovitskiy et al., ``An Image Is Worth 16x16 Words: Transformers for Image Recognition at Scale,'' \emph{International Conference on Learning Representations}. The original vision transformer paper underlying Section~\ref{sec:nn-structured-unstructured}'s discussion of transformers as a unifying architecture.
+    \item Kolanovic and Krishnamachari, ``Big Data and AI Strategies,'' J.P. Morgan. An industry survey of alternative data sources and their use in systematic investing, covering the categories in Table~\ref{tab:alt_data_sources}.
+    \item Katona, Painter, Patatoukas, and Zeng, ``On the Capital Market Consequences of Big Data: Evidence from Outer Space'' (same source as above). Also documents the short-selling, liquidity, and information-asymmetry effects of satellite coverage discussed in this chapter's expanded case vignette.
+    \item Hinton and Salakhutdinov, ``Reducing the Dimensionality of Data with Neural Networks,'' \emph{Science}. A foundational paper on autoencoders, underlying Section~\ref{sec:nn-structured-unstructured}'s reconstruction-error anomaly-detection example.
+    \item Pan and Yang, ``A Survey on Transfer Learning,'' \emph{IEEE Transactions on Knowledge and Data Engineering}. A comprehensive survey of the pretrained-backbone fine-tuning approach worked through in Section~\ref{sec:advanced-altdata}.
+    \item Kipf and Welling, ``Semi-Supervised Classification with Graph Convolutional Networks,'' \emph{International Conference on Learning Representations}. A foundational paper on the graph neural network mean-aggregation update used in Section~\ref{sec:advanced-altdata}'s shell-company network example.
+    \item Chen, Kornblith, Norouzi, and Hinton, ``A Simple Framework for Contrastive Learning of Visual Representations,'' \emph{International Conference on Machine Learning}. The SimCLR paper underlying Section~\ref{sec:advanced-altdata}'s contrastive-pretraining worked example.
+    \item He, Zhang, Ren, and Sun, ``Deep Residual Learning for Image Recognition,'' \emph{IEEE Conference on Computer Vision and Pattern Recognition}. The original ResNet paper underlying Section~\ref{sec:nn-structured-unstructured}'s discussion of shortcut connections and the vanishing-gradient problem in deep CNNs.
+\end{itemize}
+
+\end{document}

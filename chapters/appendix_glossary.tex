@@ -1,0 +1,317 @@
+\documentclass[../ai_in_finance]{subfiles}
+\usepackage[margin=1in]{geometry}
+\usepackage{tikz}
+\usetikzlibrary{positioning}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{booktabs}
+\usepackage{array}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\usepackage{url}
+\usepackage{draftwatermark}
+
+\SetWatermarkText{WSuo@Queensu.ca}
+\SetWatermarkScale{1.4}
+\SetWatermarkColor{gray!35}
+\SetWatermarkAngle{45}
+
+\usepackage{makeidx}
+\makeindex
+
+\begin{document}
+
+\ifSubfilesClassLoaded{\appendix}{}
+\chapter{Glossary of Finance Terms}
+\label{app:glossary}
+
+
+This glossary is a quick-reference point, not a substitute for the chapter that actually develops a term. Each entry gives a one- or two-sentence working definition and points to the chapter (or chapters) where the concept is developed in full, usually with a worked numerical example; use the glossary to get unstuck on an unfamiliar term encountered before its formal introduction, then follow the pointer for the real treatment. Entries are alphabetized for lookup, since a reader hitting an unfamiliar term mid-chapter needs to find it quickly, not read the glossary front to back. This glossary deliberately does not redefine standard statistics and machine learning vocabulary (regression, neural network, gradient descent, and the like) that this book's intended reader already knows; it covers finance- and trading-specific jargon, regulatory terms, and a handful of quantitative-finance terms of art (e.g., ``backtest,'' ``look-ahead bias'') that have a specific meaning in this context beyond their everyday use.
+
+
+\begin{description}
+
+\item[\textbf{Adverse selection}] The risk that a market maker's counterparty knows something the market maker does not, so that trading against better-informed counterparties is systematically unprofitable; one of the three components Chapter 3 decomposes the bid-ask spread into.
+
+\item[\textbf{Alpha}] The portion of an investment's return that is not explained by its exposure to broad market risk (beta); loosely, ``skill'' or ``edge'' rather than just being exposed to a rising market. Chapter 10 defines alpha formally as the intercept in a factor-model regression.
+
+\item[\textbf{Alternative data}] Non-traditional data sources, such as satellite imagery, web traffic, or shipping data, used as an early proxy for economic activity that has not yet appeared in official statistics or financial statements. See Chapter 15.
+
+\item[\textbf{AML (Anti-Money Laundering)}] The set of laws, regulations, and institutional controls designed to detect and prevent the disguising of criminal proceeds as legitimate funds. See Chapter 13.
+
+\item[\textbf{Automated Market Maker (AMM)}] A smart contract that quotes prices algorithmically from a fixed formula (most commonly $x\cdot y=k$) rather than from a human trader's order placement, drawing its liquidity from any user willing to deposit assets into a shared pool. See Chapter 11.
+
+\item[\textbf{Backtest}] Testing a trading strategy or model against historical data to estimate how it would have performed, a central tool of Chapter 11 that is also a common source of overly optimistic, overfit results if not done carefully.
+
+\item[\textbf{Balance sheet}] A financial statement showing what a company owns (assets), what it owes (liabilities), and the residual claim of its owners (equity) at a single point in time. See Chapter 4.
+
+\item[\textbf{Basel Accords}] A series of international banking regulatory agreements (Basel I, II, III) setting minimum capital requirements and risk-management standards for banks. See Chapter 8.
+
+\item[\textbf{Basis point (bp)}] One hundredth of one percentage point ($0.01\% = 0.0001$); the standard unit for quoting small differences in interest rates, spreads, and fees. See Chapter 3.
+
+\item[\textbf{Beta}] A measure of how sensitive an asset's returns are to the overall market's returns; a beta of 1.5 means the asset tends to move 1.5\% for every 1\% move in the market. First used informally in Chapter 5, then estimated directly from data in Chapter 10.
+
+\item[\textbf{Bid-ask spread}] The gap between the highest price a buyer is currently willing to pay (the bid) and the lowest price a seller is currently willing to accept (the ask); a direct, observable cost of trading and a proxy for an asset's liquidity. See Chapter 3.
+
+\item[\textbf{Black-Scholes-Merton model}] A closed-form formula for pricing European call and put options as a function of the underlying's price, the strike price, time to maturity, volatility, and the risk-free rate, derived independently by Black and Scholes and by Merton in 1973; the model whose Greeks (delta, gamma, vega, theta) are the standard language for describing an option position's risk. See Chapter 5.
+
+\item[\textbf{Bond}] A debt security in which the issuer (a company or government) promises to make periodic coupon payments and repay the bond's face value at maturity, in exchange for the money the bondholder lent upfront. See Chapter 5.
+
+\item[\textbf{BSA (Bank Secrecy Act)}] The primary U.S. law requiring banks to maintain records and file reports (CTRs and SARs) that assist in detecting money laundering. See Chapter 13.
+
+\item[\textbf{Call option}] A contract giving its holder the right, but not the obligation, to buy the underlying asset at a fixed strike price on or before a specified date; the holder profits if the underlying's price rises above the strike. See Chapter 5.
+
+\item[\textbf{CAPM (Capital Asset Pricing Model)}] A model relating an asset's expected return to its beta and the market's expected excess return; the foundational single-factor model that later multi-factor models extend. See Chapter 10.
+
+\item[\textbf{Cash flow statement}] A financial statement reconciling a company's cash balance from one period to the next, broken into operating, investing, and financing activities. See Chapter 4.
+
+\item[\textbf{CDD / EDD (Customer / Enhanced Due Diligence)}] CDD is the baseline process of verifying a customer's identity and establishing their expected activity profile at onboarding; EDD applies heightened scrutiny to higher-risk customers, such as politically exposed persons. See Chapter 13.
+
+\item[\textbf{CDS (Credit Default Swap)}] A derivative contract in which the protection buyer pays a periodic premium in exchange for a payout if a specified borrower defaults; effectively insurance against default. See Chapter 9.
+
+\item[\textbf{Circuit breaker}] An exchange rule that automatically halts trading in a security (or an entire market) after a sufficiently large price move, intended to give participants time to reassess rather than trade on a possible error or panic. See Chapter 12.
+
+\item[\textbf{Clearinghouse}] An intermediary that stands between the two counterparties to a trade after execution, guaranteeing settlement and reducing counterparty risk. See Chapter 3.
+
+\item[\textbf{COGS (Cost of Goods Sold)}] The direct costs attributable to producing the goods or services a company sells, subtracted from revenue to compute gross profit. See Chapter 4.
+
+\item[\textbf{Collateral}] Assets a borrower pledges to a lender to secure a loan, which the lender may seize if the borrower defaults; the basis for how loss given default depends on how well an exposure is secured. See Chapters 3 and 9.
+
+\item[\textbf{Co-location}] Renting rack space physically inside (or adjacent to) an exchange's own data center specifically to minimize the network latency of sending and receiving orders. See Chapter 12.
+
+\item[\textbf{Cointegration}] A long-run statistical relationship between two or more non-stationary time series whose particular linear combination is itself stationary; the basis for pairs-trading strategies. See Chapters 7 and 11.
+
+\item[\textbf{Counterparty}] The other party to a financial transaction or contract; counterparty risk is the risk that this other party fails to honor its obligations. See Chapters 3 and 9.
+
+\item[\textbf{Coupon}] The periodic interest payment a bond issuer promises to pay its bondholders, usually expressed as an annual percentage of the bond's face value. See Chapter 5.
+
+\item[\textbf{Credit rating}] A letter grade (e.g., AAA, BBB, CCC) assigned by a rating agency summarizing an issuer's or bond's creditworthiness. See Chapter 9.
+
+\item[\textbf{Credit spread}] The extra yield a risky bond pays over a comparable risk-free bond, compensating the lender for default risk; wider spreads mean the market perceives more credit risk. See Chapters 6 and 9.
+
+\item[\textbf{CTR (Currency Transaction Report)}] A report a U.S. financial institution must file for any cash transaction exceeding \$10,000, regardless of whether the transaction looks suspicious. See Chapter 13.
+
+\item[\textbf{Dark pool}] A private trading venue that does not publicly display its order book before a trade executes, used mainly by large institutional traders seeking to limit the market impact of a large order. See Chapter 3.
+
+\item[\textbf{Default}] A borrower's failure to make a required payment on a debt obligation as promised; the event whose probability (PD), severity (LGD), and exposure (EAD) together determine expected credit loss. See Chapter 9.
+
+\item[\textbf{Derivative}] A financial contract whose value is derived from the price of some other, underlying asset (a stock, a bond, a rate, a commodity), rather than having independent value of its own; options, futures, and CDS are all derivatives covered in this book. See Chapters 3 and 5.
+
+\item[\textbf{Disparate impact}] A legal theory under which a facially neutral policy or model is nonetheless unlawful if it produces a substantially worse outcome for a protected group, regardless of intent; the four-fifths rule is the most common numerical test for it. See Chapter 16.
+
+\item[\textbf{Diversification}] Combining assets whose returns are not perfectly correlated so that a portfolio's overall risk is less than the weighted average of its individual assets' risks. See Chapters 2 and 10.
+
+\item[\textbf{Dividend}] A cash (or stock) payment a company distributes to its shareholders, typically out of earnings. See Chapter 3.
+
+\item[\textbf{Dividend Discount Model (DDM)}] A valuation method that prices a stock as the present value of all its expected future dividend payments. See Chapter 5.
+
+\item[\textbf{Drawdown}] The decline in a portfolio's value from its most recent peak to a subsequent trough, usually expressed as a percentage; maximum drawdown is a common risk metric because it captures the pain of a losing streak in a way volatility alone does not. See Chapter 11.
+
+\item[\textbf{Duration}] A bond's approximate percentage price sensitivity to a small change in interest rates; a duration of 5 means the bond's price falls by roughly 5\% for every 1 percentage point rise in yields. See Chapter 5.
+
+\item[\textbf{EAD (Exposure at Default)}] The estimated amount a lender is exposed to at the moment a borrower defaults, one of the three components (with PD and LGD) of expected loss. See Chapter 9.
+
+\item[\textbf{EBITDA}] Earnings Before Interest, Taxes, Depreciation, and Amortization; a rough proxy for a company's operating cash-generating ability that strips out financing decisions, tax jurisdiction effects, and non-cash accounting charges. See Chapter 4.
+
+\item[\textbf{ECOA (Equal Credit Opportunity Act)}] The U.S. law prohibiting credit discrimination on the basis of race, sex, and other protected characteristics, and requiring lenders to provide specific reasons when denying credit. See Chapter 16.
+
+\item[\textbf{Efficient frontier}] The set of portfolios that offer the highest expected return for each level of risk (or, equivalently, the lowest risk for each level of expected return). See Chapter 10.
+
+\item[\textbf{ESG (Environmental, Social, and Governance)}] A set of non-financial criteria used to evaluate a company's or portfolio's exposure to environmental, social, and governance-related risks and practices. See Chapter 10.
+
+\item[\textbf{Exchange}] A regulated, centralized venue where buyers and sellers meet to trade standardized securities under a common set of rules. See Chapter 3.
+
+\item[\textbf{Expected Loss}] The average loss a lender expects on a credit exposure, computed as the product of probability of default, loss given default, and exposure at default. See Chapter 9.
+
+\item[\textbf{Expected Shortfall (ES)}] The average loss in the worst scenarios beyond the VaR threshold; unlike VaR, it answers ``how bad, on average, is a bad day'' rather than just ``how bad is a day that is bad enough.'' Also called Conditional VaR (CVaR). See Chapter 8.
+
+\item[\textbf{Face value (par value)}] The amount a bond's issuer promises to repay the bondholder at maturity, used as the basis for computing coupon payments. See Chapter 5.
+
+\item[\textbf{Factor model}] A model explaining an asset's returns as a linear combination of exposures to a small number of common risk factors (market, size, value, momentum, and so on), extending CAPM's single-factor idea. See Chapter 10.
+
+\item[\textbf{FATF (Financial Action Task Force)}] An intergovernmental body that sets international standards for combating money laundering and terrorist financing. See Chapter 13.
+
+\item[\textbf{Fat-finger error}] A large, unintended order caused by human data-entry error (an extra zero, a misplaced decimal) rather than a deliberate trading decision; exchanges use price collars specifically to limit the damage such an error can cause. See Chapter 12.
+
+\item[\textbf{Four-fifths rule}] A common (though not universally binding) threshold in U.S. discrimination law: if a protected group's selection or approval rate is less than 80\% of the most-favored group's rate, the practice is presumed to have a disparate impact. See Chapter 16.
+
+\item[\textbf{Free Cash Flow (FCF)}] The cash a company generates after covering the capital expenditures needed to sustain its operations; the actual cash available to pay down debt, pay dividends, or reinvest. See Chapters 4 and 5.
+
+\item[\textbf{FRTB (Fundamental Review of the Trading Book)}] A Basel Committee framework overhauling how banks must measure and hold capital against market risk, developed in response to weaknesses the 2008 financial crisis exposed in earlier VaR-based approaches. See Chapter 8.
+
+\item[\textbf{Futures contract}] A standardized, exchange-traded agreement to buy or sell an asset at a predetermined price on a specified future date, marked to market daily. See Chapter 3.
+
+\item[\textbf{GARCH}] Generalized Autoregressive Conditional Heteroskedasticity; a time-series model in which today's volatility depends on past volatility and past shocks, capturing the empirical fact that volatile periods tend to cluster together. See Chapter 7.
+
+\item[\textbf{Greeks}] The sensitivities of an option's price to various underlying factors: delta (price), gamma (delta's own sensitivity to price), vega (volatility), and theta (time). See Chapter 5.
+
+\item[\textbf{Gross margin}] Gross profit (revenue minus cost of goods sold) divided by revenue, expressed as a percentage. See Chapter 4.
+
+\item[\textbf{Hedge}] A position taken specifically to offset the risk of an existing position, reducing (rather than eliminating) exposure to an adverse price move. See Chapters 5 and 8.
+
+\item[\textbf{Impermanent loss}] The shortfall in value a liquidity provider to an automated market maker experiences, relative to simply holding the underlying assets, whenever the pool's price moves away from the price at deposit. See Chapter 11.
+
+\item[\textbf{Implied volatility}] The volatility level that, when plugged into an option-pricing model, reproduces the option's actual observed market price; a market-implied forecast of future volatility rather than a measure of past volatility. See Chapter 5.
+
+\item[\textbf{Integration}] The final stage of money laundering, in which layered funds are reintroduced into the legitimate economy (e.g., through a real estate purchase) and become largely indistinguishable from legitimately earned money. See Chapter 13.
+
+\item[\textbf{Inventory risk}] The risk a market maker bears that its current net position (long or short) moves against it before an offsetting trade arrives; one of the three components of the bid-ask spread and the central concern of inventory-based market-making models. See Chapters 3 and 11.
+
+\item[\textbf{IPO (Initial Public Offering)}] A company's first sale of shares to the public, converting it from privately to publicly held. See Chapter 3.
+
+\item[\textbf{KYC (Know Your Customer)}] The due-diligence process of verifying a customer's identity and understanding their expected financial activity, the foundation of a bank's anti-money-laundering program. See Chapter 13.
+
+\item[\textbf{Kyle's lambda}] A measure of price impact: the price change per unit of net order flow, estimated by regressing price changes on signed trading volume. See Chapters 11 and 12.
+
+\item[\textbf{Latency arbitrage}] A strategy that profits from being faster than other participants at reacting to new information or price changes, rather than from superior forecasting. See Chapter 12.
+
+\item[\textbf{Layering}] The second stage of money laundering, in which placed funds are moved through a chain of transactions and accounts, often across institutions and jurisdictions, specifically to obscure their criminal origin. See Chapter 13.
+
+\item[\textbf{Leverage}] The use of borrowed money to increase the potential return (and risk) of an investment or a company's balance sheet. See Chapters 4 and 8.
+
+\item[\textbf{LGD (Loss Given Default)}] The fraction of an exposure a lender expects to lose if a borrower defaults, after accounting for any recovery (e.g., from collateral). See Chapter 9.
+
+\item[\textbf{Limit order}] An order to buy or sell at a specified price or better, which rests in the order book until it either executes against an incoming order or is cancelled. See Chapter 3.
+
+\item[\textbf{Liquidity}] How easily an asset can be bought or sold close to its current price without moving that price; a liquid market has narrow spreads and deep order books. See Chapter 3.
+
+\item[\textbf{Liquidity provider (LP)}] A participant who deposits assets into an automated market maker's pool in exchange for a share of the trading fees, bearing impermanent loss in return. See Chapter 11.
+
+\item[\textbf{Long position}] Owning an asset outright, profiting if its price rises; the ordinary way of holding an investment, as opposed to a short position. See Chapter 3.
+
+\item[\textbf{Look-ahead bias}] A backtesting error in which a strategy or model is (often inadvertently) given access to information that would not actually have been available at the time of the simulated decision, producing an unrealistically good result. See Chapter 15.
+
+\item[\textbf{Margin}] Collateral a trader must post to open or maintain a leveraged position, protecting the counterparty (or exchange) against the trader's potential losses. See Chapter 3.
+
+\item[\textbf{Margin call}] A broker's demand for additional collateral when a leveraged position's losses erode the trader's existing margin below a required maintenance level. See Chapter 3.
+
+\item[\textbf{Market impact}] The extent to which placing a trade itself moves the price against the trader, distinct from the price movement that would have happened anyway. See Chapter 11.
+
+\item[\textbf{Market maker}] A firm or algorithm that continuously quotes both a bid and an ask, profiting from the spread while bearing inventory risk. See Chapters 3 and 11.
+
+\item[\textbf{Market order}] An order to buy or sell immediately at the best currently available price, trading certainty of execution for uncertainty of price. See Chapter 3.
+
+\item[\textbf{Maturity}] The date on which a bond's principal is repaid, or an option or futures contract expires; time to maturity is a key input to bond pricing, duration, and option valuation. See Chapter 5.
+
+\item[\textbf{Mean reversion}] The tendency of a price or spread to drift back toward its historical average after departing from it; the statistical basis for pairs trading and related strategies. See Chapters 7 and 11.
+
+\item[\textbf{Merton model}] A structural credit-risk model treating a firm's equity as a call option on its assets, with default occurring if asset value falls below the face value of debt at maturity. See Chapter 9.
+
+\item[\textbf{Mixing service}] A mechanism (such as CoinJoin) that pools transactions from multiple, unrelated blockchain participants into a single transaction with equal-value outputs, deliberately obscuring which output pays which input. See Chapter 13.
+
+\item[\textbf{Model risk}] The risk that a model is wrong, misused, or misunderstood, and that a decision relying on it is therefore wrong even though the model appeared to function correctly. See Chapter 8.
+
+\item[\textbf{Net Present Value (NPV)}] The present value of an investment's expected future cash flows minus its upfront cost; a positive NPV indicates the investment is expected to create value. See Chapter 5.
+
+\item[\textbf{No-arbitrage}] The principle that two portfolios with identical future payoffs must have the same price today, since otherwise a riskless profit could be locked in; the foundation of most derivatives-pricing theory. See Chapters 3 and 5.
+
+\item[\textbf{Notional (value)}] The total value a derivative contract controls or references, as distinct from the (usually much smaller) amount of capital actually posted to enter the position. See Chapter 5.
+
+\item[\textbf{Option}] A derivative contract giving its holder the right, but not the obligation, to buy or sell an underlying asset at a fixed strike price by a specified date, in exchange for an upfront premium; see \emph{call option} and \emph{put option} for the two basic types. See Chapter 5.
+
+\item[\textbf{Order book}] The list of all currently resting limit orders for a given security, organized by price level, showing the depth of buying and selling interest at each price. See Chapter 3.
+
+\item[\textbf{Order flow}] The stream of incoming buy and sell orders a market or market maker observes; signed order flow (buys minus sells) is the input to price-impact measures such as Kyle's lambda. See Chapters 11 and 12.
+
+\item[\textbf{OTC (Over-the-Counter)}] Trading conducted directly between two counterparties rather than on a centralized, regulated exchange. See Chapter 3.
+
+\item[\textbf{Pairs trading}] A strategy that takes offsetting long and short positions in two historically related securities, betting that a temporary divergence between them will revert to its historical relationship. See Chapter 11.
+
+\item[\textbf{PD (Probability of Default)}] The estimated likelihood that a borrower will fail to meet its debt obligations over a given time horizon. See Chapter 9.
+
+\item[\textbf{Peeling chain}] A pattern in which a single blockchain address receives a large amount, forwards nearly all of it onward while retaining a small remainder, and the pattern repeats for many hops; the on-chain analogue of a shell-company layering chain. See Chapter 13.
+
+\item[\textbf{PIN (Probability of Informed Trading)}] A market microstructure measure of the fraction of order flow estimated to come from traders with private information, as opposed to uninformed liquidity traders. See Chapter 12.
+
+\item[\textbf{Placement}] The first stage of money laundering: introducing illicit cash into the financial system, for example through structured deposits. See Chapter 13.
+
+\item[\textbf{Portfolio}] A collection of financial assets (stocks, bonds, cash, derivatives, or any combination) held together by an investor; this book's running two- and three-asset portfolios are the simplest possible example. See Chapters 2 and 10.
+
+\item[\textbf{Present Value (PV)}] The value today of a future cash flow (or stream of cash flows), computed by discounting it back at an appropriate rate. See Chapter 5.
+
+\item[\textbf{Prime broker}] A bank or securities firm providing a bundle of services (financing, securities lending, clearing) to institutional clients such as hedge funds. See Chapter 3.
+
+\item[\textbf{Primary market}] The market in which securities are first sold by their issuer to investors (e.g., an IPO), as opposed to a secondary market where existing securities change hands between investors. See Chapter 3.
+
+\item[\textbf{Put option}] A contract giving its holder the right, but not the obligation, to sell the underlying asset at a fixed strike price on or before a specified date; the holder profits if the underlying's price falls below the strike. See Chapter 5.
+
+\item[\textbf{Recovery rate}] The fraction of a defaulted exposure a lender ultimately recovers, typically through collateral or bankruptcy proceedings; loss given default is simply one minus the recovery rate. See Chapter 9.
+
+\item[\textbf{Repo (Repurchase Agreement)}] A short-term, collateralized loan structured as a sale of a security with an agreement to repurchase it later at a slightly higher price, the effective interest being the difference. See Chapter 3.
+
+\item[\textbf{Retained earnings}] The cumulative portion of a company's net income that has been kept (not paid out as dividends) since the company's founding. See Chapter 4.
+
+\item[\textbf{Risk-free rate}] The theoretical return on an investment with zero risk of default, typically proxied in practice by a short-term government bond yield; the baseline every risk premium (equity risk premium, credit spread) is measured against. See Chapters 5 and 10.
+
+\item[\textbf{ROA (Return on Assets)}] Net income divided by total assets, measuring how efficiently a company generates profit from everything it owns. See Chapter 4.
+
+\item[\textbf{ROE (Return on Equity)}] Net income divided by shareholders' equity, measuring the return generated on shareholders' invested capital. See Chapter 4.
+
+\item[\textbf{ROIC (Return on Invested Capital)}] After-tax operating profit divided by the total capital (debt plus equity) invested in the business, often compared against WACC to judge whether a company is creating or destroying economic value. See Chapter 4.
+
+\item[\textbf{Robo-advisor}] An automated investment-advisory service that builds and manages a portfolio for a client based on a short risk questionnaire, typically using mean-variance or similar optimization rather than a human advisor's judgment. See Chapter 10.
+
+\item[\textbf{SAR (Suspicious Activity Report)}] A report a financial institution must file for any transaction pattern, regardless of size, that appears designed to evade reporting requirements or otherwise suggests criminal activity. See Chapter 13.
+
+\item[\textbf{Sanctions screening}] Checking counterparties against government-maintained lists of prohibited individuals, entities, and countries; a binary legal-compliance check rather than a statistical risk model. See Chapter 13.
+
+\item[\textbf{Secondary market}] The market in which investors trade securities among themselves after their original issuance; most day-to-day trading (e.g., on a stock exchange) happens here. See Chapter 3.
+
+\item[\textbf{Sharpe ratio}] A portfolio's average excess return (over the risk-free rate) divided by the standard deviation of that return; the standard measure of return earned per unit of risk taken. See Chapters 10 and 11.
+
+\item[\textbf{Shell company}] An entity with no significant independent operations or assets, often used to obscure the true ownership or purpose of funds flowing through it. See Chapter 13.
+
+\item[\textbf{Short position (short selling)}] Selling a borrowed asset now with the obligation to return an equivalent asset later, a bet that the price will fall. See Chapter 3.
+
+\item[\textbf{Slippage}] The difference between the price a trader expected when deciding to trade and the price actually achieved once the order executes. See Chapter 11.
+
+\item[\textbf{Stationarity}] A time series property in which the statistical characteristics (mean, variance, autocorrelation) do not change over time; many forecasting models require stationarity, or a transformation (such as differencing) to achieve it. See Chapter 7.
+
+\item[\textbf{Stock (equity)}] A security representing fractional ownership of a company, entitling the holder to a proportional share of its residual value and (usually) a vote in corporate matters; also called equity, as opposed to debt. See Chapter 3.
+
+\item[\textbf{Stress testing}] Evaluating how a portfolio, model, or institution would perform under an extreme but plausible adverse scenario, rather than relying solely on statistical measures estimated from typical historical data. See Chapter 8.
+
+\item[\textbf{Strike price}] The fixed price at which an option holder may buy (call) or sell (put) the underlying asset. See Chapter 5.
+
+\item[\textbf{Structuring (smurfing)}] Deliberately breaking a large cash transaction into several smaller ones, each below a regulatory reporting threshold, specifically to avoid triggering a report. See Chapter 13.
+
+\item[\textbf{Survivorship bias}] The distortion introduced by analyzing only entities (companies, funds, strategies) that still exist today, silently excluding the failures that were removed along the way. See Chapter 15.
+
+\item[\textbf{Systematic risk (and idiosyncratic risk)}] Systematic risk is the portion of an asset's risk driven by broad market-wide factors and cannot be diversified away; idiosyncratic risk is asset-specific and shrinks toward zero as a portfolio is diversified. This distinction is what CAPM's beta measures and diversification exploits. See Chapter 10.
+
+\item[\textbf{10-K filing}] A U.S. public company's annual report filed with the SEC, containing audited financial statements alongside extensive qualitative disclosure, including a risk-factors section; a primary real-world source of the text financial NLP methods are applied to. See Chapter 14.
+
+\item[\textbf{Terminal value}] The estimated value of all cash flows beyond an explicit forecast horizon, typically the largest single component of a discounted-cash-flow valuation. See Chapter 5.
+
+\item[\textbf{Three lines of defense}] A governance framework dividing risk-management responsibility across business units (first line), independent risk and compliance functions (second line), and internal audit (third line). See Chapters 8 and 13.
+
+\item[\textbf{Tick size}] The minimum allowed price increment a security can move by on an exchange. See Chapter 12.
+
+\item[\textbf{Transition risk}] The financial impact on a company or portfolio of the policy, technology, and consumer-preference shifts associated with a transition to a lower-carbon economy, as distinct from physical climate risk. See Chapter 8.
+
+\item[\textbf{TWAP / VWAP}] Time-Weighted and Volume-Weighted Average Price; two common execution benchmarks (and the algorithms designed to track them) that split a large order into smaller pieces over time, either evenly (TWAP) or in proportion to expected trading volume (VWAP). See Chapter 11.
+
+\item[\textbf{Underlying (asset)}] The asset a derivative contract's value is based on, e.g., the stock an option gives the right to buy or sell. See Chapters 3 and 5.
+
+\item[\textbf{Underwriting}] The process of evaluating and pricing the risk of extending credit or issuing insurance, historically performed by a human underwriter and increasingly informed by statistical scoring models. See Chapters 3 and 9.
+
+\item[\textbf{Unit root}] A property of a non-stationary time series in which shocks have a permanent rather than temporary effect; tested for directly (e.g., with the Augmented Dickey-Fuller test) before fitting many time-series models. See Chapter 7.
+
+\item[\textbf{VaR (Value at Risk)}] A single dollar (or percentage) figure summarizing the loss a portfolio is not expected to exceed over a given time horizon at a given confidence level. See Chapter 8.
+
+\item[\textbf{Volatility}] A statistical measure (typically the standard deviation of returns) of how much an asset's price fluctuates; higher volatility means larger, more frequent price swings. See Chapters 2 and 5.
+
+\item[\textbf{Volatility clustering}] The empirical tendency for periods of high volatility to be followed by more high volatility, and calm periods to be followed by more calm, rather than volatility being independent from one period to the next. See Chapter 7.
+
+\item[\textbf{WACC (Weighted Average Cost of Capital)}] A company's blended cost of financing, combining the cost of debt and the cost of equity in proportion to how much of each the company uses; the standard discount rate for valuing a firm's overall cash flows. See Chapter 4.
+
+\item[\textbf{Walk-forward validation}] A time-series-appropriate alternative to a random train-test split, in which a model is repeatedly trained on data only up to a point in time and tested on the period immediately following, mimicking how the model would actually have been used in real time; essential for avoiding look-ahead bias in trading-signal backtests. See Chapters 7 and 11.
+
+\item[\textbf{Working capital}] Current assets minus current liabilities; a measure of a company's short-term liquidity and ability to fund its day-to-day operations. See Chapter 4.
+
+\item[\textbf{Yield}] The return an investor earns on a bond if held to maturity, accounting for both coupon payments and any difference between the purchase price and face value. See Chapter 5.
+
+\item[\textbf{Yield curve}] A plot of yields against maturity for otherwise-comparable bonds (typically government bonds), whose shape (upward-sloping, flat, inverted) is widely watched as a signal about market expectations for future interest rates and growth. See Chapters 5 and 7.
+
+\end{description}
+
+\end{document}
