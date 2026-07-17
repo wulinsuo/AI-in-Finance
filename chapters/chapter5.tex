@@ -579,7 +579,34 @@ A simplified numerical illustration makes the option-to-wait logic concrete, eve
 \begin{equation*}
 E[\text{Payoff}] = 0.5 \times \max(70.0 - 50.0,\ 0) + 0.5 \times \max(35.0 - 50.0,\ 0) = 0.5(20.0) + 0.5(0) = \$10.0 \text{ million},
 \end{equation*}
-which, discounted one year at a risk-free rate of $5\%$, has a present value of $10.0/1.05 \approx \$9.52$ million, substantially higher than the $\$0$ NPV of developing immediately. The value of waiting comes entirely from the asymmetry built into the option to walk away: the firm captures the full upside if prices rise but avoids the downside entirely if they fall, an asymmetry a simple point-estimate NPV calculation, which implicitly commits to developing the project regardless of how prices move, cannot capture at all. This is exactly why a corporate finance team that evaluates a marginal project using only a single expected NPV, without asking whether waiting for more information is itself a valuable and available choice, can systematically pass over projects, or approve them prematurely, in ways that ignore real, quantifiable option value.
+which, discounted one year at a risk-free rate of $5\%$, has a present value of $10.0/1.05 \approx \$9.52$ million, substantially higher than the $\$0$ NPV of developing immediately. Figure~\ref{fig:real_options_tree} lays out this comparison as a one-step decision tree: developing immediately is a single certain outcome, while waiting branches into the two possible commodity-price states, each carrying its own payoff. The value of waiting comes entirely from the asymmetry built into the option to walk away: the firm captures the full upside if prices rise but avoids the downside entirely if they fall, an asymmetry a simple point-estimate NPV calculation, which implicitly commits to developing the project regardless of how prices move, cannot capture at all. This is exactly why a corporate finance team that evaluates a marginal project using only a single expected NPV, without asking whether waiting for more information is itself a valuable and available choice, can systematically pass over projects, or approve them prematurely, in ways that ignore real, quantifiable option value. Chapter 17 revisits the closely related American-option early-exercise decision from Section~\ref{sec:american-options} using a model-free reinforcement-learning algorithm, Q-learning, and shows that it recovers the exact same optimal exercise policy without ever being told the tree's transition probabilities or payoff structure in advance, an instructive machine-learning counterpart to the closed-form, model-based reasoning used throughout this section.
+
+\begin{figure}[htbp]
+    \centering
+    \begin{minipage}{0.32\linewidth}
+        \centering
+        \begin{tikzpicture}[scale=0.85,transform shape,every node/.style={font=\small}]
+            \node[draw,rounded corners,align=center] (now) at (0,0) {Develop Now\\$V_0=\$50.0$M\\$\text{NPV}=\$0.00$M};
+        \end{tikzpicture}
+
+        \small Develop immediately
+    \end{minipage}%
+    \hfill
+    \begin{minipage}{0.64\linewidth}
+        \centering
+        \begin{tikzpicture}[scale=0.85,transform shape,every node/.style={font=\small}]
+            \node[draw,rounded corners,align=center] (s0) at (0,0) {Wait One Year\\$V_0=\$50.0$M};
+            \node[draw,rounded corners,align=center] (up) at (4.0,1.8) {Price Rises\\$V_u=\$70.0$M\\Develop: Payoff$=\$20.0$M};
+            \node[draw,rounded corners,align=center] (down) at (4.0,-1.8) {Price Falls\\$V_d=\$35.0$M\\Walk Away: Payoff$=\$0.00$M};
+            \draw[->] (s0) -- node[above,sloped,font=\scriptsize] {$p=0.5$} (up);
+            \draw[->] (s0) -- node[below,sloped,font=\scriptsize] {$p=0.5$} (down);
+        \end{tikzpicture}
+
+        \small Option to wait: $E[\text{Payoff}]=\$10.0$M, $PV\approx\$9.52$M
+    \end{minipage}
+    \caption{A one-step real-options decision tree for the mining deposit example. Developing immediately (left) locks in a certain $\text{NPV}=\$0$. Waiting one year (right) instead lets the firm observe which commodity-price state occurs before committing capital: it develops and captures the full \$20.0 million payoff if prices rise, but walks away at no further cost if they fall. The resulting expected payoff of \$10.0 million, discounted one year at the $5\%$ risk-free rate, is worth approximately \$9.52 million today, comfortably more than the \$0 NPV of developing now.}
+    \label{fig:real_options_tree}
+\end{figure}
 
 \section{Putting It Together: Valuing Meridian Fabrication}\index{Putting It Together: Valuing Meridian Fabrication}
 

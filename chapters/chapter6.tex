@@ -76,8 +76,33 @@ With $\bar x = 4$ and $\bar y = 208$, the data in Table~\ref{tab:credit_spread_d
 \begin{equation*}
 \hat\beta_1 = \frac{470}{10} = 47, \qquad \hat\beta_0 = 208 - 47(4) = 20.
 \end{equation*}
-The fitted model is $\widehat{\text{spread}} = 20 + 47 \times \text{leverage}$: each additional turn of debt-to-EBITDA is associated with roughly 47 additional basis points of credit spread. The fitted values are 114, 161, 208, 255, and 302 bps, close to the observed 120, 150, 210, 260, and 300. The residual sum of squares is 
-$$\text{SSE} = \sum_i (y_i - \hat y_i)^2 = 190$$, and the total sum of squares around the mean is 
+The fitted model is $\widehat{\text{spread}} = 20 + 47 \times \text{leverage}$: each additional turn of debt-to-EBITDA is associated with roughly 47 additional basis points of credit spread. The fitted values are 114, 161, 208, 255, and 302 bps, close to the observed 120, 150, 210, 260, and 300. Figure~\ref{fig:credit_spread_regression} plots the five issuers alongside this fitted line, making the tightness of the fit, and the size of each point's residual, visually immediate.
+
+\begin{figure}[htbp]
+    \centering
+    \begin{tikzpicture}[scale=0.9]
+        \draw[->] (0,0) -- (6.3,0) node[right] {Debt/EBITDA ($x$)};
+        \draw[->] (0,0) -- (0,3.4) node[above] {Credit spread, bps ($y$)};
+        \foreach \y/\ylab in {0/0, 0.914/100, 1.829/200, 2.743/300} {
+            \draw (-0.08,\y) -- (0.08,\y);
+            \node[left] at (-0.1,\y) {\ylab};
+        }
+        \foreach \x/\xlab in {1.714/2, 2.571/3, 3.429/4, 4.286/5, 5.143/6} {
+            \draw (\x,-0.08) -- (\x,0.08);
+            \node[below] at (\x,-0.1) {\xlab};
+        }
+        \draw[thick,blue] (0,0.183) -- (6.0,3.191);
+        \foreach \px/\py in {1.714/1.097, 2.571/1.371, 3.429/1.920, 4.286/2.377, 5.143/2.743} {
+            \filldraw[black] (\px,\py) circle (2pt);
+        }
+        \node[above right,blue] at (3.0,2.05) {$\widehat{\text{spread}}=20+47x$};
+    \end{tikzpicture}
+    \caption{Debt-to-EBITDA leverage and credit spread for the five hypothetical issuers in Table~\ref{tab:credit_spread_data} (black dots), with the OLS-fitted line $\widehat{\text{spread}}=20+47x$ overlaid (blue). The tight fit, consistent with $R^2\approx0.991$, is exactly what makes the slope's standard error small and its $p$-value overwhelming in the inference discussion that follows.}
+    \label{fig:credit_spread_regression}
+\end{figure}
+
+The residual sum of squares is
+$$\text{SSE} = \sum_i (y_i - \hat y_i)^2 = 190,$$ and the total sum of squares around the mean is
 $$\text{SST} = \sum_i (y_i - \bar y)^2 = 22{,}280,$$
 giving
 \begin{equation*}
@@ -120,6 +145,34 @@ This distinction between the slope's overwhelming significance and the intercept
 
 The closed-form OLS solution above exists because linear regression's loss function has a special structure: it is quadratic in the parameters, so its minimum can be found in one step by solving a system of linear equations. Most machine learning models, including logistic regression, neural networks, and many others introduced later in this chapter, do not have this convenient property, and their parameters must instead be found iteratively using an optimization algorithm called gradient descent.
 
+\begin{figure}[htbp]
+    \centering
+    \begin{tikzpicture}[scale=0.9]
+        \draw[->] (-0.5,0) -- (10.5,0) node[right] {$\theta$};
+        \draw[->] (0,-0.5) -- (0,4.5) node[above] {Loss $\mathcal{L}(\theta)$};
+        \draw[thick,domain=0:10,smooth,samples=60,variable=\x] plot ({\x},{0.16*(\x-5)*(\x-5)});
+        \draw[dashed,gray] (5,0) -- (5,-0.35);
+        \node[below] at (5,-0.4) {$\theta^\star$};
+        \filldraw[red] (5,0) circle (2pt);
+        \draw[->,thick,blue] (0,4.0) -- (3.0,0.64);
+        \draw[->,thick,blue] (3.0,0.64) -- (4.2,0.1024);
+        \draw[->,thick,blue] (4.2,0.1024) -- (4.8,0.0064);
+        \draw[->,thick,blue] (4.8,0.0064) -- (5.0,0);
+        \foreach \px/\py in {0/4.0, 3.0/0.64, 4.2/0.1024, 4.8/0.0064} {
+            \filldraw[black] (\px,\py) circle (1.8pt);
+        }
+        \node[above,font=\scriptsize] at (0,4.15) {$\theta_0$};
+        \node[above,font=\scriptsize] at (3.0,0.8) {$\theta_1$};
+        \node[above,font=\scriptsize] at (4.2,0.35) {$\theta_2$};
+        \node[above,font=\scriptsize] at (4.8,0.25) {$\theta_3$};
+        \draw[dashed,red,domain=-0.4:2.2,variable=\x] plot ({\x},{4.0-1.6*\x});
+        \node[red,font=\scriptsize] at (1.7,2.6) {slope $=\nabla\mathcal{L}(\theta_0)$};
+        \node[blue,font=\scriptsize,align=left] at (7.7,3.2) {$\theta_{k+1} = \theta_k - \eta\,\nabla\mathcal{L}(\theta_k)$};
+    \end{tikzpicture}
+    \caption{The idea of gradient descent. Starting from an initial guess $\theta_0$, each step moves against the local slope of the loss curve, the negative gradient, illustrated here by the tangent line at $\theta_0$, producing a sequence $\theta_0,\theta_1,\theta_2,\ldots$ that descends toward the minimizer $\theta^\star$. Steps are large where the curve is steep and shrink automatically as the curve flattens near the minimum, exactly the pattern seen numerically in Table~\ref{tab:gradient_descent} below.}
+    \label{fig:gradient_descent_bowl}
+\end{figure}
+
 The idea is simple: starting from some initial guess for the parameters, repeatedly take a small step in the direction that most reduces the loss, the negative of the gradient (the vector of partial derivatives) of the loss with respect to each parameter, and stop once further steps no longer improve the loss. For the mean squared error loss 
 $$\mathcal{L}(\beta_0, \beta_1) = \frac{1}{n}\sum_i (\beta_0 + \beta_1 x_i - y_i)^2,$$ 
 the gradients are
@@ -130,7 +183,7 @@ and each iteration updates the parameters by
 \begin{equation*}
 \beta_0 \leftarrow \beta_0 - \eta \frac{\partial \mathcal{L}}{\partial \beta_0}, \qquad \beta_1 \leftarrow \beta_1 - \eta \frac{\partial \mathcal{L}}{\partial \beta_1},
 \end{equation*}
-where $\eta$ (eta) is the learning rate, a small positive number controlling the step size. Applying this to the same credit-spread data as Section~\ref{sec:regression-example}, starting from $\beta_0=\beta_1=0$ with a learning rate of $\eta=0.01$, produces the trajectory in Table~\ref{tab:gradient_descent}.
+where $\eta$ is the learning rate, a small positive number controlling the step size. Applying this to the same credit-spread data as Section~\ref{sec:regression-example}, starting from $\beta_0=\beta_1=0$ with a learning rate of $\eta=0.01$, produces the trajectory in Table~\ref{tab:gradient_descent}.
 
 \begin{table}[htbp]
 \centering
@@ -149,6 +202,7 @@ Iteration & $\beta_0$ & $\beta_1$ \\
 \bottomrule
 \end{tabular}
 \end{table}
+
 
 After 10,000 iterations, gradient descent has converged to $\beta_0 \approx 20.00$ and $\beta_1 \approx 47.00$, matching the closed-form OLS solution computed directly in Section~\ref{sec:regression-example} up to rounding. This convergence is not a coincidence: for a quadratic loss function like this one, gradient descent is mathematically guaranteed to converge to the same global minimum that the closed-form formula finds directly, provided the learning rate is small enough to avoid overshooting. The learning rate itself involves a tradeoff that recurs throughout machine learning: too small, and convergence (as seen here) can require many thousands of iterations; too large, and the updates can overshoot the minimum and diverge rather than converge at all. In practice, $\eta$ is one of the most important hyperparameters to tune when training a model with gradient descent, including the neural networks discussed later in this chapter, and it is rarely fixed at a single value throughout training; adaptive variants that shrink the learning rate over time, or that use different effective rates for different parameters, are standard in modern deep learning software.
 
@@ -181,7 +235,25 @@ Predicted default & 1 & 0 & 1 & 1 & 0 & 1 & 0 & 0 & 0 & 0 \\
 \end{tabular}
 \end{table}
 
-Comparing the two rows produces a confusion matrix\index{confusion matrix}: 3 true positives ($TP$; applicants 1, 3, 6), 1 false negative ($FN$; applicant 9, an actual default the model missed), 1 false positive ($FP$; applicant 4, a good loan flagged as risky), and 5 true negatives ($TN$). From these four counts, the standard classification metrics follow directly:
+Comparing the two rows produces a confusion matrix\index{confusion matrix}: 3 true positives ($TP$; applicants 1, 3, 6), 1 false negative ($FN$; applicant 9, an actual default the model missed), 1 false positive ($FP$; applicant 4, a good loan flagged as risky), and 5 true negatives ($TN$). Table~\ref{tab:confusion_matrix} arranges these four counts into the standard $2\times 2$ layout, with the model's predictions as rows and the actual outcomes as columns.
+
+\begin{table}[htbp]
+\centering
+\caption{Confusion matrix for the 10 loan applicants in Table~\ref{tab:confusion_data}}
+\label{tab:confusion_matrix}
+\begin{tabular}{lcc}
+\toprule
+ & \multicolumn{2}{c}{Actual} \\
+\cmidrule(l){2-3}
+Predicted & Default (1) & No Default (0) \\
+\midrule
+Default (1) & $TP=3$ & $FP=1$ \\
+No Default (0) & $FN=1$ & $TN=5$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+From these four counts, the standard classification metrics follow directly:
 \begin{align*}
 \text{Accuracy} &= \frac{TP+TN}{n} = \frac{3+5}{10} = 0.80, \\
 \text{Precision} &= \frac{TP}{TP+FP} = \frac{3}{4} = 0.75, \\
@@ -441,9 +513,41 @@ These issues are not minor technicalities. They often determine whether a model 
 
 Every model in this chapter takes a fixed set of numerical features as input, but raw financial data, prices, financial statement line items, transaction records, are rarely usable directly, and the process of transforming raw data into informative model inputs, called feature engineering, is often as important to a model's performance as the choice of algorithm itself.
 
-Several patterns recur constantly when engineering features from financial data. Ratios, such as the debt-to-equity and margin ratios computed throughout Chapter 4, normalize raw dollar figures so that firms of very different sizes become comparable, exactly as the common-size statements in that chapter did. Lagged and rolling features, such as a 30-day rolling volatility or a 12-month trailing revenue growth rate, summarize recent history into a single number a model can consume, echoing the rolling-window calculations introduced in Chapter 2. Interaction features, such as leverage multiplied by an indicator for a recessionary period, allow a linear model to capture that the effect of one variable depends on the level of another, a relationship a plain linear model cannot represent on its own. Categorical features, such as industry sector, are typically converted into numerical form via one-hot encoding (a separate binary column for each category) before being used in most models, since the sector-specific behavior discussed in Chapter 4 needs to be represented numerically for a model to use it as a signal rather than an arbitrary label.
+Several patterns recur constantly when engineering features from financial data. Ratios, such as the debt-to-equity and margin ratios computed throughout Chapter 4, normalize raw dollar figures so that firms of very different sizes become comparable, exactly as the common-size statements in that chapter did. Lagged and rolling features, such as a 30-day rolling volatility or a 12-month trailing revenue growth rate, summarize recent history into a single number a model can consume, echoing the rolling-window calculations introduced in Chapter 2. Interaction features, such as leverage multiplied by an indicator for a recessionary period, allow a linear model to capture that the effect of one variable depends on the level of another, a relationship a plain linear model cannot represent on its own. Categorical features, such as industry sector, are typically converted into numerical form via one-hot encoding (a separate binary column for each category) before being used in most models, since the sector-specific behavior discussed in Chapter 4 needs to be represented numerically for a model to use it as a signal rather than an arbitrary label. Table~\ref{tab:feature_eng_raw} and Table~\ref{tab:feature_eng_derived} make these transformations concrete for a small cross-section of three firms.
 
-Two additional considerations are specific to finance. First, every engineered feature must respect the same point-in-time discipline emphasized throughout this book: a feature computed using data that would not actually have been available at the time of prediction introduces exactly the kind of data leakage described above, even if the underlying computation, such as a rolling average, seems innocuous. Second, financial features are frequently skewed or heavy-tailed (a firm's market capitalization, for example, can span many orders of magnitude across a universe of stocks), so transformations such as taking a logarithm or converting a raw value into a cross-sectional rank (its percentile relative to other firms at the same point in time) are common preprocessing steps that make such features better behaved as inputs to the linear and distance-based models discussed in this chapter.
+\begin{table}[htbp]
+\centering
+\caption{Raw firm-level inputs for a small cross-section (Debt, Equity, and Revenue in \$ millions; Market Cap in \$ billions; Recession is 1 if the firm's primary sector was in a broad-based downturn during the period)}
+\label{tab:feature_eng_raw}
+\begin{tabular}{lcrrrrrr}
+\toprule
+Firm & Sector & Debt & Equity & Rev.$_t$ & Rev.$_{t-4}$ & Recession & Mkt Cap \\
+\midrule
+1 & Tech   & 20 & 80 & 150 & 120 & 0 & 45.0 \\
+2 & Energy & 90 & 60 & 210 & 230 & 1 & 8.0 \\
+3 & Retail & 40 & 40 & 95  & 90  & 0 & 1.2 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:feature_eng_derived} shows the engineered features these raw inputs produce. The leverage ratio and year-over-year revenue growth follow directly from the raw dollar figures; the interaction term is zero for both non-recession firms regardless of their leverage, but equals $1.50$ for Firm 2, flagging that its already-elevated leverage coincides with a sector-wide downturn, exactly the kind of conditional relationship a plain linear model cannot represent on its own. One-hot encoding converts the raw Sector column into three binary indicators: Firm 1 becomes (Technology=1, Energy=0, Retail=0), Firm 2 becomes (Technology=0, Energy=1, Retail=0), and Firm 3 becomes (Technology=0, Energy=0, Retail=1).
+
+\begin{table}[htbp]
+\centering
+\caption{Engineered features derived from Table~\ref{tab:feature_eng_raw}}
+\label{tab:feature_eng_derived}
+\begin{tabular}{lrrrrr}
+\toprule
+Firm & Leverage & Rev.\ growth (YoY) & Leverage$\times$Recession & $\log_{10}$(Mkt Cap, \$B) & Mkt Cap pctile \\
+\midrule
+1 & 0.25 & 25.0\%  & 0.00 & 1.65 & 100\% \\
+2 & 1.50 & $-8.7\%$ & 1.50 & 0.90 & 50\%  \\
+3 & 1.00 & 5.6\%   & 0.00 & 0.08 & 0\%   \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Two additional considerations are specific to finance. First, every engineered feature must respect the same point-in-time discipline emphasized throughout this book: a feature computed using data that would not actually have been available at the time of prediction introduces exactly the kind of data leakage described above, even if the underlying computation, such as a rolling average, seems innocuous. Second, financial features are frequently skewed or heavy-tailed, and Table~\ref{tab:feature_eng_derived}'s market-capitalization columns make this concrete: the three firms' raw market caps span more than an order of magnitude ($\$1.2$ billion to $\$45.0$ billion, a ratio of $37.5\times$), while $\log_{10}$ of the same figures compresses this to a range of about $1.57$ ($0.08$ to $1.65$), and the cross-sectional percentile rank compresses it further still, to a bounded $[0,100\%]$ scale regardless of the firms' raw dollar magnitudes. Transformations such as these are common preprocessing steps that make skewed or heavy-tailed features better behaved as inputs to the linear and distance-based models discussed in this chapter.
 
 \section{Tree-Based Models and Ensembles}\index{Tree-Based Models and Ensembles}
 \label{sec:tree-models}
@@ -454,11 +558,31 @@ G = 1 - \sum_{k=1}^K p_k^2,
 \end{equation*}
 where $p_k$ is the proportion of observations in a node belonging to class $k$; $G=0$ when a node is pure (all one class) and is largest when classes are evenly mixed. An alternative is entropy, $H = -\sum_k p_k \log_2 p_k$, which behaves similarly.
 
-A single tree tends to have high variance: small changes in the training data can produce very different splits. Random forest\index{random forest}s reduce this variance by averaging many trees, each trained on a bootstrap sample of the data and a random subset of features at each split, so that the trees are decorrelated from one another. Gradient boosting takes a different approach: it builds trees sequentially, where each new tree $h_m$ is fit to approximate the negative gradient of the loss function with respect to the current ensemble's predictions,
+A single tree tends to have high variance: small changes in the training data can produce very different splits. Random forest\index{random forest}s reduce this variance by averaging many trees, each trained on a bootstrap sample of the data and a random subset of features at each split, so that the trees are decorrelated from one another. Gradient boosting takes a different approach: it builds trees sequentially, each one correcting the errors of the ensemble built so far. Write $F_m(x)$ for the ensemble's prediction after $m$ trees have been added; boosting initializes $F_0(x)$ to a simple constant (typically the mean of the target for regression, or the log-odds of the positive class for classification) and then grows the ensemble one shallow tree at a time,
 \begin{equation*}
-F_m(x) = F_{m-1}(x) + \nu \, h_m(x),
+F_m(x) = F_{m-1}(x) + \nu \, h_m(x), \qquad m = 1, \dots, M,
 \end{equation*}
-where $\nu$ is a learning rate that controls how much each new tree contributes. Rather than reducing variance through averaging, boosting reduces bias by iteratively correcting the errors of the current model, and is typically combined with a small learning rate and a limited number of trees to control overfitting.
+where $h_m$ is a new regression tree, not fit to the original target $y$, but fit to the current pseudo-residuals, $y_i - F_{m-1}(x_i)$ for squared-error loss (more generally, the negative gradient of the loss function with respect to the ensemble's current predictions $F_{m-1}(x_i)$, which is where the name ``gradient'' boosting comes from), so that each new tree specifically targets whatever the ensemble so far is still getting wrong. The learning rate $\nu \in (0,1]$, typically set well below 1 (commonly $0.01$ to $0.3$ in practice), then shrinks each tree's contribution before it is added: a smaller $\nu$ requires more trees $M$ to reach a given level of fit, but tends to generalize better, exactly the same regularization-driven bias-variance tradeoff the ridge and lasso penalties illustrated earlier in this chapter. Figure~\ref{fig:boosting_sequence} shows this sequential structure schematically, in direct contrast to a random forest's independently-grown, averaged trees: each boosting stage cannot be fit until the previous stage's pseudo-residuals are known, an inherently sequential dependency that random forests do not have, which is also why random forests parallelize trivially across trees while gradient boosting does not. Rather than reducing variance through averaging, boosting reduces bias by iteratively correcting the errors of the current model, and is typically combined with a small learning rate and a limited number of trees to control overfitting.
+
+\begin{figure}[htbp]
+    \centering
+    \begin{tikzpicture}[>=latex,thick,node distance=2.0cm]
+        \node[draw,rounded corners,minimum width=1.4cm,minimum height=0.8cm] (f0) {$F_0$};
+        \node[draw,rounded corners,minimum width=1.4cm,minimum height=0.8cm,right=of f0] (f1) {$F_1$};
+        \node[draw,rounded corners,minimum width=1.4cm,minimum height=0.8cm,right=of f1] (f2) {$F_2$};
+        \node[right=1.4cm of f2] (dots) {$\cdots$};
+        \node[draw,rounded corners,minimum width=1.4cm,minimum height=0.8cm,right=1.4cm of dots] (fm) {$F_M$};
+        \draw[->] (f0) -- node[above,font=\scriptsize] {$+\,\nu h_1$} (f1);
+        \draw[->] (f1) -- node[above,font=\scriptsize] {$+\,\nu h_2$} (f2);
+        \draw[->] (f2) -- (dots);
+        \draw[->] (dots) -- node[above,font=\scriptsize] {$+\,\nu h_M$} (fm);
+        \node[below=0.4cm of f0,font=\scriptsize,align=center,text width=2.0cm] {initial\\constant guess};
+        \node[below=0.4cm of f1,font=\scriptsize,align=center,text width=2.4cm] {$h_1$ fit to\\residuals of $F_0$};
+        \node[below=0.4cm of f2,font=\scriptsize,align=center,text width=2.4cm] {$h_2$ fit to\\residuals of $F_1$};
+    \end{tikzpicture}
+    \caption{Gradient boosting as a sequential chain. The ensemble prediction $F_m$ is built by adding a shrunken new tree $\nu h_m$ to the previous stage $F_{m-1}$, where $h_m$ is fit to correct whatever $F_{m-1}$ still gets wrong. Each stage depends on every stage before it, unlike the independently-grown, averaged trees of a random forest summarized in Table~\ref{tab:bagging_vs_boosting}.}
+    \label{fig:boosting_sequence}
+\end{figure}
 
 In finance, such models are widely used for default prediction, credit scoring, and fraud detection. They can also be used to estimate the importance of variables, which can be useful for understanding which features drive a prediction. However, they are not automatically more reliable than simpler models. A tree-based model can still overfit, especially when the data are noisy or when the time structure is ignored during cross-validation. Careful validation, along the lines discussed in Section~\ref{sec:overfitting-section} and using walk-forward schemes rather than random splits, remains essential.
 

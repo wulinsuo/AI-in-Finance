@@ -235,7 +235,7 @@ The lifecycle of a trade illustrates the practical importance of market structur
 
 This process is not purely mechanical. It reflects the interaction of incentives, technology, and regulation. For instance, high-frequency trading firms may compete to offer the best execution speed, while institutional investors may prioritize minimizing market impact. A retail investor may value simplicity and lower cost, whereas a hedge fund may be willing to bear more risk for a chance at a strategic advantage. All of these objectives interact within the same marketplace.
 
-The repurchase agreement\index{Repurchase Agreement (Repo)}, or repo, deserves particular attention among money market instruments because of the central role it plays in the plumbing of the financial system. In a repo, one party sells a security, typically a government bond, to another party while simultaneously agreeing to repurchase it at a slightly higher price on a specified future date, often the very next day. Economically, this is a collateralized short-term loan: the cash borrower posts the security as collateral, and the difference between the sale and repurchase price is the effective interest rate, known as the repo rate. Banks, hedge funds, and other institutions rely on the repo market to fund large securities positions on a daily basis, which means that a disruption in repo markets, as occurred at several points during the 2008 crisis, can rapidly force institutions to sell assets they would otherwise have held, transmitting stress across the financial system in exactly the way described in the systemic risk discussion above.
+The repurchase agreement\index{Repurchase Agreement (Repo)}, or repo, deserves particular attention among money market instruments because of the central role it plays in the plumbing of the financial system. In a repo, one party sells a security, typically a government bond, to another party while simultaneously agreeing to repurchase it at a slightly higher price on a specified future date, often the very next day. Economically, this is a collateralized short-term loan: the cash borrower posts the security as collateral, and the difference between the sale and repurchase price is the effective interest rate, known as the repo rate. Banks, hedge funds, and other institutions rely on the repo market to fund large securities positions on a daily basis, which means that a disruption in repo markets, as occurred at several points during the 2008 crisis, can rapidly force institutions to sell assets they would otherwise have held, transmitting stress across the financial system in exactly the way described in the systemic risk discussion below.
 
 Concretely, suppose a dealer needs to borrow $\$10{,}000{,}000$ overnight and posts Treasury securities as collateral in exchange for cash at an annualized overnight repo rate of $5\%$. Using the money market convention of a 360-day year, the interest owed for one day is
 \begin{equation*}
@@ -293,7 +293,17 @@ The balance between free markets and regulation is a persistent theme in finance
 
 From the perspective of AI and data science, regulation also matters because it shapes the data environment. Financial institutions must report certain information, comply with auditing standards, and provide transparent records. These requirements create rich datasets that can be used for forecasting, fraud detection, and risk analysis. At the same time, regulatory constraints limit what can be done with the data, especially when privacy, fairness, or market abuse concerns are involved.
 
-A few specific regulatory frameworks are worth knowing by name because they recur throughout the rest of this book. In the United States, the Securities and Exchange Commission (SEC) oversees securities markets and disclosure, while Regulation NMS\index{Regulation NMS (Reg NMS)} (National Market System) governs how orders are routed and executed across competing exchanges, directly shaping the market microstructure discussed throughout this chapter. The Dodd-Frank Act\index{Dodd-Frank Act}, passed in 2010 in response to the 2008 financial crisis, introduced the central clearing requirements for standardized swaps mentioned above, along with the Volcker Rule\index{Volcker Rule} restricting proprietary trading by banks, and stress-testing requirements for large financial institutions that are directly relevant to the risk models in Chapters 8 and 9. In Europe, MiFID II\index{MiFID II} (the Markets in Financial Instruments Directive) imposes extensive transparency and best-execution requirements on trading venues and investment firms. Basel III\index{Basel Accords}\index{Basel III} is an international framework setting minimum capital and liquidity requirements for banks, intended to make the banking system more resilient to exactly the kind of interconnected shocks described in the systemic risk discussion above. None of these frameworks is a topic this book covers in depth, but recognizing their names and general purpose is useful context for the compliance-related material in Chapter 13.
+A few specific regulatory frameworks are worth knowing by name because they recur throughout the rest of this book.
+
+\begin{itemize}
+    \item \textbf{The Securities and Exchange Commission (SEC)} oversees U.S. securities markets and disclosure.
+    \item \textbf{Regulation NMS}\index{Regulation NMS (Reg NMS)} (National Market System) governs how orders are routed and executed across competing U.S. exchanges, directly shaping the market microstructure discussed throughout this chapter.
+    \item \textbf{The Dodd-Frank Act}\index{Dodd-Frank Act}, passed in 2010 in response to the 2008 financial crisis, introduced the central clearing requirements for standardized swaps mentioned above, along with the Volcker Rule\index{Volcker Rule} restricting proprietary trading by banks, and stress-testing requirements for large financial institutions that are directly relevant to the risk models in Chapters 8 and 9.
+    \item \textbf{MiFID II}\index{MiFID II} (the Markets in Financial Instruments Directive), in Europe, imposes extensive transparency and best-execution requirements on trading venues and investment firms.
+    \item \textbf{Basel III}\index{Basel Accords}\index{Basel III} is an international framework setting minimum capital and liquidity requirements for banks, intended to make the banking system more resilient to exactly the kind of interconnected shocks described in the systemic risk discussion above.
+\end{itemize}
+
+None of these frameworks is a topic this book covers in depth, but recognizing their names and general purpose is useful context for the compliance-related material in Chapter 13.
 
 \section{The Link Between Market Structure and AI}\index{Link Between Market Structure and AI}
 
@@ -310,7 +320,16 @@ This observation has a subtle but important consequence for model validation. A 
 \section{Liquidity, Leverage, and the Economics of Market Making}\index{Liquidity, Leverage, and the Economics of Market Making}
 \label{sec:market-making}
 
-Liquidity is one of the most important but least visible features of financial markets. A liquid market allows participants to trade quickly without moving the price too much. In practice, liquidity is a multidimensional concept. It includes depth, which is the volume that can be traded at a given price, immediacy, which is the speed with which an order can be executed, resiliency, which is the speed with which the market returns to a stable state after a shock, and tightness, which is the narrowness of the bid-ask spread. A market with high liquidity is often easier to use for hedging, investment, and risk management, because traders can enter and exit positions more cheaply.
+Liquidity is one of the most important but least visible features of financial markets. A liquid market allows participants to trade quickly without moving the price too much. In practice, liquidity is a multidimensional concept:
+
+\begin{itemize}
+    \item \textbf{Depth} is the volume that can be traded at a given price.
+    \item \textbf{Immediacy} is the speed with which an order can be executed.
+    \item \textbf{Resiliency} is the speed with which the market returns to a stable state after a shock.
+    \item \textbf{Tightness} is the narrowness of the bid-ask spread.
+\end{itemize}
+
+A market with high liquidity is often easier to use for hedging, investment, and risk management, because traders can enter and exit positions more cheaply.
 
 Market makers, introduced earlier in this chapter as participants who quote both a bid and an ask and earn the spread between them, do more than passively post two prices: they actively absorb temporary imbalances between buy and sell orders, buying when others want to sell and selling when others want to buy. This is where the inventory risk mentioned earlier actually bites. If the market maker purchases an asset and its price falls, the position loses value. If the market maker sells short and the price rises, losses can also accumulate quickly. The willingness of market makers to bear this risk is therefore central to market functioning.
 
@@ -386,7 +405,7 @@ An earlier episode, the near-collapse of the hedge fund Long-Term Capital Manage
 
 \section{Technology, Speed, and Market Design}\index{Technology, Speed, and Market Design}
 
-The design of financial markets has changed dramatically with technology. Electronic trading, colocation, and automation have reduced costs and increased the speed at which orders can be processed. This has improved access for many participants, but it has also increased complexity. The market now resembles a digital system in which algorithms interact with each other at high speed and where small delays can be extremely valuable.
+The design of financial markets has changed dramatically with technology. Electronic trading, co-location, and automation have reduced costs and increased the speed at which orders can be processed. This has improved access for many participants, but it has also increased complexity. The market now resembles a digital system in which algorithms interact with each other at high speed and where small delays can be extremely valuable.
 
 Technology therefore changes not only the efficiency of trading but also the structure of competition. A participant with faster infrastructure may gain an edge even if its economic view is not superior. This explains why market microstructure has become a central topic in modern finance. Price formation is no longer shaped only by fundamentals; it is also shaped by trading rules, network effects, and technological capabilities.
 
