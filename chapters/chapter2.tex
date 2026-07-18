@@ -542,7 +542,7 @@ The expression \texttt{weights3 @ cov3.values @ weights3} is exactly the matrix 
 
 \subsection*{Object-Oriented Programming: A Reusable \texttt{Portfolio} Class}\index{Object-Oriented Programming}
 
-The procedural style used throughout this chapter, a sequence of variable assignments and function calls, works well for a single, one-off analysis, but repeating the same mean, volatility, and variance calculations for every new portfolio a researcher wants to evaluate invites exactly the kind of copy-paste duplication Section~\ref{sec:vectorization-performance}'s performance discussion and this chapter's reproducibility section both warn against. Object-oriented programming addresses this by bundling data and the operations that act on it into a single reusable \texttt{class}:
+The procedural style used throughout this chapter, a sequence of variable assignments and function calls, works well for a single, one-off analysis, but repeating the same mean, volatility, and variance calculations for every new portfolio a researcher wants to evaluate invites exactly the kind of copy-paste duplication Section~\ref{sec:vectorization-performance}'s performance discussion and this chapter's reproducibility section both warn against. Object-oriented programming addresses this with a \texttt{class}: a template, defined once, that bundles a set of related data (here, a portfolio's returns and weights) together with the functions, called \emph{methods} when they belong to a class, that operate on that data, so that every new portfolio can be built from the same reusable blueprint instead of copying and re-editing the same calculations by hand each time:
 
 \begin{verbatim}
 class Portfolio:

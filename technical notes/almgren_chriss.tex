@@ -1,0 +1,245 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs}
+\usepackage{hyperref}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{proposition}{Proposition}
+\newtheorem{corollary}{Corollary}
+\newtheorem{lemma}{Lemma}
+\theoremstyle{remark}
+\newtheorem*{remark}{Remark}
+\theoremstyle{definition}
+\newtheorem*{example}{Example}
+\newtheorem*{assumption}{Assumption}
+
+\title{The Almgren-Chriss Optimal Execution Model: A Complete Derivation}
+\author{Wulin Suo}
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent This note derives the Almgren and Chriss (2001) optimal execution model from first principles. Starting from a discrete-time model of permanent and temporary price impact, it derives the exact mean and variance of implementation shortfall for an arbitrary trading trajectory, sets up the mean-variance execution objective, and solves the resulting discrete first-order condition explicitly, obtaining the closed-form trading trajectory $x_j = X\sinh(\tilde\kappa(T-t_j))/\sinh(\tilde\kappa T)$. It verifies the two limiting cases, a risk-neutral trader recovering the uniform (TWAP) schedule and an infinitely risk-averse trader recovering immediate liquidation, establishes the efficient frontier traced out as risk aversion varies, and takes the continuous-time limit to recover the standard urgency parameter $\kappa=\sqrt{\lambda\sigma^2/\eta}$. It closes with a worked numerical example and a discussion of the model's assumptions and the principal directions in which the literature has since extended it.
+\end{abstract}
+
+\section{The Problem: Trading Off Impact Cost Against Timing Risk}
+\label{sec:setup}
+
+A trader who must liquidate a large position over some fixed horizon faces a genuine dilemma that a single-period model cannot represent. Selling the entire position immediately minimizes exposure to adverse price moves during the execution window, but a large order consumes the liquidity available at the best few prices and moves the market against the seller, a cost commonly called \emph{market impact}. Spreading the same order across many smaller trades reduces this impact cost, since each individual slice is small relative to available liquidity, but it leaves whatever remains unexecuted exposed to price uncertainty for longer, a cost this note calls \emph{timing risk}. Almgren and Chriss (2001) formalize this trade-off as a mean-variance optimization over the entire trading trajectory and obtain a closed-form optimal schedule, making it the standard reference model for optimal execution. Sections~\ref{sec:model}--\ref{sec:derivation} derive that schedule in full; Section~\ref{sec:limits} verifies it against two cases where the answer is obvious by inspection.
+
+\section{The Model: Permanent and Temporary Impact}
+\label{sec:model}
+
+Fix a horizon $[0,T]$ and divide it into $N$ equal intervals of length $\tau=T/N$, with trading times $t_k=k\tau$ for $k=0,1,\ldots,N$. Let $x_k$ denote the number of shares remaining to be sold immediately after the trade executed at time $t_k$, so that $x_0=X$ (the full position to be liquidated) and $x_N=0$ (fully liquidated by the horizon), and let $n_k=x_{k-1}-x_k$ denote the number of shares sold during interval $k$.
+
+\begin{assumption}[Unaffected price dynamics and permanent impact]
+\label{ass:permanent}
+The price that would prevail absent the trader's own activity follows an arithmetic random walk perturbed by the trader's own trading:
+\begin{equation}
+S_k = S_{k-1} - \tau\, g\!\left(\frac{n_k}{\tau}\right) + \sigma\sqrt{\tau}\,\xi_k, \qquad k=1,\dots,N,
+\label{eq:price}
+\end{equation}
+where $\{\xi_k\}$ is an i.i.d.\ sequence of mean-zero, unit-variance shocks, $\sigma>0$ is the price's per-period volatility, and $g(\cdot)$ is the \emph{permanent impact} function: trading at rate $n_k/\tau$ during interval $k$ shifts the reference price by $\tau g(n_k/\tau)$, and this shift persists for the remainder of the execution.
+\end{assumption}
+
+\begin{assumption}[Temporary impact]
+\label{ass:temporary}
+The trade executed during interval $k$ does not fill at $S_{k-1}$ itself but at a temporarily worse price,
+\begin{equation}
+\tilde S_k = S_{k-1} - h\!\left(\frac{n_k}{\tau}\right),
+\label{eq:execprice}
+\end{equation}
+where $h(\cdot)$ is the \emph{temporary impact} function, reflecting the cost of demanding immediacy (walking the order book, crossing the spread). Unlike permanent impact, this cost does not affect the reference price used for any subsequent interval.
+\end{assumption}
+
+\begin{assumption}[Linear impact]
+\label{ass:linear}
+$g(v)=\gamma v$ and $h(v)=\eta v$ for constants $\gamma,\eta>0$.
+\end{assumption}
+
+Assumption~\ref{ass:linear} is the tractable special case this note solves in closed form; Section~\ref{sec:discussion} discusses what changes when it is relaxed. \emph{Implementation shortfall} is defined as the shortfall of realized sale proceeds below the initial paper value of the position,
+\begin{equation}
+\text{IS} = X S_0 - \sum_{k=1}^{N} n_k \tilde S_k.
+\label{eq:ISdef}
+\end{equation}
+
+\section{Expected Cost and Variance of a Trading Trajectory}
+\label{sec:moments}
+
+\begin{theorem}[Expected implementation shortfall]
+\label{thm:mean}
+Under Assumptions~\ref{ass:permanent}--\ref{ass:linear}, for any trading trajectory $\{x_k\}_{k=0}^N$ with $x_0=X$, $x_N=0$,
+\begin{equation}
+E[\text{IS}] = \frac{\gamma}{2}X^2 + \left(\frac{\eta}{\tau}-\frac{\gamma}{2}\right)\sum_{k=1}^{N} n_k^2.
+\label{eq:meanIS}
+\end{equation}
+\end{theorem}
+\begin{proof}
+Unrolling Equation~\eqref{eq:price}, $S_{k-1} = S_0 - \gamma\sum_{i=1}^{k-1} n_i + \sigma\sqrt\tau\sum_{i=1}^{k-1}\xi_i$ (using $\tau g(n_i/\tau)=\gamma n_i$ under Assumption~\ref{ass:linear}), so $E[S_{k-1}] = S_0-\gamma\sum_{i=1}^{k-1}n_i$ since $E[\xi_i]=0$. From Equation~\eqref{eq:execprice}, $E[\tilde S_k] = S_0 - \gamma\sum_{i=1}^{k-1}n_i - \eta n_k/\tau$. Substituting into Equation~\eqref{eq:ISdef} and using $\sum_k n_k = X$,
+\begin{equation*}
+E[\text{IS}] = XS_0 - \sum_k n_k E[\tilde S_k] = \gamma\sum_{k=1}^N n_k\sum_{i=1}^{k-1}n_i + \frac{\eta}{\tau}\sum_{k=1}^N n_k^2 = \gamma\sum_{1\le i<k\le N} n_in_k + \frac{\eta}{\tau}\sum_k n_k^2.
+\end{equation*}
+Since $\left(\sum_k n_k\right)^2 = \sum_k n_k^2 + 2\sum_{i<k}n_in_k = X^2$, the cross-sum equals $\tfrac12\left(X^2-\sum_k n_k^2\right)$, giving Equation~\eqref{eq:meanIS} directly.
+\end{proof}
+
+The two terms of Equation~\eqref{eq:meanIS} have distinct interpretations: $\tfrac{\gamma}{2}X^2$ is a sunk cost, incurred in expectation regardless of how the $X$ shares are scheduled, since permanent impact ultimately depends only on the total quantity traded, while the second term rewards spreading a fixed total $X=\sum_k n_k$ across many small, similarly-sized trades rather than a few large ones, since $\sum_k n_k^2$ is minimized, subject to $\sum_k n_k=X$, by the uniform allocation $n_k\equiv X/N$.
+
+\begin{theorem}[Variance of implementation shortfall]
+\label{thm:var}
+Under Assumptions~\ref{ass:permanent}--\ref{ass:linear},
+\begin{equation}
+\mathrm{Var}(\text{IS}) = \sigma^2\tau\sum_{k=1}^{N-1} x_k^2.
+\label{eq:varIS}
+\end{equation}
+\end{theorem}
+\begin{proof}
+From the proof of Theorem~\ref{thm:mean}, the only stochastic part of $\tilde S_k$ is $\sigma\sqrt\tau\sum_{i=1}^{k-1}\xi_i$, so
+\begin{equation*}
+\text{IS}-E[\text{IS}] = -\sum_{k=1}^N n_k\!\left(\sigma\sqrt\tau\sum_{i=1}^{k-1}\xi_i\right) = -\sigma\sqrt\tau\sum_{i=1}^{N-1}\xi_i\sum_{k=i+1}^N n_k = -\sigma\sqrt\tau\sum_{i=1}^{N-1}\xi_i\,x_i,
+\end{equation*}
+where the last equality uses $\sum_{k=i+1}^N n_k = x_i - x_N = x_i$. Since $\{\xi_i\}$ are i.i.d.\ with unit variance, $\mathrm{Var}(\text{IS}) = \sigma^2\tau\sum_{i=1}^{N-1}x_i^2$, which is Equation~\eqref{eq:varIS}.
+\end{proof}
+
+Equation~\eqref{eq:varIS} states precisely what ``timing risk'' means: each period's contribution to the variance of total execution cost is proportional to the \emph{square of whatever quantity is still unexecuted} entering that period, so risk accumulates fastest when a large residual position is held for a long time and can be reduced only by shrinking $x_k$ more quickly, in tension with Theorem~\ref{thm:mean}'s preference for smaller, more evenly sized trades.
+
+\section{The Optimal Trajectory}
+\label{sec:derivation}
+
+Fix a risk-aversion parameter $\lambda\ge0$ and define the trader's objective as
+\begin{equation}
+U(\{x_k\}) = E[\text{IS}] + \lambda\,\mathrm{Var}(\text{IS}) = \frac{\gamma}{2}X^2 + \tilde\eta\sum_{k=1}^N n_k^2 + \lambda\sigma^2\tau\sum_{k=1}^{N-1}x_k^2, \qquad \tilde\eta := \frac{\eta}{\tau}-\frac{\gamma}{2},
+\label{eq:objective}
+\end{equation}
+to be minimized over $x_1,\ldots,x_{N-1}$ holding $x_0=X$, $x_N=0$ fixed.
+
+\begin{theorem}[Optimal trading trajectory]
+\label{thm:trajectory}
+Assume $\tilde\eta>0$. The unique minimizer of Equation~\eqref{eq:objective} is
+\begin{equation}
+x_j = X\,\frac{\sinh\big(\tilde\kappa(T-t_j)\big)}{\sinh(\tilde\kappa T)}, \qquad j=0,1,\ldots,N,
+\label{eq:trajectory}
+\end{equation}
+where $\tilde\kappa>0$ solves $\cosh(\tilde\kappa\tau) = 1+\dfrac{\lambda\sigma^2\tau^2}{2\tilde\eta}$.
+\end{theorem}
+\begin{proof}
+Since $U$ is a sum of squares in the free variables $x_1,\ldots,x_{N-1}$ with a positive-definite quadratic form (each $n_k^2=(x_{k-1}-x_k)^2$ and $x_j^2$ term enters with a strictly positive coefficient), $U$ is strictly convex, so any critical point is the unique global minimizer. Differentiating with respect to $x_j$ ($1\le j\le N-1$), only the terms $n_j^2=(x_{j-1}-x_j)^2$, $n_{j+1}^2=(x_j-x_{j+1})^2$, and $x_j^2$ depend on $x_j$:
+\begin{equation*}
+\frac{\partial U}{\partial x_j} = \tilde\eta\Big[-2(x_{j-1}-x_j)+2(x_j-x_{j+1})\Big] + 2\lambda\sigma^2\tau\,x_j = 0.
+\end{equation*}
+Writing $n_j=x_{j-1}-x_j$, $n_{j+1}=x_j-x_{j+1}$, this is $\tilde\eta(n_{j+1}-n_j) = -\lambda\sigma^2\tau\,x_j$. Substituting $n_{j+1}-n_j = (x_j-x_{j+1})-(x_{j-1}-x_j) = 2x_j-x_{j+1}-x_{j-1}$ and rearranging,
+\begin{equation}
+x_{j+1} - 2\cosh(\tilde\kappa\tau)\,x_j + x_{j-1} = 0, \qquad \cosh(\tilde\kappa\tau) := 1+\frac{\lambda\sigma^2\tau^2}{2\tilde\eta},
+\label{eq:diffeq}
+\end{equation}
+a linear, constant-coefficient second-order difference equation with characteristic roots $e^{\pm\tilde\kappa\tau}$ (the definition of $\cosh(\tilde\kappa\tau)$ guarantees $\tilde\kappa$ is a well-defined positive real number, since the right-hand side exceeds $1$ whenever $\lambda,\sigma,\tilde\eta>0$). The general solution is $x_j = \alpha e^{\tilde\kappa t_j}+\beta e^{-\tilde\kappa t_j}$ for constants $\alpha,\beta$ fixed by the boundary conditions $x_0=X$, $x_N=0$; writing the general solution instead as $x_j=A\sinh(\tilde\kappa(T-t_j))$ for a single constant $A$ (a valid re-parametrization, since $\sinh(\tilde\kappa(T-t_j))$ is itself a linear combination of $e^{\tilde\kappa t_j}$ and $e^{-\tilde\kappa t_j}$ and therefore already satisfies Equation~\eqref{eq:diffeq} by the hyperbolic identity $\sinh(a-\tilde\kappa\tau)+\sinh(a+\tilde\kappa\tau) = 2\sinh(a)\cosh(\tilde\kappa\tau)$ applied with $a=\tilde\kappa(T-t_j)$), the condition $x_N=0$ is automatic ($\sinh(0)=0$) and $x_0=X$ fixes $A=X/\sinh(\tilde\kappa T)$, giving Equation~\eqref{eq:trajectory}.
+\end{proof}
+
+\section{Limiting Cases and the Continuous-Time Urgency Parameter}
+\label{sec:limits}
+
+\begin{corollary}[Risk-neutral trader]
+\label{cor:riskneutral}
+As $\lambda\to0^+$, $\tilde\kappa\to0^+$ and the trajectory in Equation~\eqref{eq:trajectory} converges to the uniform schedule $x_j = X(1-j/N)$.
+\end{corollary}
+\begin{proof}
+As $\tilde\kappa\to0$, $\sinh(\tilde\kappa u)/u \to \tilde\kappa$ for any fixed $u$ (the derivative of $\sinh$ at $0$), so $\dfrac{\sinh(\tilde\kappa(T-t_j))}{\sinh(\tilde\kappa T)} = \dfrac{\sinh(\tilde\kappa(T-t_j))/(T-t_j)}{\sinh(\tilde\kappa T)/T}\cdot\dfrac{T-t_j}{T} \to \dfrac{T-t_j}{T} = 1-j/N$.
+\end{proof}
+
+With no penalty on variance, a risk-neutral trader is indifferent to how long risk is held and minimizes only expected impact cost, which Theorem~\ref{thm:mean} shows is minimized by trading at a constant rate; Corollary~\ref{cor:riskneutral} confirms the optimal trajectory collapses exactly to this uniform, TWAP-style schedule.
+
+\begin{corollary}[Infinitely risk-averse trader]
+\label{cor:riskaverse}
+As $\lambda\to\infty$, $\tilde\kappa\to\infty$ and $x_j\to0$ for every fixed $j\ge1$: the optimal trajectory converges to immediate liquidation of the entire position in the first interval.
+\end{corollary}
+\begin{proof}
+Fix $j\ge1$. As $\tilde\kappa\to\infty$, $\sinh(\tilde\kappa(T-t_j))/\sinh(\tilde\kappa T) \sim e^{-\tilde\kappa t_j}\to0$ (both numerator and denominator are asymptotically dominated by their positive exponential term, and $T-t_j<T$ strictly for $j\ge1$, so the ratio of exponentials vanishes).
+\end{proof}
+
+Eliminating variance entirely requires eliminating the holding period; Corollary~\ref{cor:riskaverse} confirms that an infinitely risk-averse trader accepts the resulting (large) impact cost rather than hold any residual position even momentarily. Every finite $\lambda>0$ produces a trajectory strictly between these two extremes, front-loaded relative to uniform.
+
+\begin{corollary}[Continuous-time urgency parameter]
+\label{cor:continuum}
+As $\tau\to0$ with $N=T/\tau\to\infty$ and $\eta$ held fixed as the per-unit-time impact coefficient, $\tilde\kappa \to \kappa := \sqrt{\lambda\sigma^2/\eta}$.
+\end{corollary}
+\begin{proof}
+For small $\tilde\kappa\tau$, $\cosh(\tilde\kappa\tau) - 1 \approx \tfrac12(\tilde\kappa\tau)^2$. Equating this to the defining relation in Theorem~\ref{thm:trajectory}, $\tfrac12\tilde\kappa^2\tau^2 \approx \dfrac{\lambda\sigma^2\tau^2}{2\tilde\eta}$, so $\tilde\kappa^2\to\lambda\sigma^2/\tilde\eta$. Rescaling so that $\eta$ itself (rather than $\eta/\tau$) is held fixed as $\tau\to0$, $\tilde\eta=\eta/\tau-\gamma/2\to\eta/\tau$ diverges at the same rate needed to keep $\tilde\eta\tau\to\eta$ finite, and $\gamma\tau/2\to0$ is negligible by comparison; substituting $\tilde\eta\to\eta/\tau$ into $\tilde\kappa^2\tau^2\to\lambda\sigma^2\tau^2/\tilde\eta$ gives $\tilde\kappa^2\to\lambda\sigma^2/\eta$.
+\end{proof}
+
+Corollary~\ref{cor:continuum} recovers the urgency parameter $\kappa=\sqrt{\lambda\sigma^2/\eta}$ commonly quoted as the headline result of the model: it increases in risk aversion $\lambda$ and volatility $\sigma$ (both push toward faster, more front-loaded liquidation) and decreases in the impact cost $\eta$ (a more expensive-to-trade asset is liquidated more slowly, spreading the unavoidable impact cost out).
+
+\begin{proposition}[The efficient frontier]
+\label{prop:frontier}
+As $\lambda$ ranges over $[0,\infty)$, the pairs $\big(E[\text{IS}(\lambda)],\,\mathrm{Var}(\text{IS}(\lambda))\big)$ generated by the optimal trajectory of Theorem~\ref{thm:trajectory} trace out a frontier along which $\mathrm{Var}(\text{IS})$ is minimized for its own level of $E[\text{IS}]$: no trajectory achieves a variance below this frontier at the same expected cost, since any such trajectory would violate the optimality of Theorem~\ref{thm:trajectory} at the corresponding $\lambda$.
+\end{proposition}
+
+This is the execution-cost analog of the mean-variance efficient frontier of portfolio theory, with the trading trajectory playing the role of portfolio weights and $\lambda$ playing the role of the risk-aversion coefficient that selects a single point on the frontier.
+
+\section{Worked Numerical Example}
+\label{sec:example}
+
+Take $X=250$ shares, $T=1$ (one trading day, normalized), $N=5$ equal intervals, $\sigma=2\%$ per interval, $\eta=0.01$, and $\gamma$ small enough to be neglected ($\tilde\eta\approx\eta/\tau=0.01/0.2=0.05$). At $\lambda=0.5$,
+\begin{equation*}
+\cosh(\tilde\kappa\tau) = 1+\frac{0.5(0.02)^2(0.2)^2}{2(0.05)} = 1+0.00008 \;\;\Rightarrow\;\; \tilde\kappa\tau\approx0.01265,\;\; \tilde\kappa\approx0.0632,
+\end{equation*}
+and Equation~\eqref{eq:trajectory} gives the trajectory in Table~\ref{tab:traj}.
+
+\begin{table}[htbp]
+\centering
+\caption{Optimal trajectory, $\lambda=0.5$, against the risk-neutral (uniform) benchmark}
+\label{tab:traj}
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+Interval $j$ & $t_j$ & $x_j$ (optimal) & $x_j$ (uniform, $\lambda=0$) \\
+\midrule
+0 & $0.0$ & $250.0$ & $250.0$ \\
+1 & $0.2$ & $199.4$ & $200.0$ \\
+2 & $0.4$ & $149.6$ & $150.0$ \\
+3 & $0.6$ & $100.0$ & $100.0$ \\
+4 & $0.8$ & $50.2$ & $50.0$ \\
+5 & $1.0$ & $0.0$ & $0.0$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The optimal trajectory sells $50.6$ shares in the first interval against a uniform pace of $50.0$, a modest front-loading consistent with the small $\lambda$ chosen; Section~\ref{sec:limits}'s two corollaries are visible at the extremes of this same example, since increasing $\lambda$ by several orders of magnitude pulls the schedule toward front-loaded liquidation within the first interval or two, while $\lambda\to0$ reproduces the uniform column exactly.
+
+\section{Discussion: Assumptions and Extensions}
+\label{sec:discussion}
+
+\subsection{What linear impact and constant parameters assume away}
+Assumption~\ref{ass:linear}'s linear specification is chosen for tractability; empirically, impact is often closer to a concave power law of trading rate (the ``square-root law,'' impact $\propto v^{0.5\text{--}0.6}$). Assumptions~\ref{ass:permanent}--\ref{ass:temporary} also hold $\sigma$, $\gamma$, and $\eta$ fixed over the entire execution window, ignoring intraday liquidity and volatility patterns (such as the well-documented U-shaped intraday volume curve) that a real execution desk must account for.
+
+\subsection{Nonlinear impact}
+Almgren (2003) extends the framework to general convex temporary-impact functions $h(\cdot)$, at the cost of losing the closed-form $\sinh$ trajectory of Theorem~\ref{thm:trajectory}; the optimal schedule must then generally be found by solving the associated Hamilton-Jacobi-Bellman equation numerically or via a discretized dynamic program.
+
+\subsection{Order-book resilience}
+Obizhaeva and Wang (2013) replace the reduced-form linear-impact assumption with an explicit, block-shaped limit order book that is depleted by trading and replenishes over time (resiliency), producing optimal trajectories that can include discrete lump-sum trades at the start and end of the horizon rather than the smooth, everywhere-continuous schedule of Equation~\eqref{eq:trajectory}.
+
+\subsection{Multi-asset execution}
+A portfolio transition, liquidating or rebalancing many positions simultaneously, requires accounting for cross-impact (trading one asset can move a correlated asset's price), generalizing the scalar coefficients $\eta,\gamma$ to matrices and Theorem~\ref{thm:trajectory}'s scalar difference equation to a vector-valued one; Proposition~\ref{prop:frontier}'s efficient-frontier logic carries over directly, but the optimal trajectories are no longer simply proportional to any single asset's own urgency.
+
+\subsection{Adverse selection}
+The model treats impact as a purely mechanical, liquidity-driven cost. Extensions incorporating a Kyle (1985)- or Glosten-Milgrom (1985)-style informed-trading channel allow other participants to infer information from the executing trader's own order flow and trade ahead of it, adding a genuinely adversarial dimension the linear-impact model of Assumptions~\ref{ass:permanent}--\ref{ass:linear} does not capture.
+
+\subsection{Model-free and reinforcement-learning execution}
+Rather than solving a control problem under an assumed impact model, a reinforcement-learning agent can learn an execution policy directly from historical or simulated order-book data, conditioning trade size on the actually observed book rather than committing to Equation~\eqref{eq:trajectory}'s pre-computed schedule. Because the closed-form solution derived here requires only a handful of parameters, it serves as a natural benchmark for such an agent: a correctly implemented learner trained on a simulated market satisfying Assumptions~\ref{ass:permanent}--\ref{ass:linear} should converge toward Theorem~\ref{thm:trajectory}'s trajectory, and a failure to do so is diagnostic of an implementation error rather than a genuinely superior strategy.
+
+\section{Summary}
+\label{sec:summary}
+
+Liquidating a large position trades off market impact cost, minimized by trading slowly, against timing risk, minimized by trading quickly, a tension a single-period model cannot represent (Section~\ref{sec:setup}). Under linear permanent and temporary impact, expected implementation shortfall decomposes into a trajectory-independent sunk cost and a term minimized by even-sized trades (Theorem~\ref{thm:mean}), while its variance accumulates in proportion to the square of whatever position remains unexecuted at each point in time (Theorem~\ref{thm:var}). Minimizing a mean-variance combination of the two over the trading trajectory is a strictly convex discrete optimization problem whose first-order condition is a linear second-order difference equation, solved explicitly by the hyperbolic trajectory $x_j=X\sinh(\tilde\kappa(T-t_j))/\sinh(\tilde\kappa T)$ (Theorem~\ref{thm:trajectory}), which correctly recovers uniform (TWAP) trading as risk aversion vanishes and immediate liquidation as it diverges (Section~\ref{sec:limits}), and whose continuous-time limit is governed by the single urgency parameter $\kappa=\sqrt{\lambda\sigma^2/\eta}$. The model's linear-impact, constant-parameter assumptions are also precisely where the subsequent literature has extended it: nonlinear impact, order-book resilience, multi-asset cross-impact, adverse selection, and model-free reinforcement-learning execution policies (Section~\ref{sec:discussion}).
+
+\section*{References}
+\begin{itemize}
+\item Almgren, R., and Chriss, N. (2001). ``Optimal Execution of Portfolio Transactions.'' \textit{Journal of Risk}, 3(2), 5--39.
+\item Almgren, R. (2003). ``Optimal Execution with Nonlinear Impact Functions and Trading-Enhanced Risk.'' \textit{Applied Mathematical Finance}, 10(1), 1--18.
+\item Obizhaeva, A. A., and Wang, J. (2013). ``Optimal Trading Strategy and Supply/Demand Dynamics.'' \textit{Journal of Financial Markets}, 16(1), 1--32.
+\item Bertsimas, D., and Lo, A. W. (1998). ``Optimal Control of Execution Costs.'' \textit{Journal of Financial Markets}, 1(1), 1--50.
+\item Kyle, A. S. (1985). ``Continuous Auctions and Insider Trading.'' \textit{Econometrica}, 53(6), 1315--1335.
+\item Glosten, L. R., and Milgrom, P. R. (1985). ``Bid, Ask and Transaction Prices in a Specialist Market with Heterogeneously Informed Traders.'' \textit{Journal of Financial Economics}, 14(1), 71--100.
+\end{itemize}
+
+\end{document}

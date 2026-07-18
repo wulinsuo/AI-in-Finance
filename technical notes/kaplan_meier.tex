@@ -1,0 +1,207 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs}
+\usepackage{hyperref}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{proposition}{Proposition}
+\newtheorem{corollary}{Corollary}
+\newtheorem{lemma}{Lemma}
+\theoremstyle{remark}
+\newtheorem*{remark}{Remark}
+\theoremstyle{definition}
+\newtheorem*{example}{Example}
+\newtheorem*{assumption}{Assumption}
+
+\title{The Kaplan-Meier Estimator: A Complete Derivation}
+\author{Wulin Suo}
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent This note derives the Kaplan-Meier (1958) survival estimator as the nonparametric maximum-likelihood estimator of a survival function from right-censored time-to-event data. It shows that the likelihood, restricted to distributions that place mass only at the observed event times, factors exactly into independent binomial-type terms, one per distinct event time, so that maximizing it separately at each event time recovers the familiar product-limit formula $\hat S(t)=\prod_{t_i\le t}(1-d_i/n_i)$ directly, with no additional assumption beyond the factorization itself. It then derives Greenwood's formula for the estimator's variance via two applications of the delta method to the log-survival function, works a numerical example illustrating both the point estimate and the widening of its confidence interval as the risk set is depleted, sketches the log-rank test for comparing two survival curves, and closes with a discussion of the model's assumptions and the principal directions in which survival analysis has extended it.
+\end{abstract}
+
+\section{The Problem: Estimating Survival from Incomplete Data}
+\label{sec:setup}
+
+Many financial questions are really questions about \emph{time to an event}: how long until a flagged account is confirmed as fraudulent, how long until a loan defaults, how long until a customer churns. A naive approach, simply computing the fraction of accounts that have experienced the event so far, is badly biased whenever the observation window closes before every account's fate is known. An account opened recently and still active is not evidence the account will never default; it simply has not had time to yet, and discarding it, or worse, silently counting it as a confirmed non-event, throws away real information and biases any downstream estimate. Sections~\ref{sec:model}--\ref{sec:mle} show that the Kaplan-Meier estimator is not an ad hoc fix for this problem but the exact nonparametric maximum-likelihood estimator of the survival function once the data's incompleteness, right censoring, is built into the likelihood correctly from the start.
+
+\section{The Model}
+\label{sec:model}
+
+Let $T$ be the (random) time until the event of interest for a given subject. The survival function is $S(t)=\Pr(T>t)$, with $S(0)=1$ and $S$ non-increasing.
+
+\begin{assumption}[Right censoring]
+\label{ass:censoring}
+Each of $n$ independent subjects contributes an observed time $y_j$ and an indicator $\delta_j\in\{0,1\}$: $\delta_j=1$ if $y_j$ is a genuine event time ($y_j=T_j$), and $\delta_j=0$ if $y_j$ is a censoring time at which observation of subject $j$ ends before its event occurs ($y_j=C_j<T_j$, with only $T_j>y_j$ known).
+\end{assumption}
+
+\begin{assumption}[Non-informative censoring]
+\label{ass:noninformative}
+Each subject's censoring time $C_j$ is independent of its event time $T_j$: whether and when observation of a subject ends carries no information about that subject's underlying event risk.
+\end{assumption}
+
+Assumption~\ref{ass:noninformative} is what licenses treating a censored subject's contribution to the likelihood below as simply ``known to have survived at least this long,'' with no further correction; Section~\ref{sec:discussion} discusses what fails when it does not hold.
+
+\begin{lemma}[Discrete-hazard representation]
+\label{lem:telescope}
+Let $S$ be any right-continuous, non-increasing step function with $S(0)=1$, with jumps at $u_1<u_2<\cdots$, and define the discrete hazard at each jump as $h(u_k) := \dfrac{S(u_k^{-})-S(u_k)}{S(u_k^{-})}$. Then
+\begin{equation}
+S(t) = \prod_{k:\,u_k\le t}\big(1-h(u_k)\big).
+\label{eq:telescope}
+\end{equation}
+\end{lemma}
+\begin{proof}
+By definition of $h(u_k)$, $S(u_k) = S(u_k^{-})\big(1-h(u_k)\big)$. Applying this repeatedly from $u_1$ up to the largest jump not exceeding $t$, and using $S(u_1^-)=S(0)=1$ (no jumps before $u_1$), gives Equation~\eqref{eq:telescope} by direct substitution, an elementary telescoping product.
+\end{proof}
+
+Lemma~\ref{lem:telescope} says nothing yet about estimation; it is simply the statement that any admissible survival curve, viewed at its own jump points, is exactly the product of one minus its own hazard at each point. Section~\ref{sec:mle} shows that maximum likelihood pins down exactly what those hazards should be estimated to be.
+
+\section{The Nonparametric Maximum-Likelihood Estimator}
+\label{sec:mle}
+
+\begin{lemma}[The likelihood-maximizing survival curve is discrete]
+\label{lem:discrete}
+The likelihood of the observed data $\{(y_j,\delta_j)\}_{j=1}^n$, viewed as a function of the candidate survival curve $S$,
+\begin{equation}
+L(S) = \prod_{j:\,\delta_j=1}\big[S(y_j^-)-S(y_j)\big]\;\prod_{j:\,\delta_j=0} S(y_j),
+\label{eq:likelihood0}
+\end{equation}
+depends on $S$ only through its values $S(y_j^-)$ and $S(y_j)$ at the finitely many observed times $y_1,\ldots,y_n$. Consequently, $L(S)$ is maximized by some $S$ whose points of decrease occur only among $t_1<\cdots<t_m$, the distinct times at which $\delta_j=1$.
+\end{lemma}
+\begin{proof}
+The first product in Equation~\eqref{eq:likelihood0} is the probability of an exact event at each observed event time, $\Pr(T=y_j)=S(y_j^-)-S(y_j)$; the second is the probability of survival past each observed censoring time, $\Pr(T>y_j)=S(y_j)$. Neither factor depends on how $S$ behaves away from the finite set of observed times $\{y_j\}$. Given any candidate $S$, therefore, redistributing all of its decrease within each interval between consecutive observed times to the right endpoint of that interval (if the right endpoint is itself an uncensored event time) or leaving it undecreased over that interval (otherwise) leaves every $S(y_j^-)$ and $S(y_j)$, and hence $L(S)$, unchanged, while concentrating every jump onto the set of observed times; a jump placed exactly at a censored time $y_j$ (rather than immediately after it) can only lower $S(y_j)$ without contributing any compensating event-probability factor, so it is weakly suboptimal relative to deferring that mass to the next event time. A maximizer can therefore be taken to jump only at $\{t_1,\ldots,t_m\}$.
+\end{proof}
+
+Lemma~\ref{lem:discrete} is the reason the Kaplan-Meier estimator is a step function that changes only at observed event times, never at censoring times, a feature visible in every Kaplan-Meier curve and now shown to be a consequence of maximum likelihood rather than a modeling convenience.
+
+For each distinct event time $t_i$ ($i=1,\ldots,m$), define $n_i$ as the number of subjects still under observation and event-free immediately before $t_i$ (the \emph{risk set}), and $d_i$ as the number of subjects experiencing the event exactly at $t_i$. Write $h_i:=h(t_i)$ for the discrete hazard at $t_i$ from Lemma~\ref{lem:telescope}.
+
+\begin{theorem}[Likelihood factorization]
+\label{thm:factorization}
+Restricted to survival curves that jump only at $\{t_1,\ldots,t_m\}$ (justified by Lemma~\ref{lem:discrete}), the likelihood in Equation~\eqref{eq:likelihood0} factors exactly as
+\begin{equation}
+L(h_1,\ldots,h_m) = \prod_{i=1}^{m} h_i^{d_i}\,(1-h_i)^{n_i-d_i}.
+\label{eq:likelihood1}
+\end{equation}
+\end{theorem}
+\begin{proof}
+By Lemma~\ref{lem:telescope}, $S(t_i^-)=\prod_{k<i}(1-h_k)$. A subject with an event at $t_i$ contributes $S(t_i^-)-S(t_i) = S(t_i^-)h_i = h_i\prod_{k<i}(1-h_k)$ to Equation~\eqref{eq:likelihood0}. A subject censored at some time in $[t_i,t_{i+1})$ (under the standard convention that a censoring tied with an event at $t_i$ is treated as occurring immediately after it, so such a subject still counts toward $n_i$) contributes $S(t_i) = \prod_{k\le i}(1-h_k)$, since $S$ is constant on $[t_i,t_{i+1})$. Multiplying the contributions of all $n$ subjects together and collecting terms by which $h_k$ they involve: the factor $h_k$ appears exactly once for each of the $d_k$ subjects with an event at $t_k$, and the factor $(1-h_k)$ appears exactly once for every subject that was at risk at $t_k$ but did not have an event there, of which there are $n_k-d_k$ by definition of the risk set. This is precisely Equation~\eqref{eq:likelihood1}.
+\end{proof}
+
+\begin{corollary}[The Kaplan-Meier formula as nonparametric MLE]
+\label{cor:km}
+The maximum-likelihood estimate of each discrete hazard is $\hat h_i = d_i/n_i$, and therefore, by Lemma~\ref{lem:telescope},
+\begin{equation}
+\hat S(t) = \prod_{i:\,t_i\le t}\left(1-\frac{d_i}{n_i}\right).
+\label{eq:km}
+\end{equation}
+\end{corollary}
+\begin{proof}
+Since Equation~\eqref{eq:likelihood1} is a product of $m$ factors each depending on a single, distinct $h_i$, maximizing $L$ is equivalent to maximizing $\ell_i(h_i):=d_i\ln h_i+(n_i-d_i)\ln(1-h_i)$ separately for each $i$. Setting $\ell_i'(h_i)=d_i/h_i-(n_i-d_i)/(1-h_i)=0$ gives $d_i(1-h_i)=(n_i-d_i)h_i$, i.e., $d_i=n_ih_i$, so $\hat h_i=d_i/n_i$ (the ordinary binomial maximum-likelihood estimate, and a maximum rather than a minimum since $\ell_i$ is strictly concave on $(0,1)$). Substituting into Equation~\eqref{eq:telescope} gives Equation~\eqref{eq:km}.
+\end{proof}
+
+Equation~\eqref{eq:km} is exactly the familiar Kaplan-Meier product-limit formula, now derived rather than merely stated: at each observed event time, the running survival estimate is multiplied by the empirical fraction of the current risk set that survives that specific time point. A censored observation is never treated as an event and never contributes a factor of its own, but Theorem~\ref{thm:factorization}'s proof shows precisely how it still contributes real information, by remaining in the risk set $n_k$ (and thereby affecting $\hat h_k$) for every event time it survives past before it leaves observation.
+
+\section{Variance: Greenwood's Formula}
+\label{sec:variance}
+
+\begin{theorem}[Greenwood's formula]
+\label{thm:greenwood}
+Treating $\hat h_1,\ldots,\hat h_m$ as approximately independent binomial proportions with $\mathrm{Var}(\hat h_i)\approx h_i(1-h_i)/n_i$ (conditional on the sequence of risk-set sizes), the delta method gives
+\begin{equation}
+\widehat{\mathrm{Var}}\big[\hat S(t)\big] \approx \hat S(t)^2\sum_{i:\,t_i\le t}\frac{d_i}{n_i(n_i-d_i)}.
+\label{eq:greenwood}
+\end{equation}
+\end{theorem}
+\begin{proof}
+Write $\ln\hat S(t) = \sum_{t_i\le t}\ln(1-\hat h_i)$. By the delta method applied to $g(h)=\ln(1-h)$, $g'(h)=-1/(1-h)$, so
+\begin{equation*}
+\mathrm{Var}\big[\ln(1-\hat h_i)\big] \approx \left(\frac{-1}{1-h_i}\right)^2\mathrm{Var}(\hat h_i) \approx \frac{h_i(1-h_i)/n_i}{(1-h_i)^2} = \frac{h_i}{n_i(1-h_i)}.
+\end{equation*}
+Substituting the plug-in estimate $h_i\approx d_i/n_i$, $1-h_i\approx (n_i-d_i)/n_i$, gives $\mathrm{Var}[\ln(1-\hat h_i)]\approx \dfrac{d_i/n_i}{n_i(n_i-d_i)/n_i} = \dfrac{d_i}{n_i(n_i-d_i)}$. Since the $\hat h_i$ are treated as independent across $i$, variances add: $\mathrm{Var}[\ln\hat S(t)]\approx\sum_{t_i\le t}d_i/[n_i(n_i-d_i)]$. Applying the delta method a second time to $\hat S(t)=\exp(\ln\hat S(t))$, with derivative $\hat S(t)$ itself, gives $\mathrm{Var}[\hat S(t)]\approx \hat S(t)^2\,\mathrm{Var}[\ln\hat S(t)]$, which is Equation~\eqref{eq:greenwood}.
+\end{proof}
+
+A normal-approximation confidence interval follows directly, $\hat S(t)\pm z_{\alpha/2}\sqrt{\widehat{\mathrm{Var}}[\hat S(t)]}$ (in practice often computed on a transformed, e.g.\ log-log, scale to keep the interval inside $[0,1]$). Two features of Equation~\eqref{eq:greenwood} matter in practice: the variance accumulates \emph{additively} across every event time up to $t$, so it grows, and the interval widens, monotonically in $t$; and each additive term shrinks as the risk set $n_i$ grows, so the estimator is most precise early, while the risk set is still large, and least precise late, once prior events and censoring have depleted it.
+
+\section{Comparing Groups: The Log-Rank Test}
+\label{sec:logrank}
+
+To test whether two groups (e.g., two risk tiers, two origination cohorts) share the same underlying survival function, the log-rank test compares, at each event time $t_i$ pooled across both groups, the number of events actually observed in group 1, $d_{1i}$, against the number expected under the null hypothesis that both groups share the same hazard at $t_i$: given $n_{1i}$ and $n_{2i}$ subjects at risk in each group and $d_i=d_{1i}+d_{2i}$ total events, the expected count under the null is $e_{1i}=d_i\,n_{1i}/(n_{1i}+n_{2i})$ (a hypergeometric mean), with variance $v_i = \dfrac{n_{1i}n_{2i}d_i(n_{1i}+n_{2i}-d_i)}{(n_{1i}+n_{2i})^2(n_{1i}+n_{2i}-1)}$. Summing the discrepancies and variances across all event times and forming
+\begin{equation*}
+Z = \frac{\sum_i (d_{1i}-e_{1i})}{\sqrt{\sum_i v_i}}
+\end{equation*}
+gives a statistic that is asymptotically standard normal under the null (equivalently, $Z^2$ is asymptotically $\chi^2_1$), a result established rigorously via the martingale central limit theorem for counting processes (Fleming and Harrington, 1991) rather than reproduced here.
+
+\section{Worked Numerical Example}
+\label{sec:example}
+
+Ten loan accounts are observed for time to default (months), with $+$ marking censoring: $5$, $8^{+}$, $12$, $12$, $18^{+}$, $20$, $24^{+}$, $30$, $30^{+}$, $36^{+}$. There are $m=4$ distinct default times, $t=(5,12,20,30)$, with the risk-set and event counts in Table~\ref{tab:km}.
+
+\begin{table}[htbp]
+\centering
+\caption{Kaplan-Meier calculation for ten loan accounts}
+\label{tab:km}
+\begin{tabular}{@{}lrrrrr@{}}
+\toprule
+$t_i$ & $n_i$ & $d_i$ & $1-d_i/n_i$ & $\hat S(t_i)$ & Greenwood term $d_i/[n_i(n_i-d_i)]$ \\
+\midrule
+$5$  & $10$ & $1$ & $0.9000$ & $0.9000$ & $0.01111$ \\
+$12$ & $8$  & $2$ & $0.7500$ & $0.6750$ & $0.04167$ \\
+$20$ & $5$  & $1$ & $0.8000$ & $0.5400$ & $0.05000$ \\
+$30$ & $3$  & $1$ & $0.6667$ & $0.3600$ & $0.16667$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The risk set falls from $n_1=10$ to $n_4=3$ as accounts either default or are censored (at months $8$, $18$, and $24$) and leave observation; the tie at month $30$ (one default, one censoring) is handled exactly as Theorem~\ref{thm:factorization}'s proof specifies, the censored account still counts toward $n_4=3$ but is removed from the risk set immediately afterward, leaving only the account censored at month $36$ still under observation. By Corollary~\ref{cor:km}, $\hat S(30)=0.9\times0.75\times0.8\times0.6667\approx0.360$: an estimated $36\%$ of accounts remain default-free beyond 30 months. Applying Theorem~\ref{thm:greenwood},
+\begin{equation*}
+\widehat{\mathrm{Var}}[\hat S(30)] \approx (0.360)^2(0.01111+0.04167+0.05000+0.16667) = 0.1296(0.26944) \approx 0.0349,
+\end{equation*}
+giving a standard error of about $0.187$ and a (truncated) $95\%$ confidence interval of roughly $(0,\,0.73)$. The Greenwood term contributed by the final risk set, $n_4=3$, is more than an order of magnitude larger than the term contributed by the first, $n_1=10$ ($0.1667$ against $0.0111$), even though the two corresponding factors in $\hat S$ are of similar magnitude: this is Section~\ref{sec:variance}'s point made concrete, the point estimate $\hat S(30)=0.360$ looks numerically no less precise than $\hat S(5)=0.900$, but it is built on a risk set of only $3$ remaining accounts and carries a correspondingly much wider confidence interval, information the point estimate alone does not convey.
+
+\section{Discussion: Assumptions and Extensions}
+\label{sec:discussion}
+
+\subsection{What non-informative censoring rules out}
+Assumption~\ref{ass:noninformative} requires that censoring carry no information about a subject's own event risk. If, for example, loans are disproportionately paid off in full, and thereby censored, immediately before they would otherwise have defaulted, Theorem~\ref{thm:factorization}'s likelihood is misspecified: the subjects remaining in the risk set at later event times are no longer representative of the original at-risk population, and Corollary~\ref{cor:km}'s estimator is biased in a direction the formula itself cannot detect or correct.
+
+\subsection{Cox proportional hazards model}
+The most common extension relates the hazard to covariates via $\lambda(t\mid x)=\lambda_0(t)\exp(\beta^\top x)$, leaving the baseline hazard $\lambda_0(t)$ unspecified (estimated nonparametrically, in the same spirit as Corollary~\ref{cor:km}) while estimating covariate effects $\beta$ parametrically via a partial-likelihood argument closely related to Theorem~\ref{thm:factorization}'s risk-set construction. This is the natural next step whenever the question moves from ``what is the survival curve'' to ``which characteristics predict faster or slower time-to-event.''
+
+\subsection{Parametric survival models}
+Fully parametric alternatives (exponential, Weibull, log-normal hazard specifications) trade the nonparametric estimator's flexibility for smoother, extrapolable curves and directly interpretable hazard shapes, useful when the sample is too small to support a nonparametric curve or when extrapolation beyond the observed data range is genuinely needed.
+
+\subsection{Competing risks}
+A subject can be removed from observation by more than one distinct type of terminal event (a loan can default \emph{or} be prepaid in full, and prepayment is not simply a censoring of the default clock, since it is itself economically meaningful and can be correlated with default risk). The competing-risks framework replaces the single survival function of Section~\ref{sec:model} with cause-specific hazard and cumulative-incidence functions for each event type, since Assumption~\ref{ass:noninformative} applied naively to a competing event can bias the estimated risk of the event of interest.
+
+\subsection{Left truncation and interval censoring}
+Real datasets sometimes enter observation only after a delay (left truncation, e.g., an account appears in a monitoring database only once it first triggers an alert, not from origination) or only reveal that an event occurred somewhere within an interval rather than at a precise time (interval censoring). Both require risk-set bookkeeping beyond Theorem~\ref{thm:factorization}'s basic right-censored construction.
+
+\subsection{Machine-learning survival models}
+Random survival forests and neural-network-based approaches (e.g., DeepSurv and other neural extensions of the Cox model) relax the linear, additive covariate-effect assumption of the standard Cox model, allowing nonlinear effects and interactions among covariates at the cost of the interpretability of a single estimated coefficient vector $\beta$.
+
+\subsection{Discrete-time hazard models and vintage analysis}
+In credit-risk practice, survival is often modeled directly in discrete (e.g., monthly) time as a sequence of conditional default probabilities using a standard binary classifier applied to a person-period dataset, an approach more easily integrated with existing classification infrastructure than a continuous-time Cox model. A common applied use of Corollary~\ref{cor:km} itself is to compute separate curves for each loan origination cohort (``vintage''), letting an analyst compare how quickly different cohorts migrate to default and detect deteriorating underwriting standards well before a full-portfolio aggregate default rate would reveal it.
+
+\section{Summary}
+\label{sec:summary}
+
+The Kaplan-Meier estimator is not an ad hoc device for handling censored data but the exact nonparametric maximum-likelihood estimator of the survival function once censoring is built into the likelihood correctly. Any admissible survival curve can be written as a telescoping product of one minus its own discrete hazards (Lemma~\ref{lem:telescope}), the likelihood of censored time-to-event data is maximized by a curve that jumps only at the observed event times (Lemma~\ref{lem:discrete}), and restricted to such curves the likelihood factors exactly into one independent binomial-type term per event time (Theorem~\ref{thm:factorization}), so that maximizing separately at each event time gives $\hat h_i=d_i/n_i$ and, by substitution, the familiar product-limit formula (Corollary~\ref{cor:km}). Two applications of the delta method to the resulting log-survival function give Greenwood's formula for its variance (Theorem~\ref{thm:greenwood}), which grows monotonically with $t$ and is dominated by whichever risk sets have been most depleted by prior events and censoring, a fact a numerical example makes concrete (Section~\ref{sec:example}). The estimator's validity rests on non-informative censoring (Assumption~\ref{ass:noninformative}), and the literature has extended it in the directions where that assumption, or the estimator's purely nonparametric, single-event-type, fixed-covariate structure, is most restrictive: regression on covariates (Cox), competing risks, left truncation and interval censoring, and flexible machine-learning hazard models (Section~\ref{sec:discussion}).
+
+\section*{References}
+\begin{itemize}
+\item Kaplan, E. L., and Meier, P. (1958). ``Nonparametric Estimation from Incomplete Observations.'' \textit{Journal of the American Statistical Association}, 53(282), 457--481.
+\item Greenwood, M. (1926). ``The Natural Duration of Cancer.'' \textit{Reports on Public Health and Medical Subjects}, 33, 1--26.
+\item Cox, D. R. (1972). ``Regression Models and Life-Tables.'' \textit{Journal of the Royal Statistical Society, Series B}, 34(2), 187--220.
+\item Mantel, N. (1966). ``Evaluation of Survival Data and Two New Rank Order Statistics Arising in Its Consideration.'' \textit{Cancer Chemotherapy Reports}, 50(3), 163--170.
+\item Fleming, T. R., and Harrington, D. P. (1991). \textit{Counting Processes and Survival Analysis}. Wiley.
+\item Kalbfleisch, J. D., and Prentice, R. L. (2002). \textit{The Statistical Analysis of Failure Time Data}, 2nd ed. Wiley.
+\item Klein, J. P., and Moeschberger, M. L. (2003). \textit{Survival Analysis: Techniques for Censored and Truncated Data}, 2nd ed. Springer.
+\end{itemize}
+
+\end{document}

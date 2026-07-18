@@ -38,7 +38,7 @@ It is worth being explicit about what makes this chapter's models different from
 \section{Stationarity, White Noise, and Random Walks}\index{Stationarity, White Noise, and Random Walks}
 \label{sec:random-walk}
 
-A time series $\{X_t\}$ is weakly stationary if its mean and variance do not change over time and the covariance between $X_t$ and $X_{t-k}$ depends only on the lag $k$, not on $t$ itself:
+Suppose an analyst fits a seemingly solid model relating an interest rate series to its own past values, only to find the fitted relationship falls apart the moment new data arrives, not because the estimation was done incorrectly, but because the series itself was never behaving consistently enough to model in the first place. This section makes precise exactly what kind of consistency a time series needs for a fitted model to have any hope of generalizing. A time series $\{X_t\}$ is weakly stationary if its mean and variance do not change over time and the covariance between $X_t$ and $X_{t-k}$ depends only on the lag $k$, not on $t$ itself:
 \begin{equation*}
 \mathbb{E}[X_t] = \mu, \qquad \text{Var}(X_t) = \sigma^2, \qquad \text{Cov}(X_t, X_{t-k}) = \gamma_k \text{ for all } t.
 \end{equation*}
@@ -72,7 +72,7 @@ exactly. Critically, the Dickey-Fuller test does not use standard normal or $t$-
 \section{Autocorrelation and the Correlogram}\index{Autocorrelation and the Correlogram}
 \label{sec:acf-section}
 
-The autocorrelation function (ACF) measures how strongly a series is related to its own past values. At lag $k$, it is defined as
+Suppose an analyst has just concluded, from the ADF test above, that an interest-rate series is likely mean-reverting rather than a random walk, and now wants to know exactly how far back its memory extends: does today's value mainly reflect yesterday's, or does a shock from several periods ago still leave a detectable trace? The autocorrelation function (ACF) answers this directly by measuring how strongly a series is related to its own past values. At lag $k$, it is defined as
 \begin{equation*}
 \rho_k = \frac{\gamma_k}{\gamma_0} = \frac{\text{Cov}(X_t, X_{t-k})}{\text{Var}(X_t)},
 \end{equation*}
@@ -227,7 +227,7 @@ This is noticeably lower than both the simple exponential smoothing forecast (ab
 
 \section{ARIMA Models}\index{ARIMA Models}
 
-The AR(1) model in Section~\ref{sec:ar1-example} is a special case of a much broader family. A moving-average model of order $q$, MA($q$), expresses the current value as a function of recent noise terms rather than recent levels,
+Suppose a shock, a one-time data-reporting glitch, say, appears to influence a series for exactly one additional period before vanishing completely, rather than decaying away gradually forever the way the AR(1) model above implies. The AR(1) model in Section~\ref{sec:ar1-example} is a special case of a much broader family built to capture exactly this kind of finite-memory dependence, among others. A moving-average model of order $q$, MA($q$), expresses the current value as a function of recent noise terms rather than recent levels,
 \begin{equation*}
 X_t = \mu + \varepsilon_t + \theta_1 \varepsilon_{t-1} + \cdots + \theta_q \varepsilon_{t-q},
 \end{equation*}
@@ -401,7 +401,7 @@ The GARCH(1,1) model treats a positive and a negative return of the same magnitu
 \section{State-Space Models and the Kalman Filter}\index{State-Space Models and the Kalman Filter}
 \label{sec:kalman-example}
 
-A different, more general way to model time-varying behavior is the state-space representation, which separates an unobserved (``latent'') state that evolves over time from the observed data that provides noisy information about it:
+Suppose a fund re-estimates a stock's market beta from a rolling regression each quarter and finds the estimate bouncing around noticeably from one quarter to the next. Some of that bounce is pure estimation noise, sampling variation that would appear even if the true beta never changed at all, but part of it might be the true beta itself genuinely drifting over time as the company's business evolves, and a single quarter's estimate cannot tell the two apart. A different, more general way to model this kind of time-varying behavior is the state-space representation, which separates an unobserved (``latent'') state that evolves over time from the observed data that provides noisy information about it:
 \begin{align*}
 \text{State equation:} \quad & \beta_t = \beta_{t-1} + \eta_t, \\
 \text{Observation equation:} \quad & y_t = x_t^\top \beta_t + \varepsilon_t,
@@ -540,6 +540,7 @@ The exercises below span the full range of tools introduced in this chapter, fro
     \item Using this chapter's RMSE/MAPE comparison, recompute both metrics for the naive benchmark if its forecasts were instead $99, 101, 99, 104, 100$ (closer to the actual values than the original naive forecasts), and discuss whether the fitted model would still show a clear advantage over this improved benchmark.
     \item Using Section~\ref{sec:ljung-box}'s Ljung-Box calculation, explain in your own words why a large $Q$ statistic (and correspondingly small $p$-value) is evidence that a model's residuals still contain autocorrelation, and why this counts against the model even though the model's own $R^2$ or fitted coefficients might look reasonable on their own.
     \item Section~\ref{sec:ljung-box} found that AIC and BIC both favor the AR(2) model over the AR(1) model, yet also cautioned that this conclusion may simply reflect overfitting on only six observations. Describe a concrete piece of additional evidence (not just a lower in-sample AIC or BIC) that would make you more confident the AR(2) model is genuinely better specified, not just better fitting.
+    \item \textbf{Challenge (real data).} Download at least five years of daily closing prices for a real, liquid stock (for example, via the \texttt{yfinance} library, as Chapter 2 and Chapter 5 already do) and compute its daily log returns. (a) Test the return series for a unit root using the augmented Dickey-Fuller test, as in Section~\ref{sec:adf-test}, and contrast the statistical power of this test on your (likely thousands of) real observations with this chapter's own 8-observation toy example, where the test failed to reject a unit root despite a clearly mean-reverting fitted coefficient. (b) Fit a GARCH(1,1) model to the return series and plot the fitted conditional volatility alongside the raw returns, identifying at least one real historical event (an earnings surprise, a market-wide shock) that produced a visible volatility spike. (c) Compare your fitted $\alpha+\beta$ to the stationarity condition discussed in this chapter, and comment on whether real daily equity returns typically sit close to the $\alpha+\beta=1$ boundary this chapter warns is a sign of near-nonstationary volatility.
 \end{enumerate}
 
 \section{Further Reading}

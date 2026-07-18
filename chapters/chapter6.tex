@@ -29,7 +29,7 @@ By the end of the chapter, the reader will have seen how a model's parameters ar
 
 \section{What Machine Learning Is}\index{What Machine Learning Is}
 
-Machine learning is a branch of statistics and computer science concerned with building models that improve with experience. The basic setup is straightforward: a model is given data, it learns parameters from those data by minimizing some measure of error, and it is then used to make predictions or decisions on new data. The model may be used for regression, classification, clustering, dimensionality reduction, or anomaly detection.
+Suppose an analyst has a decade of loan-application data and wants a system that predicts default risk more accurately than a fixed set of hand-written underwriting rules, one that gets better as more data arrives rather than needing to be manually rewritten every time economic conditions shift. Machine learning is the branch of statistics and computer science built to do exactly this: building models that improve with experience, rather than encoding a fixed decision procedure by hand. The basic setup is straightforward: a model is given data, it learns parameters from those data by minimizing some measure of error, and it is then used to make predictions or decisions on new data. The model may be used for regression, classification, clustering, dimensionality reduction, or anomaly detection.
 
 This basic setup is, in an important sense, not new. Fitting a linear regression by least squares, a technique dating to Gauss and Legendre in the early 1800s, is itself a machine learning algorithm by this definition: it minimizes an error measure (squared error) over a set of parameters using data. What distinguishes the modern field of machine learning is less the underlying mathematical principle, minimizing a loss function over parameters, than the scale of data and computation now available, and the resulting emphasis on flexible, high-capacity models (trees, ensembles, neural networks) whose parameters number in the thousands, millions, or more, and whose behavior is correspondingly harder to interpret than that of the small, transparent linear models classical statistics was built around.
 
@@ -333,7 +333,7 @@ The choice of $k$ controls a bias-variance tradeoff directly analogous to the on
 
 \section{Support Vector Machines}\index{Support Vector Machines}
 
-A support vector machine\index{support vector machine (SVM)} (SVM) approaches classification geometrically: rather than modeling a probability (logistic regression) or voting among neighbors (KNN), it searches directly for the hyperplane (a line, in two dimensions) that separates the two classes with the widest possible margin, the distance from the separating boundary to the nearest training point of either class. Intuitively, a wider margin means the decision boundary is less sensitive to small perturbations in the data, which is one reason SVMs often generalize well.
+Suppose a credit analyst has a single, standardized measure of financial distress for a handful of firms and wants to draw the clearest possible dividing line between the ones that later defaulted and the ones that did not, not just any line that happens to separate the two groups in the historical data, but the one least likely to misclassify a new, slightly different firm sitting close to the boundary. A support vector machine\index{support vector machine (SVM)} (SVM) approaches classification geometrically: rather than modeling a probability (logistic regression) or voting among neighbors (KNN), it searches directly for the hyperplane (a line, in two dimensions) that separates the two classes with the widest possible margin, the distance from the separating boundary to the nearest training point of either class. Intuitively, a wider margin means the decision boundary is less sensitive to small perturbations in the data, which is one reason SVMs often generalize well.
 
 The training points that lie exactly on the margin, the closest points to the boundary, are called support vectors, since they alone determine the position of the separating hyperplane; every other training point could, in principle, be moved or removed without changing the fitted boundary at all, in contrast to a linear regression, where every point contributes to the fitted line. When the classes cannot be separated perfectly by a straight line, a soft-margin SVM allows some points to fall on the wrong side of the margin, controlled by a penalty parameter that trades off margin width against the number of misclassified training points, directly analogous to the regularization strength $\lambda$ in ridge and lasso regression.
 
@@ -459,7 +459,7 @@ a striking contrast: ridge barely moves either coefficient at this $\lambda$, wh
 \section{Bias, Variance, and the Tradeoff}\index{Bias, Variance, and the Tradeoff}
 \label{sec:bias-variance}
 
-The bias-variance tradeoff is a foundational concept in machine learning and can be stated precisely. For a model $\hat f$ trained on random training data and evaluated at a point $x$ with true relationship 
+Suppose two analysts fit different models to the exact same noisy training sample: one fits a single straight line, the other fits a high-degree polynomial that passes through every training point exactly, the degree-9 fit in Table~\ref{tab:overfitting_stylized} among them. Which one should be trusted on new data the model has not yet seen, and why? The bias-variance tradeoff is the foundational concept in machine learning that answers this precisely. For a model $\hat f$ trained on random training data and evaluated at a point $x$ with true relationship 
 $$y = f(x) + \varepsilon,$$ 
 where $\varepsilon$ has mean zero and variance $\sigma^2$, the expected squared prediction error decomposes as
 \begin{equation*}
@@ -623,7 +623,7 @@ where $\text{count}(x_j,k)$ is how many times word $x_j$ appeared across class $
 
 \section{Clustering and Dimensionality Reduction}\index{Clustering and Dimensionality Reduction}
 
-Not all machine learning tasks involve predicting a known outcome. Sometimes the goal is to understand structure in a large set of assets or transactions. $K$-means clustering\index{K-means clustering} partitions observations into $K$ groups by minimizing the within-cluster sum of squared distances to each group's center,
+Not all machine learning tasks involve predicting a known outcome. Sometimes the goal is to understand structure in a large set of assets or transactions. Suppose a portfolio manager has a spreadsheet of a few hundred holdings and no label telling her which ones behave similarly; she would like an algorithm that groups them automatically, purely from their measured characteristics, rather than sorting them by eye. $K$-means clustering\index{K-means clustering} partitions observations into $K$ groups by minimizing the within-cluster sum of squared distances to each group's center,
 \begin{equation*}
 \arg\min_{\{S_k\}} \sum_{k=1}^K \sum_{x_i \in S_k} \|x_i - \mu_k\|^2, \qquad \mu_k = \frac{1}{|S_k|}\sum_{x_i \in S_k} x_i,
 \end{equation*}
@@ -668,7 +668,7 @@ Initializing two cluster centers at $F_1$ and $F_4$, the algorithm alternates be
 
 \section{Neural Networks and Deep Learning in Finance}\index{Neural Networks and Deep Learning in Finance}
 
-Neural networks represent another major class of machine learning methods. A simple feedforward network with one hidden layer computes
+Suppose an analyst suspects that default risk depends on leverage and profitability not through any simple additive combination, but through some more intricate interaction between the two that is too complex to write down as a specific nonlinear formula in advance, and wants a model flexible enough to learn whatever that relationship turns out to be directly from data, rather than committing in advance to a particular functional form the way linear or logistic regression do. Neural networks represent another major class of machine learning methods, built for exactly this kind of unspecified nonlinearity. A simple feedforward network with one hidden layer computes
 \begin{equation*}
 \hat y = \sigma_2\big(W_2\, \sigma_1(W_1 x + b_1) + b_2\big),
 \end{equation*}
@@ -779,6 +779,7 @@ This chapter also introduced a genuine diversity of algorithmic approaches, para
     \item Using this chapter's maximum-margin example, suppose a fifth point is added at $x=3.5$ belonging to the ``low-risk'' class. Compute its functional margin under the original hyperplane ($w=1$, $b=-3$), explain why this point must become a new support vector, and recompute the resulting hyperplane and margin width.
     \item Using this chapter's ridge-versus-lasso worked example, explain in your own words why lasso's exact zero for the spurious feature's coefficient is a direct consequence of the penalty term's shape (a kink at zero), rather than simply a coincidence of this particular dataset, and describe what would need to be true of ridge's penalty for it to ever produce an exactly zero coefficient.
     \item Using this chapter's backpropagation worked example, recompute $\partial L/\partial z_2$, $\partial L/\partial W_2$, and $\partial L/\partial b_2$ if the true label were $y=0$ instead of $y=1$ (all forward-pass values unchanged), and explain in words why the sign of every downstream gradient flips as a result.
+    \item \textbf{Challenge (real data).} Download the UCI Bank Marketing dataset (a Portuguese bank's telemarketing campaign, roughly 45,000 client contacts, with features such as age, job, account balance, and prior campaign outcomes, and a binary label for whether the client subscribed to a term deposit). (a) Fit both a logistic regression and a $k$-nearest-neighbors classifier (trying at least three values of $k$) to predict subscription on a held-out test split, and compare their accuracy, precision, and recall. (b) Using Section~\ref{sec:bias-variance}'s bias-variance framework, explain which of your $k$ values appears to underfit and which appears to overfit, based on how training and test accuracy diverge. (c) This dataset's subscription rate is only around $11\%$, far from the roughly balanced toy examples used elsewhere in this chapter; discuss, referencing this chapter's overfitting and validation material, why a model that reports $89\%$ accuracy on this dataset could still be practically useless to the bank's marketing team.
 \end{enumerate}
 
 \section{Further Reading}

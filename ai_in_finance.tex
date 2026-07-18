@@ -31,6 +31,19 @@
 \usepackage{makeidx}
 \makeindex
 
+% Running headers: "AI in Finance" on even pages, the current chapter's name on odd
+% pages (replacing the default section-name running head, whose length varies too
+% much chapter to chapter to fit reliably in the header's width).
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\setlength{\headheight}{15pt}
+\fancyhead[LE]{\slshape\thepage}
+\fancyhead[RE]{\slshape AI in Finance}
+\fancyhead[LO]{\slshape\leftmark}
+\fancyhead[RO]{\slshape\thepage}
+\renewcommand{\headrulewidth}{0pt}
+
 \begin{document}
 
 \frontmatter
@@ -94,11 +107,13 @@ I have written this book for readers who are already comfortable with quantitati
 
 \section*{How This Book Is Organized}
 
-The eighteen chapters are ordered by dependency, not by alphabetical convenience or topical grouping. Chapter 2 teaches the Python tools, NumPy, pandas, scikit-learn, matplotlib, that nearly every later chapter's worked examples rely on, so it comes before those chapters need it rather than after. Chapter 3's markets and institutions precede Chapter 4's financial statements, and Chapter 4's statements feed directly into Chapter 5's valuation and asset-pricing models, which in turn recur throughout the risk, portfolio, and credit chapters that follow. Machine learning fundamentals (Chapter 6) are introduced once, in depth, and then reused, not re-taught, in every later chapter that needs a regression, a classifier, or a neural network: fraud scoring, credit scoring, algorithmic trading signals, natural language processing, and the explainability methods of Chapter 16 all build on that same foundation rather than each inventing their own. Chapter 17 closes the methods sequence with reinforcement learning, built on the trading and portfolio machinery of Chapters 10 through 12, immediately before Chapter 18's capstone puts every method in the book to work on one real dataset. This ordering was arrived at, in part, by actually running the companion notebooks end to end and discovering where an earlier draft asked a chapter to use a tool it had not yet been taught.
+The nineteen chapters are ordered by dependency, not by alphabetical convenience or topical grouping. Chapter 2 teaches the Python tools, NumPy, pandas, scikit-learn, matplotlib, that nearly every later chapter's worked examples rely on, so it comes before those chapters need it rather than after. Chapter 3's markets and institutions precede Chapter 4's financial statements, and Chapter 4's statements feed directly into Chapter 5's valuation and asset-pricing models, which in turn recur throughout the risk, portfolio, and credit chapters that follow. Machine learning fundamentals (Chapter 6) are introduced once, in depth, and then reused, not re-taught, in every later chapter that needs a regression, a classifier, or a neural network: fraud scoring, credit scoring, algorithmic trading signals, natural language processing, and the explainability methods of Chapter 16 all build on that same foundation rather than each inventing their own. Chapter 17 closes the methods sequence proper with reinforcement learning, built on the trading and portfolio machinery of Chapters 10 through 12; Chapter 18 then turns to a third modeling paradigm, agent-based models of markets and financial networks, built on that same statistical and portfolio machinery together with Chapter 17's own sequential-decision framing, immediately before Chapter 19's capstone puts every method in the book to work on one real dataset. This ordering was arrived at, in part, by actually running the companion notebooks end to end and discovering where an earlier draft asked a chapter to use a tool it had not yet been taught.
 
-Every chapter follows the same shape: an introduction, several sections of exposition built around at least one fully worked numerical example a reader can check by hand, a discussion of the practical challenges and limitations specific to that chapter's topic, and a closing sequence of Key Takeaways, Suggested Exercises, and Further Reading pointing to the standard textbooks and original papers behind the chapter's material. Each chapter is sized for roughly a ninety-minute class session, so the book can serve as the backbone of a one-semester course, taught roughly one chapter per week, exactly as it can serve a reader working through it independently at their own pace. Two appendices follow the eighteen chapters: a catalog of real financial datasets and APIs for readers who want to extend the book's examples with real data of their own, and a glossary of finance and trading terms for readers who hit an unfamiliar term before the chapter that formally introduces it.
+Beneath this chapter-by-chapter dependency, the book falls into three broader parts. Chapters 1 through 7 are preparation: the finance vocabulary, institutions, financial statements, and valuation machinery a reader needs before any model can be usefully applied, together with the Python and machine learning fundamentals every later chapter draws on. Chapters 8 through 15 cover the applications a working quantitative finance professional encounters most often: market and credit risk, portfolio construction, algorithmic and high-frequency trading, fraud detection, and the natural language processing and alternative-data methods reshaping how firms extract signal from unstructured sources. Chapters 16 through 19 turn to more advanced and specialized territory: explainability, fairness, and regulation; reinforcement learning; agent-based models of markets and financial networks; and a closing capstone that applies the entire toolkit to one real, publicly available dataset end to end. A reader pressed for time could stop after Part II and still have a working, practitioner-level command of AI in finance; Part III is where the book pushes into territory still actively being worked out in research and in practice.
 
-Real, named case studies are woven throughout rather than confined to a single chapter: the 1998 collapse of Long-Term Capital Management, the 2008 financial crisis and the Gaussian copula's role in mispricing CDO risk, the 2010 Flash Crash, the 2012 Knight Capital trading malfunction, the Danske Bank Estonia money-laundering scandal, the 2016 Bitfinex exchange hack and the blockchain forensics that traced its proceeds to a 2022 U.S. Department of Justice seizure, the 2019 Apple Card gender-bias controversy, and the SEC's 2022 settlement with Schwab over undisclosed robo-advisor cash allocations, among others. These are real events with real consequences, included because the lesson a formula teaches in the abstract is rarely the lesson a genuine failure teaches in practice. Chapter 18's capstone case study goes further still, working a real, publicly available consumer-credit dataset end to end, undocumented category codes, class imbalance, model comparison, calibration, explainability, and fairness auditing included, using nothing invented for the occasion.
+Every chapter follows the same shape: an introduction, several sections of exposition built around at least one fully worked numerical example a reader can check by hand, a discussion of the practical challenges and limitations specific to that chapter's topic, and a closing sequence of Key Takeaways, Suggested Exercises, and Further Reading pointing to the standard textbooks and original papers behind the chapter's material. Most chapters' Suggested Exercises close with a challenge question that asks the reader to redo one of the chapter's own methods on a real, freely obtainable dataset, from sources such as the UCI Machine Learning Repository, Kaggle, SEC EDGAR, or the Consumer Financial Protection Bureau's HMDA database, or, in the handful of cases where no clean real dataset exists (a limit order book fast enough to show latency arbitrage, say), on data generated by a documented simulation instead; the point of each is to show what a real-world version of the chapter's toy example actually looks like, messy edges included. Each chapter is sized for roughly a ninety-minute class session, so the book can serve as the backbone of a one-semester course, taught roughly one chapter per week, exactly as it can serve a reader working through it independently at their own pace. Two appendices follow the nineteen chapters: a catalog of real financial datasets and APIs for readers who want to extend the book's examples with real data of their own, and a glossary of finance and trading terms for readers who hit an unfamiliar term before the chapter that formally introduces it.
+
+Real, named case studies are woven throughout rather than confined to a single chapter: the 1998 collapse of Long-Term Capital Management, the 2008 financial crisis and the Gaussian copula's role in mispricing CDO risk, the 2010 Flash Crash, the 2012 Knight Capital trading malfunction, the Danske Bank Estonia money-laundering scandal, the 2016 Bitfinex exchange hack and the blockchain forensics that traced its proceeds to a 2022 U.S. Department of Justice seizure, the 2019 Apple Card gender-bias controversy, and the SEC's 2022 settlement with Schwab over undisclosed robo-advisor cash allocations, among others. These are real events with real consequences, included because the lesson a formula teaches in the abstract is rarely the lesson a genuine failure teaches in practice. Chapter 19's capstone case study goes further still, working a real, publicly available consumer-credit dataset end to end, undocumented category codes, class imbalance, model comparison, calibration, explainability, and fairness auditing included, using nothing invented for the occasion.
 
 \section*{The Companion Notebooks}
 
@@ -113,6 +128,12 @@ this book itself, are available at:
 \end{center}
 
 I encourage readers to run each notebook alongside the corresponding chapter, change an input or two, and see what happens; a formula becomes far more trustworthy once you have watched it respond correctly to a change you made yourself.
+
+\section*{Technical Notes}
+
+A few of the formulas used in this book are quoted without a full derivation, since working through every one of them line by line in the main text would bury the finance and the intuition, which is this book's actual subject, under mathematics that is not. Where a derivation is long enough to be worth doing properly but not essential to following the chapter that uses the result, I have written it up separately as a standalone technical note and placed it in the \texttt{technical notes} folder of the same GitHub repository as the companion notebooks, linked above.
+
+These notes are entirely optional. They exist for the reader who wonders where a particular formula actually comes from and wants to see the argument worked out in full; skipping them has no effect on understanding any of the approaches covered in this book, since every chapter states the results it needs and shows how to use them regardless of whether the underlying derivation has been read. More notes will be added over time as new formulas in the book warrant one.
 
 \section*{A Note on the Draft}
 
@@ -146,6 +167,7 @@ Wulin.Suo@Queensu.ca
 \subfile{chapters/chapter16}
 \subfile{chapters/chapter17}
 \subfile{chapters/chapter18}
+\subfile{chapters/chapter19}
 
 \addtocontents{toc}{\string\renewcommand{\string\cftchappresnum}{Appendix }}
 \subfile{chapters/appendix_datasets}

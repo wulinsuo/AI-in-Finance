@@ -26,9 +26,9 @@
 
 \section{Introduction}
 
-Every chapter in this book is built around a worked numerical example, and several of the later chapters, most notably Chapter 18's UCI credit-card default case study, are built around a real, publicly available dataset rather than a fictional one. This appendix collects, in one place, the data sources a reader is most likely to reach for when reproducing this book's examples with real data or extending them into an independent project: what each source covers, how it is typically licensed or priced, and the specific API or library used to pull it into Python.
+Every chapter in this book is built around a worked numerical example, and several of the later chapters, most notably Chapter 19's UCI credit-card default case study, are built around a real, publicly available dataset rather than a fictional one. This appendix collects, in one place, the data sources a reader is most likely to reach for when reproducing this book's examples with real data or extending them into an independent project: what each source covers, how it is typically licensed or priced, and the specific API or library used to pull it into Python.
 
-This appendix is deliberately organized around \emph{access mechanism} as much as content, since the practical difference between a dataset a reader can query in five minutes with a free API key and one that requires an institutional subscription is often the difference between a project that gets started and one that does not. Where this book's own companion notebooks already reach outside the book's fictional running examples for real data, chiefly Chapter 5's CBOE Volatility Index (VIX) history (Section~\ref{sec:appendix-market-data}, downloaded live via the \texttt{yfinance} library) and Chapter 18's UCI ``Default of Credit Card Clients'' dataset (Section~\ref{sec:appendix-credit-data}), this appendix cross-references the relevant chapter directly.
+This appendix is deliberately organized around \emph{access mechanism} as much as content, since the practical difference between a dataset a reader can query in five minutes with a free API key and one that requires an institutional subscription is often the difference between a project that gets started and one that does not. Where this book's own companion notebooks already reach outside the book's fictional running examples for real data, chiefly Chapter 5's CBOE Volatility Index (VIX) history (Section~\ref{sec:appendix-market-data}, downloaded live via the \texttt{yfinance} library) and Chapter 19's UCI ``Default of Credit Card Clients'' dataset (Section~\ref{sec:appendix-credit-data}), this appendix cross-references the relevant chapter directly.
 
 \begin{figure}[htbp]
     \centering
@@ -60,7 +60,7 @@ This appendix is deliberately organized around \emph{access mechanism} as much a
 \toprule
 Source & Access & API / library & Notes \\
 \midrule
-Yahoo Finance & Free & \texttt{yfinance} (PyPI) & Equities, ETFs, indices, FX, crypto, options chains; used in Chapters 2 and 5 of this book; unofficial, can break without notice \\
+Yahoo Finance & Free & \texttt{yfinance} (PyPI) & Equities, ETFs, indices, FX, crypto, options chains; used in Chapter 5 of this book (the VIX example), and a natural real-data upgrade for Chapter 2's synthetic AssetA/AssetB series; unofficial, can break without notice \\
 Alpha Vantage & Free tier + paid & REST API, key required (\url{alphavantage.co}) & Equities, FX, crypto, and technical indicators; free tier is rate-limited to a handful of calls per minute \\
 Nasdaq Data Link (formerly Quandl) & Free + paid tiers & REST API (\url{nasdaqdatalink.com}) & Broad marketplace of market, commodity, and economic datasets from many contributors \\
 Polygon.io & Free limited tier + paid & REST and WebSocket API & Real-time and historical US equities, options, FX, and crypto, including tick-level data \\
@@ -139,7 +139,7 @@ U.S. Bureau of Labor Statistics & Free, key optional & REST API (\url{bls.gov}) 
 \section{Credit, Lending, and Consumer Finance Data}
 \label{sec:appendix-credit-data}
 
-\index{UCI Machine Learning Repository}This is the category with the deepest overlap with this book's own worked examples. The UCI ``Default of Credit Card Clients'' dataset is already Chapter 18's own running case study, downloaded programmatically by that chapter's notebook rather than committed to this repository. The other datasets in Table~\ref{tab:appendix-credit} are natural extensions for the capstone project ideas Chapter 18 closes with.
+\index{UCI Machine Learning Repository}This is the category with the deepest overlap with this book's own worked examples. The UCI ``Default of Credit Card Clients'' dataset is already Chapter 19's own running case study, downloaded programmatically by that chapter's notebook rather than committed to this repository. The other datasets in Table~\ref{tab:appendix-credit} are natural extensions for the capstone project ideas Chapter 19 closes with.
 
 \begin{table}[htbp]
 \centering
@@ -149,9 +149,9 @@ U.S. Bureau of Labor Statistics & Free, key optional & REST API (\url{bls.gov}) 
 \toprule
 Source & Access & API / library & Notes \\
 \midrule
-UCI Default of Credit Card Clients & Free & Direct download via \texttt{urllib} & Chapter 18's own dataset; Taiwanese credit-card default data \\
+UCI Default of Credit Card Clients & Free & Direct download via \texttt{urllib} & Chapter 19's own dataset; Taiwanese credit-card default data \\
 UCI German Credit Data & Free & Direct download & Small, classic credit-scoring dataset, conceptually close to Chapter 6 and 9's examples \\
-Lending Club loan data & Free (via Kaggle mirror) & Kaggle API & Loan-level peer-to-peer lending data; a Chapter 18 capstone idea \\
+Lending Club loan data & Free (via Kaggle mirror) & Kaggle API & Loan-level peer-to-peer lending data; a Chapter 19 capstone idea \\
 HMDA (Home Mortgage Disclosure Act) data & Free & REST API via the Consumer Financial Protection Bureau's data browser (\url{consumerfinance.gov}) & Mortgage application-level data widely used for fair-lending analysis; directly usable for Chapter 16's fairness audits \\
 \bottomrule
 \end{tabular}
@@ -159,7 +159,7 @@ HMDA (Home Mortgage Disclosure Act) data & Free & REST API via the Consumer Fina
 
 \section{Fraud, AML, and Regulatory Compliance Data}
 
-\index{IEEE-CIS Fraud Detection dataset}Genuinely labeled fraud data is scarce, since financial institutions rarely release real transaction-level fraud labels, which is exactly why the two datasets in Table~\ref{tab:appendix-fraud} recur so often in both industry benchmarks and this book's own Chapter 13 and Chapter 18 capstone list.
+\index{IEEE-CIS Fraud Detection dataset}Genuinely labeled fraud data is scarce, since financial institutions rarely release real transaction-level fraud labels, which is exactly why the two datasets in Table~\ref{tab:appendix-fraud} recur so often in both industry benchmarks and this book's own Chapter 13 and Chapter 19 capstone list.
 
 \begin{table}[htbp]
 \centering
@@ -169,7 +169,7 @@ HMDA (Home Mortgage Disclosure Act) data & Free & REST API via the Consumer Fina
 \toprule
 Source & Access & API / library & Notes \\
 \midrule
-IEEE-CIS Fraud Detection (Kaggle) & Free (Kaggle competition dataset) & Kaggle API & Real, anonymized e-commerce transaction fraud data; a Chapter 13/17 capstone idea \\
+IEEE-CIS Fraud Detection (Kaggle) & Free (Kaggle competition dataset) & Kaggle API & Real, anonymized e-commerce transaction fraud data; a Chapter 13/19 capstone idea \\
 PaySim & Free & Kaggle API & Synthetic mobile-money transaction data modeled on a real provider's logs; well suited to practicing the structuring and layering detection introduced in Chapter 13 \\
 OFAC Sanctions Lists & Free & Bulk data files and a REST search API via the US Treasury & Sanctioned-party screening lists used in AML compliance workflows \\
 \bottomrule
@@ -258,7 +258,7 @@ S\&P Dow Jones Indices & Free (delayed) + paid (full) & Vendor portal & Index me
 
 \section{Putting It Together: A Chapter-by-Chapter Dataset Map}
 
-Table~\ref{tab:appendix-chapter-map} condenses the sections above into a single reference: for each chapter of this book, which of the sources above is the most natural place to look for real data to extend that chapter's fictional examples. Chapter 18's own closing list of capstone project ideas already names several of these sources directly; this table extends that same mapping to every other chapter.
+Table~\ref{tab:appendix-chapter-map} condenses the sections above into a single reference: for each chapter of this book, which of the sources above is the most natural place to look for real data to extend that chapter's fictional examples. Chapter 19's own closing list of capstone project ideas already names several of these sources directly; this table extends that same mapping to every other chapter.
 
 \begin{table}[htbp]
 \centering
@@ -283,9 +283,10 @@ Chapter & Most relevant data sources \\
 13. Fraud Detection, Compliance, and Financial Crime & IEEE-CIS Fraud Detection, PaySim, OFAC sanctions lists \\
 14. Natural Language Processing in Finance & SEC EDGAR full-text search, Loughran-McDonald dictionary, Financial PhraseBank, GDELT, Reddit API \\
 15. Alternative Data and Deep Learning in Finance & Google Trends, satellite/alt-data vendors (enterprise), Similarweb \\
-16. Explainability, Fairness, and Regulation & HMDA data, UCI Default of Credit Card Clients (Chapter 16's own baseline model) \\
+16. Explainability, Fairness, and Regulation & HMDA data, UCI Default of Credit Card Clients (as in Chapter 19's own capstone fairness audit) \\
 17. Reinforcement Learning in Finance & Simulated market environments by design; LOBSTER or Yahoo Finance intraday data for a real extension of the chapter's execution and market-making agents \\
-18. Case Studies and Capstone Projects & The full list above; see Chapter 18's own closing section for specific project pairings \\
+18. Agent-Based Models in Finance & Simulated agent populations by design; LOBSTER order-book data for a real zero-intelligence-trader comparison, or BIS locational banking statistics for a real interbank exposure network \\
+19. Case Studies and Capstone Projects & The full list above; see Chapter 19's own closing section for specific project pairings \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -299,7 +300,7 @@ Pulling real data into a project is rarely as simple as calling an API and movin
 
 \textbf{Survivorship bias.} A free API that only lists currently-traded tickers implicitly excludes every company that has since been delisted, gone bankrupt, or been acquired, which biases any historical universe built from it toward survivors. CRSP's paid, point-in-time data is the academic standard specifically because it avoids this.
 
-\textbf{Licensing and redistribution restrictions.} Most vendor terms of service prohibit redistributing raw data even for non-commercial or educational use, which is exactly why this book's own real-dataset chapters (Chapter 18, and this appendix's own Chapter 5 VIX example) download data programmatically at run time rather than committing it to the repository. The same discipline is worth following in any derivative project.
+\textbf{Licensing and redistribution restrictions.} Most vendor terms of service prohibit redistributing raw data even for non-commercial or educational use, which is exactly why this book's own real-dataset chapters (Chapter 19, and this appendix's own Chapter 5 VIX example) download data programmatically at run time rather than committing it to the repository. The same discipline is worth following in any derivative project.
 
 \textbf{API and vendor instability.} Unofficial APIs such as \texttt{yfinance} work by interacting with a public website rather than a documented, contractually stable interface, so they can change behavior or stop working without notice whenever the underlying site changes. Even official free tiers are periodically discontinued or replaced outright, as has happened repeatedly across the market-data-vendor landscape. Every specific vendor and endpoint named in this appendix should therefore be treated as illustrative rather than permanent: verify current availability and terms directly with the provider before building anything on top of one.
 

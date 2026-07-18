@@ -1,0 +1,235 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs}
+\usepackage{hyperref}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{proposition}{Proposition}
+\newtheorem{corollary}{Corollary}
+\newtheorem{lemma}{Lemma}
+\theoremstyle{remark}
+\newtheorem*{remark}{Remark}
+\theoremstyle{definition}
+\newtheorem*{example}{Example}
+\newtheorem*{assumption}{Assumption}
+
+\title{The Avellaneda-Stoikov Market-Making Model: A Complete Derivation}
+\author{Wulin Suo}
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent This note derives the Avellaneda and Stoikov (2008) market-making model in two exact, self-contained steps. First, it derives the market maker's \emph{reservation price}, the price at which it is indifferent between its current inventory and one unit more (or less), directly from exponential (CARA) utility applied to a normally distributed terminal mark-to-market value, with no need to solve the full dynamic control problem; this recovers the inventory-risk skew $r(s,q,t)=s-q\gamma\sigma^2(T-t)$ exactly. Second, it derives the optimal markup a market maker adds on each side of the reservation price by maximizing the expected utility gain from a single marginal fill against a Poisson arrival process, recovering the order-arrival term $\tfrac1\gamma\ln(1+\gamma/\kappa)$ exactly, and combines the two results into the model's headline formula for the total optimal spread. It verifies the sign and direction of the resulting inventory skew, checks two limiting cases, works a numerical example, and closes with a discussion of the model's assumptions and the principal directions in which the literature has extended it.
+\end{abstract}
+
+\section{The Problem: Quoting Around a Risky Inventory}
+\label{sec:setup}
+
+A market maker profits from the bid-ask spread by continuously quoting a price at which it will buy and a higher price at which it will sell, but every filled order changes its inventory, and inventory is risky: a market maker sitting on a large long position is exposed to a price decline just like any other long holder, only it did not choose the position size, the arrival of counterparties did. A market maker who quotes a fixed spread symmetrically around the mid-price regardless of its current inventory ignores this risk entirely. Avellaneda and Stoikov (2008) ask how quotes should instead be skewed as inventory accumulates, and show the answer decomposes cleanly into two separate questions answered in Sections~\ref{sec:reservation} and~\ref{sec:markup} below: \emph{where} to center the quotes (the reservation price), and \emph{how wide} to make them around that center (the optimal markup).
+
+\section{The Model}
+\label{sec:model}
+
+\begin{assumption}[Mid-price dynamics]
+\label{ass:price}
+The reference mid-price follows driftless arithmetic Brownian motion, $dS_t = \sigma\,dW_t$, with constant volatility $\sigma>0$.
+\end{assumption}
+
+\begin{assumption}[Order arrivals]
+\label{ass:arrivals}
+Orders that hit the market maker's own quotes arrive as Poisson processes. Quoting at a distance $\delta$ from the mid-price on a given side, the arrival intensity of fills on that side is $\Lambda(\delta) = Ae^{-\kappa\delta}$ for constants $A,\kappa>0$: quoting closer to the mid-price attracts order flow at a higher rate, and quoting far from it attracts almost none.
+\end{assumption}
+
+\begin{assumption}[Preferences]
+\label{ass:utility}
+The market maker evaluates outcomes by CARA (exponential) utility, $U(W) = -e^{-\gamma W}$, with risk-aversion parameter $\gamma>0$, applied to terminal wealth $W_T = X_T + q_TS_T$ (cash plus the mark-to-market value of terminal inventory) at a fixed horizon $T$.
+\end{assumption}
+
+Let $x$ denote current cash, $q$ current inventory, $s$ the current mid-price, and $t$ current time.
+
+\section{The Reservation Price}
+\label{sec:reservation}
+
+\begin{lemma}[Value of a frozen position]
+\label{lem:frozen}
+Suppose the market maker holds inventory $q$ and cash $x$ at time $t$ and does not trade again before $T$. Then
+\begin{equation}
+V(x,s,q,t) := E_t\big[-e^{-\gamma(x+qS_T)}\big] = -\exp\!\left(-\gamma x - \gamma qs + \tfrac12\gamma^2q^2\sigma^2(T-t)\right).
+\label{eq:frozenvalue}
+\end{equation}
+\end{lemma}
+\begin{proof}
+Under Assumption~\ref{ass:price}, $S_T \mid S_t=s \sim N(s,\sigma^2(T-t))$, so $x+qS_T \sim N(x+qs,\,q^2\sigma^2(T-t))$. For $W\sim N(\mu,v)$, $E[e^{-\gamma W}] = e^{-\gamma\mu+\frac12\gamma^2v}$ (the moment-generating function of a normal random variable evaluated at $-\gamma$), so $E[-e^{-\gamma W}] = -e^{-\gamma\mu+\frac12\gamma^2v}$. Substituting $\mu=x+qs$, $v=q^2\sigma^2(T-t)$ gives Equation~\eqref{eq:frozenvalue}.
+\end{proof}
+
+\begin{theorem}[Reservation bid and ask]
+\label{thm:reservation}
+Define the reservation bid $r^b(s,q,t)$ as the price at which the market maker is indifferent between holding $(x,q)$ and buying one unit at $r^b$ (moving to $(x-r^b,q+1)$), and the reservation ask $r^a(s,q,t)$ symmetrically for selling one unit at $r^a$ (moving to $(x+r^a,q-1)$): that is, $V(x-r^b,s,q+1,t)=V(x,s,q,t)$ and $V(x+r^a,s,q-1,t)=V(x,s,q,t)$. Then
+\begin{align}
+r^b(s,q,t) &= s - \gamma\sigma^2(T-t)\,q - \tfrac12\gamma\sigma^2(T-t), \label{eq:rb} \\
+r^a(s,q,t) &= s - \gamma\sigma^2(T-t)\,q + \tfrac12\gamma\sigma^2(T-t). \label{eq:ra}
+\end{align}
+\end{theorem}
+\begin{proof}
+Both sides of $V(x-r^b,s,q+1,t)=V(x,s,q,t)$ are negative numbers of the form $-e^{(\cdot)}$, so the equality holds if and only if the two exponents agree. By Equation~\eqref{eq:frozenvalue},
+\begin{equation*}
+-\gamma(x-r^b) - \gamma(q+1)s + \tfrac12\gamma^2(q+1)^2\sigma^2(T-t) = -\gamma x - \gamma qs + \tfrac12\gamma^2q^2\sigma^2(T-t).
+\end{equation*}
+The $-\gamma x$ terms cancel. Rearranging, $\gamma r^b = \gamma s - \tfrac12\gamma^2\sigma^2(T-t)\big[(q+1)^2-q^2\big] = \gamma s - \tfrac12\gamma^2\sigma^2(T-t)(2q+1)$, and dividing by $\gamma$ gives Equation~\eqref{eq:rb}. The identical argument applied to $V(x+r^a,s,q-1,t)=V(x,s,q,t)$ gives $-\gamma r^a = -\gamma s + \tfrac12\gamma^2\sigma^2(T-t)\big[q^2-(q-1)^2\big] = -\gamma s+\tfrac12\gamma^2\sigma^2(T-t)(2q-1)$, which rearranges to Equation~\eqref{eq:ra}.
+\end{proof}
+
+\begin{corollary}[The reservation price and the inventory-risk spread component]
+\label{cor:reservation}
+Let $r(s,q,t) := \tfrac12\big(r^a(s,q,t)+r^b(s,q,t)\big)$. Then
+\begin{equation}
+r(s,q,t) = s - q\,\gamma\sigma^2(T-t), \qquad r^a(s,q,t) - r^b(s,q,t) = \gamma\sigma^2(T-t).
+\label{eq:reservation}
+\end{equation}
+\end{corollary}
+\begin{proof}
+Immediate from averaging and differencing Equations~\eqref{eq:rb}--\eqref{eq:ra}: the $\mp\tfrac12\gamma\sigma^2(T-t)$ terms cancel in the average and add in the difference.
+\end{proof}
+
+The midpoint $r(s,q,t)=s-q\gamma\sigma^2(T-t)$ is \emph{not} the mid-price; it is the mid-price shifted by an amount proportional to inventory, risk aversion, variance, and remaining time. A market maker long inventory ($q>0$) has $r<s$: it privately values an additional unit less than the market does, since it is already overexposed, and would need to be compensated by a lower price to hold more or would willingly give some up at a discount to reduce risk. A market maker short inventory has $r>s$, symmetrically. The gap $r^a-r^b=\gamma\sigma^2(T-t)$ is exactly the first term of the total spread formula quoted in the introduction to this literature: it is the price of inventory risk alone, before any consideration of how order flow responds to where the market maker actually posts its quotes, which Section~\ref{sec:markup} derives separately.
+
+\section{The Optimal Markup}
+\label{sec:markup}
+
+Theorem~\ref{thm:reservation} gives the prices at which the market maker is exactly indifferent to a fill; a rational market maker will not post quotes at these indifference prices themselves; it will post a bid strictly below $r^b$ and an ask strictly above $r^a$, trading off a lower fill probability (Assumption~\ref{ass:arrivals}) against a larger profit margin per fill.
+
+\begin{theorem}[Optimal markup beyond the reservation price]
+\label{thm:markup}
+Consider posting an ask at $p^a = r^a+\delta$ for $\delta\ge0$ (the symmetric argument applies to the bid). Approximating the expected utility gain from a single potential fill within a short time interval $dt$ as $\Lambda(\delta)\,dt\cdot\big(1-e^{-\gamma\delta}\big)$, the fill-arrival rate times the CARA-utility gain of realizing a margin $\delta$ certain relative to the indifference price, the markup that maximizes this expected utility flow is
+\begin{equation}
+\delta^{*} = \frac{1}{\gamma}\ln\!\left(1+\frac{\gamma}{\kappa}\right).
+\label{eq:markup}
+\end{equation}
+\end{theorem}
+\begin{proof}
+Write $f(\delta) = \Lambda(\delta)(1-e^{-\gamma\delta}) = A\big(e^{-\kappa\delta}-e^{-(\kappa+\gamma)\delta}\big)$ using Assumption~\ref{ass:arrivals}. Then
+\begin{equation*}
+f'(\delta) = A\big({-\kappa}e^{-\kappa\delta}+(\kappa+\gamma)e^{-(\kappa+\gamma)\delta}\big).
+\end{equation*}
+Setting $f'(\delta)=0$ and dividing by $Ae^{-(\kappa+\gamma)\delta}>0$, $(\kappa+\gamma) = \kappa\,e^{\gamma\delta}$, so $e^{\gamma\delta} = 1+\gamma/\kappa$ and $\delta^{*}=\tfrac1\gamma\ln(1+\gamma/\kappa)$ as in Equation~\eqref{eq:markup}. This is the unique interior maximizer: $f(0)=0$, $f(\delta)\to0$ as $\delta\to\infty$, and $f(\delta)>0$ for $\delta$ strictly between, so the single interior critical point found is a maximum rather than a minimum.
+\end{proof}
+
+Since $f(\delta)$ has the identical functional form on the bid side (with $\delta$ measured as the markdown below $r^b$), the optimal bid markdown is the same $\delta^{*}=\tfrac1\gamma\ln(1+\gamma/\kappa)$.
+
+\begin{corollary}[Optimal quotes and total spread]
+\label{cor:quotes}
+The optimal bid and ask quotes are
+\begin{equation}
+p^{b} = r^b - \delta^{*}, \qquad p^{a} = r^a + \delta^{*},
+\label{eq:quotes}
+\end{equation}
+symmetric around the reservation price $r=(r^a+r^b)/2$ of Corollary~\ref{cor:reservation}, with total spread
+\begin{equation}
+p^a - p^b = \big(r^a-r^b\big) + 2\delta^{*} = \gamma\sigma^2(T-t) + \frac{2}{\gamma}\ln\!\left(1+\frac{\gamma}{\kappa}\right).
+\label{eq:totalspread}
+\end{equation}
+\end{corollary}
+\begin{proof}
+Substituting Equations~\eqref{eq:rb}--\eqref{eq:ra} into Equation~\eqref{eq:quotes}, $p^b = r-\tfrac12\gamma\sigma^2(T-t)-\delta^{*}$ and $p^a=r+\tfrac12\gamma\sigma^2(T-t)+\delta^{*}$, which are symmetric around $r$ by inspection; subtracting gives Equation~\eqref{eq:totalspread} directly from Corollary~\ref{cor:reservation} and Theorem~\ref{thm:markup}.
+\end{proof}
+
+Equation~\eqref{eq:totalspread} is the model's headline result, and Corollary~\ref{cor:quotes} shows exactly why it decomposes into two additive terms: the first is the gap between the prices at which the market maker is indifferent to buying versus selling one more unit (Corollary~\ref{cor:reservation}), and the second is twice the additional margin the market maker demands, on each side independently, to compensate for the risk of a fill at an unfavorable price (Theorem~\ref{thm:markup}). Because quotes are centered on $r$ rather than $s$, and $r<s$ whenever $q>0$, both the bid and the ask fall relative to a naive, inventory-blind quote centered on $s$: a long market maker's lower bid makes further buying by the market maker less attractive to a counterparty, while its lower, more competitive ask makes selling out of its position more attractive, simultaneously discouraging further accumulation and encouraging unwind.
+
+\section{Limiting Cases}
+\label{sec:limits}
+
+\begin{proposition}[Behavior as the horizon closes]
+\label{prop:horizon}
+As $T-t\to0^+$, $r^a-r^b\to0$ and the total spread in Equation~\eqref{eq:totalspread} converges to $\tfrac{2}{\gamma}\ln(1+\gamma/\kappa)$, the order-arrival term alone.
+\end{proposition}
+\begin{proof}
+Immediate from Equation~\eqref{eq:totalspread}: the first term is linear in $T-t$ and vanishes as $T-t\to0$, while the second term does not depend on $t$ at all.
+\end{proof}
+
+Proposition~\ref{prop:horizon} isolates a genuine economic distinction between the two terms of Equation~\eqref{eq:totalspread}: the inventory-risk term compensates for the risk of holding a position \emph{until it can be unwound}, so it shrinks to zero as there is simply no time left over which an adverse move could occur, while the order-arrival term compensates for a completely different risk, quoting at a price that attracts an unfavorable fill in the first place, which exists at every instant regardless of how little time remains and therefore never vanishes.
+
+\begin{proposition}[Behavior in a perfectly competitive market]
+\label{prop:competitive}
+As $\kappa\to\infty$ (arrival intensity falls off arbitrarily sharply with distance from the mid-price, i.e., the market maker's quotes must be arbitrarily close to competitors' to attract any flow at all), $\delta^{*}\to0$.
+\end{proposition}
+\begin{proof}
+As $\kappa\to\infty$, $\gamma/\kappa\to0$ and $\ln(1+\gamma/\kappa)\to0$, so Equation~\eqref{eq:markup} gives $\delta^{*}\to0$.
+\end{proof}
+
+\section{Worked Numerical Example}
+\label{sec:example}
+
+Take $s=\$100.00$, $\sigma=2$ (per-unit-time price standard deviation, in the units of Avellaneda and Stoikov's own example), $\gamma=0.1$, $\kappa=1.5$, $T-t=1$ (one full trading day remaining), and inventory $q=+5$ (long five units).
+
+\begin{equation*}
+r = 100 - 5(0.1)(2)^2(1) = 100-2.00 = \$98.00,
+\end{equation*}
+\begin{equation*}
+r^a-r^b = \gamma\sigma^2(T-t) = 0.1(4)(1) = 2.00, \qquad r^b=98-1.00=\$97.00,\;\; r^a=98+1.00=\$99.00,
+\end{equation*}
+\begin{equation*}
+\delta^{*} = \frac{1}{0.1}\ln\!\left(1+\frac{0.1}{1.5}\right) = 10\ln(1.0667) \approx 10(0.0645) \approx 0.645,
+\end{equation*}
+\begin{equation*}
+p^b = 97.00-0.645 \approx \$96.35, \qquad p^a = 99.00+0.645 \approx \$99.65, \qquad p^a-p^b \approx \$3.30.
+\end{equation*}
+Table~\ref{tab:comparison} compares these quotes against a naive, inventory-blind market maker quoting the same total spread symmetrically around the raw mid-price $s=\$100.00$.
+
+\begin{table}[htbp]
+\centering
+\caption{Inventory-aware quotes ($q=5$) versus naive, inventory-blind quotes of the same total width}
+\label{tab:comparison}
+\begin{tabular}{@{}lrr@{}}
+\toprule
+& Bid & Ask \\
+\midrule
+Inventory-aware (Corollary~\ref{cor:quotes}) & $\$96.35$ & $\$99.65$ \\
+Naive, centered on $s=\$100.00$ & $\$98.35$ & $\$101.65$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Both quotes shift down by exactly $s-r=\$2.00$ relative to the naive benchmark, consistent with Corollary~\ref{cor:quotes}: the long market maker's bid becomes markedly less attractive to sellers ($\$96.35$ against a naive $\$98.35$), directly discouraging further accumulation, while its ask becomes markedly more attractive to buyers ($\$99.65$ against a naive $\$101.65$), directly encouraging unwind of the existing long position, with the total spread width itself unchanged by inventory, exactly as Corollary~\ref{cor:quotes}'s symmetric-around-$r$ structure predicts.
+
+\section{Discussion: Assumptions and Extensions}
+\label{sec:discussion}
+
+\subsection{What the myopic markup approximation assumes}
+Theorem~\ref{thm:markup}'s derivation optimizes the expected utility gain from a single marginal fill in isolation; it is not a solution to the full multi-period stochastic control problem, which would require the fill on one side to also account for how it changes the reservation price (and therefore the value of subsequently offered quotes) governing every later fill. This myopic approximation is the same one Avellaneda and Stoikov use in their own paper to obtain Equation~\eqref{eq:totalspread} in closed form; the exact solution to the full control problem generally requires a numerical PDE solve, and Section~\ref{sec:discussion}'s first extension below describes the standard closed-form alternative.
+
+\subsection{Guéant-Lehalle-Fernández-Tapia (GLFT) exact solution}
+Guéant, Lehalle, and Fernández-Tapia (2013) solve a closely related control problem exactly, without Theorem~\ref{thm:markup}'s myopic approximation, by reducing the associated system of Hamilton-Jacobi-Bellman equations to a linear ordinary differential equation, and extend it to include a hard inventory limit (a cap on $|q|$ the market maker will not exceed) that Assumptions~\ref{ass:price}--\ref{ass:utility} do not impose; this closed-form, inventory-constrained solution is the version most often deployed in practice.
+
+\subsection{Adverse selection}
+Assumption~\ref{ass:arrivals}'s Poisson process treats every counterparty identically, uninformed and informed alike. Extensions blend this inventory-based framework with a Glosten-Milgrom (1985)- or Kyle (1985)-style informed-trading channel, in which some fraction of order flow is information-driven and systematically adverse to the market maker, requiring the spread to compensate for expected losses to informed counterparties in addition to the pure inventory risk of Theorem~\ref{thm:reservation}.
+
+\subsection{Multi-asset market making}
+A market maker quoting several correlated instruments simultaneously faces an inventory-risk term that generalizes Lemma~\ref{lem:frozen}'s scalar $q^2\sigma^2$ to a quadratic form in a vector of inventories and a covariance matrix, so the resulting optimal quotes on each instrument depend on inventory in every other instrument, not only its own.
+
+\subsection{Stochastic and regime-switching volatility}
+Replacing Assumption~\ref{ass:price}'s constant $\sigma$ with a stochastic-volatility or regime-switching process requires the reservation price and spread to depend on the current volatility regime, not only on calendar time remaining, since risk compensation should rise when realized volatility spikes even at the same inventory and the same time-to-horizon.
+
+\subsection{Latency and queue-position awareness}
+At high-frequency time scales, Assumption~\ref{ass:arrivals}'s smooth intensity function ignores discrete queue position within a price level (price-time priority); extensions incorporate the market maker's actual position in the order queue, since two quotes at the identical price can have very different expected fill probabilities depending on how much size is ahead of them.
+
+\subsection{Data-driven and reinforcement-learning market making}
+Rather than assuming the specific parametric form $\Lambda(\delta)=Ae^{-\kappa\delta}$ of Assumption~\ref{ass:arrivals}, a reinforcement-learning market maker can learn a quoting policy directly from historical or simulated limit-order-book data, conditioning on the full observed book state rather than only on distance from the mid-price and current inventory, trading the model's closed-form guarantees for potentially better empirical fit to real, non-Poisson order flow.
+
+\section{Summary}
+\label{sec:summary}
+
+The Avellaneda-Stoikov market maker's problem decomposes cleanly into two separate questions. First, \emph{where} to center its quotes: applying CARA utility directly to the normally distributed mark-to-market value of a frozen position (Lemma~\ref{lem:frozen}) gives the exact reservation bid and ask (Theorem~\ref{thm:reservation}), whose midpoint is the reservation price $r=s-q\gamma\sigma^2(T-t)$ and whose gap is the inventory-risk component of the spread, $\gamma\sigma^2(T-t)$ (Corollary~\ref{cor:reservation}). Second, \emph{how wide} to quote around that center: maximizing the expected utility gain from a single marginal fill against the Poisson arrival process gives the optimal markup $\tfrac1\gamma\ln(1+\gamma/\kappa)$ on each side (Theorem~\ref{thm:markup}), and combining the two pieces recovers the model's total spread formula and its symmetric, inventory-shifted quotes exactly (Corollary~\ref{cor:quotes}). The inventory-risk term vanishes as the horizon closes, while the order-arrival term does not (Proposition~\ref{prop:horizon}), reflecting the genuinely different risks the two terms compensate for. The model's Poisson-arrival, single-asset, constant-volatility assumptions are also precisely where the literature has extended it: an exact (non-myopic) closed-form solution with inventory limits (Guéant-Lehalle-Fernández-Tapia), adverse selection, multi-asset and stochastic-volatility generalizations, queue-position awareness, and data-driven, reinforcement-learning market making (Section~\ref{sec:discussion}).
+
+\section*{References}
+\begin{itemize}
+\item Avellaneda, M., and Stoikov, S. (2008). ``High-Frequency Trading in a Limit Order Book.'' \textit{Quantitative Finance}, 8(3), 217--224.
+\item Guéant, O., Lehalle, C.-A., and Fernández-Tapia, J. (2013). ``Dealing with the Inventory Risk: A Solution to the Market Making Problem.'' \textit{Mathematics and Financial Economics}, 7(4), 477--507.
+\item Ho, T., and Stoll, H. R. (1981). ``Optimal Dealer Pricing under Transactions and Return Uncertainty.'' \textit{Journal of Financial Economics}, 9(1), 47--73.
+\item Glosten, L. R., and Milgrom, P. R. (1985). ``Bid, Ask and Transaction Prices in a Specialist Market with Heterogeneously Informed Traders.'' \textit{Journal of Financial Economics}, 14(1), 71--100.
+\item Kyle, A. S. (1985). ``Continuous Auctions and Insider Trading.'' \textit{Econometrica}, 53(6), 1315--1335.
+\item Cartea, \'A., Jaimungal, S., and Penalva, J. (2015). \textit{Algorithmic and High-Frequency Trading}. Cambridge University Press.
+\end{itemize}
+
+\end{document}
