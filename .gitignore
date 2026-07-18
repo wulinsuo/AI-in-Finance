@@ -28,11 +28,3 @@ ch12_data/
 # stay local only rather than being pushed to the public repo.
 solutions_chapter_end_questions/
 solutions_chapter_end_questions_zh/
-
-# Chinese edition: kept as local working files only, not tracked or pushed from this
-# point forward. (Origin/main still has an older, partial ch.1-6 Chinese translation
-# from before this rule was added; see CLAUDE.md / commit history for that history.)
-ai_in_finance_zh.tex
-ai_in_finance_zh.pdf
-chapters_zh/
-notebooks_zh/
