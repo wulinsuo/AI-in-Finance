@@ -5,6 +5,7 @@
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{booktabs}
+\usepackage{floatrow}
 \usepackage{draftwatermark}
 
 \SetWatermarkText{Wulin.Suo@Queensu.ca}
@@ -75,7 +76,8 @@ During that window, Firm F can buy against Firm S's stale \$100.05 ask, immediat
 \end{equation*}
 
 \begin{figure}[htbp]
-    \centering
+\centering
+\begin{lrbox}{\bookmeasuredbox}
     \begin{tikzpicture}[thick]
         \draw[->] (0,0) -- (11,0) node[right,font=\small] {time};
         \draw (0,0.12) -- (0,-0.12);
@@ -88,8 +90,18 @@ During that window, Firm F can buy against Firm S's stale \$100.05 ask, immediat
         \node[above,font=\scriptsize,align=center] at (6,1.3) {$450\mu s$ window: Firm F buys against\\Firm S's stale \$100.05 ask};
         \node[above,font=\scriptsize] at (0,0.3) {value jumps to \$100.10};
     \end{tikzpicture}
-    \caption{The sequence of events behind the latency-arbitrage worked example (not drawn to scale, since $450\mu s$ would otherwise be visually indistinguishable from $50\mu s$). The $450$-microsecond gap between when each firm's quotes reflect the new fundamental value is exactly the window Firm F trades in.}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ffigbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
+    \caption{The sequence of events behind the latency-arbitrage worked example (not drawn to scale).}
     \label{fig:latency_arb_timeline}
+}
 \end{figure}
 
 From Firm S's perspective, this is not a mysterious loss but the direct, quantifiable cost of adverse selection introduced in Chapter 11's discussion of Kyle's model\index{Kyle model}: Firm S's quotes are, in effect, being picked off specifically by counterparties with better (here, purely faster, not more informed in the traditional sense) information, and the \$0.05 per-share loss is exactly the kind of cost the inventory-holding and adverse-selection components of the bid-ask spread\index{bid-ask spread}, introduced in Chapter 3, exist to compensate for. A slower market maker that ignores this risk will find its realized spread capture is persistently lower than its quoted spread would suggest, since a predictable fraction of its fills are, by construction, the ones a faster competitor chose to make happen.
@@ -316,7 +328,8 @@ an unusually tight fit for illustration; real order-book data produces a much no
 Every high-frequency trading decision, whether market making, latency arbitrage, order-flow-imbalance prediction, or the sequential-trade updating of Section~\ref{sec:glosten-milgrom}, passes through the same basic pipeline, illustrated in Figure~\ref{fig:hft_pipeline}: market data arrives, a fair-value or signal model consumes it, a risk check validates the resulting order, and the order is transmitted to the exchange. Every stage adds latency, and at HFT timescales, the choice of model at the second stage is itself a latency decision, not merely an accuracy decision.
 
 \begin{figure}[htbp]
-    \centering
+\centering
+\begin{lrbox}{\bookmeasuredbox}
     \begin{tikzpicture}[>=latex,thick,node distance=2.1cm]
         \node[draw,rounded corners,minimum width=2.4cm,minimum height=0.9cm,align=center] (data) {Market Data\\In};
         \node[draw,rounded corners,minimum width=2.4cm,minimum height=0.9cm,right=of data,align=center] (model) {Fair-Value /\\Signal Model};
@@ -326,8 +339,18 @@ Every high-frequency trading decision, whether market making, latency arbitrage,
         \draw[->] (model) -- (risk);
         \draw[->] (risk) -- (order);
     \end{tikzpicture}
-    \caption{The high-frequency trading decision pipeline. Every stage, receiving market data, computing a fair-value or signal estimate, validating the resulting order against risk limits, and transmitting it, adds latency, and the model chosen at the second stage must be fast enough not to dominate the total.}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ffigbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
+    \caption{The high-frequency trading decision pipeline.}
     \label{fig:hft_pipeline}
+}
 \end{figure}
 
 Chapter 6 developed machine learning models ranging from a simple linear regression to deep neural networks, evaluating them primarily on predictive accuracy. At HFT timescales, a model's inference latency, how long it takes to actually produce a prediction from new data, becomes a competing objective of comparable importance: a simple threshold rule or a small logistic regression\index{logistic regression} can typically produce a prediction in low single-digit microseconds, a shallow decision tree or small gradient-boosted ensemble in perhaps ten to a few tens of microseconds, while a deep neural network of even moderate size can take from the high tens of microseconds into the low milliseconds, depending heavily on its architecture and the hardware it runs on (these are illustrative, order-of-magnitude figures rather than precise benchmarks, since actual latency depends heavily on implementation and hardware). If a firm's total available decision budget, the time between receiving new market data and needing to act on it before a competitor does, is itself only tens of microseconds, a more accurate but slower model can be strictly worse in practice than a less accurate but faster one, since arriving at the correct decision after a competitor has already traded captures none of the opportunity at all. This is precisely why the simplest models in Chapter 6, not the most sophisticated ones, dominate the most latency-sensitive layers of high-frequency trading, with more complex machine learning models, including the deep learning methods introduced in Chapter 6, reserved for slower-moving decisions, such as which symbols to focus market-making capital on today, where microseconds do not matter but predictive accuracy does.

@@ -5,6 +5,7 @@
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{booktabs}
+\usepackage{floatrow}
 \usepackage{draftwatermark}
 
 \SetWatermarkText{WSuo@Queensu.ca}
@@ -79,7 +80,8 @@ With $\bar x = 4$ and $\bar y = 208$, the data in Table~\ref{tab:credit_spread_d
 The fitted model is $\widehat{\text{spread}} = 20 + 47 \times \text{leverage}$: each additional turn of debt-to-EBITDA is associated with roughly 47 additional basis points of credit spread. The fitted values are 114, 161, 208, 255, and 302 bps, close to the observed 120, 150, 210, 260, and 300. Figure~\ref{fig:credit_spread_regression} plots the five issuers alongside this fitted line, making the tightness of the fit, and the size of each point's residual, visually immediate.
 
 \begin{figure}[htbp]
-    \centering
+\centering
+\begin{lrbox}{\bookmeasuredbox}
     \begin{tikzpicture}[scale=0.9]
         \draw[->] (0,0) -- (6.3,0) node[right] {Debt/EBITDA ($x$)};
         \draw[->] (0,0) -- (0,3.4) node[above] {Credit spread, bps ($y$)};
@@ -97,8 +99,18 @@ The fitted model is $\widehat{\text{spread}} = 20 + 47 \times \text{leverage}$: 
         }
         \node[above right,blue] at (3.0,2.05) {$\widehat{\text{spread}}=20+47x$};
     \end{tikzpicture}
-    \caption{Debt-to-EBITDA leverage and credit spread for the five hypothetical issuers in Table~\ref{tab:credit_spread_data} (black dots), with the OLS-fitted line $\widehat{\text{spread}}=20+47x$ overlaid (blue). The tight fit, consistent with $R^2\approx0.991$, is exactly what makes the slope's standard error small and its $p$-value overwhelming in the inference discussion that follows.}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ffigbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
+    \caption{Debt-to-EBITDA leverage and credit spread for the five hypothetical issuers in Table~\ref{tab:credit_spread_data} (black dots), with the OLS-fitted line $\widehat{\text{spread}}=20+47x$ overlaid (blue).}
     \label{fig:credit_spread_regression}
+}
 \end{figure}
 
 The residual sum of squares is
@@ -146,7 +158,8 @@ This distinction between the slope's overwhelming significance and the intercept
 The closed-form OLS solution above exists because linear regression's loss function has a special structure: it is quadratic in the parameters, so its minimum can be found in one step by solving a system of linear equations. Most machine learning models, including logistic regression, neural networks, and many others introduced later in this chapter, do not have this convenient property, and their parameters must instead be found iteratively using an optimization algorithm called gradient descent.
 
 \begin{figure}[htbp]
-    \centering
+\centering
+\begin{lrbox}{\bookmeasuredbox}
     \begin{tikzpicture}[scale=0.9]
         \draw[->] (-0.5,0) -- (10.5,0) node[right] {$\theta$};
         \draw[->] (0,-0.5) -- (0,4.5) node[above] {Loss $\mathcal{L}(\theta)$};
@@ -169,8 +182,18 @@ The closed-form OLS solution above exists because linear regression's loss funct
         \node[red,font=\scriptsize] at (1.7,2.6) {slope $=\nabla\mathcal{L}(\theta_0)$};
         \node[blue,font=\scriptsize,align=left] at (7.7,3.2) {$\theta_{k+1} = \theta_k - \eta\,\nabla\mathcal{L}(\theta_k)$};
     \end{tikzpicture}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ffigbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
     \caption{The idea of gradient descent. Starting from an initial guess $\theta_0$, each step moves against the local slope of the loss curve, the negative gradient, illustrated here by the tangent line at $\theta_0$, producing a sequence $\theta_0,\theta_1,\theta_2,\ldots$ that descends toward the minimizer $\theta^\star$. Steps are large where the curve is steep and shrink automatically as the curve flattens near the minimum, exactly the pattern seen numerically in Table~\ref{tab:gradient_descent} below.}
     \label{fig:gradient_descent_bowl}
+}
 \end{figure}
 
 The idea is simple: starting from some initial guess for the parameters, repeatedly take a small step in the direction that most reduces the loss, the negative of the gradient (the vector of partial derivatives) of the loss with respect to each parameter, and stop once further steps no longer improve the loss. For the mean squared error loss 
@@ -239,8 +262,7 @@ Comparing the two rows produces a confusion matrix\index{confusion matrix}: 3 tr
 
 \begin{table}[htbp]
 \centering
-\caption{Confusion matrix for the 10 loan applicants in Table~\ref{tab:confusion_data}}
-\label{tab:confusion_matrix}
+\begin{lrbox}{\bookmeasuredbox}
 \begin{tabular}{lcc}
 \toprule
  & \multicolumn{2}{c}{Actual} \\
@@ -251,6 +273,18 @@ Default (1) & $TP=3$ & $FP=1$ \\
 No Default (0) & $FN=1$ & $TN=5$ \\
 \bottomrule
 \end{tabular}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ttabbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
+\caption{Confusion matrix for the 10 loan applicants in Table~\ref{tab:confusion_data}}
+\label{tab:confusion_matrix}
+}
 \end{table}
 
 From these four counts, the standard classification metrics follow directly:
@@ -299,7 +333,8 @@ d_F &= 10.44, & d_C &= 12.37, & d_D &= 14.32,
 sorted from nearest to farthest. With $k=3$, the three nearest neighbors are E (Default), A (Default), and B (No default), so the majority vote (2 Default, 1 No default) classifies the new applicant as a predicted default. Figure~\ref{fig:knn_geometry} shows this geometrically: the query point sits closest to a mix of Default and No-default points, and only the identity of its $k$ nearest neighbors, not any global decision boundary, determines the prediction.
 
 \begin{figure}[htbp]
-    \centering
+\centering
+\begin{lrbox}{\bookmeasuredbox}
     \begin{tikzpicture}[scale=1.0]
         \draw[->] (0,0) -- (7.0,0) node[right] {Debt/income (\%)};
         \draw[->] (0,0) -- (0,4.6) node[above] {Credit history (yrs)};
@@ -325,8 +360,18 @@ sorted from nearest to farthest. With $k=3$, the three nearest neighbors are E (
         \node[circle,fill=blue,inner sep=1.4pt] at (5.7,3.9) {};
         \node[right,font=\footnotesize] at (5.8,3.9) {No default};
     \end{tikzpicture}
-    \caption{The $K$-nearest neighbors example of Table~\ref{tab:knn_data}: six labeled training points and the query applicant (debt/income 28\%, 4 years of credit history, black diamond), with dashed lines to its three nearest neighbors under $k=3$ (E, A, and B). Two Default votes to one No-default vote classify the query as a predicted default.}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ffigbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
+    \caption{The $K$-nearest neighbors example of Table~\ref{tab:knn_data}: six labeled training points and the query applicant (debt/income 28\%, 4 years of credit history, black diamond), with dashed lines to its three nearest neighbors under $k=3$.}
     \label{fig:knn_geometry}
+}
 \end{figure}
 
 The choice of $k$ controls a bias-variance tradeoff directly analogous to the one in Section~\ref{sec:overfitting-section}: a small $k$ (even $k=1$) makes the prediction highly sensitive to individual nearby points, including noisy or mislabeled ones (high variance), while a large $k$ smooths over local structure and can underfit, in the extreme case where $k$ equals the entire training set, always predicting the overall majority class regardless of the query point (high bias). KNN also has a practical limitation that becomes severe in high dimensions: as the number of features grows, all points tend to become roughly equidistant from one another, a phenomenon known as the curse of dimensionality\index{Curse of Dimensionality}, which is one reason KNN is more commonly used with a small number of carefully chosen features than as a general-purpose model for wide financial datasets.
@@ -342,7 +387,8 @@ SVMs can also be extended to nonlinear decision boundaries using the ``kernel tr
 A deliberately simple example makes the maximum-margin idea concrete without requiring the full quadratic-programming machinery SVMs use in practice. Suppose four training points are perfectly separable along a single feature (say, a standardized measure of financial distress): two ``high-risk'' points at $x=1$ and $x=2$, and two ``low-risk'' points at $x=4$ and $x=5$. Because the classes are already perfectly separated along this one dimension, the maximum-margin hyperplane is simply the point exactly halfway between the two closest points of opposite classes, $x=2$ and $x=4$, namely $x=3$. Writing the decision function as $w x + b$ with $w=1$, the boundary condition $wx+b=0$ at $x=3$ requires $b=-3$, and checking the two nearest points confirms $w(2)+b = 2-3=-1$ and $w(4)+b=4-3=1$, exactly the $\pm 1$ margin boundaries the SVM optimization enforces. The points at $x=2$ and $x=4$ are the support vectors: they alone determine $w$ and $b$, and the geometric margin, the distance from the boundary to either margin boundary, is $1/|w|=1$, for a total margin width of $2$, the full gap between the nearest opposite-class points. The two more extreme points, $x=1$ and $x=5$, play no role at all in determining the boundary, illustrating concretely the earlier claim that only support vectors matter: moving the point at $x=1$ to $x=-100$ would not change the fitted hyperplane in the slightest, whereas moving the support vector at $x=2$ even slightly would immediately shift the boundary. Figure~\ref{fig:svm_margin} shows this geometry directly.
 
 \begin{figure}[htbp]
-    \centering
+\centering
+\begin{lrbox}{\bookmeasuredbox}
     \begin{tikzpicture}[scale=1.0]
         \draw[->] (0,0) -- (6.3,0) node[right] {$x$};
         \foreach \x in {0,1,2,3,4,5,6} {
@@ -364,8 +410,18 @@ A deliberately simple example makes the maximum-margin idea concrete without req
         \node[circle,fill=blue,inner sep=1.4pt] at (4.7,0.95) {};
         \node[right,font=\footnotesize] at (4.8,0.95) {Low-risk};
     \end{tikzpicture}
-    \caption{The maximum-margin hyperplane for the one-dimensional example: two high-risk points ($x=1,2$) and two low-risk points ($x=4,5$). The support vectors ($x=2$ and $x=4$, circled) alone determine the hyperplane at $x=3$ and the margin boundaries (dashed) on either side of it; the points at $x=1$ and $x=5$ play no role and could move freely without changing the boundary.}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ffigbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
+    \caption{The maximum-margin hyperplane for the one-dimensional example: two high-risk points ($x=1,2$) and two low-risk points ($x=4,5$), with the support vectors circled.}
     \label{fig:svm_margin}
+}
 \end{figure}
 
 \section{Overfitting and Generalization}\index{Overfitting and Generalization}
@@ -390,7 +446,8 @@ Test error (MSE)     & 9.0 & 6.5 & 5.4 & 6.8 & 15.2 \\
 The minimum test error in Table~\ref{tab:overfitting_stylized} occurs at degree 3, not at the most flexible model, degree 9, even though degree 9 fits the training data almost perfectly. This gap between training and test performance is the signature of overfitting, and it is the reason a model should never be selected purely on training performance. Figure~\ref{fig:overfitting_curve} plots the same two rows of Table~\ref{tab:overfitting_stylized} as curves rather than numbers, making the characteristic divergence easier to see at a glance.
 
 \begin{figure}[htbp]
-    \centering
+\centering
+\begin{lrbox}{\bookmeasuredbox}
     \begin{tikzpicture}[scale=1.0]
         \draw[->] (0,0) -- (6.2,0) node[right] {Polynomial degree};
         \draw[->] (0,0) -- (0,5.2) node[above] {MSE};
@@ -416,14 +473,25 @@ The minimum test error in Table~\ref{tab:overfitting_stylized} occurs at degree 
         \draw[red,thick,dashed] (0.3,4.5) -- (0.7,4.5);
         \node[right,font=\footnotesize] at (0.75,4.5) {Test};
     \end{tikzpicture}
-    \caption{Training and test error (MSE) from Table~\ref{tab:overfitting_stylized} as polynomial degree increases. Training error falls monotonically as the model gains flexibility, but test error is minimized at degree 3 and rises sharply beyond it, the signature of overfitting once the model becomes flexible enough to fit noise in the training sample.}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ffigbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
+    \caption{Training and test error (MSE) from Table~\ref{tab:overfitting_stylized} as polynomial degree increases.}
     \label{fig:overfitting_curve}
+}
 \end{figure}
 
 Generalization refers to the ability of a model to perform on unseen data. The goal of model selection is not merely to maximize performance on the training set, but to choose a model that will perform well out of sample. $k$-fold cross-validation\index{cross-validation} formalizes this: the data are split into $k$ roughly equal parts, and the model is trained on $k-1$ of them and evaluated on the remaining part, repeating $k$ times so that every observation is used for validation exactly once. Figure~\ref{fig:cv} illustrates a single fold of 5-fold cross-validation.
 
 \begin{figure}[htbp]
-    \centering
+\centering
+\begin{lrbox}{\bookmeasuredbox}
     \begin{tikzpicture}[node distance=0mm]
         \node[draw,fill=blue!15,minimum width=2.1cm,minimum height=1cm] (f1) at (0,0) {Fold 1};
         \node[draw,fill=blue!15,minimum width=2.1cm,minimum height=1cm,right=0mm of f1] (f2) {Fold 2};
@@ -432,8 +500,18 @@ Generalization refers to the ability of a model to perform on unseen data. The g
         \node[draw,fill=blue!15,minimum width=2.1cm,minimum height=1cm,right=0mm of f4] (f5) {Fold 5};
         \node[below=4mm of f3] {Fold 3 held out for validation; Folds 1, 2, 4, 5 used for training};
     \end{tikzpicture}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ffigbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
     \caption{One iteration of 5-fold cross-validation. The procedure repeats five times, holding out a different fold each time, and the five validation scores are averaged.}
     \label{fig:cv}
+}
 \end{figure}
 
 For financial time series, ordinary $k$-fold cross-validation can be misleading because it may train on future data and validate on the past, which is not possible in real deployment. Walk-forward validation, in which the training window always precedes the validation window in time, is the standard alternative and is discussed further in Chapter 7.
@@ -492,7 +570,8 @@ The practical deployment of machine learning in finance requires attention to da
 A compact view of the modeling lifecycle is shown in Figure~\ref{fig:ml_lifecycle}.
 
 \begin{figure}[htbp]
-    \centering
+\centering
+\begin{lrbox}{\bookmeasuredbox}
     \begin{tikzpicture}[>=latex,thick,node distance=2.0cm]
         \node[draw,rounded corners,minimum width=2.2cm,minimum height=0.8cm] (train) {Training};
         \node[draw,rounded corners,minimum width=2.2cm,minimum height=0.8cm,right=of train] (validate) {Validation};
@@ -503,8 +582,18 @@ A compact view of the modeling lifecycle is shown in Figure~\ref{fig:ml_lifecycl
         \draw[->] (deploy) -- (monitor);
         \draw[->] (monitor) to[out=135,in=45] (train);
     \end{tikzpicture}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ffigbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
     \caption{A machine learning workflow in finance should include training, validation, deployment, and continuous monitoring, with findings from monitoring feeding back into retraining.}
     \label{fig:ml_lifecycle}
+}
 \end{figure}
 
 These issues are not minor technicalities. They often determine whether a model survives in production. Strong financial modeling involves not only fitting a statistical relationship, but also ensuring that the relationship is stable enough to remain useful, and building the monitoring infrastructure to detect when it stops being useful.
@@ -517,8 +606,7 @@ Several patterns recur constantly when engineering features from financial data.
 
 \begin{table}[htbp]
 \centering
-\caption{Raw firm-level inputs for a small cross-section (Debt, Equity, and Revenue in \$ millions; Market Cap in \$ billions; Recession is 1 if the firm's primary sector was in a broad-based downturn during the period)}
-\label{tab:feature_eng_raw}
+\begin{lrbox}{\bookmeasuredbox}
 \begin{tabular}{lcrrrrrr}
 \toprule
 Firm & Sector & Debt & Equity & Rev.$_t$ & Rev.$_{t-4}$ & Recession & Mkt Cap \\
@@ -528,6 +616,18 @@ Firm & Sector & Debt & Equity & Rev.$_t$ & Rev.$_{t-4}$ & Recession & Mkt Cap \\
 3 & Retail & 40 & 40 & 95  & 90  & 0 & 1.2 \\
 \bottomrule
 \end{tabular}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ttabbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
+\caption{Raw firm-level inputs for a small cross-section (Debt, Equity, and Revenue in \$ millions; Market Cap in \$ billions; Recession is 1 if the firm's primary sector was in a broad-based downturn during the period)}
+\label{tab:feature_eng_raw}
+}
 \end{table}
 
 Table~\ref{tab:feature_eng_derived} shows the engineered features these raw inputs produce. The leverage ratio and year-over-year revenue growth follow directly from the raw dollar figures; the interaction term is zero for both non-recession firms regardless of their leverage, but equals $1.50$ for Firm 2, flagging that its already-elevated leverage coincides with a sector-wide downturn, exactly the kind of conditional relationship a plain linear model cannot represent on its own. One-hot encoding converts the raw Sector column into three binary indicators: Firm 1 becomes (Technology=1, Energy=0, Retail=0), Firm 2 becomes (Technology=0, Energy=1, Retail=0), and Firm 3 becomes (Technology=0, Energy=0, Retail=1).
@@ -565,7 +665,8 @@ F_m(x) = F_{m-1}(x) + \nu \, h_m(x), \qquad m = 1, \dots, M,
 where $h_m$ is a new regression tree, not fit to the original target $y$, but fit to the current pseudo-residuals, $y_i - F_{m-1}(x_i)$ for squared-error loss (more generally, the negative gradient of the loss function with respect to the ensemble's current predictions $F_{m-1}(x_i)$, which is where the name ``gradient'' boosting comes from), so that each new tree specifically targets whatever the ensemble so far is still getting wrong. The learning rate $\nu \in (0,1]$, typically set well below 1 (commonly $0.01$ to $0.3$ in practice), then shrinks each tree's contribution before it is added: a smaller $\nu$ requires more trees $M$ to reach a given level of fit, but tends to generalize better, exactly the same regularization-driven bias-variance tradeoff the ridge and lasso penalties illustrated earlier in this chapter. Figure~\ref{fig:boosting_sequence} shows this sequential structure schematically, in direct contrast to a random forest's independently-grown, averaged trees: each boosting stage cannot be fit until the previous stage's pseudo-residuals are known, an inherently sequential dependency that random forests do not have, which is also why random forests parallelize trivially across trees while gradient boosting does not. Rather than reducing variance through averaging, boosting reduces bias by iteratively correcting the errors of the current model, and is typically combined with a small learning rate and a limited number of trees to control overfitting.
 
 \begin{figure}[htbp]
-    \centering
+\centering
+\begin{lrbox}{\bookmeasuredbox}
     \begin{tikzpicture}[>=latex,thick,node distance=2.0cm]
         \node[draw,rounded corners,minimum width=1.4cm,minimum height=0.8cm] (f0) {$F_0$};
         \node[draw,rounded corners,minimum width=1.4cm,minimum height=0.8cm,right=of f0] (f1) {$F_1$};
@@ -580,8 +681,18 @@ where $h_m$ is a new regression tree, not fit to the original target $y$, but fi
         \node[below=0.4cm of f1,font=\scriptsize,align=center,text width=2.4cm] {$h_1$ fit to\\residuals of $F_0$};
         \node[below=0.4cm of f2,font=\scriptsize,align=center,text width=2.4cm] {$h_2$ fit to\\residuals of $F_1$};
     \end{tikzpicture}
-    \caption{Gradient boosting as a sequential chain. The ensemble prediction $F_m$ is built by adding a shrunken new tree $\nu h_m$ to the previous stage $F_{m-1}$, where $h_m$ is fit to correct whatever $F_{m-1}$ still gets wrong. Each stage depends on every stage before it, unlike the independently-grown, averaged trees of a random forest summarized in Table~\ref{tab:bagging_vs_boosting}.}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ffigbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
+    \caption{Gradient boosting as a sequential chain of shrunken trees, each fit to correct the previous stage's residuals.}
     \label{fig:boosting_sequence}
+}
 \end{figure}
 
 In finance, such models are widely used for default prediction, credit scoring, and fraud detection. They can also be used to estimate the importance of variables, which can be useful for understanding which features drive a prediction. However, they are not automatically more reliable than simpler models. A tree-based model can still overfit, especially when the data are noisy or when the time structure is ignored during cross-validation. Careful validation, along the lines discussed in Section~\ref{sec:overfitting-section} and using walk-forward schemes rather than random splits, remains essential.
@@ -639,7 +750,8 @@ F_3 &= (0.80, 0.05), & F_4 &= (0.90, 0.10).
 Initializing two cluster centers at $F_1$ and $F_4$, the algorithm alternates between two steps: assign each point to its nearest center, then recompute each center as the mean of its assigned points. In this example, $F_1$ and $F_2$ (both low leverage, higher margin) are closest to the first center, while $F_3$ and $F_4$ (both high leverage, low margin) are closest to the second, giving updated centers $\mu_1 = (0.25, 0.275)$ and $\mu_2 = (0.85, 0.075)$. Recomputing distances with these updated centers does not change any point's assignment, so the algorithm has converged after a single update: the data naturally separates into a ``low-leverage, higher-margin'' group and a ``high-leverage, low-margin'' group, without ever being told what leverage or margin mean, purely from the geometry of the two features. Figure~\ref{fig:kmeans_example} shows the four firms, the initial centers, and the updated centers $\mu_1$ and $\mu_2$ together.
 
 \begin{figure}[htbp]
-    \centering
+\centering
+\begin{lrbox}{\bookmeasuredbox}
     \begin{tikzpicture}[scale=1.0]
         \draw[->] (0,0) -- (6.5,0) node[right] {Leverage};
         \draw[->] (0,0) -- (0,3.6) node[above] {Profit margin};
@@ -662,8 +774,18 @@ Initializing two cluster centers at $F_1$ and $F_4$, the algorithm alternates be
         \draw[black,thick] (5.0,0.85) -- (5.2,0.65);
         \node[right,font=\footnotesize] at (5.25,0.75) {$\mu_2$};
     \end{tikzpicture}
-    \caption{The $K$-means example: four firms in leverage/profit-margin space, colored by their converged cluster assignment (blue: low-leverage, higher-margin; red: high-leverage, low-margin). Circled points mark the two initial centers (placed at $F_1$ and $F_4$); the $\times$ markers show the updated centers $\mu_1$ and $\mu_2$ after one iteration, at which point the algorithm has converged.}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ffigbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
+    \caption{The $K$-means example: four firms in leverage/profit-margin space, with the initial centers (circled) and the updated centers $\mu_1$ and $\mu_2$.}
     \label{fig:kmeans_example}
+}
 \end{figure}
 
 \section{Neural Networks and Deep Learning in Finance}\index{Neural Networks and Deep Learning in Finance}
@@ -701,7 +823,8 @@ where $\text{ReLU}'(z)=1$ if $z>0$ and $0$ otherwise, and $\odot$ denotes elemen
 Every one of these four gradients was obtained purely by repeated application of the chain rule, working from the loss backward to the output layer, then backward again through the hidden layer, never once needing to re-derive the forward pass from scratch; this reuse of intermediate quantities computed once, moving backward, is precisely what makes backpropagation efficient enough to train networks with millions of parameters, rather than the (computationally infeasible) alternative of perturbing each weight individually and re-running the entire forward pass to estimate its gradient numerically. A single gradient descent step with learning rate $\eta=0.1$, exactly the update rule Section 6.5 introduced, moves every parameter a small step opposite its gradient, $W_2 \leftarrow W_2 - \eta\,\partial L/\partial W_2$ and likewise for $b_2$, $W_1$, and $b_1$, nudging the network's prediction for this particular example fractionally closer to the target $y=1$, and repeating this update across many training examples and many iterations is, in its entirety, how a deep network's weights are actually learned.
 
 \begin{figure}[htbp]
-    \centering
+\centering
+\begin{lrbox}{\bookmeasuredbox}
     \begin{tikzpicture}[>=latex,thick,
         neuron/.style={draw,circle,minimum size=1.3cm,align=center,font=\small},
         biaslabel/.style={font=\scriptsize,align=center}]
@@ -726,8 +849,18 @@ Every one of these four gradients was obtained purely by repeated application of
         \node[font=\small,below=1.6cm of h2] {Hidden layer (ReLU)};
         \node[font=\small,below=2.9cm of y] {Output layer (sigmoid)};
     \end{tikzpicture}
-    \caption{The toy feedforward network worked through above: two inputs, a hidden layer of two ReLU units, and a single sigmoid output. Each edge is labeled with its weight from $W_1$ or $W_2$, each hidden and output neuron is labeled with its bias, and each neuron shows the value it computes on the forward pass for input $x=(1.0,0.5)$. Chapter 16 revisits this same network to verify LIME and integrated-gradients explanations against its exact analytical gradient.}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ffigbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
+    \caption{The toy feedforward network worked through above. Chapter 16 revisits it to verify LIME and integrated-gradients explanations against its exact analytical gradient.}
     \label{fig:toy_feedforward_network}
+}
 \end{figure}
 
 In finance, neural networks have been used for forecasting, option pricing, time series modeling, and text analysis. The appeal of deep learning is that it can automatically learn useful nonlinear representations from raw data, reducing the need for hand-crafted features. However, neural networks are not a magic solution. They often require substantial data, careful tuning of architecture and learning rate, and strong regularization (such as dropout or weight decay, which is mathematically equivalent to the ridge penalty introduced earlier) to avoid overfitting. They may also be more difficult to interpret than a linear model or a single decision tree, which matters when the model influences real-world, and sometimes regulated, decisions. For this reason, deep learning is often most useful when paired with domain knowledge and robust validation practices. A neural network that performs well in a laboratory setting may still fail in production if the data environment shifts or if the model is not monitored properly.

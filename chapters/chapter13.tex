@@ -5,6 +5,7 @@
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{booktabs}
+\usepackage{floatrow}
 \usepackage{draftwatermark}
 
 \SetWatermarkText{Wulin.Suo@Queensu.ca}
@@ -303,8 +304,7 @@ Layering is where the network-based detection approach flagged in Table~\ref{tab
 
 \begin{table}[htbp]
 \centering
-\caption{A four-hop layering chain: funds received, forwarded, and retained at each shell entity}
-\label{tab:layering_network}
+\begin{lrbox}{\bookmeasuredbox}
 \begin{tabular}{lrrr}
 \toprule
 Entity & Received & Forwarded (98\%) & Retained (2\%) \\
@@ -315,10 +315,23 @@ Gamma & \$480{,}200.00 & \$470{,}596.00 & \$9{,}604.00 \\
 Delta & \$470{,}596.00 & \$461{,}184.08 & \$9{,}411.92 \\
 \bottomrule
 \end{tabular}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ttabbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
+\caption{A four-hop layering chain: funds received, forwarded, and retained at each shell entity}
+\label{tab:layering_network}
+}
 \end{table}
 
 \begin{figure}[htbp]
-    \centering
+\centering
+\begin{lrbox}{\bookmeasuredbox}
     \begin{tikzpicture}[>=latex,thick,node distance=1.7cm]
         \node[draw,rounded corners,align=center,font=\small] (place) {Placement\\\$500{,}000};
         \node[draw,rounded corners,align=center,font=\small,right=of place] (alpha) {Alpha};
@@ -336,8 +349,18 @@ Delta & \$470{,}596.00 & \$461{,}184.08 & \$9{,}411.92 \\
         \draw[->] (gamma) -- ++(0,-1.1) node[below,font=\scriptsize] {retains \$9.6k};
         \draw[->] (delta) -- ++(0,-1.1) node[below,font=\scriptsize] {retains \$9.4k};
     \end{tikzpicture}
-    \caption{The four-hop layering chain of Table~\ref{tab:layering_network} as a network. Each shell entity forwards roughly $98\%$ of what it received to exactly one downstream entity and retains the rest, a chain topology, and a near-total pass-through ratio at every hop, that only becomes visible once the accounts are examined together rather than one at a time.}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ffigbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
+    \caption{The four-hop layering chain of Table~\ref{tab:layering_network} as a network.}
     \label{fig:layering_network}
+}
 \end{figure}
 
 After four hops, $\$461{,}184.08$, over $92\%$ of the original placed amount, reaches its ultimate destination, with only $\$38{,}815.92$ lost to the network's own retained ``fees'' along the way, having passed through four legally separate entities in under a week. Figure~\ref{fig:layering_network} draws this chain as the network it actually is, rather than as four separate, individually unremarkable rows in a table. No individual hop in Table~\ref{tab:layering_network} looks obviously wrong; each is a plausible-looking business payment of a plausible size. What is anomalous is the pattern viewed as a network: a near-total pass-through ratio (each entity forwards almost exactly what it received, rather than retaining or redeploying it as a genuine operating business would), extremely short dwell time between receipt and forwarding, and a chain topology, each entity receiving from only one source and sending to only one destination, that has no obvious legitimate business rationale. This is precisely why anti-money-laundering systems increasingly supplement Section~\ref{sec:risk-tiering}'s per-account behavioral scoring with network or graph-based analysis, examining the structure of relationships between accounts rather than any single account's activity alone, since a layering scheme is, by design, constructed so that every individual node in the chain looks unremarkable.
@@ -368,7 +391,8 @@ Table~\ref{tab:layering_network}'s chain topology itself, one source, one destin
 Figure~\ref{fig:crime_pipeline} places this rule-based structuring and layering detection, on-chain or off, alongside the statistical and behavioral tools developed earlier in the chapter, showing how a real institution's monitoring system typically combines several distinct signals before a case ever reaches a human investigator.
 
 \begin{figure}[htbp]
-    \centering
+\centering
+\begin{lrbox}{\bookmeasuredbox}
     \begin{tikzpicture}[>=latex,thick,node distance=0.9cm]
         \node[draw,rounded corners,minimum width=1.85cm,minimum height=0.9cm,align=center,font=\scriptsize] (txn) {Transaction /\\Account Activity};
         \node[draw,rounded corners,minimum width=1.85cm,minimum height=0.9cm,right=of txn,align=center,font=\scriptsize] (score) {Scoring, Rules,\\Behavioral Risk};
@@ -380,8 +404,18 @@ Figure~\ref{fig:crime_pipeline} places this rule-based structuring and layering 
         \draw[->] (alert) -- (invest);
         \draw[->] (invest) -- (report);
     \end{tikzpicture}
-    \caption{The fraud and AML monitoring pipeline. Transaction-level scoring (Section~\ref{sec:fraud-scoring}), rule-based checks such as structuring detection, and account-level behavioral risk tiering (Section~\ref{sec:risk-tiering}) all feed a single alert queue, which a human investigator must resolve into either a filed report or a cleared alert.}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ffigbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
+    \caption{The fraud and AML monitoring pipeline.}
     \label{fig:crime_pipeline}
+}
 \end{figure}
 
 Beyond structuring, AML regulation imposes an ongoing due-diligence obligation that goes beyond fraud detection's largely reactive posture: Customer Due Diligence (CDD)\index{Customer Due Diligence (CDD)} at onboarding establishes a customer's expected activity profile (Section~\ref{sec:risk-tiering}'s KYC inputs), Enhanced Due Diligence (EDD)\index{Enhanced Due Diligence (EDD)} applies heightened scrutiny to higher-risk customers such as politically exposed persons or those in high-risk jurisdictions, and ongoing monitoring compares actual behavior against that expected profile continuously, exactly the account-level, time-varying risk view Section~\ref{sec:survival-fraud}'s survival framework formalizes. Sanctions screening, checking counterparties against government-maintained lists of prohibited individuals, entities, and countries, is a related but distinct compliance obligation, typically implemented as a direct name-matching rule rather than a statistical model, precisely because a sanctioned-party match is a binary legal fact rather than a probabilistic risk estimate.
@@ -411,7 +445,8 @@ Chapters 8 and 9 introduced model risk management\index{model risk management}, 
 Banks and regulators structure this accountability using a widely adopted governance framework called the three lines of defense\index{three lines of defense}, illustrated in Figure~\ref{fig:three_lines_defense}: the business unit that owns customer relationships and transaction processing is the first line, directly responsible for day-to-day monitoring and following established procedures; a dedicated compliance and risk management function is the second line, independently setting policy, building and validating the scoring and monitoring models this chapter has developed, and challenging the first line's judgment calls; and internal audit is the third line, periodically and independently testing whether the first two lines are actually functioning as designed, reporting directly to the board rather than to management responsible for day-to-day operations.
 
 \begin{figure}[htbp]
-    \centering
+\centering
+\begin{lrbox}{\bookmeasuredbox}
     \begin{tikzpicture}[>=latex,thick,node distance=0.6cm]
         \node[draw,rounded corners,minimum width=6.5cm,minimum height=0.9cm,align=center] (first) {First Line: Business Units\\(Day-to-day monitoring and controls)};
         \node[draw,rounded corners,minimum width=6.5cm,minimum height=0.9cm,below=of first,align=center] (second) {Second Line: Compliance and Risk Management\\(Policy, model development, independent challenge)};
@@ -419,8 +454,18 @@ Banks and regulators structure this accountability using a widely adopted govern
         \draw[->] (first) -- (second);
         \draw[->] (second) -- (third);
     \end{tikzpicture}
-    \caption{The three lines of defense governance framework for fraud and AML programs. Each line provides a progressively more independent check on whether monitoring and reporting obligations are actually being met, not merely documented.}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ffigbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
+    \caption{The three lines of defense governance framework for fraud and AML programs.}
     \label{fig:three_lines_defense}
+}
 \end{figure}
 
 This structure is a direct, institutionalized answer to a failure mode this chapter's case vignette illustrates concretely: a monitoring system can exist on paper, and even generate the alert volumes quantified in Section~\ref{sec:alert-economics}, while still failing in practice if the first line lacks the incentive or staffing to act on alerts, if the second line's independent challenge is weak or under-resourced, or if the third line's audits are not, in fact, independent of the business they are reviewing.
@@ -431,14 +476,25 @@ Chapter 12 introduced concept drift, a predictive model's fitted relationship gr
 
 \begin{table}[htbp]
 \centering
-\caption{A stylized six-month precision drift at a fixed classification threshold}
-\label{tab:precision_drift}
+\begin{lrbox}{\bookmeasuredbox}
 \begin{tabular}{lrrrrrr}
 \toprule
 Month & 1 & 2 & 3 & 4 & 5 & 6 \\
 Precision & 24.2\% & 22.5\% & 20.8\% & 19.6\% & 18.3\% & 17.1\% \\
 \bottomrule
 \end{tabular}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ttabbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
+\caption{A stylized six-month precision drift at a fixed classification threshold}
+\label{tab:precision_drift}
+}
 \end{table}
 
 If the second line has set a minimum acceptable precision floor of $20\%$ below which the alert-economics burden of Section~\ref{sec:alert-economics} is judged too costly relative to the fraud actually being caught, Table~\ref{tab:precision_drift} crosses that floor between month 3 and month 4, which should trigger a specific, pre-defined governance response, refitting the model on recent data, adding new features that capture the fraudsters' apparent behavioral shift, or tightening the classification threshold, rather than allowing the model to keep running unchanged simply because no single month's decline looks alarming on its own. This is precisely the kind of ongoing performance monitoring Chapter 8's model risk management framework requires, and it is the second line's specific responsibility under the three-lines-of-defense structure above to define the precision floor in advance and act automatically once it is breached, rather than leaving the decision to the first-line staff who are, understandably, focused on clearing today's alert queue rather than questioning whether the underlying model still works.

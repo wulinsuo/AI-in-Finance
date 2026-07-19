@@ -6,6 +6,7 @@
 \usepackage{amssymb}
 \usepackage{booktabs}
 \usepackage{eurosym}
+\usepackage{floatrow}
 \usepackage{draftwatermark}
 
 \SetWatermarkText{WSuo@Queensu.ca}
@@ -163,7 +164,8 @@ The best bid is \$50.05 and the best ask is \$50.10, so the quoted bid-ask sprea
 This average price is \$0.03 above the best ask of \$50.10, roughly 6 basis points of price impact, purely a consequence of order size relative to the liquidity available at each price level, with no new information entering the market at all. A trader who needs to buy or sell a large position faces exactly this tradeoff: submitting the entire order at once guarantees immediate execution but at a worse average price, while breaking the order into smaller pieces over time (the subject of the execution algorithms in Chapter 11) can reduce price impact at the cost of exposing the trader to price movements while the order is worked.
 
 \begin{figure}[htbp]
-    \centering
+\centering
+\begin{lrbox}{\bookmeasuredbox}
     \begin{tikzpicture}[thick]
         \draw[->] (-0.5,0) -- (10.3,0) node[right,font=\small] {price};
         \draw[->] (-0.5,0) -- (-0.5,7.0) node[above,font=\small] {size (shares)};
@@ -185,8 +187,18 @@ This average price is \$0.03 above the best ask of \$50.10, roughly 6 basis poin
         \draw[<->,dashed] (4.2,6.3) -- (5.5,6.3);
         \node[above,font=\scriptsize] at (4.85,6.3) {spread};
     \end{tikzpicture}
-    \caption{The simplified limit order book of Table~\ref{tab:order_book}, drawn as a depth chart. Bid sizes (light gray) sit to the left of the spread, ask sizes (white outline) to the right. The solid black portion of the two lowest ask levels shows exactly what the 250-share market buy order consumes: all 100 shares at \$50.10 and 150 of the 200 shares at \$50.15, leaving the remaining 50 shares at that level and the entire \$50.20 level (white) untouched.}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ffigbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
+    \caption{The limit order book of Table~\ref{tab:order_book} as a depth chart. Bid sizes (light gray) sit left of the spread, ask sizes (white outline) right; the solid black portion of the two lowest ask levels marks what the 250-share market order consumes.}
     \label{fig:order_book_depth}
+}
 \end{figure}
 
 \section{Decomposing the Bid-Ask Spread}\index{Decomposing the Bid-Ask Spread}
@@ -271,8 +283,7 @@ Table~\ref{tab:margin_comparison} summarizes the two margin mechanics side by si
 
 \begin{table}[htbp]
 \centering
-\caption{Two margin mechanisms compared: bilateral broker margin on a short sale versus centrally cleared futures margin.}
-\label{tab:margin_comparison}
+\begin{lrbox}{\bookmeasuredbox}
 \begin{tabular}{lll}
 \toprule
 & Short-sale margin (Section~\ref{sec:short-selling-margin}) & Futures variation margin \\
@@ -283,6 +294,18 @@ Trigger & Equity falls below maintenance \% & Any price move, however small \\
 Typical use case & Individual equity short position & Standardized futures and swaps \\
 \bottomrule
 \end{tabular}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ttabbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
+\caption{Two margin mechanisms compared: bilateral broker margin on a short sale versus centrally cleared futures margin.}
+\label{tab:margin_comparison}
+}
 \end{table}
 
 \section{Regulation, Disclosure, and Market Integrity}\index{Regulation, Disclosure, and Market Integrity}

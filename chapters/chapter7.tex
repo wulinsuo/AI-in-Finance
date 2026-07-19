@@ -6,6 +6,7 @@
 \usepackage{amssymb}
 \usepackage{booktabs}
 \usepackage{draftwatermark}
+\usepackage{floatrow}
 
 \SetWatermarkText{WSuo@Queensu.ca}
 \SetWatermarkScale{1.4}
@@ -82,7 +83,7 @@ and is estimated from a sample of $T$ observations with mean $\bar X$ as
 \end{equation*}
 A plot of $\hat\rho_k$ against $k$ is called a correlogram, and it is one of the most commonly used diagnostic tools in time series analysis: white noise has a correlogram that is statistically indistinguishable from zero at every lag, while a genuinely autocorrelated series shows a clear pattern, decaying gradually for an autoregressive process, cutting off sharply for a pure moving-average process. Figure~\ref{fig:acf} shows the correlogram computed from the worked example in the next section.
 
-Because $\hat\rho_k$ is estimated from a finite sample, it is subject to sampling error, and a common rule of thumb treats $\hat\rho_k$ as statistically indistinguishable from zero if it falls within an approximate 95\% confidence band of $\pm 1.96/\sqrt{T}$, where $T$ is the number of observations used to compute the ACF. For the 8-observation series analyzed in the next section, this band is $\pm 1.96/\sqrt{8} \approx \pm 0.693$, which is larger in magnitude than the sample autocorrelation $\hat\rho_1 = 0.497$ computed there. In other words, even the largest, most visually striking autocorrelation in this chapter's own worked example is not, strictly speaking, statistically distinguishable from zero at conventional confidence levels, purely because the sample is so small. This is not a contradiction of the chapter's earlier claim that the correlogram shows a clear AR(1) pattern; rather, it is a reminder, consistent with the ADF test's failure to reject a unit root in Section~\ref{sec:adf-test}, that with only 8 observations essentially no time series diagnostic can be fully trusted, and that the qualitative pattern (geometric decay) is more informative here than any individual significance test.
+Because $\hat\rho_k$ is estimated from a finite sample, it is subject to sampling error, and a common rule of thumb treats $\hat\rho_k$ as statistically indistinguishable from zero if it falls within an approximate 95\% confidence band of $\pm 1.96/\sqrt{T}$, where $T$ is the number of observations used to compute the ACF. For the 8-observation series analyzed in the next section, this band is $\pm 1.96/\sqrt{8} \approx \pm 0.693$, which is larger in magnitude than the sample autocorrelation $\hat\rho_1 = 0.497$ computed there; Figure~\ref{fig:acf} plots this band directly alongside the correlogram. In other words, even the largest, most visually striking autocorrelation in this chapter's own worked example is not, strictly speaking, statistically distinguishable from zero at conventional confidence levels, purely because the sample is so small. This is not a contradiction of the chapter's earlier claim that the correlogram shows a clear AR(1) pattern; rather, it is a reminder, consistent with the ADF test's failure to reject a unit root in Section~\ref{sec:adf-test}, that with only 8 observations essentially no time series diagnostic can be fully trusted, and that the qualitative pattern (geometric decay) is more informative here than any individual significance test.
 
 \section{A Worked Example: Fitting and Forecasting an AR(1) Model}\index{Fitting and Forecasting an AR(1) Model}
 \label{sec:ar1-example}
@@ -110,10 +111,12 @@ Deviation $X_t$ & 9.0 & 8.0 & 7.0 & 7.0 & 5.0 & 6.0 & 4.0 & 4.0 \\
 The sample autocorrelations, computed directly from the formula above using the full-sample mean $\bar X = 6.25$, are $\hat\rho_1 = 0.50$, $\hat\rho_2 = 0.24$, and $\hat\rho_3 = 0.03$, plotted in Figure~\ref{fig:acf}. The roughly geometric decay, each lag's autocorrelation is a bit less than half the previous one, is exactly the signature an AR(1) process should produce.
 
 \begin{figure}[htbp]
-    \centering
+\centering
+\begin{lrbox}{\bookmeasuredbox}
     \begin{tikzpicture}[scale=0.9]
+        \draw[->] (0,-1.0) -- (0,3.9) node[above] {$\hat\rho_k$};
+        \draw[red,dashed,thick] (0,3.45) -- (4.2,3.45) node[right,black,font=\footnotesize] {$\pm 1.96/\sqrt{T}$};
         \draw[->] (0,0) -- (4.5,0) node[right] {Lag $k$};
-        \draw[->] (0,-1.0) -- (0,3.0) node[above] {$\hat\rho_k$};
         \draw[gray,dashed] (0,0) -- (4.2,0);
         \draw[thick,blue,fill=blue!30] (0.7,0) rectangle (1.1,2.49);
         \draw[thick,blue,fill=blue!30] (1.7,0) rectangle (2.1,1.20);
@@ -125,8 +128,18 @@ The sample autocorrelations, computed directly from the formula above using the 
         \node[above] at (1.9,1.26) {0.24};
         \node[above] at (2.9,0.21) {0.03};
     \end{tikzpicture}
-    \caption{Sample correlogram for the interest-rate deviation series in Table~\ref{tab:ar1_data}. The roughly geometric decay is characteristic of an AR(1) process.}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ffigbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
+    \caption{Sample correlogram for the interest-rate deviation series in Table~\ref{tab:ar1_data}, with the approximate $95\%$ significance band $\pm 1.96/\sqrt{T}$ (dashed red; symmetric about zero, so only its positive side is drawn).}
     \label{fig:acf}
+}
 \end{figure}
 
 The AR(1) coefficients are estimated the same way any linear regression is estimated, by regressing $X_t$ on $X_{t-1}$ using the OLS formulas from Chapter 6:
@@ -231,13 +244,39 @@ Suppose a shock, a one-time data-reporting glitch, say, appears to influence a s
 \begin{equation*}
 X_t = \mu + \varepsilon_t + \theta_1 \varepsilon_{t-1} + \cdots + \theta_q \varepsilon_{t-q},
 \end{equation*}
-and combining autoregressive and moving-average terms gives an ARMA($p,q$) model. Because many financial series (prices, but also many macroeconomic series) are non-stationary in levels but stationary after differencing, the ARIMA($p,d,q$) model applies an ARMA($p,q$) model to the series after differencing $d$ times: $d=1$ removes a linear trend, $d=2$ removes a quadratic trend, and so on. In practice, $d$ is rarely more than 1 or 2 for financial data, since returns (a $d=1$ difference of log prices) are already close to stationary.
+and combining autoregressive and moving-average terms gives an ARMA($p,q$) model. Because many financial series (prices, but also many macroeconomic series) 
+are non-stationary in levels 
+but stationary after differencing, the ARIMA($p,d,q$) model applies an ARMA($p,q$) model to the series after 
+differencing $d$ times: $d=1$ removes a linear trend, $d=2$ removes a quadratic trend, and so on. In practice, $d$ is rarely more than 1 or 2 for financial data, 
+since returns (a $d=1$ difference of log prices) are already close to stationary.
 
-The MA($q$) component has a theoretical autocorrelation structure that is the mirror image of the AR($p$) process introduced earlier in this chapter, and this contrast is precisely what makes the ACF and PACF useful diagnostic tools together. For an MA(1) process $X_t = \mu + \varepsilon_t + \theta \varepsilon_{t-1}$, the theoretical autocorrelation is $\rho_1 = \theta/(1+\theta^2)$ and $\rho_k=0$ for every lag $k>1$; for $\theta=0.6$, this gives $\rho_1 = 0.6/1.36 \approx 0.441$ and then an abrupt drop to zero at lag 2, in sharp contrast to the AR(1) correlogram in Figure~\ref{fig:acf}, whose autocorrelations decay gradually across every lag rather than cutting off sharply. This is the basis of the Box-Jenkins identification rule: a correlogram (ACF) that cuts off sharply after lag $q$ suggests an MA($q$) model, while a partial autocorrelation function that cuts off sharply after lag $p$ suggests an AR($p$) model; a series where both decay gradually suggests a mixed ARMA($p,q$) model, for which the specific orders are typically chosen by comparing information criteria across a small number of candidates rather than by reading the correlogram alone.
+The MA($q$) component has a theoretical autocorrelation structure that is the mirror image of the AR($p$) process introduced earlier in this chapter, and this 
+contrast is precisely what makes the ACF and PACF useful diagnostic tools together. For an MA(1) process $X_t = \mu + \varepsilon_t + \theta \varepsilon_{t-1}$, 
+the theoretical autocorrelation is $\rho_1 = \theta/(1+\theta^2)$ and $\rho_k=0$ for every lag $k>1$; for $\theta=0.6$, this gives $\rho_1 = 0.6/1.36 \approx 0.441$ and 
+then an abrupt drop to zero at lag 2, in sharp contrast to the AR(1) correlogram in Figure~\ref{fig:acf}, whose autocorrelations decay gradually across every lag 
+rather than cutting off sharply. This is the basis of the Box-Jenkins identification rule: a correlogram (ACF) that cuts off sharply after lag $q$ suggests an 
+MA($q$) model, while a partial autocorrelation function that cuts off sharply after lag $p$ suggests an AR($p$) model; a series where both decay gradually 
+suggests a mixed ARMA($p,q$) model, for which the specific orders are typically chosen by comparing information criteria across a small number of candidates
+ rather than by reading the correlogram alone.
 
-Choosing the orders $p$, $d$, and $q$ is traditionally done with the Box-Jenkins methodology\index{Box-Jenkins Methodology}: examine the ACF and its partial-autocorrelation counterpart (the PACF\index{Partial Autocorrelation Function (PACF)}, which measures the correlation between $X_t$ and $X_{t-k}$ after removing the influence of the intervening lags) to identify candidate orders, fit several candidate models, and compare them using an information criterion such as AIC or BIC, which penalize model complexity to avoid simply picking the model with the most parameters. This is the time series analogue of the model-selection problem in Chapter 6: more lags will always fit the training data at least as well, but a model with too many lags overfits sample noise exactly as a high-degree polynomial does.
+Choosing the orders $p$, $d$, and $q$ is traditionally done with the Box-Jenkins methodology\index{Box-Jenkins Methodology}: examine the ACF and its partial-autocorrelation 
+counterpart (the PACF\index{Partial Autocorrelation Function (PACF)}, which measures the correlation between $X_t$ and $X_{t-k}$ after removing the influence of the 
+intervening lags) to identify candidate orders, fit several candidate models, and compare them using an information criterion such as AIC or BIC, which penalize 
+model complexity to avoid simply picking the model with the most parameters. This is the time series analogue of the model-selection problem in Chapter 6: 
+more lags will always fit the training data at least as well, but a model with too many lags overfits sample noise exactly as a high-degree polynomial does.
 
-Many financial and economic series also exhibit seasonality, a repeating pattern at a fixed period, such as retail sales spiking every December or trading volume dipping every summer. SARIMA (Seasonal ARIMA)\index{SARIMA (Seasonal ARIMA)} extends ARIMA by adding a second set of autoregressive, differencing, and moving-average terms operating at the seasonal period $s$, denoted $\text{SARIMA}(p,d,q)(P,D,Q)_s$: the non-seasonal part $(p,d,q)$ captures short-run dynamics exactly as before, while the seasonal part $(P,D,Q)_s$ captures dependence at lags $s, 2s, 3s, \ldots$. For example, a monthly retail sales series might be modeled as $\text{SARIMA}(1,1,1)(1,1,1)_{12}$, where the seasonal terms specifically model the relationship between each month and the same month one year ($s=12$ months) earlier, on top of the ordinary month-to-month dynamics the non-seasonal terms capture. Seasonal differencing, $\Delta_s X_t = X_t - X_{t-s}$, is the seasonal analogue of the ordinary differencing introduced above, and it is applied when a series exhibits a seasonal unit root, an extension of the stationarity testing in Section~\ref{sec:adf-test} to the seasonal frequency. Most asset return series in finance show little seasonality at the daily frequency, which is why the GARCH and ARIMA examples elsewhere in this chapter do not require a seasonal extension, but seasonality is common and important in macroeconomic series (retail sales, employment, seasonally-adjusted GDP) that feed into the fundamental analysis of Chapter 4 and the macroeconomic risk factors of Chapters 8 and 9.
+Many financial and economic series also exhibit seasonality, a repeating pattern at a fixed period, such as retail sales spiking every December or trading 
+volume dipping every summer. SARIMA (Seasonal ARIMA)\index{SARIMA (Seasonal ARIMA)} extends ARIMA by adding a second set of autoregressive, differencing, and 
+moving-average terms operating at the seasonal period $s$, denoted $\text{SARIMA}(p,d,q)(P,D,Q)_s$: the non-seasonal part $(p,d,q)$ captures short-run 
+dynamics exactly as before, while the seasonal part $(P,D,Q)_s$ captures dependence at lags $s, 2s, 3s, \ldots$. For example, a monthly retail sales 
+series might be modeled as $\text{SARIMA}(1,1,1)(1,1,1)_{12}$, where the seasonal terms specifically model the relationship between each month and 
+the same month one year ($s=12$ months) earlier, on top of the ordinary month-to-month dynamics the non-seasonal terms capture. 
+
+Seasonal differencing, $\Delta_s X_t = X_t - X_{t-s}$, is the seasonal analogue of the ordinary differencing introduced above, and it is applied when a series 
+exhibits a seasonal unit root, an extension of the stationarity testing in Section~\ref{sec:adf-test} to the seasonal frequency. Most asset return series in 
+finance show little seasonality at the daily frequency, which is why the GARCH and ARIMA examples elsewhere in this chapter do not require a seasonal extension, 
+but seasonality is common and important in macroeconomic series (retail sales, employment, seasonally-adjusted GDP) that feed into the fundamental analysis of
+ Chapter 4 and the macroeconomic risk factors of Chapters 8 and 9.
 
 \section{Cointegration and Pairs Trading}\index{Cointegration and Pairs Trading}
 \label{sec:cointegration}
@@ -309,8 +348,7 @@ This worked example uses real data: the U.S. Treasury's daily par yield curve ra
 
 \begin{table}[htbp]
 \centering
-\caption{Explained variance ratio by principal component, 1990--2023 Treasury yield curve panel}
-\label{tab:pca_variance}
+\begin{lrbox}{\bookmeasuredbox}
 \begin{tabular}{lrrrrr}
 \toprule
 Component & PC1 & PC2 & PC3 & PC4 & PC5 \\
@@ -318,12 +356,25 @@ Component & PC1 & PC2 & PC3 & PC4 & PC5 \\
 Variance explained & $95.95\%$ & $3.78\%$ & $0.22\%$ & $0.03\%$ & $0.01\%$ \\
 \bottomrule
 \end{tabular}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ttabbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
+\caption{Explained variance ratio by principal component, 1990--2023 Treasury yield curve panel}
+\label{tab:pca_variance}
+}
 \end{table}
 
 The first three components alone explain $99.96\%$ of the total variation across 34 years of daily yield curve moves, a striking result: an eight-dimensional forecasting problem collapses, with almost no loss of information, to a three-dimensional one. This is not a coincidence specific to this dataset; it is one of the most reproduced empirical results in fixed income, first documented by Litterman and Scheinkman (1991), and the three components have well-known, economically interpretable shapes once their loadings, the weight each maturity contributes to that component, are plotted against maturity.
 
 \begin{figure}[htbp]
 \centering
+\begin{lrbox}{\bookmeasuredbox}
 \begin{tikzpicture}[>=latex,thick,scale=0.95,transform shape]
 \draw[->] (-0.4,0) -- (8.6,0) node[right,font=\small] {maturity};
 \draw[->] (0,-3.3) -- (0,3.3) node[above,font=\small] {loading ($\times\,5$)};
@@ -342,8 +393,18 @@ The first three components alone explain $99.96\%$ of the total variation across
 \draw[dotted] plot coordinates {(0,2.61) (1,1.06) (2,-0.75) (3,-2.29) (4,-2.28) (5,-0.75) (6,0.66) (7,2.26)};
 \node[below,font=\scriptsize] at (3.5,-2.95) {PC3 (curvature)};
 \end{tikzpicture}
-\caption{PCA loadings by maturity for the first three principal components of the 1990--2023 Treasury yield curve panel. PC1 loads almost equally and positively on every maturity (a parallel shift, or \emph{level} factor); PC2 loads negatively on short maturities and positively on long ones (a steepening or flattening, or \emph{slope} factor); PC3 loads positively at both ends and negatively in the middle (a \emph{curvature} or ``butterfly'' factor).}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ffigbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
+\caption{PCA loadings by maturity for the first three principal components of the 1990--2023 Treasury yield curve panel.}
 \label{fig:yield_curve_pca_loadings}
+}
 \end{figure}
 
 Figure~\ref{fig:yield_curve_pca_loadings} shows exactly this level-slope-curvature structure. PC1's loadings range only from $0.30$ to $0.38$ across all eight maturities, all positive and all close together: a positive PC1 shock raises every yield on the curve by roughly the same amount, a parallel shift, which is why PC1 is called the \emph{level} factor. PC2's loadings move monotonically from $-0.42$ at the 3-month maturity to $+0.53$ at the 10-year maturity, so a positive PC2 shock lowers short-term yields while raising long-term ones, steepening the curve; this is the \emph{slope} factor. PC3's loadings are positive at both ends of the curve ($0.52$ at 3 months, $0.45$ at 10 years) and negative in the middle ($-0.46$ at both 2 and 3 years), a hump-shaped pattern called the \emph{curvature} factor, since a positive PC3 shock bends the belly of the curve down relative to both ends.
@@ -421,7 +482,8 @@ Suppose a fund's current estimate of a stock's market beta is $\hat\beta_0 = 1.0
 Chapter 6 introduced $k$-fold cross-validation and noted that it can be misleading for time series, because a random split can train a model on data from after the validation period, information that would never be available at the time a real forecast was made. Walk-forward validation avoids this by always keeping the training window entirely before the validation window in time, then rolling both windows forward, as shown in Figure~\ref{fig:walk_forward}.
 
 \begin{figure}[htbp]
-    \centering
+\centering
+\begin{lrbox}{\bookmeasuredbox}
     \begin{tikzpicture}[scale=0.85]
         \node[draw,fill=blue!15,minimum width=3.2cm,minimum height=0.8cm] (t1) at (1.6,0) {Train: months 1--4};
         \node[draw,fill=orange!50,minimum width=0.8cm,minimum height=0.8cm,right=1mm of t1] (v1) {Test: 5};
@@ -432,8 +494,18 @@ Chapter 6 introduced $k$-fold cross-validation and noted that it can be misleadi
         \node[draw,fill=blue!15,minimum width=4.6cm,minimum height=0.8cm] (t3) at (2.35,-2.4) {Train: months 1--6};
         \node[draw,fill=orange!50,minimum width=0.8cm,minimum height=0.8cm,right=1mm of t3] (v3) {Test: 7};
     \end{tikzpicture}
-    \caption{Walk-forward validation: the training window always ends before the test period, and both roll forward together, so no forecast ever uses future information.}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ffigbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
+    \caption{Walk-forward validation across three successive train/test splits.}
     \label{fig:walk_forward}
+}
 \end{figure}
 
 At each step, the model is refit (or updated) using only data available up to that point, produces a forecast for the next period, and that forecast is scored against the realized outcome once it arrives. The process repeats, rolling forward through the entire sample, and the reported performance is the average across all these genuinely out-of-sample forecasts. This is more computationally expensive than a single train-test split, since the model may be refit many times, but it is the only evaluation procedure that mimics how a forecasting model would actually be used in practice, one period at a time, without ever peeking ahead.
@@ -483,13 +555,14 @@ Several challenges recur across almost every time series application in finance.
 With this many tools introduced across the chapter, it is useful to close with a single, concrete workflow that ties them together in the order they would typically be applied in practice, summarized in Figure~\ref{fig:ts_workflow}.
 
 \begin{figure}[htbp]
-    \centering
-    \begin{tikzpicture}[>=latex,thick,node distance=1.9cm,scale=0.9,transform shape]
+\centering
+\begin{lrbox}{\bookmeasuredbox}
+    \begin{tikzpicture}[>=latex,thick,node distance=1.3cm,scale=0.9,transform shape]
         \node[draw,rounded corners,minimum width=2.6cm,minimum height=0.8cm,align=center] (raw) {Raw series};
         \node[draw,rounded corners,minimum width=2.6cm,minimum height=0.8cm,right=of raw,align=center] (stationarity) {Test\\stationarity};
         \node[draw,rounded corners,minimum width=2.6cm,minimum height=0.8cm,right=of stationarity,align=center] (identify) {Identify\\order (ACF/PACF)};
         \node[draw,rounded corners,minimum width=2.6cm,minimum height=0.8cm,right=of identify,align=center] (fit) {Fit\\candidate models};
-        \node[draw,rounded corners,minimum width=2.6cm,minimum height=0.8cm,below=1.4cm of fit,align=center] (validate) {Walk-forward\\validate};
+        \node[draw,rounded corners,minimum width=2.6cm,minimum height=0.8cm,below=1.0cm of fit,align=center] (validate) {Walk-forward\\validate};
         \node[draw,rounded corners,minimum width=2.6cm,minimum height=0.8cm,left=of validate,align=center] (select) {Select model\\(AIC/BIC, RMSE)};
         \node[draw,rounded corners,minimum width=2.6cm,minimum height=0.8cm,left=of select,align=center] (monitor) {Deploy and\\monitor};
         \draw[->] (raw) -- (stationarity);
@@ -500,8 +573,18 @@ With this many tools introduced across the chapter, it is useful to close with a
         \draw[->] (select) -- (monitor);
         \draw[->] (monitor) to[out=135,in=225] (stationarity);
     \end{tikzpicture}
-    \caption{A practical time series modeling workflow: test stationarity, identify candidate model orders, fit several candidates, validate with a walk-forward scheme, select the best model, and monitor after deployment, periodically revisiting earlier steps as new data arrives.}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ffigbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
+    \caption{A practical time series modeling workflow.}
     \label{fig:ts_workflow}
+}
 \end{figure}
 
 Starting from a raw series, the first step is always to test stationarity (Section~\ref{sec:adf-test}), since every model in this chapter, from AR(1) to GARCH to VAR, assumes some form of stationarity either in levels or after transformation. If the series is non-stationary, difference it (or work with returns, as in Chapter 2) and re-test before proceeding. Next, the ACF and PACF guide the choice of candidate model orders, following the Box-Jenkins logic introduced in the ARIMA section, rather than guessing arbitrarily or defaulting to the most complex model available. Several candidate specifications are then fit and compared using information criteria (in-sample) and, more importantly, walk-forward validation (out-of-sample), scored with the RMSE or MAPE metrics introduced above and always benchmarked against a naive forecast. Only once a model has demonstrated genuine walk-forward skill is it deployed, and even then, monitoring continues: the feedback arrow in Figure~\ref{fig:ts_workflow} back to the stationarity test reflects the reality, emphasized throughout this chapter's challenges section, that financial time series are subject to regime changes and structural breaks, so a model that was well-specified last year may need to be re-identified, not just re-fit, as new data arrives.

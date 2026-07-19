@@ -5,6 +5,7 @@
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{booktabs}
+\usepackage{floatrow}
 \usepackage{draftwatermark}
 
 \SetWatermarkText{WSuo@Queensu.ca}
@@ -41,7 +42,8 @@ where PD is the probability of default\index{Probability of Default (PD)} over t
 Figure~\ref{fig:el_decomposition} lays out this same decomposition as a pipeline, since the rest of this chapter is organized around estimating each of these three inputs in turn, first PD (via logistic regression and, later, the Merton model), then LGD, then EAD.
 
 \begin{figure}[htbp]
-    \centering
+\centering
+\begin{lrbox}{\bookmeasuredbox}
     \begin{tikzpicture}[scale=0.8,transform shape,>=latex,thick,node distance=1.4cm]
         \node[draw,rounded corners,align=center,minimum width=2.1cm,minimum height=1.0cm] (pd) {PD\\$3\%$};
         \node[draw,rounded corners,align=center,minimum width=2.1cm,minimum height=1.0cm,right=of pd] (lgd) {LGD\\$60\%$};
@@ -51,8 +53,18 @@ Figure~\ref{fig:el_decomposition} lays out this same decomposition as a pipeline
         \draw[->] (lgd) -- node[above,font=\small] {$\times$} (ead);
         \draw[->] (ead) -- node[above,font=\small] {$=$} (el);
     \end{tikzpicture}
-    \caption{The expected-loss decomposition, applied to the Chapter 5 bond example. Each of PD, LGD, and EAD is estimated separately, using its own methods and data, before being combined into a single dollar figure.}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ffigbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
+    \caption{The expected-loss decomposition, applied to the Chapter 5 bond example.}
     \label{fig:el_decomposition}
+}
 \end{figure}
 This is not a coincidence relative to Chapter 5's earlier calculation: that chapter found the bond's expected payoff to be \$982 against a promised \$1,000, and $1{,}000 - 982 = 18$ exactly, confirming that discounting the expected payoff and separately computing an expected loss are two equivalent ways of describing the same underlying credit risk. The practical distinction between the two framings is one of purpose rather than substance: the pricing framing of Chapter 5 asks ``what should this bond be worth today,'' while the expected-loss framing here asks ``how much of this exposure should a lender expect to lose, on average, and how much capital or loan-loss reserve should be held against that possibility,'' which is exactly the accounting and regulatory question addressed later in this chapter.
 
@@ -120,8 +132,7 @@ Ranking applicants correctly from safest to riskiest is a distinct property from
 
 \begin{table}[htbp]
 \centering
-\caption{Predicted default probabilities for all six training applicants, sorted from highest to lowest risk}
-\label{tab:credit_auc}
+\begin{lrbox}{\bookmeasuredbox}
 \begin{tabular}{lrrl}
 \toprule
 Applicant & Debt/income (\%) & $\Pr(\text{Default})$ & Actual outcome \\
@@ -134,6 +145,18 @@ F & 18 & 0.0144 & No default \\
 D & 15 & 0.0015 & No default \\
 \bottomrule
 \end{tabular}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ttabbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
+\caption{Predicted default probabilities for all six training applicants, sorted from highest to lowest risk}
+\label{tab:credit_auc}
+}
 \end{table}
 
 Every one of the nine possible (defaulter, non-defaulter) pairs, three defaulters times three non-defaulters, is correctly ordered: each of C, A, and E's predicted probabilities exceeds each of B, F, and D's, so $\text{AUC}=9/9=1.0$ and $\text{Gini}=2(1.0)-1=1.0$, a perfect ranking. This is a genuine red flag rather than a cause for celebration, and for exactly the reason Chapter 6 raised repeatedly: this AUC is computed on the same six observations the model was fit to, with two features and six data points, so a perfect in-sample ranking is close to the least surprising outcome imaginable, not evidence the model would rank a new, out-of-sample applicant with anything like this accuracy. A real credit scoring model's AUC and Gini coefficient are only meaningful when computed on a genuinely held-out validation sample, following exactly the train-test discipline Chapter 6 developed at length, and an AUC this close to a perfect score on such a small training sample is itself a warning sign of overfitting to memorize, rather than a property to report proudly in a model validation document.
@@ -152,7 +175,8 @@ $$\Pr(\text{Default}) = N(-d_2),$$
 the same $N(-d_2)$ term that appeared when Chapter 5 priced a European put. Figure~\ref{fig:merton_payoff} draws this payoff structure directly: equity holders receive nothing if the firm's assets are worth less than its debt at maturity, and the excess above debt otherwise, exactly a call option's hockey-stick payoff with the debt's face value playing the role of the strike price.
 
 \begin{figure}[htbp]
-    \centering
+\centering
+\begin{lrbox}{\bookmeasuredbox}
     \begin{tikzpicture}[thick]
         \draw[->] (0,0) -- (10.5,0);
         \node[above left,font=\small] at (10.5,0.1) {firm asset value at maturity, $V_T$};
@@ -167,8 +191,18 @@ the same $N(-d_2)$ term that appeared when Chapter 5 priced a European put. Figu
         \node[align=center,font=\small] at (2.5,1.3) {Default:\\equity worth \$0,\\bondholders take the assets};
         \node[align=center,font=\small] at (8.3,3.9) {Solvent:\\equity $=V_T-D$};
     \end{tikzpicture}
-    \caption{The Merton model's equity payoff at maturity, $\max(V_T-D,0)$, for the worked example's $D=\$100$ million. This is exactly a call option's payoff diagram with the firm's asset value in place of the underlying price and the debt's face value in place of the strike; the dashed lines mark where the firm's estimated current asset value, $V_0=\$150$ million, would land if assets never moved before maturity.}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ffigbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
+    \caption{The Merton model's equity payoff at maturity, $\max(V_T-D,0)$, for the worked example's $D=\$100$ million.}
     \label{fig:merton_payoff}
+}
 \end{figure}
 
 Consider a firm with

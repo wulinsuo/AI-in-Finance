@@ -5,6 +5,7 @@
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{booktabs}
+\usepackage{floatrow}
 \usepackage{draftwatermark}
 
 \SetWatermarkText{WSuo@Queensu.ca}
@@ -38,7 +39,8 @@ These questions matter because finance is not only about price changes. It is al
 In practice, the statements are analyzed together rather than in isolation. The balance sheet shows the firm's position at a point in time. The income statement shows performance over a period. The cash flow statement shows the movement of cash. Together, they provide a more complete picture than any single report could provide. Figure~\ref{fig:three_statements} sketches how the three statements relate to one another.
 
 \begin{figure}[htbp]
-    \centering
+\centering
+\begin{lrbox}{\bookmeasuredbox}
     \begin{tikzpicture}[>=latex,thick,node distance=2.4cm]
         \node[draw,rounded corners,minimum width=3.0cm,minimum height=0.9cm,align=center] (bs1) {Balance Sheet\\(Start of Period)};
         \node[draw,rounded corners,minimum width=3.0cm,minimum height=0.9cm,right=of bs1,align=center] (is) {Income Statement\\(Over Period)};
@@ -50,8 +52,18 @@ In practice, the statements are analyzed together rather than in isolation. The 
         \draw[->] (cf) -- (bs2);
         \draw[->] (bs1) -- (bs2);
     \end{tikzpicture}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ffigbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
     \caption{The three statements are linked: the income statement and cash flow statement explain the change in the balance sheet from the start to the end of the period.}
     \label{fig:three_statements}
+}
 \end{figure}
 
 \section{A Running Example: Meridian Fabrication\index{Meridian Fabrication Inc.} Inc.}\index{Meridian Fabrication Inc.}
@@ -243,7 +255,8 @@ Suppose a firm doubles its revenue and its balance sheet over five years, yet it
 where ROIC is the return on invested capital and WACC is the weighted average cost of capital. A simple value-creation diagram is shown in Figure~\ref{fig:value_creation}.
 
 \begin{figure}[htbp]
-    \centering
+\centering
+\begin{lrbox}{\bookmeasuredbox}
     \begin{tikzpicture}[>=latex,thick,node distance=2.2cm]
         \node[draw,rounded corners,minimum width=2.2cm,minimum height=0.8cm] (capital) {Capital};
         \node[draw,rounded corners,minimum width=2.2cm,minimum height=0.8cm,right=of capital] (project) {Projects};
@@ -251,8 +264,18 @@ where ROIC is the return on invested capital and WACC is the weighted average co
         \draw[->] (capital) -- (project);
         \draw[->] (project) -- (value);
     \end{tikzpicture}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ffigbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
     \caption{A firm generates value when its projects earn a return above the cost of capital.}
     \label{fig:value_creation}
+}
 \end{figure}
 
 This idea links financial statements to valuation. A firm that generates high returns on capital and reinvests profitably can compound value over time. A firm that earns low returns and uses excessive leverage may appear large but create little wealth. Data scientists working in finance often use accounting and market data together to evaluate such patterns. A predictive model may forecast changes in revenue, but an analyst must still ask whether those changes translate into durable value creation.

@@ -5,6 +5,7 @@
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{booktabs}
+\usepackage{floatrow}
 \usepackage{draftwatermark}
 
 \SetWatermarkText{Wulin.Suo@Queensu.ca}
@@ -70,7 +71,8 @@ which, applied to the covariance matrix above, gives $w_A^{\text{MV}} = 34.05\%$
 Sweeping $w$ across its full range, not just the two points considered so far, traces out every possible risk-return combination achievable from AssetA and AssetB, illustrated schematically in Figure~\ref{fig:efficient_frontier}. Because $\rho_{AB} < 0$, the resulting curve bows sharply to the left of a straight line connecting the two individual assets, exactly the geometric signature of diversification: some combination of the two assets is less risky than either asset held alone, which is only possible because the assets do not move in lockstep. In this particular sample, Asset B happens to have \emph{both} lower risk and higher return than Asset A ($\sigma_B=1.09\%$ versus $\sigma_A=2.03\%$, and $\bar r_B=1.00\%$ versus $\bar r_A=0.76\%$), so Asset A is not itself mean-variance efficient; the figure's upper arm, running from the minimum-variance point to Asset B, is the efficient portion of the curve, while the lower arm, running from the minimum-variance point to Asset A, is feasible but dominated.
 
 \begin{figure}[htbp]
-    \centering
+\centering
+\begin{lrbox}{\bookmeasuredbox}
     \begin{tikzpicture}[scale=1.0]
         \draw[->] (0,0) -- (6.0,0) node[right] {Risk ($\sigma_p$)};
         \draw[->] (0,0) -- (0,4.2) node[above] {Expected Return};
@@ -81,8 +83,18 @@ Sweeping $w$ across its full range, not just the two points considered so far, t
         \fill[red] (2.645,0.3) circle (2pt) node[right] {Asset A};
         \fill[blue] (1.7,1.0) circle (2pt) node[below right] {Equal-Weight};
     \end{tikzpicture}
-    \caption{A schematic efficient frontier for two assets, where Asset B has both lower risk and higher return than Asset A. The minimum-variance portfolio sits at the leftmost (lowest-risk) point. The solid curve running from it up to Asset B is efficient (no other feasible portfolio offers higher return for the same risk); the dashed curve running from it down to Asset A is feasible but inefficient, since every point on it is dominated by a point on the solid curve at the same or lower risk.}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ffigbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
+    \caption{A schematic efficient frontier for the two-asset example (solid: efficient; dashed: feasible but dominated).}
     \label{fig:efficient_frontier}
+}
 \end{figure}
 
 Only the upper portion of this curve, starting at the minimum-variance portfolio and moving toward the higher-returning asset, is efficient in Markowitz's specific sense: every portfolio on this segment offers the highest possible expected return for its level of risk. The lower portion (the dashed segment in Figure~\ref{fig:efficient_frontier}) is feasible, an investor could hold it, but never optimal, since a portfolio directly above it on the efficient segment offers a strictly higher return at the same risk. This is the precise, quantitative content behind the informal advice to diversify: it is not merely that diversification feels prudent, but that every portfolio not on the efficient frontier is demonstrably dominated by one that is.
@@ -160,18 +172,29 @@ and $R^2$ is exactly the fraction of total variance that is systematic. For the 
 This relationship between beta and expected return has a natural graphical representation, the Security Market Line, plotting CAPM's expected return, $r_f + \beta(r_m-r_f)$, as a straight line against beta itself, shown in Figure~\ref{fig:sml}. Unlike the Capital Market Line of Section~\ref{sec:sharpe-cml} below, which plots return against total risk ($\sigma_p$) and is populated only by efficient portfolios, the Security Market Line plots return against systematic risk (beta) alone and, under CAPM, every correctly priced individual asset or portfolio, efficient or not, should lie exactly on it.
 
 \begin{figure}[htbp]
-    \centering
+\centering
+\begin{lrbox}{\bookmeasuredbox}
     \begin{tikzpicture}[scale=1.0]
         \draw[->] (0,0.6) -- (5.5,0.6) node[right] {Beta ($\beta$)};
         \draw[->] (0,0.6) -- (0,4.2) node[above] {Expected Return};
         \draw[red,thick] (0,1.0) -- (5.0,4.0);
         \fill[black] (0,1.0) circle (2pt) node[left] {$r_f$};
         \fill[blue] (2.4,2.44) circle (2pt) node[above left] {Market ($\beta=1$)};
-        \fill[green!60!black] (4.0,3.4) circle (2pt) node[above] {Undervalued};
+        \fill[green!60!black] (3.5,3.4) circle (2pt) node[above] {Undervalued};
         \fill[orange] (3.0,2.2) circle (2pt) node[below right] {Overvalued};
     \end{tikzpicture}
-    \caption{The Security Market Line plots CAPM's expected return against beta. An asset plotting above the line (green) offers more return than its systematic risk warrants and is undervalued relative to CAPM; one plotting below the line (orange) is overvalued. The market portfolio itself, by definition, has $\beta=1$ and sits exactly on the line.}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ffigbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
+    \caption{The Security Market Line plots CAPM's expected return against beta, with an undervalued (green) and an overvalued (orange) asset marked relative to it.}
     \label{fig:sml}
+}
 \end{figure}
 
 An asset whose actual expected return plots above the Security Market Line is, under CAPM, undervalued: it offers more expected return than its systematic risk alone would justify, and the nonzero alpha from Section~\ref{sec:capm-beta}'s regression is exactly the vertical distance between an asset's actual position and the line. An asset plotting below the line is correspondingly overvalued. This is precisely the graphical version of the active-management logic introduced later in this chapter's discussion of the information ratio: an active manager's entire task can be described as searching for assets that plot persistently above the Security Market Line, and a manager who succeeds systematically is finding genuine mispricing rather than simply taking on more systematic risk than their benchmark, which the Security Market Line makes visually explicit in a way that a raw return comparison does not.
@@ -190,7 +213,8 @@ the excess return earned per unit of total risk taken. Comparing the equal-weigh
 The minimum-variance portfolio not only has lower risk, as expected by construction, but also a substantially higher Sharpe ratio, since it happens to also have a slightly higher mean return in this particular sample; this is not a general guarantee (the minimum-variance portfolio does not target return at all) but is a useful reminder that lower risk and competitive returns are not mutually exclusive. Plotting every portfolio's Sharpe ratio against a combination of the risk-free asset and the tangency portfolio (the portfolio of risky assets with the single highest Sharpe ratio) produces the Capital Market Line, illustrated in Figure~\ref{fig:cml}, the set of risk-return combinations achievable by mixing the risk-free asset with that one specific risky portfolio.
 
 \begin{figure}[htbp]
-    \centering
+\centering
+\begin{lrbox}{\bookmeasuredbox}
     \begin{tikzpicture}[scale=1.0]
         \draw[->] (0,0) -- (6.0,0) node[right] {Risk ($\sigma_p$)};
         \draw[->] (0,0) -- (0,4.2) node[above] {Expected Return};
@@ -200,8 +224,18 @@ The minimum-variance portfolio not only has lower risk, as expected by construct
         \draw[red,thick] (0,1.3) -- (2.9,4.2);
         \fill[red] (1.7,3.0) circle (2pt) node[above right] {Tangency Portfolio};
     \end{tikzpicture}
-    \caption{The Capital Market Line (red) is tangent to the efficient frontier of risky assets (blue) at the tangency portfolio, and represents combinations of the risk-free asset and the tangency portfolio. Every point on the red line has a higher Sharpe ratio than every point on the blue curve below it, which is why the two-fund separation theorem recommends holding only these two building blocks.}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ffigbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
+    \caption{The Capital Market Line (red) is tangent to the efficient frontier of risky assets (blue) at the tangency portfolio.}
     \label{fig:cml}
+}
 \end{figure}
 
 A central result of modern portfolio theory (the two-fund separation theorem\index{Two-Fund Separation Theorem}) is that every investor, regardless of their individual risk tolerance, should hold some combination of only the risk-free asset and this single tangency portfolio, differing only in how much of each they hold, not in the composition of the risky portion itself: a more risk-averse investor simply holds more of the risk-free asset and less of the tangency portfolio, while a less risk-averse investor may even borrow at the risk-free rate to hold more than $100\%$ of their wealth in the tangency portfolio, moving further out along the Capital Market Line in either direction without ever needing to change which risky assets they hold or in what proportion.

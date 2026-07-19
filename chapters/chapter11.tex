@@ -5,6 +5,7 @@
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{booktabs}
+\usepackage{floatrow}
 \usepackage{draftwatermark}
 
 \SetWatermarkText{WSuo@Queensu.ca}
@@ -73,7 +74,8 @@ Beyond the order type itself, an algorithmic execution system must decide how to
 A large order also raises a genuine tension that the order types above do not fully resolve: posting the full order as a visible limit order reveals the trader's intentions to every other market participant, who can then adjust their own behavior in response, for example by front-running the anticipated remaining demand. Iceberg orders\index{Iceberg Orders} address this by displaying only a small portion of the total order size at any given time, automatically revealing more once the visible portion is filled, so that the order book shows only a fraction of the true remaining size. Dark pools\index{Dark Pools} take this further still, entirely private trading venues that match buy and sell orders without displaying any pre-trade price or size information to the broader market, only reporting completed trades after the fact. Both mechanisms trade away pre-trade transparency, one of the market-quality benefits Chapter 3 attributed to well-functioning exchanges, in exchange for reduced information leakage and, in principle, lower market impact\index{market impact} for large orders; this is a genuine tradeoff rather than a free improvement, since a market with a large fraction of its volume trading in dark, non-displayed venues can make the lit, publicly visible order book a less complete and less reliable picture of overall supply and demand, a concern regulators have studied closely as dark-pool trading volume has grown.
 
 \begin{figure}[htbp]
-    \centering
+\centering
+\begin{lrbox}{\bookmeasuredbox}
     \begin{tikzpicture}[>=latex,thick,node distance=2.2cm,scale=0.9,transform shape]
         \node[draw,rounded corners,minimum width=2.6cm,minimum height=0.9cm,align=center] (signal) {Signal\\Generation};
         \node[draw,rounded corners,minimum width=2.6cm,minimum height=0.9cm,right=of signal,align=center] (order) {Order\\Type Choice};
@@ -84,8 +86,18 @@ A large order also raises a genuine tension that the order types above do not fu
         \draw[->] (route) -- (exec);
         \draw[->] (exec) to[out=135,in=45] (signal);
     \end{tikzpicture}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ffigbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
     \caption{The path from a trading signal to a completed, evaluated trade: each stage introduces its own decisions and costs, and transaction cost analysis at the end feeds back into how future signals and execution choices are made.}
     \label{fig:execution_pipeline}
+}
 \end{figure}
 
 \section{Market Impact and the Cost of Trading Fast}\index{Market Impact and the Cost of Trading Fast}
@@ -184,7 +196,8 @@ mildly front-loaded relative to the perfectly uniform $50$-share-per-interval TW
 nearly double the first-interval quantity of the low-risk-aversion trajectory: a more risk-averse trader accepts a higher expected impact cost from trading more aggressively up front specifically to shrink the variance contributed by however much of the order remains exposed to further price moves. Figure~\ref{fig:almgren_chriss_trajectories} plots both optimal trajectories against the uniform TWAP baseline, making the front-loading pattern, and how much more pronounced it becomes as $\lambda$ rises, directly visible.
 
 \begin{figure}[htbp]
-    \centering
+\centering
+\begin{lrbox}{\bookmeasuredbox}
     \begin{tikzpicture}[thick]
         \draw[->] (0,0) -- (7.6,0) node[right,font=\small] {interval};
         \draw[->] (0,0) -- (0,5.8) node[above,font=\small] {shares remaining};
@@ -203,8 +216,18 @@ nearly double the first-interval quantity of the low-risk-aversion trajectory: a
         \draw[dashed] (8.3,4.8) -- (8.9,4.8); \node[right,font=\scriptsize] at (8.9,4.8) {$\lambda=0.5$ (mild)};
         \draw[solid] (8.3,4.2) -- (8.9,4.2); \node[right,font=\scriptsize] at (8.9,4.2) {$\lambda=5$ (risk-averse)};
     \end{tikzpicture}
-    \caption{Almgren-Chriss optimal unexecuted-share trajectories at two risk-aversion levels, against the uniform TWAP baseline. Higher risk aversion ($\lambda=5$) front-loads execution far more aggressively than the mildly risk-averse $\lambda=0.5$ trajectory, trading nearly double the shares in the first interval to shrink the timing-risk exposure of whatever remains unexecuted.}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ffigbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
+    \caption{Almgren-Chriss optimal unexecuted-share trajectories at two risk-aversion levels, against the uniform TWAP baseline.}
     \label{fig:almgren_chriss_trajectories}
+}
 \end{figure}
 
 Scoring all three strategies, this front-loaded optimal trajectory, the uniform TWAP schedule, and the fully aggressive single-shot execution of Section~\ref{sec:market-impact}, on the identical risk-adjusted objective at $\lambda=0.5$ makes the tradeoff numerically concrete:
@@ -276,9 +299,11 @@ The economic parallel to Section~\ref{sec:inventory} runs deeper than a surface 
 
 \begin{figure}[htbp]
 \centering
+\begin{lrbox}{\bookmeasuredbox}
 \begin{tikzpicture}[>=stealth,thick,scale=0.85,transform shape]
 \draw[->] (0,0) -- (9,0) node[below] {\small ETH reserve $x$};
-\draw[->] (0,0) -- (0,7) node[above,rotate=90,anchor=south] {\small USDC reserve $y$ (thousands)};
+\draw[->] (0,0) -- (0,7);
+\node[rotate=90,anchor=south] at (-0.7,3.5) {\small USDC reserve $y$ (thousands)};
 \draw[domain=3.1:8.7,smooth,variable=\t,samples=60,thick] plot ({\t},{20/\t});
 \node[font=\scriptsize] at (3.7,6.5) {$x\cdot y = k$};
 \draw[dashed] (5,0) -- (5,4);
@@ -292,8 +317,13 @@ The economic parallel to Section~\ref{sec:inventory} runs deeper than a surface 
 \draw[thin] (5.5,3.636) -- (8.7,1.0);
 \node[left,font=\scriptsize,align=left] at (8.7,1.0) {after 10 ETH sold in:\\$(110,\,181.8)$};
 \end{tikzpicture}
+\end{lrbox}
+\ffigbox[0.45\linewidth]{
+\usebox{\bookmeasuredbox}
+}{
 \caption{The constant-product curve $x\cdot y=k$. Selling ETH into the pool moves the pool's reserves down and to the right along the curve; the curvature is what generates price impact directly from the trade size, with no order book involved.}
 \label{fig:amm_curve}
+}
 \end{figure}
 
 Figure~\ref{fig:amm_curve} plots this constant-product curve and the same $10$-ETH swap worked through above: the trade moves the pool from $(100, 200{,}000)$ to $(110, 181{,}818)$ along the hyperbola, and the curve's flattening slope as $x$ grows is exactly why proportionally larger trades in ETH terms extract proportionally less USDC per unit sold, the AMM's mechanical analog of the diminishing marginal liquidity a limit order book exhibits as a large order walks deeper into resting quotes.
@@ -306,8 +336,7 @@ Chapter 7 introduced pairs trading conceptually using six days of prices for two
 
 \begin{table}[htbp]
 \centering
-\caption{Out-of-sample spread and $z$-score for the extended pairs-trading example}
-\label{tab:pairs_backtest}
+\begin{lrbox}{\bookmeasuredbox}
 \begin{tabular}{lrrrr}
 \toprule
 Day & 7 & 8 & 9 & 10 \\
@@ -315,6 +344,18 @@ Spread ($A-B$) & 4.00 & 3.50 & 2.80 & 2.50 \\
 $z$-score & 2.74 & 1.83 & 0.55 & 0.00 \\
 \bottomrule
 \end{tabular}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ttabbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
+\caption{Out-of-sample spread and $z$-score for the extended pairs-trading example}
+\label{tab:pairs_backtest}
+}
 \end{table}
 
 Day 7's $z$-score of $2.74$ exceeds the entry threshold of $2$, triggering a trade: short 1 share of Stock A and long 1 share of Stock B (the $\beta\approx 1$ simple-spread convention Chapter 7 used), betting that the unusually wide spread will revert toward its historical mean. By day 10, the spread has fully reverted to $2.50$, almost exactly the in-sample mean, triggering an exit. The trade's profit is simply the decline in the spread over the holding period,
@@ -332,8 +373,7 @@ A concrete example makes this precise. Consider three stocks, W, X, and Y, in th
 
 \begin{table}[htbp]
 \centering
-\caption{Estimated betas and out-of-sample residual $z$-scores for three sector peers}
-\label{tab:statarb}
+\begin{lrbox}{\bookmeasuredbox}
 \begin{tabular}{lrrr}
 \toprule
 Stock & Estimated $\beta$ & Month-6 residual & $z$-score \\
@@ -343,6 +383,18 @@ X & 1.21 & $-0.15\%$ & $-1.8$ \\
 Y & 0.81 & $+0.09\%$ & $+1.1$ \\
 \bottomrule
 \end{tabular}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ttabbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
+\caption{Estimated betas and out-of-sample residual $z$-scores for three sector peers}
+\label{tab:statarb}
+}
 \end{table}
 
 Stocks X and Y behave as their historical betas would predict, with residuals well within the range of ordinary in-sample noise. Stock W, by contrast, returned far more than its beta of $0.98$ and the month's $3\%$ market move would explain, a residual $z$-score of over $13$, an extraordinarily large deviation that strongly suggests either genuine, stock-specific news (in which case the move may be permanent and should not be traded against) or a temporary, unexplained dislocation (in which case a statistical arbitrage desk would short Stock W against a long position in a market-neutral basket of its sector peers, betting the residual reverts). This is precisely the multi-asset generalization of the two-stock pairs trade in Section~\ref{sec:pairs-backtest}: rather than trading one stock's price against one other specific stock's price, the position is effectively long the sector and short this one stock's excess idiosyncratic move relative to it, diversifiable across many such residual signals computed the same way across an entire universe of stocks simultaneously.
@@ -390,8 +442,7 @@ Table~\ref{tab:trading_features} computes three of these features, reusing the i
 
 \begin{table}[htbp]
 \centering
-\caption{Three engineered trading-signal features, computed from Section~\ref{sec:ma-crossover}'s twelve-day price series}
-\label{tab:trading_features}
+\begin{lrbox}{\bookmeasuredbox}
 \begin{tabular}{lrrrr}
 \toprule
 Day & Price & Mom3 (\%) & Vol3 (\%) & RSI3 \\
@@ -407,6 +458,18 @@ Day & Price & Mom3 (\%) & Vol3 (\%) & RSI3 \\
 12 & 100 & $-12.28$ & 0.313 & 0.00 \\
 \bottomrule
 \end{tabular}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ttabbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
+\caption{Three engineered trading-signal features, computed from Section~\ref{sec:ma-crossover}'s twelve-day price series}
+\label{tab:trading_features}
+}
 \end{table}
 
 The three columns tell a genuinely complementary story about the same twelve days Section~\ref{sec:ma-crossover} already walked through. Momentum simply tracks the trend, rising through day 7 and falling steadily thereafter, exactly mirroring the price series it is computed from. Realized volatility does something a momentum feature cannot: it stays low and calm throughout the smooth days-4-through-7 uptrend ($0.45\%$ to $0.78\%$) and then spikes sharply, to $2.3\%$ and $2.8\%$, exactly at the days 8 and 9 trend reversal Section~\ref{sec:ma-crossover} identified as the crossover strategy's whipsaw, a concrete instance of the volatility clustering Chapter 7's GARCH material developed at length: volatility rises around genuine regime changes, not uniformly through time, which is precisely why realized volatility is itself a useful predictive feature and not merely a risk-management input. RSI illustrates a real limitation alongside its usefulness: because every change in the days-4-through-7 window is positive, RSI saturates at exactly $100$ for four consecutive days, the indicator's conventional ``overbought'' signal, but it cannot distinguish a mild uptrend from an explosive one once every recent change has the same sign, and it falls just as quickly to a saturated $0$ (``oversold'') once the reversal takes hold and every recent change turns negative. A model trained only on RSI would have no way to tell days 4 through 7 apart from each other, despite their visibly different momentum, which is exactly why practitioners typically feed a model both a bounded indicator like RSI and the underlying continuous features, momentum and realized volatility among them, side by side, letting the model itself learn how much weight each deserves rather than discarding the information a saturated indicator throws away.
@@ -415,8 +478,7 @@ Two further technical indicators are common enough in practice to be worth worki
 
 \begin{table}[htbp]
 \centering
-\caption{Absolute Price Oscillator (3-day and 6-day EMA), computed from the same twelve-day price series}
-\label{tab:apo}
+\begin{lrbox}{\bookmeasuredbox}
 \begin{tabular}{lrrrr}
 \toprule
 Day & Price & EMA3 & EMA6 & APO \\
@@ -435,14 +497,25 @@ Day & Price & EMA3 & EMA6 & APO \\
 12 & 100 & 104.031 & 106.942 & $-2.911$ \\
 \bottomrule
 \end{tabular}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ttabbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
+\caption{Absolute Price Oscillator (3-day and 6-day EMA), computed from the same twelve-day price series}
+\label{tab:apo}
+}
 \end{table}
 
 The APO column tells the same trend story as momentum but with an EMA's smoother, weighted-average lens: it is positive and climbing throughout the days-1-through-7 uptrend, peaking at $4.136$ exactly at day 7's local high, then falls steadily and turns negative by day 11 once the fast EMA has crossed back below the slow one, a lagging but directly interpretable confirmation of the same trend reversal Section~\ref{sec:ma-crossover}'s crossover strategy was built to detect. \textbf{Bollinger Bands} take a different approach to the same underlying price series, wrapping a simple moving average in bands set a fixed number of standard deviations above and below it: $\text{Middle}_t = \text{SMA}_t$, $\text{Upper}_t = \text{SMA}_t + k\cdot\sigma_t$, and $\text{Lower}_t = \text{SMA}_t - k\cdot\sigma_t$, where $\sigma_t$ is the rolling standard deviation of price (not return) over the same window as the moving average and $k$ is conventionally set to $2$. Industry practice typically uses a 20-day window; Table~\ref{tab:bollinger} instead uses a 5-day window for the same reason Table~\ref{tab:apo} shortened its EMA windows.
 
 \begin{table}[htbp]
 \centering
-\caption{Bollinger Bands (5-day SMA, $k=2$), computed from the same twelve-day price series}
-\label{tab:bollinger}
+\begin{lrbox}{\bookmeasuredbox}
 \begin{tabular}{lrrrr}
 \toprule
 Day & Price & Middle (SMA5) & Upper & Lower \\
@@ -461,6 +534,18 @@ Day & Price & Middle (SMA5) & Upper & Lower \\
 12 & 100 & 109.000 & 122.023 & 95.977 \\
 \bottomrule
 \end{tabular}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ttabbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
+\caption{Bollinger Bands (5-day SMA, $k=2$), computed from the same twelve-day price series}
+\label{tab:bollinger}
+}
 \end{table}
 
 The band width (upper minus lower) is itself a volatility indicator, and it tells exactly the same story as Table~\ref{tab:trading_features}'s Vol3 column told numerically: the bands are tight while days 1 through 5 climb smoothly, then widen sharply from day 6 onward and stay wide through day 12, tracking the same days-8-and-9 volatility spike Vol3 flagged and the same GARCH-style volatility clustering Chapter 7 introduced, only expressed geometrically around the price chart rather than as a single rolling standard deviation. Because both indicators are, at bottom, further transformations of the same rolling mean and rolling dispersion of price already summarized by momentum and realized volatility, neither APO nor Bollinger Bands supplies information a model could not in principle extract from those two features directly; their real value is the packaging, a chart-ready, bounded-relative-to-price representation that a human trader can read at a glance, which is exactly why both remain popular in practitioner tools even though a machine-learning pipeline is free to work from the underlying momentum and volatility features instead.

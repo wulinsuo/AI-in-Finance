@@ -5,6 +5,7 @@
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{booktabs}
+\usepackage{floatrow}
 \usepackage{draftwatermark}
 
 \SetWatermarkText{Wulin.Suo@Queensu.ca}
@@ -66,7 +67,8 @@ The 30,000 accounts are split 80/20 into a training set of 24,000 and a held-out
 One further discipline is worth naming explicitly because a real dataset makes it easy to violate by accident: every one of this section's engineered features, \texttt{max\_delinquency} included, is computed from information available at the time each account's repayment history was recorded, not from anything that depends on knowing whether the account actually defaulted. This sounds obvious, but Chapter 15's point-in-time discipline for alternative data applies here in a more subtle form: a feature engineered carelessly from a dataset that also contains the outcome column, for instance a rolling average that accidentally incorporates a future month's billing data, can leak information about the label into the features and produce a model that looks excellent on a held-out test set drawn from the same leaking dataset, yet fails immediately once deployed on genuinely new applicants for whom that same leakage is not available. This dataset's structure happens to make such leakage easy to avoid, since every raw field precedes the single target month by construction, but the discipline of checking for it explicitly, not merely assuming a clean-looking dataset has none, is exactly the habit a reader should carry into Section~\ref{sec:capstone-projects}'s further projects, several of which (the Lending Club dataset in particular) are considerably easier to leak by accident than this one.
 
 \begin{figure}[htbp]
-    \centering
+\centering
+\begin{lrbox}{\bookmeasuredbox}
     \begin{tikzpicture}[>=latex,thick,node distance=0.6cm]
         \node[draw,rounded corners,minimum width=1.7cm,minimum height=0.9cm,align=center,font=\scriptsize] (raw) {Raw UCI/\\Kaggle data};
         \node[draw,rounded corners,minimum width=1.7cm,minimum height=0.9cm,right=of raw,align=center,font=\scriptsize] (clean) {Clean\\undocumented\\codes};
@@ -80,8 +82,18 @@ One further discipline is worth naming explicitly because a real dataset makes i
         \draw[->] (split) -- (bakeoff);
         \draw[->] (bakeoff) -- (audit);
     \end{tikzpicture}
-    \caption{The end-to-end pipeline this chapter works through by hand. Every stage after the first two is exactly the discipline earlier chapters developed on fictional data, applied here to a real, imperfect dataset for the first time.}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ffigbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
+    \caption{The end-to-end pipeline this chapter works through by hand.}
     \label{fig:capstone_pipeline}
+}
 \end{figure}
 
 \section{A Model Bake-Off: Logistic Regression, Random Forests, and Gradient Boosting}\index{Model Bake-Off: Logistic Regression, Random Forests, and Gradient Boosting}
@@ -91,8 +103,7 @@ Four models are fit on the training set and evaluated, once, on the untouched te
 
 \begin{table}[htbp]
 \centering
-\caption{Held-out test set performance for four models on the credit-default dataset}
-\label{tab:capstone_bakeoff}
+\begin{lrbox}{\bookmeasuredbox}
 \begin{tabular}{lrrrrrrr}
 \toprule
 Model & Accuracy & Precision & Recall & $F_1$ & ROC-AUC\index{ROC curve} & PR-AUC & Brier \\
@@ -103,6 +114,18 @@ Random Forest & 0.817 & 0.662 & 0.350 & 0.458 & 0.775 & 0.555 & 0.136 \\
 XGBoost & 0.818 & 0.665 & 0.357 & 0.465 & 0.780 & 0.558 & 0.135 \\
 \bottomrule
 \end{tabular}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ttabbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
+\caption{Held-out test set performance for four models on the credit-default dataset}
+\label{tab:capstone_bakeoff}
+}
 \end{table}
 
 The plain logistic regression's accuracy (80.8\%) looks respectable in isolation, exactly the trap Chapter 13 warned against for a rare-event problem: with a 22.1\% default rate, a model that is far too conservative about flagging defaults can still post high accuracy simply by defaulting, so to speak, to predicting the majority class, and this model's recall of only 23.5\% shows it is missing more than three-quarters of the accounts that actually default at the standard 0.5 threshold. Class weighting flips the trade-off almost exactly as Chapter 13 described in the abstract: recall rises to 63.1\% while precision falls from 69.6\% to 41.3\%, a substantially better $F_1$ (0.499 versus 0.352) but, notably, a distinctly worse Brier score\index{Brier score} (0.205 versus 0.146), the first concrete evidence in this book that class weighting is not a free improvement: reweighting the training loss to counter class imbalance also distorts the model's output away from a well-calibrated probability estimate, a real cost Chapter 13 did not have occasion to quantify with an imbalance-sensitive metric like Brier score, since its own worked example used a perfectly balanced confusion-matrix illustration rather than a held-out probability calibration check.
@@ -147,7 +170,7 @@ The improvement is concentrated exactly where Table~\ref{tab:capstone_calibratio
 \text{Original (uncalibrated):} &\quad \text{predicted} = 4.0\%, \ \text{actual} = 12.5\%, \ \text{ratio} > 3,
 \end{align*} This is a genuinely useful, general lesson beyond this one dataset: a model with strong discriminative power but poor calibration, exactly the plain logistic regression's situation here, does not need to be replaced to become trustworthy as a probability estimate, only recalibrated, a considerably cheaper fix in practice than retraining an entirely different model family, and one that leaves every one of the model's original coefficients, and therefore its adverse-action interpretability, completely intact. It is worth being equally clear about what recalibration does not fix: XGBoost's own Brier score ($0.135$) remains lower than the recalibrated logistic regression's ($0.142$) even after this correction, since XGBoost's advantage was never purely a calibration artifact to begin with, its higher ROC-AUC in Table~\ref{tab:capstone_bakeoff} reflects genuinely superior discriminative power that a monotonic remapping of the logistic regression's probabilities cannot manufacture out of a linear model's more limited functional form.
 
-Calibration matters beyond this chapter's own threshold and fairness exercises, too. A bank reporting expected credit losses under accounting standards such as IFRS 9\index{IFRS 9} or the analogous U.S. CECL\index{Current Expected Credit Losses (CECL)} framework multiplies a probability of default directly into a provisioning calculation, exposure at default times probability of default times loss given default, so a systematically miscalibrated probability, not merely a poorly ranked one, translates directly into an over- or understated loss provision on the bank's own financial statements, exactly the kind of number Chapter 4 taught how to read and Chapter 9 taught how to model, now shown depending on a property (calibration) that a model's accuracy or even its ROC-AUC does not, by itself, guarantee.
+Calibration matters beyond this chapter's own threshold and fairness exercises, too. A bank reporting expected credit losses under accounting standards such as IFRS 9\index{IFRS 9} or the analogous U.S. CECL\index{Current Expected Credit Losses (CECL)} framework multiplies a probability of default directly into a provisioning calculation, Chapter 9's own $\text{EL} = \text{PD} \times \text{LGD} \times \text{EAD}$ decomposition, so a systematically miscalibrated probability, not merely a poorly ranked one, translates directly into an over- or understated loss provision on the bank's own financial statements, exactly the kind of number Chapter 4 taught how to read and Chapter 9 taught how to model, now shown depending on a property (calibration) that a model's accuracy or even its ROC-AUC does not, by itself, guarantee. Section~\ref{sec:capstone-explain} returns to this formula with real provisioning numbers, once this chapter's own low-risk and high-risk applicants have been introduced.
 
 \section{Explaining a Real, Nonlinear Model: SHAP and Permutation Importance}\index{Explaining a Real, Nonlinear Model: SHAP and Permutation Importance}
 \label{sec:capstone-explain}
@@ -190,6 +213,18 @@ A contrasting, genuinely high-risk applicant from the same test sample makes the
 \end{align*}
 the most-recent-repayment contribution by far the single largest seen in either applicant's decomposition. Placed side by side, the two applicants' explanations read almost as mirror images, no delinquency history and full repayment pushing one applicant's risk sharply down, recent and severe delinquency alongside near-zero repayment pushing the other's sharply up, exactly the kind of concrete, individualized contrast an adverse-action notice or an internal credit-committee review would need, and exactly what a single aggregate feature-importance ranking like Table~\ref{tab:capstone_importance} cannot provide on its own.
 
+\subsection*{A Worked Example: From Predicted Probability to a Provisioning Number}
+
+Section~\ref{sec:capstone-calibration} promised to return to Chapter 9's $\text{EL} = \text{PD} \times \text{LGD} \times \text{EAD}$ decomposition with real numbers; the two applicants just explained supply exactly what is needed. Each applicant's credit limit stands in for exposure at default, a standard simplifying assumption for a revolving credit-card line assumed fully drawn at the moment of default, and, absent any collateral information for an unsecured card balance, this example reuses Chapter 9's own illustrative $\text{LGD}=60\%$. For the low-risk applicant, $\text{PD}=11.9736\%$ (the $11.97\%$ reported earlier, carried to two more decimals to reproduce the dollar figure below exactly by hand) and $\text{EAD}=\$50{,}000$ (this applicant's \texttt{LIMIT\_BAL}), giving
+\begin{equation*}
+\text{EL}_{\text{low-risk}} = 0.119736 \times 0.60 \times \$50{,}000 = \$3{,}592.08,
+\end{equation*}
+while the high-risk applicant, with $\text{PD}=91.1565\%$ (similarly carried two more decimals) and a smaller $\text{EAD}=\$20{,}000$ (a lower credit limit, itself consistent with this applicant's weaker profile), gives
+\begin{equation*}
+\text{EL}_{\text{high-risk}} = 0.911565 \times 0.60 \times \$20{,}000 = \$10{,}938.78.
+\end{equation*}
+The high-risk applicant's expected loss is roughly $3.05\times$ the low-risk applicant's, a smaller multiple than the two applicants' $7.6\times$ gap in predicted default probability alone ($91.16\%/11.97\%$), because the high-risk applicant's smaller credit limit partially offsets an otherwise much larger provisioning number, exactly the kind of interaction between the three separate inputs to expected loss that looking at PD in isolation would miss. A bank provisioning against its entire card portfolio would sum a version of this calculation across every account, so a systematic miscalibration of the kind Section~\ref{sec:capstone-calibration} found and fixed in the plain logistic regression, understating risk in the model's lowest-probability decile, would understate the provisioning total specifically for the bank's safest-looking accounts, understating reserves in exactly the segment a supervisor examining the bank's provisioning adequacy would be least likely to scrutinize closely.
+
 \texttt{TreeExplainer}'s speed is itself worth noting: it computes exact Shapley values for a tree ensemble in time roughly proportional to the number of trees times the square of tree depth, rather than the exponential cost the general, model-agnostic Shapley formula Chapter 16 mentioned in passing would require, which is precisely why it is practical to run it here against a genuine, several-hundred-tree ensemble rather than only against the small, linear, two-feature toy models Chapter 16's hand computations were limited to. This matters operationally, not just theoretically: a bank issuing thousands of adverse-action notices a month needs an explanation method fast enough to run at that volume, and a sampling-based method like Chapter 16's LIME, however useful for a single, illustrative explanation, does not scale to that volume nearly as cleanly as an algorithm purpose-built for the specific model family being explained.
 
 \section{Choosing an Operating Threshold: A Real Cost-Sensitive Analysis}\index{Choosing an Operating Threshold}
@@ -226,8 +261,7 @@ Chapter 16's fairness audit used a synthetic eight-applicant dataset built to il
 
 \begin{table}[htbp]
 \centering
-\caption{A fairness audit by sex, XGBoost model at the cost-minimizing threshold ($t=0.09$)}
-\label{tab:capstone_fairness}
+\begin{lrbox}{\bookmeasuredbox}
 \begin{tabular}{lrrrr}
 \toprule
 Group & $n$ & Approval rate & False-negative rate & False-positive rate \\
@@ -236,6 +270,18 @@ Male & 2{,}402 & 24.1\% & 6.4\% & 70.5\% \\
 Female & 3{,}598 & 29.5\% & 9.4\% & 65.1\% \\
 \bottomrule
 \end{tabular}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ttabbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
+\caption{A fairness audit by sex, XGBoost model at the cost-minimizing threshold ($t=0.09$)}
+\label{tab:capstone_fairness}
+}
 \end{table}
 
 The adverse impact ratio\index{adverse impact ratio}, $\min(24.1\%, 29.5\%)/\max(24.1\%, 29.5\%) = 0.818$, narrowly clears the 80\% four-fifths-rule threshold Chapter 16's fairness section formalized, close enough that a modest shift in next quarter's applicant pool, exactly the kind of drift Chapter 16's population stability index\index{population stability index (PSI)} is designed to catch early, could plausibly move this real model to the wrong side of that line without any change to the model itself. The error-rate comparison shows the same tension Chapter 16's synthetic example illustrated, now with genuine data: the group with the higher approval rate (female accounts) also has the higher false-negative rate, missing 9.4\% of accounts that actually go on to default, versus 6.4\% for male accounts, so the group nominally favored by the headline approval-rate statistic is simultaneously the group whose real default risk this specific threshold captures somewhat less completely. Neither the approval-rate comparison nor the error-rate comparison is ``the'' fairness result; both are properties of the same model and the same threshold, and, exactly as Chapter 16's fairness-impossibility result predicts, no adjustment to this one threshold alone can bring both gaps to zero simultaneously unless the two groups' underlying default rates happen to coincide.

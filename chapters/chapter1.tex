@@ -5,6 +5,7 @@
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{booktabs}
+\usepackage{floatrow}
 \usepackage{draftwatermark}
 
 \SetWatermarkText{WSuo@Queensu.ca}
@@ -30,7 +31,8 @@ The central challenge in finance is not only to process data but also to make de
 A simple way to visualize this process is shown in Figure~\ref{fig:finance_ai_pipeline}: raw data feeds a model, the model's output is checked before being trusted, and only then does it inform an actual decision, a step this book returns to directly when discussing why models must be interpreted rather than worshipped.
 
 \begin{figure}[htbp]
-    \centering
+\centering
+\begin{lrbox}{\bookmeasuredbox}
     \begin{tikzpicture}[>=latex,thick,node distance=2.0cm]
         \node[draw,rounded corners,minimum width=2.2cm,minimum height=0.8cm] (data) {Data};
         \node[draw,rounded corners,minimum width=2.2cm,minimum height=0.8cm,right=of data] (model) {Model};
@@ -40,8 +42,18 @@ A simple way to visualize this process is shown in Figure~\ref{fig:finance_ai_pi
         \draw[->] (model) -- (eval);
         \draw[->] (eval) -- (decision);
     \end{tikzpicture}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ffigbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
     \caption{A simple pipeline from financial data to modeling, evaluation, and finally decisions.}
     \label{fig:finance_ai_pipeline}
+}
 \end{figure}
 
 There is also a strong economic reason for the growing role of AI in finance. Many financial decisions are made under limited information, time pressure, and changing conditions. Traditional rules may be too rigid to capture subtle patterns in the data. Machine learning methods can uncover nonlinear relationships and adapt to new information, provided they are used with appropriate domain knowledge and careful validation.
@@ -221,7 +233,8 @@ A simple illustration is shown in Figure~\ref{fig:risk_return_tradeoff}. Higher 
 This tradeoff is one of the most important ideas in finance because it explains why investors do not simply choose the asset with the highest expected return. They must also consider whether the additional risk is acceptable given their objectives, constraints, and time horizon. The same logic appears in corporate finance, where firms must decide how much debt to use and how much uncertainty they can tolerate in their operations.
 
 \begin{figure}[htbp]
-    \centering
+\centering
+\begin{lrbox}{\bookmeasuredbox}
     \begin{tikzpicture}[scale=1.0]
         \draw[->] (0,0) -- (5.6,0) node[right] {Risk};
         \draw[->] (0,0) -- (0,4.2) node[above] {Expected Return};
@@ -233,8 +246,18 @@ This tradeoff is one of the most important ideas in finance because it explains 
         \node[below] at (2.861,2.622) {Medium};
         \node[right] at (4.275,3.503) {High};
     \end{tikzpicture}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ffigbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
     \caption{The risk-return tradeoff: higher expected returns generally require accepting greater risk.}
     \label{fig:risk_return_tradeoff}
+}
 \end{figure}
 
 \subsection{Time Value of Money}\index{Time Value of Money}
@@ -380,7 +403,8 @@ The ideas introduced in this chapter provide the conceptual foundation for the m
 This perspective is essential for anyone who wants to work at the intersection of finance and AI. A successful practitioner must be able to translate a financial question into a statistical problem, then translate the output of a model back into a financial decision. That translation requires both technical skill and financial intuition.
 
 \begin{figure}[htbp]
-    \centering
+\centering
+\begin{lrbox}{\bookmeasuredbox}
     \begin{tikzpicture}[>=latex,thick,node distance=2.2cm]
         \node[draw,rounded corners,minimum width=3.0cm,minimum height=0.9cm,align=center] (finance) {Financial\ Foundations};
         \node[draw,rounded corners,minimum width=3.0cm,minimum height=0.9cm,right=of finance,align=center] (stats) {Statistical\ Methods};
@@ -388,8 +412,18 @@ This perspective is essential for anyone who wants to work at the intersection o
         \draw[->] (finance) -- (stats);
         \draw[->] (stats) -- (ai);
     \end{tikzpicture}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ffigbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
     \caption{The book progresses from finance fundamentals to statistical tools and then to AI-driven applications.}
     \label{fig:book_flow}
+}
 \end{figure}
 
 \section{Finance as a System of Incentives and Information}\index{Finance as a System of Incentives and Information}
@@ -498,7 +532,8 @@ The ``posterior becomes the next prior'' idea is easiest to see by continuing th
 Two independent pieces of weak-to-moderate evidence, an automated flag and an unusual location, combine to raise the probability of fraud from a 1\% base rate to roughly 66\%, each update using exactly the same formula with the previous posterior in place of the original prior. Figure~\ref{fig:bayesian_chain} lays out this chain of updates directly. This is precisely how a production fraud system in Chapter 13 accumulates evidence from several independent model outputs before deciding whether a transaction warrants manual review, and it is why an ensemble of several weak signals, evaluated one Bayesian update at a time, can be more reliable than any single signal considered alone.
 
 \begin{figure}[htbp]
-    \centering
+\centering
+\begin{lrbox}{\bookmeasuredbox}
     \begin{tikzpicture}[>=latex,thick,node distance=2.3cm]
         \node[draw,rounded corners,align=center,minimum width=2.6cm,minimum height=1.1cm] (prior) {Prior\\$\Pr(\text{Fraud})=1\%$};
         \node[draw,rounded corners,align=center,minimum width=2.8cm,minimum height=1.1cm,right=of prior] (post1) {Posterior 1\\$\approx24.2\%$};
@@ -506,8 +541,18 @@ Two independent pieces of weak-to-moderate evidence, an automated flag and an un
         \draw[->] (prior) -- node[above,align=center,font=\scriptsize] {transaction\\flagged} (post1);
         \draw[->] (post1) -- node[above,align=center,font=\scriptsize] {unusual\\location} (post2);
     \end{tikzpicture}
-    \caption{Sequential Bayesian updating on the fraud example: each new, independent piece of evidence turns the previous posterior into the next prior, using the identical Bayes'-theorem formula both times.}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ffigbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
+    \caption{The fraud example's two-step Bayesian update chain.}
     \label{fig:bayesian_chain}
+}
 \end{figure}
 
 \section{Why Models Must Be Interpreted, Not Worshipped}\index{Why Models Must Be Interpreted, Not Worshipped}

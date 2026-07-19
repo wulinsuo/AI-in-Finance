@@ -5,6 +5,7 @@
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{booktabs}
+\usepackage{floatrow}
 \usepackage{draftwatermark}
 
 \SetWatermarkText{Wulin.Suo@Queensu.ca}
@@ -33,15 +34,26 @@ The chapter proceeds in three stages. Sections~\ref{sec:rl-framework} through~\r
 Consider a market maker deciding, moment by moment, how to skew its bid and ask quotes as its inventory evolves, or a trader deciding how many shares of a large order to release this minute versus holding back for a better price later: in both cases, today's decision changes tomorrow's starting position, so the two decisions cannot be solved separately, one at a time, the way most of the models in Chapters 10 and 11 do. A reinforcement learning problem is formalized as a Markov decision process, a tuple $(\mathcal{S}, \mathcal{A}, P, R, \gamma)$, precisely to capture this kind of interlocking, path-dependent decision problem. At each discrete time step $t$, an \textbf{agent} observes a \textbf{state} $s_t \in \mathcal{S}$, a summary of everything about the environment relevant to the decision at hand (a market maker's current inventory and the prevailing bid-ask spread; a trading agent's remaining order size and elapsed time; a portfolio manager's current holdings and estimated risk factors). The agent selects an \textbf{action} $a_t \in \mathcal{A}$ (post a quote at a given skew; sell a given number of shares this period; rebalance toward a given target weight) according to a \textbf{policy} $\pi(a \mid s)$, a mapping, possibly stochastic, from states to actions. The environment then transitions to a new state $s_{t+1}$ according to a transition function $P(s_{t+1} \mid s_t, a_t)$ and returns a scalar \textbf{reward} $r_{t+1}$ (realized profit and loss net of costs; a small quadratic risk penalty; an exercise payoff), governed by a reward function $R(s_t, a_t, s_{t+1})$. Figure~\ref{fig:rl_loop} depicts this loop; it repeats until the episode ends, either at a fixed horizon (the market closes, the order is fully executed) or when the agent reaches an absorbing state (a position is liquidated, an option is exercised).
 
 \begin{figure}[htbp]
-    \centering
+\centering
+\begin{lrbox}{\bookmeasuredbox}
     \begin{tikzpicture}[thick,node distance=3.4cm]
         \node[draw,rounded corners,minimum width=3.2cm,minimum height=1.4cm,align=center] (agent) {Agent\\(policy $\pi$)};
         \node[draw,rounded corners,minimum width=3.2cm,minimum height=1.4cm,align=center,right=of agent] (env) {Environment\\(market)};
         \draw[->] ([yshift=0.35cm]agent.east) -- node[above,font=\small,yshift=1pt]{action $a_t$} ([yshift=0.35cm]env.west);
         \draw[->] ([yshift=-0.35cm]env.west) -- node[below,font=\small,yshift=-1pt]{state $s_{t+1}$, reward $r_{t+1}$} ([yshift=-0.35cm]agent.east);
     \end{tikzpicture}
-    \caption{The reinforcement learning loop. The agent observes a state and chooses an action according to its policy; the environment responds with a new state and a reward, and the cycle repeats for the length of the episode.}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ffigbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
+    \caption{The reinforcement learning loop.}
     \label{fig:rl_loop}
+}
 \end{figure}
 
 The word ``Markov'' in Markov decision process is a precise mathematical assumption, not a figure of speech: it requires that $P(s_{t+1} \mid s_t, a_t)$ and $R(s_t, a_t, s_{t+1})$ depend only on the current state and action, not on the full history that led there. This is exactly the assumption behind every stochastic process this book has already used to model prices, from the binomial tree's independent up-and-down moves in Chapter 5 to the random-walk and GARCH innovations of Chapter 7, so it is not a new leap of faith for a reader of this book, only a new name for a familiar structural assumption, now applied to an agent's decisions rather than only to prices themselves. In practice, whether a proposed state representation is genuinely Markovian is itself a design choice: a market maker's state that includes only the current mid-price, and not recent order flow, discards information a real market maker would use, which is why Chapter 12's order-flow-imbalance regression and Chapter 11's Kyle's-lambda\index{Kyle Model: A Formal Model of Price Impact} framework are natural sources of state features for a genuinely useful trading agent, not merely of standalone predictive signals.
@@ -78,7 +90,8 @@ A reader who worked through Chapter 5's two-step binomial tree (Section 5.9) has
 Two further distinctions organize the wide range of reinforcement learning algorithms in use today, and fixing both precisely now makes it easier to place every method the rest of this chapter introduces. Figure~\ref{fig:rl_method_map} previews where each of them fits before the text below explains why.
 
 \begin{figure}[htbp]
-    \centering
+\centering
+\begin{lrbox}{\bookmeasuredbox}
     \begin{tikzpicture}[thick,every node/.style={draw,rounded corners,align=center,font=\small},node distance=1.3cm and 0.9cm]
         \node (root) {Reinforcement Learning};
         \node[below left=of root,text width=3.1cm] (mb) {\textbf{Model-based}\\Chapter 5's tree: known $P$, $R$, solved by backward induction};
@@ -90,8 +103,18 @@ Two further distinctions organize the wide range of reinforcement learning algor
         \draw (mf) -- (vb);
         \draw (mf) -- (pb);
     \end{tikzpicture}
-    \caption{A map of the reinforcement learning methods this chapter develops. The model-based/model-free split and the value-based/policy-based split within model-free methods are explained below; Table~\ref{tab:rl_methods} compares the four leaf methods in more detail.}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ffigbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
+    \caption{A map of the reinforcement learning methods this chapter develops.}
     \label{fig:rl_method_map}
+}
 \end{figure}
 
 \textbf{Model-based methods} have access to, or explicitly learn, the transition function $P$ and reward function $R$ themselves, and use them to plan. Chapter 5's binomial tree is a model-based method: $q$, $u$, $d$, and every terminal payoff are known in advance, so backward induction can compute the exact optimal value with no simulated experience required at all.
@@ -126,7 +149,8 @@ Putting these pieces together, this is precisely a Markov decision process with 
 Figure~\ref{fig:mdp_tree} redraws Chapter 5's tree in this chapter's language, labeling each decision node with its two available actions rather than with a single option value.
 
 \begin{figure}[htbp]
-    \centering
+\centering
+\begin{lrbox}{\bookmeasuredbox}
     \begin{tikzpicture}[scale=0.9,transform shape,every node/.style={font=\small}]
         \node[draw,rounded corners,align=center] (s0) at (0,0) {$S_0=\$50$\\exercise: \$0.00\\hold: \$2.5641};
         \node[draw,rounded corners,align=center] (su) at (4.0,2.2) {$S_u=\$60$\\exercise: \$0.00\\hold: \$0.00};
@@ -141,8 +165,18 @@ Figure~\ref{fig:mdp_tree} redraws Chapter 5's tree in this chapter's language, l
         \draw[->] (sd) -- node[above,sloped,font=\scriptsize] {hold, $q$} (sud);
         \draw[->] (sd) -- node[below,sloped,font=\scriptsize] {hold, $1-q$} (sdd);
     \end{tikzpicture}
-    \caption{The early-exercise decision of Chapter 5's American put, redrawn as a three-state Markov decision process. Each of $S_0$, $S_u$, and $S_d$ lists the closed-form $Q$-value of both available actions, exercise and hold; the down node's exercise value, marked with an asterisk, exceeds its hold value, making exercise the optimal action there and the source of the tree's early-exercise premium. Terminal nodes show the American put's payoff, reached only if the holder chooses hold at every earlier decision point.}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ffigbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
+    \caption{The early-exercise decision of Chapter 5's American put, redrawn as a three-state Markov decision process, with the optimal action at each node marked by an asterisk.}
     \label{fig:mdp_tree}
+}
 \end{figure}
 
 Chapter 5 solved this exact problem by backward induction, working from the known terminal payoffs back to today. Restated in this chapter's notation, that solution is
@@ -161,12 +195,23 @@ Q(s,a) \leftarrow Q(s,a) + \alpha\Big[r + \gamma \max_{a'} Q(s',a') - Q(s,a)\Big
 \end{equation*}
 where $\alpha$ is a learning rate. This update rule, known as \textbf{temporal-difference learning}\index{Temporal-Difference Learning}, nudges the current estimate $Q(s,a)$ toward a bootstrapped target, the observed reward plus the discounted value of the best action available in the next state, without ever requiring a model of the transition probabilities; the agent learns $q$'s effect on the optimal decision purely by observing many simulated up and down moves and seeing which actions paid off, in exactly the same statistical spirit as every other machine learning method in this book learning a relationship from data rather than being told it directly.
 
+\subsection*{A Worked Example: The First Two Learning Steps}
+
+Starting from a $Q$-table initialized entirely to zero, with a learning rate of $\alpha=0.1$, suppose the very first simulated episode reaches $S_d$, chooses \textbf{hold} (all actions still look identically worthless at this point, so the choice is effectively random), and the simulated down-move occurs, landing on the terminal payoff of \$9.50 at $S_{dd}$. Since this transition ends the episode, the bootstrapped target's continuation term is zero, and the update is
+\begin{equation*}
+Q(S_d,\text{hold}) \leftarrow 0 + 0.1\big[9.50 + \gamma(0) - 0\big] = 0.1(9.50) = \$0.9500,
+\end{equation*}
+the first nonzero entry the table ever acquires. Now suppose a later episode reaches $S_0$, chooses \textbf{hold}, and the simulated move is down, transitioning to $S_d$ with an immediate reward of \$0 (holding earns nothing until a terminal payoff is reached). The bootstrapped target now uses the current, already partially learned table, $\max_{a'}Q(S_d,a') = \max(0, 0.9500) = 0.9500$, giving
+\begin{equation*}
+Q(S_0,\text{hold}) \leftarrow 0 + 0.1\big[0 + \gamma(0.9500) - 0\big] \approx 0.1(0.9615)(0.9500) \approx \$0.0913.
+\end{equation*}
+Two updates in, the table already shows the qualitative shape of the true solution, $Q(S_d,\text{hold})$ noticeably positive and $Q(S_0,\text{hold})$ smaller but nonzero, even though both values are still far from their closed-form targets of \$4.8718 and \$2.5641. This is exactly the mechanism the $100{,}000$-episode simulation below repeats: each terminal payoff nudges the value of the state that led to it, and that nudge is itself propagated one more step backward the next time an earlier state is visited, gradually diffusing the terminal reward's information all the way back to $S_0$ without ever consulting $q$ directly.
+
 The companion notebook simulates this process for $100{,}000$ episodes, using a learning rate that decays with each state-action pair's visit count and an exploration rate $\varepsilon$ that decays from $0.30$ to $0.02$ over training, standard choices that guarantee enough early exploration to discover the exercise decision at $S_d$ while still converging to a stable, greedy policy by the end of training. Table~\ref{tab:rl_qlearning} compares the learned $Q$-table to the closed-form values derived above.
 
 \begin{table}[htbp]
 \centering
-\caption{Closed-form Bellman-optimal $Q$-values (from backward induction) versus tabular Q-learning's learned estimates after 100,000 simulated episodes.}
-\label{tab:rl_qlearning}
+\begin{lrbox}{\bookmeasuredbox}
 \begin{tabular}{lccc}
 \toprule
 State-action & Closed-form $Q^*$ & Learned $Q$ (Q-learning) & Relative gap \\
@@ -179,6 +224,18 @@ $(S_d, \text{exercise})$ & \$5.0000 & \$5.0000 & $0.00\%$ \\
 $(S_d, \text{hold})$ & \$4.8718 & \$4.9234 & $1.06\%$ \\
 \bottomrule
 \end{tabular}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ttabbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
+\caption{Closed-form Bellman-optimal $Q$-values (from backward induction) versus tabular Q-learning's learned estimates after 100,000 simulated episodes.}
+\label{tab:rl_qlearning}
+}
 \end{table}
 
 \subsection{Comparing the Learned and Closed-Form Solutions}
@@ -270,7 +327,8 @@ Exact backward-induction dynamic programming over this same discretized grid, co
 Figure~\ref{fig:dp_backward_induction} makes the backward-induction computation itself concrete. Dynamic programming does not work through the five intervals in the order a trader would experience them; it starts from the one stage with no real decision left, the forced liquidation at $x_4$, and solves backward, one stage at a time, using each already-solved stage's value function to solve the one before it, until $V_1(x_0)$ finally gives the answer for the full, five-interval problem. Only after this entire backward pass is complete can the optimal trajectory be traced forward, choosing at each state whichever action attains the value just computed for it, exactly the bottom row of the figure.
 
 \begin{figure}[htbp]
-    \centering
+\centering
+\begin{lrbox}{\bookmeasuredbox}
     \begin{tikzpicture}[thick,every node/.style={font=\small}]
         \draw[->,line width=1.1pt] (12.0,3.3) -- (0,3.3);
         \node[align=center,font=\small] at (6.0,3.7) {backward induction: solve stage $5 \to 4 \to 3 \to 2 \to 1$};
@@ -296,8 +354,18 @@ Figure~\ref{fig:dp_backward_induction} makes the backward-induction computation 
         \draw[dashed] (v4) -- (n3);
         \draw[dashed] (v5) -- (n4);
     \end{tikzpicture}
-    \caption{Backward-induction dynamic programming for the execution problem. The top row is solved right to left: the forced stage-5 liquidation cost is known immediately, then $V_4$, $V_3$, $V_2$, and finally $V_1(x_0)=139.52$, the total cost of the whole five-interval problem, each computed using the value already found for the stage to its right. Only once every value function is known does the bottom row, the optimal trajectory, get traced left to right by following whichever action attains each state's value.}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ffigbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
+    \caption{Backward-induction dynamic programming for the execution problem.}
     \label{fig:dp_backward_induction}
+}
 \end{figure}
 
 Table~\ref{tab:rl_execution_compare} places the Q-learning-recovered trajectory alongside the uniform TWAP schedule and the fully aggressive single-shot execution Chapter 11 also scored, confirming the same efficient-frontier ordering Chapter 11 established analytically now emerges from an agent that was never given the underlying cost formula at all.
@@ -320,7 +388,8 @@ Q-learning (learned, discretized) & $(250, 195, 145, 95, 45, 0)$ & $139.52$ \\
 Figure~\ref{fig:execution_trajectories} plots the same three trajectories, making the front-loading pattern immediately visible: the fully aggressive strategy liquidates instantly, the uniform TWAP schedule is a straight line, and the Q-learning trajectory sits just above TWAP early on, trading a little faster than uniform while inventory is largest and tapering to match TWAP by the final interval, exactly the mild front-loading Chapter 11's continuous closed-form solution also produced.
 
 \begin{figure}[htbp]
-    \centering
+\centering
+\begin{lrbox}{\bookmeasuredbox}
     \begin{tikzpicture}[thick]
         \draw[->] (0,0) -- (7.6,0) node[right,font=\small] {interval $j$};
         \draw[->] (0,0) -- (0,5.8) node[above,font=\small] {shares remaining};
@@ -339,8 +408,18 @@ Figure~\ref{fig:execution_trajectories} plots the same three trajectories, makin
         \draw[dotted] (8.3,4.8) -- (8.9,4.8); \node[right,font=\scriptsize] at (8.9,4.8) {Uniform TWAP};
         \draw[solid] (8.3,4.2) -- (8.9,4.2); \node[right,font=\scriptsize] at (8.9,4.2) {Q-learning (learned)};
     \end{tikzpicture}
-    \caption{Unexecuted-share trajectories under the three strategies of Table~\ref{tab:rl_execution_compare}. The learned Q-learning trajectory closely tracks uniform TWAP but trades slightly faster in the first two intervals, the same mild front-loading Chapter 11's closed-form solution derives analytically for a modestly risk-averse trader.}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ffigbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
+    \caption{Unexecuted-share trajectories under the three strategies of Table~\ref{tab:rl_execution_compare}.}
     \label{fig:execution_trajectories}
+}
 \end{figure}
 
 Market making extends naturally to the same framework. Chapter 11's Avellaneda-Stoikov model derives a closed-form optimal quote skew from an assumed order-arrival intensity function and a known risk-aversion parameter; a reinforcement-learning market maker instead learns a quoting policy directly from simulated or historical order flow, with state features again drawn from current inventory, time-to-close, and order-book depth, action given by the bid and ask quotes (or, in a simplified discrete-action version, a small set of candidate skews), and reward given by realized spread capture net of inventory risk and adverse selection, the same adverse-selection concern Chapter 12's Glosten-Milgrom\index{Glosten-Milgrom model} model formalizes. The appeal is identical to the execution case: a learned policy can adapt to order-arrival patterns that deviate from Avellaneda-Stoikov's assumed functional form, at the cost of requiring a large amount of representative training data and offering none of the closed-form model's transparency about why a given quote was chosen, a tradeoff this chapter's closing sections return to directly.
@@ -368,15 +447,17 @@ Running that sanity check honestly, rather than only asserting it would work, is
 What makes this problem genuinely hard for a model-free method is the relationship between the reward's noise and the size of what there is to learn: the gap between the optimal action's growth rate and its nearest neighbors on the grid, $g(0.20)-g(0.15)\approx0.0013$ and $g(0.20)-g(0.25)\approx0.0013$, is tiny, while a single bet's outcome swings between $\ln(1.20)\approx0.182$ and $\ln(0.80)\approx-0.223$, a standard deviation roughly $150$ times larger than the gap Q-learning needs to resolve. Trained for $200{,}000$ simulated bets with the same $\varepsilon$-greedy, visit-count-decayed setup used throughout this chapter, tabular Q-learning settles on $f=0.15$, not $f^*=0.20$, leaving $g(0.20)-g(0.15)\approx0.0013$ of achievable growth rate on the table, about $6.4\%$ of the optimal rate. This is a real, if modest, miss, not the exact or near-exact recovery Sections~\ref{sec:rl-qlearning} and~\ref{sec:rl-execution-worked} demonstrated. Figure~\ref{fig:kelly_growth_curve} shows why: the growth-rate curve is nearly flat across the entire $0.10$-to-$0.30$ range, so the two marked points, the true optimum and where Q-learning actually converges, sit almost on top of each other.
 
 \begin{figure}[htbp]
-    \centering
+\centering
+\begin{lrbox}{\bookmeasuredbox}
     \begin{tikzpicture}[thick]
-        \draw[->] (0,-4.0) -- (12.8,-4.0) node[right,font=\small] {betting fraction $f$};
+        \draw[->] (0,-4.0) -- (12.8,-4.0);
         \draw[->] (0,-4.0) -- (0,3.5);
         \node[rotate=90,font=\small] at (-1.3,-0.5) {growth rate $g(f)$};
         \foreach \i/\lab in {0/0.0,2.4/0.1,4.8/0.2,7.2/0.3,9.6/0.4,12.0/0.5} {
             \draw (\i,-3.9) -- (\i,-4.1);
             \node[below,font=\scriptsize] at (\i,-4.3) {\lab};
         }
+        \node[below,font=\small] at (6.0,-4.6) {betting fraction $f$};
         \foreach \y/\lab in {2.0/0.02,0.0/0.00,-2.0/-0.02} {
             \draw (0.1,\y) -- (-0.1,\y);
             \node[left,font=\scriptsize] at (-0.2,\y) {\lab};
@@ -389,8 +470,18 @@ What makes this problem genuinely hard for a model-free method is the relationsh
         \node[above,font=\scriptsize,align=center] at (1.8,3.1) {Q-learning\\converges to $f=0.15$};
         \draw[->,dashed] (2.3,2.75) -- (3.5,1.98);
     \end{tikzpicture}
-    \caption{The Kelly growth-rate curve $g(f)=p\ln(1+f)+q\ln(1-f)$ for $p=0.6$, $b=1$. The curve is nearly flat near its peak, the two marked fractions differ in growth rate by only $0.0013$, far smaller than the swing between a single bet's win and loss outcomes, which is exactly why a model-free method needs an enormous number of samples to reliably tell them apart.}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ffigbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
+    \caption{The Kelly growth-rate curve $g(f)=p\ln(1+f)+q\ln(1-f)$ for $p=0.6$, $b=1$.}
     \label{fig:kelly_growth_curve}
+}
 \end{figure}
 
 The contrast worth drawing out is what a \textbf{model-based} approach, Section~\ref{sec:rl-taxonomy}'s other category, does with the identical $200{,}000$ observations. Rather than treating each bet's outcome as an opaque reward to average over a large discretized action grid, it exploits the fact that this particular problem has a compact underlying model: a single unknown parameter, the win probability $p$, plugged directly into Chapter 1's closed form. Simply counting wins and losses across the same $200{,}000$ simulated bets gives an observed win frequency $\hat p=0.6003$, and substituting into $\hat f^*=\hat p-(1-\hat p)/b$ gives $\hat f^*\approx0.2006$, accurate to within $0.0006$ of the true optimum, an order of magnitude closer than Q-learning's answer from the exact same data.

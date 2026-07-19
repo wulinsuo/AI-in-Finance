@@ -5,6 +5,7 @@
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{booktabs}
+\usepackage{floatrow}
 \usepackage{draftwatermark}
 
 \SetWatermarkText{Wulin.Suo@Queensu.ca}
@@ -68,7 +69,8 @@ Beyond these historical origins, agent-based models occupy a specific, recurring
 Figure~\ref{fig:abm-loop} sketches the basic ABM simulation loop that every example in this chapter follows: a population of agents, each with its own rule, observes the current market state, each agent acts (submits an order, updates a belief, decides whether to pay a debt), those actions are aggregated by a market mechanism into a new market state, and the loop repeats. Nothing here is estimated from historical data the way Chapter 6's models are; everything is specified as a rule and then simulated forward.
 
 \begin{figure}[htbp]
-    \centering
+\centering
+\begin{lrbox}{\bookmeasuredbox}
     \begin{tikzpicture}[>=latex,thick,node distance=1.5cm]
         \node[draw,rounded corners,minimum width=2.6cm,minimum height=0.9cm,align=center] (agents) {Heterogeneous\\agents};
         \node[draw,rounded corners,minimum width=2.6cm,minimum height=0.9cm,right=of agents,align=center] (actions) {Individual\\actions};
@@ -79,8 +81,18 @@ Figure~\ref{fig:abm-loop} sketches the basic ABM simulation loop that every exam
         \draw[->] (market) -- (state);
         \draw[->] (state) to[out=135,in=45] (agents);
     \end{tikzpicture}
-    \caption{The basic agent-based simulation loop. Each agent observes the current market state and acts according to its own behavioral rule; a market mechanism (a double auction, a price-impact equation, a clearing algorithm) aggregates those individual actions into a new market state, which every agent then observes in the next round. Every example in this chapter is an instance of this loop with a different agent population and market mechanism.}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ffigbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
+    \caption{The basic agent-based simulation loop.}
     \label{fig:abm-loop}
+}
 \end{figure}
 
 \section{Zero-Intelligence Traders and the Double Auction}
@@ -205,7 +217,8 @@ The examples so far model a single market's price. A separate, and for regulator
 Consider three banks connected in a simple chain: Bank A owes Bank B $\$50$, and Bank B owes Bank C $\$40$; Bank C has no obligations to anyone. Each bank also holds external assets: $\$60$ for A, $\$10$ for B, and $\$5$ for C. Figure~\ref{fig:abm-contagion} shows this network.
 
 \begin{figure}[htbp]
-    \centering
+\centering
+\begin{lrbox}{\bookmeasuredbox}
     \begin{tikzpicture}[>=latex,thick,node distance=3.0cm]
         \node[draw,circle,minimum size=1.2cm] (a) {A};
         \node[draw,circle,minimum size=1.2cm,right=of a] (b) {B};
@@ -216,8 +229,18 @@ Consider three banks connected in a simple chain: Bank A owes Bank B $\$50$, and
         \node[below=0.3cm of b,font=\scriptsize] {external: \$10};
         \node[below=0.3cm of c,font=\scriptsize] {external: \$5};
     \end{tikzpicture}
-    \caption{A three-bank interbank obligation network. Bank A owes Bank B \$50; Bank B owes Bank C \$40; Bank C has no outstanding obligations. Each bank additionally holds the external (non-interbank) assets shown below it.}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ffigbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
+    \caption{A three-bank interbank obligation network.}
     \label{fig:abm-contagion}
+}
 \end{figure}
 
 In the baseline, no-shock case, every bank can pay its obligations in full: A's total resources are its $\$60$ of external assets (no one owes A anything), comfortably covering its $\$50$ obligation to B and leaving A with net worth $60-50=\$10$. B's resources are its $\$10$ of external assets plus the $\$50$ it receives from A, $\$60$ total, covering its $\$40$ obligation to C and leaving B with net worth $60-40=\$20$. C's resources are its $\$5$ of external assets plus the $\$40$ it receives from B, for a net worth of $\$45$. Total system-wide net worth is $10+20+45=\$75$.
@@ -228,8 +251,7 @@ Table~\ref{tab:abm-contagion} summarizes the cascade. Total system-wide net wort
 
 \begin{table}[htbp]
 \centering
-\caption{The default cascade following a \$45 shock to Bank A's external assets (all figures in \$)}
-\label{tab:abm-contagion}
+\begin{lrbox}{\bookmeasuredbox}
 \begin{tabular}{lrrrrrr}
 \toprule
 Bank & External (shocked) & Owed & Received & Paid & Net worth (baseline) & Net worth (shocked) \\
@@ -239,6 +261,18 @@ B & 10 & 40 & 15 & 25 & 20 & 0 \\
 C & 5  & 0  & 25 & 0  & 45 & 30 \\
 \bottomrule
 \end{tabular}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ttabbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
+\caption{The default cascade following a \$45 shock to Bank A's external assets (all figures in \$)}
+\label{tab:abm-contagion}
+}
 \end{table}
 
 \section{Case Vignette: The Bank of England's RAMSI Model}
@@ -328,8 +362,7 @@ Starting from an uninformed $n_{f,0}=n_{c,0}=0.5$, no fitness history yet exists
 
 \begin{table}[htbp]
 \centering
-\caption{Discrete-choice switching ($\theta=0.5$) replacing Section~\ref{sec:abm-stylized-facts}'s fixed threshold. Each period's population shares are computed from the fitness realized over the immediately preceding period, then used to set that period's aggregate demand.}
-\label{tab:abm-discrete-choice}
+\begin{lrbox}{\bookmeasuredbox}
 \begin{tabular}{lrrrrrrr}
 \toprule
 $t$ & $p_t$ & $n_{f,t}$ & $n_{c,t}$ & $d^f_t$ & $d^c_t$ & $D_t$ & $p_{t+1}$ \\
@@ -339,6 +372,18 @@ $t$ & $p_t$ & $n_{f,t}$ & $n_{c,t}$ & $d^f_t$ & $d^c_t$ & $D_t$ & $p_{t+1}$ \\
 2 & 100.583 & 0.056 & 0.944 & $-0.175$ & 2.958 & 2.783 & 104.757 \\
 \bottomrule
 \end{tabular}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ttabbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
+\caption{Discrete-choice switching ($\theta=0.5$) replacing Section~\ref{sec:abm-stylized-facts}'s fixed threshold. Each period's population shares are computed from the fitness realized over the immediately preceding period, then used to set that period's aggregate demand.}
+\label{tab:abm-discrete-choice}
+}
 \end{table}
 
 The first period's fitness gap is already informative: with $\Delta p_1=2.625$, the chartist demand submitted the period before, $d^c_0=2.0$, earned a realized profit of $\pi_{c,1}=2.625\times2.0=5.250$, against the fundamentalist's $\pi_{f,1}=2.625\times1.5=3.938$; chartists were not merely more numerous, they were genuinely more profitable, since their demand happened to be better aligned with the up-move that materialized. The logit rule converts this into $n_{c,1}=0.658$, already sitting at the very edge of the exact critical threshold $n_c^{*}\approx0.667$ Section~\ref{sec:abm-fundamentalist-chartist} derived analytically for this same $\lambda$ and $\beta$. One further period of chartist outperformance, $\pi_{c,2}=7.764$ against $\pi_{f,2}=2.107$, pushes the population decisively past that threshold to $n_{c,2}=0.944$, and the price increments confirm the market has genuinely crossed into the unstable regime: $\Delta p_1=2.625$, $\Delta p_2=2.958$, $\Delta p_3=4.174$, growing rather than shrinking, exactly Scenario B's explosive signature, but reached here with no threshold rule written into the model at all, only individual agents comparing two realized numbers each period and updating a choice probability accordingly.
@@ -358,8 +403,7 @@ Section~\ref{sec:abm-stylized-facts}'s regime-switching simulation happened to p
 
 \begin{table}[htbp]
 \centering
-\caption{Simulated kurtosis as a function of the switching threshold (500 periods, otherwise identical to Section~\ref{sec:abm-stylized-facts})}
-\label{tab:abm-msm-sweep}
+\begin{lrbox}{\bookmeasuredbox}
 \begin{tabular}{rr}
 \toprule
 Switching threshold & Pearson kurtosis \\
@@ -371,6 +415,18 @@ Switching threshold & Pearson kurtosis \\
 0.35 & 11.64 \\
 \bottomrule
 \end{tabular}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ttabbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
+\caption{Simulated kurtosis as a function of the switching threshold (500 periods, otherwise identical to Section~\ref{sec:abm-stylized-facts})}
+\label{tab:abm-msm-sweep}
+}
 \end{table}
 
 The direction is worth pausing on, because it is not the one intuition suggests first: kurtosis \emph{rises} as the threshold rises, that is, as the volatile regime becomes \emph{harder} to trigger, not easier. A low threshold puts the market into the volatile regime often, which raises overall variance but makes the two regimes blend into one another rather than standing sharply apart; a high threshold makes the volatile regime rare, so on the infrequent occasions it does trigger, it produces a small number of sharp outliers against an otherwise calm baseline, exactly the mixture-of-a-common-calm-regime-and-a-rare-extreme-regime structure that drives kurtosis up. Suppose an analyst wanted the simulation to match a specific real asset's historically observed kurtosis of $6.0$: Table~\ref{tab:abm-msm-sweep} shows the threshold value that comes closest is $0.30$, landing at $6.62$, a small overshoot that a finer search between $0.25$ and $0.30$ would narrow further. Crucially, finding a threshold that approximately matches $6.0$ would establish only that this particular mechanism, among what is likely a wide range of other threshold values, population-share assumptions, or entirely different ABM structures, is \emph{capable} of producing that kurtosis, not that real traders actually switch strategies according to anything resembling this rule, and, as this reversed direction illustrates concretely, not that the calibrated parameter's economic interpretation, ``how readily the market panics,'' behaves the way casual intuition about it would suggest. That gap, between matching a moment and confirming a mechanism, is precisely Section~\ref{sec:abm-calibration}'s central caution, restated here in terms of real, computed numbers rather than in the abstract.

@@ -11,7 +11,11 @@
 \newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
 \usepackage{url}
 \usepackage{eurosym}
+\usepackage{floatrow}
 \usepackage{draftwatermark}
+
+\newsavebox{\bookmeasuredbox}
+\newlength{\bookcapwidth}
 
 \definecolor{coverbg}{HTML}{0B1F3A}
 \definecolor{coveraccent}{HTML}{C9A227}
@@ -184,21 +188,28 @@ Every chapter's own ``Further Reading'' section lists sources with a short note 
 
 \begin{itemize}
     \item Abbeel, P., and A. Y. Ng, ``Apprenticeship Learning via Inverse Reinforcement Learning,'' \emph{Proceedings of the Twenty-First International Conference on Machine Learning}, 2004, pp. 1--8.
+    \item Acemoglu, D., A. Ozdaglar, and A. Tahbaz-Salehi, ``Systemic Risk and Stability in Financial Networks,'' \emph{American Economic Review}, vol. 105, no. 2, 2015, pp. 564--608.
     \item Adams, H., N. Zinsmeister, and D. Robinson, ``Uniswap v2 Core,'' 2020. Available at: \url{https://uniswap.org/whitepaper.pdf}.
     \item Aldridge, I., \emph{High-Frequency Trading: A Practical Guide to Algorithmic Strategies and Trading Systems}, 2nd ed., Wiley, Hoboken, NJ, 2013.
     \item Almgren, R., and N. Chriss, ``Optimal Execution of Portfolio Transactions,'' \emph{Journal of Risk}, vol. 3, no. 2, 2001, pp. 5--39.
     \item Ang, A., \emph{Asset Management: A Systematic Approach to Factor Investing}, Oxford University Press, New York, 2014.
     \item Appel, G., \emph{Technical Analysis: Power Tools for Active Investors}, Financial Times Prentice Hall, Upper Saddle River, NJ, 2005.
+    \item Arthur, W. B., J. H. Holland, B. LeBaron, R. Palmer, and P. Tayler, ``Asset Pricing Under Endogenous Expectations in an Artificial Stock Market,'' in \emph{The Economy as an Evolving Complex System II}, W. B. Arthur, S. N. Durlauf, and D. A. Lane, eds., Addison-Wesley, Reading, MA, 1997, pp. 15--44.
     \item Avellaneda, M., and S. Stoikov, ``High-Frequency Trading in a Limit Order Book,'' \emph{Quantitative Finance}, vol. 8, no. 3, 2008, pp. 217--224.
+    \item Axtell, R. L., and J. D. Farmer, ``Agent-Based Modeling in Economics and Finance: Past, Present, and Future,'' \emph{Journal of Economic Literature}, vol. 63, no. 1, 2025, pp. 197--287.
+    \item Bank of England (O. Burrows, D. Learmonth, and J. McKeown), ``RAMSI: A Top-Down Stress-Testing Model,'' Bank of England Financial Stability Paper No. 17, 2012.
     \item Barocas, S., M. Hardt, and A. Narayanan, \emph{Fairness and Machine Learning: Limitations and Opportunities}, MIT Press, Cambridge, MA, 2023.
     \item Basel Committee on Banking Supervision, \emph{Basel III: A Global Regulatory Framework for More Resilient Banks and Banking Systems}, Bank for International Settlements, Basel, Switzerland, December 2010 (rev.\ June 2011).
     \item Berg, F., J. F. Kölbel, and R. Rigobon, ``Aggregate Confusion: The Divergence of ESG Ratings,'' \emph{Review of Finance}, vol. 26, no. 6, 2022, pp. 1315--1344.
+    \item Black, F., ``Studies of Stock Price Volatility Changes,'' \emph{Proceedings of the 1976 Meetings of the Business and Economics Statistics Section, American Statistical Association}, 1976, pp. 177--181.
     \item Black, F., and R. Litterman, ``Global Portfolio Optimization,'' \emph{Financial Analysts Journal}, vol. 48, no. 5, 1992, pp. 28--43.
     \item Board of Governors of the Federal Reserve System and Office of the Comptroller of the Currency, \emph{Supervisory Guidance on Model Risk Management}, SR 11-7, April 4, 2011.
     \item Bodie, Z., A. Kane, and A. Marcus, \emph{Investments}, 13th ed., McGraw Hill, New York, 2024.
     \item Bollinger, J. A., \emph{Bollinger on Bollinger Bands}, McGraw-Hill, New York, 2001.
     \item Bolton, R. J., and D. J. Hand, ``Statistical Fraud Detection: A Review,'' \emph{Statistical Science}, vol. 17, no. 3, 2002, pp. 235--255.
     \item Brealey, R. A., S. C. Myers, F. Allen, and A. Edmans, \emph{Principles of Corporate Finance}, 15th ed., McGraw Hill, New York, 2025.
+    \item Britten-Jones, M., and A. Neuberger, ``Option Prices, Implied Price Processes, and Stochastic Volatility,'' \emph{Journal of Finance}, vol. 55, no. 2, 2000, pp. 839--866.
+    \item Brock, W. A., and C. H. Hommes, ``A Rational Route to Randomness,'' \emph{Econometrica}, vol. 65, no. 5, 1997, pp. 1059--1095.
     \item Bruun \& Hjejle, \emph{Report on the Non-Resident Portfolio at Danske Bank's Estonian Branch}, law firm report commissioned by Danske Bank A/S, September 2018.
     \item Budish, E., P. Cramton, and J. Shim, ``The High-Frequency Trading Arms Race: Frequent Batch Auctions as a Market Design Response,'' \emph{Quarterly Journal of Economics}, vol. 130, no. 4, 2015, pp. 1547--1621.
     \item Buolamwini, J., and T. Gebru, ``Gender Shades: Intersectional Accuracy Disparities in Commercial Gender Classification,'' \emph{Proceedings of Machine Learning Research}, vol. 81, 2018, pp. 77--91.
@@ -218,14 +229,18 @@ Every chapter's own ``Further Reading'' section lists sources with a short note 
     \item Doshi-Velez, F., and B. Kim, ``Towards a Rigorous Science of Interpretable Machine Learning,'' arXiv:1702.08608, 2017.
     \item Dosovitskiy, A., L. Beyer, A. Kolesnikov, D. Weissenborn, X. Zhai, T. Unterthiner, M. Dehghani, M. Minderer, G. Heigold, S. Gelly, J. Uszkoreit, and N. Houlsby, ``An Image Is Worth 16x16 Words: Transformers for Image Recognition at Scale,'' \emph{International Conference on Learning Representations}, 2021.
     \item Dua, D., and C. Graff, \emph{UCI Machine Learning Repository}, University of California, Irvine, School of Information and Computer Sciences, 2019.
+    \item Dwork, C., M. Hardt, T. Pitassi, O. Reingold, and R. Zemel, ``Fairness Through Awareness,'' \emph{Proceedings of the 3rd Innovations in Theoretical Computer Science Conference}, 2012, pp. 214--226.
+    \item Eisenberg, L., and T. H. Noe, ``Systemic Risk in Financial Systems,'' \emph{Management Science}, vol. 47, no. 2, 2001, pp. 236--249.
     \item Engle, R. F., ``Autoregressive Conditional Heteroscedasticity with Estimates of the Variance of United Kingdom Inflation,'' \emph{Econometrica}, vol. 50, no. 4, 1982, pp. 987--1007.
     \item Engle, R. F., and C. W. J. Granger, ``Co-integration and Error Correction: Representation, Estimation, and Testing,'' \emph{Econometrica}, vol. 55, no. 2, 1987, pp. 251--276.
     \item Fabozzi, F. J., \emph{Fixed Income Analysis}, 2nd ed., CFA Institute Investment Series, Wiley, Hoboken, NJ, 2007.
     \item Fama, E. F., and K. R. French, ``Common Risk Factors in the Returns on Stocks and Bonds,'' \emph{Journal of Financial Economics}, vol. 33, no. 1, 1993, pp. 3--56.
+    \item Farmer, J. D., and D. Foley, ``The Economy Needs Agent-Based Modelling,'' \emph{Nature}, vol. 460, 2009, pp. 685--686.
     \item Federal Reserve Bank of St. Louis, \emph{FRED API Documentation}, fred.stlouisfed.org.
     \item Feng, C., and S. Fay, ``An Empirical Investigation of Forward-Looking Retailer Performance Using Parking Lot Traffic Data Derived from Satellite Imagery,'' \emph{Journal of Retailing}, vol. 98, no. 4, 2022, pp. 633--646.
     \item Financial Action Task Force (FATF), \emph{International Standards on Combating Money Laundering and the Financing of Terrorism \& Proliferation: The FATF Recommendations}, FATF, Paris, May 2012.
     \item French, K. R., \emph{Data Library}, Tuck School of Business, Dartmouth College, mba.tuck.dartmouth.edu.
+    \item Gode, D. K., and S. Sunder, ``Allocative Efficiency of Markets with Zero-Intelligence Traders: Market as a Partial Substitute for Individual Rationality,'' \emph{Journal of Political Economy}, vol. 101, no. 1, 1993, pp. 119--137.
     \item Goodfellow, I., Y. Bengio, and A. Courville, \emph{Deep Learning}, MIT Press, Cambridge, MA, 2016.
     \item Goodfellow, I., J. Shlens, and C. Szegedy, ``Explaining and Harnessing Adversarial Examples,'' \emph{International Conference on Learning Representations}, 2015.
     \item Goodfellow, I., J. Pouget-Abadie, M. Mirza, B. Xu, D. Warde-Farley, S. Ozair, A. Courville, and Y. Bengio, ``Generative Adversarial Networks,'' \emph{Communications of the ACM}, vol. 63, no. 11, 2020, pp. 139--144.
@@ -260,6 +275,7 @@ Every chapter's own ``Further Reading'' section lists sources with a short note 
     \item Kolanovic, M., and R. T. Krishnamachari, ``Big Data and AI Strategies: Machine Learning and Alternative Data Approach to Investing,'' J.P.\ Morgan, Global Quantitative \& Derivatives Strategy, May 2017.
     \item Kusner, M. J., J. R. Loftus, C. Russell, and R. Silva, ``Counterfactual Fairness,'' \emph{Advances in Neural Information Processing Systems 30}, 2017, pp. 4066--4076.
     \item Kyle, A. S., ``Continuous Auctions and Insider Trading,'' \emph{Econometrica}, vol. 53, no. 6, 1985, pp. 1315--1335.
+    \item LeBaron, B., ``Agent-Based Computational Finance,'' in \emph{Handbook of Computational Economics, Volume 2}, L. Tesfatsion and K. L. Judd, eds., Elsevier, Amsterdam, 2006, pp. 1187--1233.
     \item LeCun, Y., Y. Bengio, and G. Hinton, ``Deep Learning,'' \emph{Nature}, vol. 521, no. 7553, 2015, pp. 436--444.
     \item Lewis, M., \emph{Flash Boys: A Wall Street Revolt}, W.W. Norton \& Company, New York, 2014.
     \item Lewis, P., E. Perez, A. Piktus, F. Petroni, V. Karpukhin, N. Goyal, H. Küttler, M. Lewis, W. Yih, T. Rocktäschel, S. Riedel, and D. Kiela, ``Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks,'' \emph{Advances in Neural Information Processing Systems 33}, 2020, pp. 9459--9474.
@@ -268,12 +284,14 @@ Every chapter's own ``Further Reading'' section lists sources with a short note 
     \item LOBSTER, \emph{Limit Order Book Data Documentation}, lobsterdata.com.
     \item Loughran, T., and B. McDonald, ``When Is a Liability Not a Liability? Textual Analysis, Dictionaries, and 10-Ks,'' \emph{Journal of Finance}, vol. 66, no. 1, 2011, pp. 35--65.
     \item Lundberg, S. M., and S.-I. Lee, ``A Unified Approach to Interpreting Model Predictions,'' \emph{Advances in Neural Information Processing Systems 30}, 2017, pp. 4765--4774.
+    \item Lux, T., and M. Marchesi, ``Scaling and Criticality in a Stochastic Multi-Agent Model of a Financial Market,'' \emph{Nature}, vol. 397, 1999, pp. 498--500.
     \item Markowitz, H., ``Portfolio Selection,'' \emph{Journal of Finance}, vol. 7, no. 1, 1952, pp. 77--91.
     \item McDonald, R. L., \emph{Derivatives Markets}, 3rd ed., Pearson, Boston, 2012.
     \item McKinney, W., \emph{Python for Data Analysis}, 3rd ed., O'Reilly Media, Sebastopol, CA, 2022.
     \item McNeil, A. J., R. Frey, and P. Embrechts, \emph{Quantitative Risk Management: Concepts, Techniques and Tools}, rev.\ ed., Princeton University Press, Princeton, NJ, 2015.
     \item Meiklejohn, S., M. Pomarole, G. Jordan, K. Levchenko, D. McCoy, G. M. Voelker, and S. Savage, ``A Fistful of Bitcoins: Characterizing Payments Among Men with No Names,'' \emph{Proceedings of the 2013 Internet Measurement Conference}, 2013, pp. 127--140.
     \item Menkveld, A. J., ``High-Frequency Trading and the New Market Makers,'' \emph{Journal of Financial Markets}, vol. 16, no. 4, 2013, pp. 712--740.
+    \item Merton, R. C., ``On the Pricing of Corporate Debt: The Risk Structure of Interest Rates,'' \emph{Journal of Finance}, vol. 29, no. 2, 1974, pp. 449--470.
     \item Michaud, R. O., and R. O. Michaud, \emph{Efficient Asset Management: A Practical Guide to Stock Portfolio Optimization and Asset Allocation}, 2nd ed., Oxford University Press, New York, 2008.
     \item Mikolov, T., K. Chen, G. Corrado, and J. Dean, ``Efficient Estimation of Word Representations in Vector Space,'' arXiv:1301.3781, 2013.
     \item Mnih, V., K. Kavukcuoglu, D. Silver, A. A. Rusu, J. Veness, M. G. Bellemare, A. Graves, M. Riedmiller, A. K. Fidjeland, G. Ostrovski, et al., ``Human-Level Control through Deep Reinforcement Learning,'' \emph{Nature}, vol. 518, 2015, pp. 529--533.
@@ -295,7 +313,9 @@ Every chapter's own ``Further Reading'' section lists sources with a short note 
     \item Provost, F., and T. Fawcett, \emph{Data Science for Business: What You Need to Know about Data Mining and Data-Analytic Thinking}, O'Reilly Media, Sebastopol, CA, 2013.
     \item Ribeiro, M. T., S. Singh, and C. Guestrin, ```Why Should I Trust You?': Explaining the Predictions of Any Classifier,'' \emph{Proceedings of the 22nd ACM SIGKDD International Conference on Knowledge Discovery and Data Mining}, 2016, pp. 1135--1144.
     \item Roll, R., ``A Simple Implicit Measure of the Effective Bid-Ask Spread in an Efficient Market,'' \emph{Journal of Finance}, vol. 39, no. 4, 1984, pp. 1127--1139.
+    \item Rubinstein, M., ``Implied Binomial Trees,'' \emph{Journal of Finance}, vol. 49, no. 3, 1994, pp. 771--818.
     \item Saunders, A., and L. Allen, \emph{Credit Risk Management In and Out of the Financial Crisis: New Approaches to Value at Risk and Other Paradigms}, 3rd ed., Wiley, Hoboken, NJ, 2010.
+    \item Schelling, T. C., ``Dynamic Models of Segregation,'' \emph{Journal of Mathematical Sociology}, vol. 1, no. 2, 1971, pp. 143--186.
     \item Schulman, J., F. Wolski, P. Dhariwal, A. Radford, and O. Klimov, ``Proximal Policy Optimization Algorithms,'' arXiv:1707.06347, 2017.
     \item Shapley, L. S., ``A Value for $n$-Person Games,'' in \emph{Contributions to the Theory of Games (AM-28), Volume II}, H.\,W.\ Kuhn and A.\,W.\ Tucker, eds., Annals of Mathematics Studies no. 28, Princeton University Press, Princeton, NJ, 1953, pp. 307--318.
     \item Sharpe, W. F., ``Capital Asset Prices: A Theory of Market Equilibrium under Conditions of Risk,'' \emph{Journal of Finance}, vol. 19, no. 3, 1964, pp. 425--442.
@@ -320,6 +340,7 @@ Every chapter's own ``Further Reading'' section lists sources with a short note 
     \item Wu, S., O. Irsoy, S. Lu, V. Dabravolski, M. Dredze, S. Gehrmann, P. Kambadur, D. Rosenberg, and G. Mann, ``BloombergGPT: A Large Language Model for Finance,'' arXiv:2303.17564, 2023.
     \item Yao, S., J. Zhao, D. Yu, N. Du, I. Shafran, K. Narasimhan, and Y. Cao, ``ReAct: Synergizing Reasoning and Acting in Language Models,'' \emph{International Conference on Learning Representations}, 2023.
     \item Yeh, I.-C., and C.-H. Lien, ``The Comparisons of Data Mining Techniques for the Predictive Accuracy of Probability of Default of Credit Card Clients,'' \emph{Expert Systems with Applications}, vol. 36, no. 2, 2009, pp. 2473--2480.
+    \item Zhang, K., Z. Yang, and T. Ba\c{s}ar, ``Multi-Agent Reinforcement Learning: A Selective Overview of Theories and Algorithms,'' in \emph{Handbook of Reinforcement Learning and Control}, K. G. Vamvoudakis, Y. Wan, F. L. Lewis, and D. Cansever, eds., Springer, Cham, 2021, pp. 321--384.
 \end{itemize}
 
 \clearpage

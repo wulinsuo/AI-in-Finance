@@ -6,6 +6,7 @@
 \usepackage{amssymb}
 \usepackage{booktabs}
 \usepackage{graphicx}
+\usepackage{floatrow}
 \usepackage{draftwatermark}
 
 \SetWatermarkText{WSuo@Queensu.ca}
@@ -57,7 +58,7 @@ scikit-learn & Machine learning models, preprocessing, and model evaluation \\
 \section{A First Python Session}\index{First Python Session}
 \label{sec:first-session}
 
-The basic structure of Python is simple. Variables store values, functions transform inputs, and control flow allows the program to make decisions. A small example computes the future value of an investment:
+Suppose an analyst needs to know what a \$100 investment earning 8\% will be worth after one year, a calculation simple enough to do on paper once, but tedious and error-prone to redo by hand for every price, rate, and holding period a real portfolio might contain. Python solves this by turning a value into a variable, a rule into a function, and a decision into a piece of control flow, so the same calculation can be reused rather than retyped: variables store values, functions transform inputs, and control flow allows the program to make decisions. A small example computes the future value of an investment:
 
 \begin{verbatim}
 price = 100.0
@@ -120,7 +121,7 @@ This is an inherently sequential calculation, next month's balance depends on th
 
 \section{Core Data Structures}\index{Core Data Structures}
 
-Python provides several data structures that are especially useful for financial work. Lists store ordered collections of values. Dictionaries store mappings from keys to values. Tuples are immutable sequences, often used for fixed collections of quantities. For most financial analysis, however, the most important structure is the pandas \texttt{DataFrame}, which organizes tabular data in rows and columns.
+An analyst tracking even a handful of securities quickly needs more than single numbers: an ordered run of daily closing prices, a lookup from ticker symbol to sector, a fixed set of open/high/low/close values for one trading day that should never accidentally be reordered. Python provides several data structures built for exactly these different needs. Lists store ordered collections of values. Dictionaries store mappings from keys to values. Tuples are immutable sequences, often used for fixed collections of quantities. For most financial analysis, however, the most important structure is the pandas \texttt{DataFrame}, which organizes tabular data in rows and columns.
 
 A \texttt{DataFrame} is ideal for financial data because it resembles a spreadsheet. One column may contain dates, another may contain prices, and another may contain trading volume. The running example for this chapter is a small two-asset price history, built directly from Python lists so that it is fully self-contained and reproducible without any external file or internet connection:
 
@@ -149,7 +150,7 @@ This makes it easy to filter observations, compute statistics, and merge dataset
 
 \section{Dictionaries, Tuples, and List Comprehensions}\index{Dictionaries, Tuples, and List Comprehensions}
 
-Before every dataset becomes a \texttt{DataFrame}, it often starts life as a simpler Python structure. A dictionary maps descriptive keys to values and is a natural way to store metadata about a security:
+Suppose an analyst has just pulled together a handful of facts about one security, its ticker, sector, share count, whether it pays a dividend, long before that information is tidy enough to belong in a full \texttt{DataFrame}. Before every dataset becomes a \texttt{DataFrame}, it often starts life as a simpler Python structure. A dictionary maps descriptive keys to values and is a natural way to store metadata about a security:
 
 \begin{verbatim}
 security_info = {
@@ -199,7 +200,7 @@ The pattern \texttt{[expression for item in iterable if condition]} reads almost
 \section{Working with Numerical Arrays}\index{Working with Numerical Arrays}
 \label{sec:vectorization}
 
-NumPy is the foundational package for numerical computation in Python. It provides arrays that are efficient and support vectorized operations. In finance, vectorization is very useful because many tasks involve applying the same operation to large collections of prices or returns, without writing explicit loops.
+Computing a return one day at a time in a Python loop works fine for the four prices used so far, but a real price history can span thousands of trading days across hundreds of securities, and a Python-level loop over every one of them is far slower than it needs to be. NumPy is the foundational package for numerical computation in Python. It provides arrays that are efficient and support vectorized operations. In finance, vectorization is very useful because many tasks involve applying the same operation to large collections of prices or returns, without writing explicit loops.
 
 Given a series of daily prices $P_0, P_1, \dots, P_T$, the simple (arithmetic) return in period $t$ is
 \begin{equation*}
@@ -229,7 +230,7 @@ This is much faster and more readable than writing explicit loops for each eleme
 
 \section{Boolean Indexing and Vectorized Conditionals}\index{Boolean Indexing and Vectorized Conditionals}
 
-The classification function in Section 2.4 used an \texttt{if}/\texttt{elif} chain applied one return at a time. NumPy and pandas offer a vectorized alternative that avoids the loop entirely. A boolean mask, an array of \texttt{True}/\texttt{False} values produced by comparing an array to a condition, can be used to select or count observations directly:
+The classification function in Section 2.4 used an \texttt{if}/\texttt{elif} chain applied one return at a time, exactly the kind of loop the previous section warned scales poorly once a price history grows large. NumPy and pandas offer a vectorized alternative that avoids the loop entirely. A boolean mask, an array of \texttt{True}/\texttt{False} values produced by comparing an array to a condition, can be used to select or count observations directly:
 
 \begin{verbatim}
 up_days = returns_a > 0
@@ -255,7 +256,7 @@ This produces exactly the same classifications as the loop-based \texttt{classif
 
 \section{Data Manipulation with pandas}\index{Data Manipulation with pandas}
 
-pandas is the workhorse library for handling time series and structured data. It allows the analyst to load data from CSV files, databases, or online sources; to index by date; to sort observations; to handle missing values; and to compute rolling statistics. These capabilities are essential in finance because market data are often irregular and incomplete.
+Real market data rarely arrives as clean as the toy price arrays used so far: a downloaded CSV may have gaps for holidays, dates out of order, or entire days missing for one security but not another, and none of the NumPy tools introduced so far know what to do with a date. pandas is the workhorse library for handling time series and structured data. It allows the analyst to load data from CSV files, databases, or online sources; to index by date; to sort observations; to handle missing values; and to compute rolling statistics. These capabilities are essential in finance because market data are often irregular and incomplete.
 
 The pandas method \texttt{pct\_change()} computes the same simple returns shown above, applied automatically to every column:
 
@@ -338,7 +339,7 @@ Computing weekly returns this way, from resampled weekly prices, is subtly diffe
 
 \section{Visualization}\index{Visualization}
 
-Visualization is a critical part of financial analysis. Charts help reveal patterns in returns, volatility, trends, and correlations. Matplotlib is the standard library for creating static plots. The chapter's own \texttt{AssetA}/\texttt{AssetB} example has only four daily returns, enough to illustrate the portfolio formulas in Section~\ref{sec:worked-example} by hand, but too few to make a histogram or scatter plot visually informative. To show what these chart types actually look like, this section simulates a longer, one-year (252 trading day) two-asset price history with a similar negative correlation between the assets, used only for the three plots below:
+A table of a hundred daily returns is hard to read at a glance; a suspicion that two assets tend to move in opposite directions, or that a return series has grown more volatile recently, is often invisible in a column of numbers but obvious the instant it is plotted. Visualization is a critical part of financial analysis. Charts help reveal patterns in returns, volatility, trends, and correlations. Matplotlib is the standard library for creating static plots. The chapter's own \texttt{AssetA}/\texttt{AssetB} example has only four daily returns, enough to illustrate the portfolio formulas in Section~\ref{sec:worked-example} by hand, but too few to make a histogram or scatter plot visually informative. To show what these chart types actually look like, this section simulates a longer, one-year (252 trading day) two-asset price history with a similar negative correlation between the assets, used only for the three plots below:
 
 \begin{verbatim}
 rng = np.random.default_rng(6)
@@ -383,10 +384,21 @@ plt.savefig("ch2_fig_prices_growth.png", dpi=150)
 \end{verbatim}
 
 \begin{figure}[htbp]
-    \centering
+\centering
+\begin{lrbox}{\bookmeasuredbox}
     \includegraphics[width=\linewidth]{ch2_fig_prices_growth.png}
-    \caption{Output of the code above: simulated AssetA and AssetB prices, each on its own y-axis (left), and the cumulative growth of \$1 invested in each, which shares a single axis since both series start at the same value (right), over a 252-day simulated price history.}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ffigbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
+    \caption{Simulated AssetA and AssetB prices, each on its own y-axis (left); cumulative growth of \$1 invested in each (right), over a 252-day history.}
     \label{fig:ch2-prices-growth}
+}
 \end{figure}
 
 Visualization is not merely decorative. It is part of the analytical process. A model may appear strong in a statistical summary, but a plot may reveal outliers, regime shifts, or data problems that would otherwise go unnoticed. In finance, where data quality and market context matter greatly, visualization is an essential discipline, and it is often the fastest way to notice that two return series are moving in opposite directions, as AssetA and AssetB do here.
@@ -402,10 +414,21 @@ plt.tight_layout()
 \end{verbatim}
 
 \begin{figure}[htbp]
-    \centering
+\centering
+\begin{lrbox}{\bookmeasuredbox}
     \includegraphics[width=0.7\linewidth]{ch2_fig_histogram.png}
-    \caption{Output of the code above: the distribution of AssetA's simulated daily returns over the 252-day history. With hundreds of observations the shape is now informative, and the same code applied to real return data of any length would reveal skewness and heavy tails that summary statistics can miss.}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ffigbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
+    \caption{Distribution of AssetA's simulated daily returns over the 252-day history.}
     \label{fig:ch2-histogram}
+}
 \end{figure}
 
 A scatter plot of one asset's returns against another's is the most direct way to visualize a correlation like the one computed numerically in Section~\ref{sec:worked-example}:
@@ -420,13 +443,24 @@ plt.tight_layout()
 \end{verbatim}
 
 \begin{figure}[htbp]
-    \centering
-    \includegraphics[width=0.55\linewidth]{ch2_fig_scatter.png}
-    \caption{Output of the code above: simulated AssetA daily returns plotted against simulated AssetB daily returns. The cloud of points slopes visibly downward, consistent with the simulated correlation of $-0.641$.}
+\centering
+\begin{lrbox}{\bookmeasuredbox}
+    \includegraphics[width=0.5\linewidth]{ch2_fig_scatter.png}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ffigbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
+    \caption{Simulated AssetA daily returns plotted against simulated AssetB daily returns.}
     \label{fig:ch2-scatter}
+}
 \end{figure}
 
-Figure~\ref{fig:ch2-scatter} shows the cloud of 252 points sloping visibly downward, since a negative correlation means the two assets tend to move in opposite directions; with a real analysis, the same chart becomes a genuinely useful diagnostic for spotting nonlinear relationships or clusters that a single correlation number, a linear summary, cannot capture. The chapter's own four-observation example (Section~\ref{sec:worked-example}) shows the same qualitative pattern with an even stronger correlation of $-0.896$, but has too few points to plot informatively.
+Figure~\ref{fig:ch2-scatter} shows the cloud of 252 points sloping visibly downward, consistent with the simulated correlation of $-0.641$ printed in the plot title: a negative correlation means the two assets tend to move in opposite directions. With a real analysis, the same chart becomes a genuinely useful diagnostic for spotting nonlinear relationships or clusters that a single correlation number, a linear summary, cannot capture. The chapter's own four-observation example (Section~\ref{sec:worked-example}) shows the same qualitative pattern with an even stronger correlation of $-0.896$, but has too few points to plot informatively.
 
 \section{Data Cleaning and Preparation}\index{Data Cleaning and Preparation}
 \label{sec:data-cleaning}
@@ -446,7 +480,8 @@ print(cleaned["AssetB"].isna().sum(), "missing value(s) after cleaning")
 \end{verbatim}
 
 \begin{figure}[htbp]
-    \centering
+\centering
+\begin{lrbox}{\bookmeasuredbox}
     \begin{tikzpicture}[>=latex,thick,node distance=2.0cm]
         \node[draw,rounded corners,minimum width=2.2cm,minimum height=0.8cm] (raw) {Raw Data};
         \node[draw,rounded corners,minimum width=2.2cm,minimum height=0.8cm,right=of raw] (clean) {Clean Data};
@@ -454,8 +489,18 @@ print(cleaned["AssetB"].isna().sum(), "missing value(s) after cleaning")
         \draw[->] (raw) -- (clean);
         \draw[->] (clean) -- (model);
     \end{tikzpicture}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ffigbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
     \caption{A typical financial data pipeline moves from raw data to cleaned inputs and then to modeling.}
     \label{fig:data_pipeline}
+}
 \end{figure}
 
 Forward-filling is appropriate for a short gap in an otherwise liquid series, but it is not always the right choice: forward-filling an illiquid security for many consecutive days can create the false impression of zero volatility. A price series for a stock must also often be adjusted for splits and dividends to produce a consistent total return series; otherwise, the historical performance may be distorted by mechanical price drops that have nothing to do with economic losses. This is an important lesson for quantitative finance: even a sophisticated model is only as good as the data that feed it.
@@ -579,7 +624,7 @@ but the real payoff appears when evaluating the three-asset portfolio built abov
 
 \section{Working with Time Series and Financial Data}\index{Working with Time Series and Financial Data}
 
-Many financial datasets are time series, meaning that observations are indexed by time and ordered sequentially. Stock prices, interest rates, exchange rates, and macroeconomic indicators all arrive as time-dependent data. Working with such data requires careful handling of date indexes, alignment, and missing observations. In Python, pandas is particularly useful because it provides a time-indexed data structure that makes these operations natural, including resampling to a different frequency and computing rolling statistics:
+An analyst comparing two securities that trade on different exchanges, or trying to line up daily prices with a monthly economic release, quickly runs into a problem ordinary rows and columns do not solve on their own: which date does each observation actually belong to, and what should happen when one series has an entry for a day the other is missing? Many financial datasets are time series, meaning that observations are indexed by time and ordered sequentially. Stock prices, interest rates, exchange rates, and macroeconomic indicators all arrive as time-dependent data. Working with such data requires careful handling of date indexes, alignment, and missing observations. In Python, pandas is particularly useful because it provides a time-indexed data structure that makes these operations natural, including resampling to a different frequency and computing rolling statistics:
 
 \begin{verbatim}
 rolling_vol = returns["AssetA"].rolling(window=2).std()
@@ -651,7 +696,7 @@ Returning \texttt{nan} (not-a-number) rather than letting the program crash allo
 
 \section{Descriptive Statistics and Portfolio Analytics}\index{Descriptive Statistics and Portfolio Analytics}
 
-Once data are imported and cleaned, Python can be used to calculate descriptive statistics such as averages, standard deviations, skewness, and kurtosis. These statistics summarize the distribution of returns and provide a starting point for risk analysis:
+A return series that has been imported, cleaned, and plotted still leaves an obvious question unanswered: how risky does this asset actually look, in numbers precise enough to compare against another asset or feed into a portfolio calculation? Once data are imported and cleaned, Python can be used to calculate descriptive statistics such as averages, standard deviations, skewness, and kurtosis. These statistics summarize the distribution of returns and provide a starting point for risk analysis:
 
 \begin{verbatim}
 summary = returns.describe().round(4)

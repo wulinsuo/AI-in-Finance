@@ -5,6 +5,7 @@
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{booktabs}
+\usepackage{floatrow}
 \usepackage{draftwatermark}
 
 \SetWatermarkText{Wulin.Suo@Queensu.ca}
@@ -31,7 +32,8 @@ The chapter is organized around three questions a financial institution must ans
 Suppose a bank's model validation team asks a data scientist why the credit model just denied a particular applicant, and the honest answer is ``because that is what several hundred decision trees, averaged together, produced.'' That answer is true, but it satisfies no one: not the applicant, who is legally entitled under fair-lending rules to specific reasons for the denial; not the regulator, who needs some way to verify the model is not proxying for a protected characteristic; and not the risk committee, who cannot sign off on a decision it cannot itself understand. Two related but distinct words recur throughout this chapter in response to exactly this problem, and are worth fixing precisely before using them interchangeably, as casual usage often does. \textbf{Interpretability} is a property of a model itself: a model is interpretable to the degree that a human can understand, without any additional tool, how its inputs map to its outputs, simply by inspecting its structure. A linear regression's coefficients, Chapter 6's credit-spread regression among them, are interpretable in this direct sense: the coefficient itself is the answer to ``how much does the prediction change per unit change in this feature.'' \textbf{Explainability}, by contrast, is a property of a method applied \emph{after} a model is built, regardless of the model's own structure: an explanation method takes a model, interpretable or not, and produces a human-comprehensible account of a specific prediction or of the model's behavior in general. A deep neural network is not interpretable in the first sense, its millions of weights admit no direct reading, but it can still be explained, approximately, using the post-hoc methods this chapter develops. Every explanation method in this chapter falls into one of four cells formed by two independent distinctions, illustrated in Figure~\ref{fig:xai_taxonomy}: whether it explains the model's behavior in general (\emph{global}) or a single prediction (\emph{local}), and whether it is built into the model's own structure (\emph{intrinsic}) or applied afterward to an already-fit model (\emph{post-hoc}).
 
 \begin{figure}[htbp]
-    \centering
+\centering
+\begin{lrbox}{\bookmeasuredbox}
     \begin{tikzpicture}[>=latex,thick]
         \draw[thick] (0,0) rectangle (10,6);
         \draw[thick] (5,0) -- (5,6);
@@ -45,11 +47,21 @@ Suppose a bank's model validation team asks a data scientist why the credit mode
         \node[align=center,font=\small] at (2.5,1.5) {One applicant's own\\linear score decomposition\\(additive by construction)};
         \node[align=center,font=\small] at (7.5,1.5) {Shapley value\index{Shapley value}s; LIME\index{LIME (Local Interpretable Model-agnostic Explanations)}\\(Sections~\ref{sec:shapley-explain}, \ref{sec:lime-explain})};
     \end{tikzpicture}
-    \caption{A taxonomy of explanation methods along two axes: global versus local, and intrinsic versus post-hoc. Most of the powerful, high-capacity models this book has introduced, ensembles (Chapter 6), CNNs and RNNs (Chapter 15), transformers (\index{transformer architecture}Chapter 14), fall outside the left column entirely, which is exactly why the post-hoc methods on the right exist.}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ffigbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
+    \caption{A taxonomy of explanation methods along two axes: global versus local, and intrinsic versus post-hoc.}
     \label{fig:xai_taxonomy}
+}
 \end{figure}
 
-The trade-off this taxonomy makes visible is not a minor implementation detail; it is the central tension of this entire chapter. Chapter 6 already observed that the most flexible, highest-capacity models, large ensembles, deep neural networks, are typically also the least directly interpretable, while the most interpretable models, a linear regression, a shallow decision tree, are typically less flexible and can fit a smaller class of relationships. Post-hoc explanation methods do not eliminate this trade-off; they manage it, by producing an approximate, human-readable account of a black-box model's behavior without changing the underlying model at all. That approximation is genuinely useful, a bank can keep the gradient-boosted model that best predicts default while still producing an adverse-action notice for a declined applicant, but it is an approximation, and Section~\ref{sec:lime-explain}'s worked example shows concretely both how well such an approximation can work near the point it is built around and how it can degrade away from that point.
+The trade-off this taxonomy makes visible is not a minor implementation detail; it is the central tension of this entire chapter. Chapter 6 already observed that the most flexible, highest-capacity models, large ensembles, deep neural networks, and transformers\index{transformer architecture} (Chapter 14) among them, are typically also the least directly interpretable, while the most interpretable models, a linear regression, a shallow decision tree, are typically less flexible and can fit a smaller class of relationships. Post-hoc explanation methods do not eliminate this trade-off; they manage it, by producing an approximate, human-readable account of a black-box model's behavior without changing the underlying model at all. That approximation is genuinely useful, a bank can keep the gradient-boosted model that best predicts default while still producing an adverse-action notice for a declined applicant, but it is an approximation, and Section~\ref{sec:lime-explain}'s worked example shows concretely both how well such an approximation can work near the point it is built around and how it can degrade away from that point.
 
 \section{Intrinsically Interpretable Models Revisited}\index{Intrinsically Interpretable Models Revisited}
 \label{sec:intrinsic-models}
@@ -120,7 +132,8 @@ The Shapley decomposition of the gap between them is
 and indeed $0.608 + 0.883 + 0.270 = 1.761$ exactly, up to rounding, verifying the efficiency property directly. Both features push the applicant's predicted risk above the baseline, the applicant's debt-to-income ratio is higher than the reference population's average (more leverage, more risk) and the applicant's credit history is shorter than average (less seasoning, more risk), but debt-to-income's contribution (0.883) is more than three times credit history's (0.270), identifying debt-to-income as the dominant driver of this applicant's elevated predicted default risk, not merely a contributing factor tied for first place. Figure~\ref{fig:shap_waterfall} draws this decomposition as a waterfall chart, the standard way a SHAP explanation is presented in practice.
 
 \begin{figure}[htbp]
-    \centering
+\centering
+\begin{lrbox}{\bookmeasuredbox}
     \begin{tikzpicture}[thick]
         \draw[->] (0,0) -- (0,6.3) node[above,font=\small] {$z$ (log-odds)};
         \draw[fill=gray!25] (0,0) rectangle (1.4,2.03);
@@ -135,8 +148,18 @@ and indeed $0.608 + 0.883 + 0.270 = 1.761$ exactly, up to rounding, verifying th
         \draw[dashed] (3.4,4.97) -- (4,4.97);
         \draw[dashed] (5.4,5.87) -- (6,5.87);
     \end{tikzpicture}
-    \caption{The Shapley decomposition as a waterfall chart. Starting from the baseline applicant's log-odds ($0.608$), each feature's contribution (black bars) bridges the gap to the actual applicant's log-odds ($1.761$, right), with debt-to-income responsible for more than three times the credit-history contribution.}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ffigbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
+    \caption{The Shapley decomposition as a waterfall chart.}
     \label{fig:shap_waterfall}
+}
 \end{figure}
 
 \subsection*{From Shapley Values to Adverse Action Reason Codes}\index{From Shapley Values to Adverse Action Reason Codes}
@@ -164,8 +187,7 @@ which at $x_0 = (1.0, 0.5)$ produces hidden activations $h_0 = (0.35, 0.15)$ and
 
 \begin{table}[htbp]
 \centering
-\caption{Perturbed samples around $x_0=(1.0,0.5)$ and the network's exact prediction}
-\label{tab:lime_samples}
+\begin{lrbox}{\bookmeasuredbox}
 \begin{tabular}{lrr}
 \toprule
 Perturbed input $(x_1,x_2)$ & Hidden activations & Prediction $\hat y$ \\
@@ -180,6 +202,18 @@ $(1.1, 0.4)$ & $(0.41, 0.13)$ & 0.5698 \\
 $(0.9, 0.6)$ & $(0.29, 0.17)$ & 0.5471 \\
 \bottomrule
 \end{tabular}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ttabbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
+\caption{Perturbed samples around $x_0=(1.0,0.5)$ and the network's exact prediction}
+\label{tab:lime_samples}
+}
 \end{table}
 
 Fitting an ordinary least-squares surrogate 
@@ -208,8 +242,7 @@ Table~\ref{tab:fairness_audit} makes this tension concrete with a small, stylize
 
 \begin{table}[htbp]
 \centering
-\caption{A fairness audit of the credit-scoring model on two synthetic four-applicant groups}
-\label{tab:fairness_audit}
+\begin{lrbox}{\bookmeasuredbox}
 \begin{tabular}{lrrrrl}
 \toprule
 Applicant & Debt/income & Credit history & $\Pr(\text{Default})$ & Decision & Will actually default \\
@@ -225,6 +258,18 @@ Beta-3 & 20\% & 5 yrs & 6.2\% & Approve & No \\
 Beta-4 & 38\% & 1 yr & $>$99.9\% & Deny & Yes \\
 \bottomrule
 \end{tabular}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ttabbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
+\caption{A fairness audit of the credit-scoring model on two synthetic four-applicant groups}
+\label{tab:fairness_audit}
+}
 \end{table}
 
 Group Alpha's approval rate is $3/4 = 75\%$; Group Beta's is $1/4 = 25\%$, giving an adverse impact ratio of $0.25/0.75 = 0.333$, far below the 0.80 threshold and, on this evidence alone, a clear four-fifths-rule violation calling for further fair-lending investigation. Yet the error-rate picture is not simply the mirror image of this disparity: among Group Alpha's two applicants who will actually default (Alpha-2 and Alpha-3), the model approves one of them (Alpha-2, whose moderate debt-to-income and credit history keep her predicted probability just under the threshold), a false-negative rate of $50\%$; among Group Beta's two future defaulters (Beta-2 and Beta-4), the model correctly denies both, a false-negative rate of $0\%$. The group that is approved far more often (Alpha) is thus also the group whose true risk the model is worse at catching, while the group facing the harsher approval rate (Beta) is, on this small sample, screened perfectly. Neither statistic alone tells the whole story: a regulator focused only on approval-rate parity would flag this model for disadvantaging Beta, while a regulator focused only on error-rate parity would note that Alpha's approved population is quietly carrying more missed risk, and reconciling the two findings, rather than optimizing either one in isolation, is exactly the judgment call the impossibility result above shows cannot be avoided by a purely statistical fix.
@@ -265,8 +310,7 @@ Chapter 13's precision-drift table tracked a fraud model's precision declining f
 
 \begin{table}[htbp]
 \centering
-\caption{Population stability index for the fraud-scoring model's score distribution}
-\label{tab:psi_monitoring}
+\begin{lrbox}{\bookmeasuredbox}
 \begin{tabular}{lrrrrr}
 \toprule
 Score bin & $[0, 0.25)$ & $[0.25, 0.50)$ & $[0.50, 0.75)$ & $[0.75, 1.00]$ & Total PSI \\
@@ -276,6 +320,18 @@ Current proportion & 0.34 & 0.29 & 0.22 & 0.15 & \\
 Bin contribution & 0.062 & 0.006 & 0.027 & 0.020 & 0.115 \\
 \bottomrule
 \end{tabular}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ttabbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
+\caption{Population stability index for the fraud-scoring model's score distribution}
+\label{tab:psi_monitoring}
+}
 \end{table}
 
 A total PSI of $0.115$ falls into the conventional ``moderate shift, worth investigating'' band used widely in credit-risk monitoring practice (below $0.10$ is treated as no material change; above $0.25$ as a major shift typically requiring retraining or revalidation before the model continues to be used), well before precision itself has moved enough to be conclusively distinguishable from noise. A larger share of transactions now score in the lower bins and a smaller share in the top bin, consistent with the same adaptive evasion Section~\ref{sec:adversarial-robustness} demonstrated directly: as more transactions structure themselves to sit just under the model's threshold, the population of scores shifts downward even before enough investigated cases accumulate to move the precision figure meaningfully. This is exactly the kind of early warning SR 11-7's ongoing-monitoring pillar is meant to produce, and exactly why a mature model governance program tracks both a leading, label-free statistic like PSI and a lagging, outcome-based statistic like precision, rather than either alone.
@@ -379,6 +435,7 @@ Interpretability is a property of a model's own structure, while explainability 
     \item Barocas, Hardt, and Narayanan, \emph{Fairness and Machine Learning: Limitations and Opportunities}. A comprehensive treatment of statistical fairness definitions, including disparate impact and equalized odds\index{Equalized Odds}, underlying Section~\ref{sec:fairness}.
     \item Chouldechova, ``Fair Prediction with Disparate Impact: A Study of Bias in Recidivism Prediction Instruments,'' \emph{Big Data}. One of the two papers establishing the impossibility of simultaneously satisfying calibration and error-rate parity across groups, cited in Section~\ref{sec:fairness}.
     \item Kleinberg, Mullainathan, and Raghavan, ``Inherent Trade-Offs in the Fair Determination of Risk Scores,'' \emph{Proceedings of Innovations in Theoretical Computer Science}. The companion impossibility result to Chouldechova's, cited in Section~\ref{sec:fairness}.
+    \item Dwork, Hardt, Pitassi, Reingold, and Zemel, ``Fairness Through Awareness,'' \emph{Proceedings of the 3rd Innovations in Theoretical Computer Science Conference}. The original individual-fairness definition discussed as a third fairness paradigm in Section~\ref{sec:fairness}.
     \item Board of Governors of the Federal Reserve System and Office of the Comptroller of the Currency, ``Supervisory Guidance on Model Risk Management,'' SR 11-7. The foundational U.S. bank regulatory guidance on model risk management underlying Section~\ref{sec:governance-monitoring}.
     \item National Institute of Standards and Technology, ``AI Risk Management Framework (AI RMF 1.0).'' The govern/map/measure/manage framework discussed at the close of Section~\ref{sec:governance-monitoring}.
     \item Goodfellow, Shlens, and Szegedy, ``Explaining and Harnessing Adversarial Examples,'' \emph{International Conference on Learning Representations}. The foundational paper on adversarial perturbations in deep learning, contrasted with the fraud-model perturbation in Section~\ref{sec:adversarial-robustness}.

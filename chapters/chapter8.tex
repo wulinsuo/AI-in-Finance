@@ -5,6 +5,7 @@
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{booktabs}
+\usepackage{floatrow}
 \usepackage{draftwatermark}
 
 \SetWatermarkText{WSuo@Queensu.ca}
@@ -146,7 +147,8 @@ The parametric Expected Shortfall under normality has a closed-form expression i
 which for $\alpha=95\%$ gives $\text{ES}_{95\%} \approx \$225{,}366$, noticeably larger than the parametric VaR$_{95\%}$ of \$186,195, exactly as it should be, since ES averages over the full tail rather than reporting only its edge. Because ES is a coherent risk measure\index{Coherent Risk Measure} in a precise mathematical sense that VaR is not (it satisfies a subadditivity property guaranteeing that diversification can never increase measured risk, which VaR can occasionally violate in pathological cases), banking regulators have shifted market-risk capital requirements from VaR toward Expected Shortfall in recent years, a change explored further in this chapter's discussion of regulatory capital. Figure~\ref{fig:var_es_tail} shows why the two measures differ: VaR marks only the boundary of the shaded loss tail, while ES averages over the entire tail beyond it.
 
 \begin{figure}[htbp]
-    \centering
+\centering
+\begin{lrbox}{\bookmeasuredbox}
     \begin{tikzpicture}[thick]
         \draw[->] (-6.2,0) -- (6.2,0) node[right,font=\small] {portfolio return};
         \draw[->] (0,0) -- (0,4.6) node[above,font=\small] {probability density};
@@ -159,8 +161,18 @@ which for $\alpha=95\%$ gives $\text{ES}_{95\%} \approx \$225{,}366$, noticeably
         \node[align=center,font=\scriptsize] at (-4.6,2.4) {$\text{ES}_{95\%}$\\$=\$225{,}366$\\(mean of shaded tail)};
         \draw[->] (-4.4,1.75) -- (-3.0,0.25);
     \end{tikzpicture}
-    \caption{The parametric VaR and Expected Shortfall of Table~\ref{tab:portfolio_returns}'s portfolio, illustrated against the assumed normal return distribution. VaR$_{95\%}$ marks the boundary of the shaded $5\%$ loss tail (worse returns to its left); Expected Shortfall averages over that entire shaded region rather than reporting only its edge, which is exactly why $\text{ES}_{95\%}>\text{VaR}_{95\%}$.}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ffigbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
+    \caption{The parametric VaR and Expected Shortfall of Table~\ref{tab:portfolio_returns}'s portfolio, illustrated against the assumed normal return distribution.}
     \label{fig:var_es_tail}
+}
 \end{figure}
 
 \section{Maximum Drawdown: A Path-Dependent Risk Measure}\index{Maximum drawdown}
@@ -362,7 +374,8 @@ A mature model risk management\index{model risk management} framework, closely f
 Every quantitative method in this chapter, VaR, Expected Shortfall, economic capital, exists inside an organizational structure that determines whether it is actually used correctly, and financial institutions typically organize risk oversight using a ``three lines of defense\index{three lines of defense}'' model, illustrated in Figure~\ref{fig:three_lines}.
 
 \begin{figure}[htbp]
-    \centering
+\centering
+\begin{lrbox}{\bookmeasuredbox}
     \begin{tikzpicture}[>=latex,thick,node distance=2.3cm]
         \node[draw,rounded corners,minimum width=3.0cm,minimum height=1.0cm,align=center] (first) {First Line:\\Risk-Taking Units};
         \node[draw,rounded corners,minimum width=3.0cm,minimum height=1.0cm,right=of first,align=center] (second) {Second Line:\\Risk \& Compliance};
@@ -370,8 +383,18 @@ Every quantitative method in this chapter, VaR, Expected Shortfall, economic cap
         \draw[->] (first) -- (second);
         \draw[->] (second) -- (third);
     \end{tikzpicture}
-    \caption{The three lines of defense: risk-taking units own their risk day to day, an independent risk and compliance function sets limits and models like those in this chapter and monitors compliance with them, and internal audit periodically verifies that the first two lines are actually functioning as designed.}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ffigbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
+    \caption{The three lines of defense in risk governance.}
     \label{fig:three_lines}
+}
 \end{figure}
 
 The first line of defense is the business unit that actually takes the risk, a trading desk or a lending team, and is responsible for managing it day to day within approved limits. The second line is an independent risk management and compliance function, organizationally separate from the business units it oversees, that builds and maintains models like the VaR and economic capital methods introduced in this chapter and the credit-scoring methods of Chapter 9, sets risk limits, and monitors whether the first line is operating within them. The third line, internal audit, periodically and independently verifies that the first two lines are functioning as intended, checking not just whether a number was computed correctly but whether the entire risk management process was followed. This structure exists specifically to prevent the single point of failure that arises when the people generating revenue from a risk position are also the people responsible for measuring and reporting that risk, a conflict of interest that has been implicated in numerous historical risk management failures. A model like the ones developed in this chapter is only as trustworthy as the governance structure that surrounds it: a perfectly specified VaR model computed by a risk function with no real independence from the trading desk it monitors provides little genuine protection.

@@ -5,6 +5,7 @@
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{booktabs}
+\usepackage{floatrow}
 \usepackage{draftwatermark}
 
 \SetWatermarkText{Wulin.Suo@Queensu.ca}
@@ -53,7 +54,8 @@ Social media and analyst reports & Aggregate sentiment signals, higher noise, hi
 Figure~\ref{fig:nlp_pipeline} sketches the pipeline this chapter follows, from raw text to a model-ready representation to an application. Every technique in this chapter is a way of filling in the middle step.
 
 \begin{figure}[htbp]
-    \centering
+\centering
+\begin{lrbox}{\bookmeasuredbox}
     \begin{tikzpicture}[>=latex,thick,node distance=0.7cm]
         \node[draw,rounded corners,minimum width=1.7cm,minimum height=0.9cm,align=center,font=\scriptsize] (raw) {Raw Text\\(Transcript, Filing)};
         \node[draw,rounded corners,minimum width=1.6cm,minimum height=0.9cm,right=of raw,align=center,font=\scriptsize] (clean) {Tokenize /\\Clean};
@@ -65,14 +67,24 @@ Figure~\ref{fig:nlp_pipeline} sketches the pipeline this chapter follows, from r
         \draw[->] (vec) -- (model);
         \draw[->] (model) -- (app);
     \end{tikzpicture}
-    \caption{The text-to-application pipeline this chapter develops. Vectorization (Section~\ref{sec:bow-tfidf} and Section~\ref{sec:embeddings}) and modeling (Section~\ref{sec:naive-bayes-text} and Section~\ref{sec:attention-transformers}) are where most of the chapter's technical content sits.}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ffigbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
+    \caption{The text-to-application pipeline this chapter develops.}
     \label{fig:nlp_pipeline}
+}
 \end{figure}
 
 \section{From Text to Numbers: Bag-of-Words and TF-IDF}\index{From Text to Numbers: Bag-of-Words and TF-IDF}
 \label{sec:bow-tfidf}
 
-The simplest way to turn text into a feature vector is the bag-of-words representation: fix a vocabulary of terms, and represent each document as the count of each vocabulary term it contains, discarding word order entirely. This is a drastic simplification, ``growth despite headwinds'' and ``headwinds despite growth'' produce identical vectors, but it is a surprisingly effective baseline, and it is exactly the ``word counts'' feature representation Chapter 6 anticipated for Naive Bayes text classification.
+Suppose an analyst has thousands of earnings-call transcripts and wants to feed them into one of Chapter 6's classifiers, every one of which expects a fixed-length numeric vector as input, not a paragraph of English text. The simplest way to turn text into a feature vector is the bag-of-words representation: fix a vocabulary of terms, and represent each document as the count of each vocabulary term it contains, discarding word order entirely. This is a drastic simplification, ``growth despite headwinds'' and ``headwinds despite growth'' produce identical vectors, but it is a surprisingly effective baseline, and it is exactly the ``word counts'' feature representation Chapter 6 anticipated for Naive Bayes text classification.
 
 A raw count, however, overweights common words that appear in almost every document and carry little discriminating information. Term frequency-inverse document frequency (TF-IDF) corrects for this. For term $t$ in document $d$, drawn from a collection of $N$ documents,
 \begin{equation*}
@@ -117,7 +129,7 @@ The word ``revenue'' appears in three of the four documents, so it earns a modes
 \section{Financial Sentiment Analysis and the Loughran-McDonald Dictionary}\index{Loughran-McDonald dictionary}
 \label{sec:sentiment}
 
-The most direct way to score sentiment is a lexicon-based approach: maintain a list of positive and negative financial words, count how many of each appear in a document, and combine the counts into a tone score,
+Suppose a trader wants to know, within seconds of an earnings call ending, whether management sounded upbeat or defensive, without waiting for an analyst to read the transcript and write a summary. The most direct way to score sentiment is a lexicon-based approach: maintain a list of positive and negative financial words, count how many of each appear in a document, and combine the counts into a tone score,
 \begin{equation*}
 \text{tone} = \frac{\#\text{positive words} - \#\text{negative words}}{\#\text{total words}}.
 \end{equation*}
@@ -144,8 +156,7 @@ Suppose eight earnings-call events produce the tone scores and next-day stock re
 
 \begin{table}[htbp]
 \centering
-\caption{Eight earnings-call events: tone score, next-day return, signal, and strategy return}
-\label{tab:event_driven_signal}
+\begin{lrbox}{\bookmeasuredbox}
 \begin{tabular}{lccccc}
 \toprule
 Event & Tone score & Next-day return (\%) & Signal & Strategy return (\%) & Correct? \\
@@ -160,6 +171,18 @@ Event & Tone score & Next-day return (\%) & Signal & Strategy return (\%) & Corr
 8 & $-0.12$ & $-0.9$ & Short & $+0.9$ & Yes \\
 \bottomrule
 \end{tabular}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ttabbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
+\caption{Eight earnings-call events: tone score, next-day return, signal, and strategy return}
+\label{tab:event_driven_signal}
+}
 \end{table}
 
 The strategy is correct, meaning the sign of its position matches the sign of the subsequent return, in 6 of 8 events, a 75\% hit rate. Events 4 and 7 are misses: in event 4, mildly negative tone was followed by a small positive return, and in event 7, mildly positive tone was followed by a small negative return, both events where the tone score was close to zero and therefore only weakly informative, a reminder that a sentiment signal is genuinely noisy, not a deterministic predictor. Comparing the two strategies (Sharpe-like ratio: mean divided by standard deviation, with no annualization applied here),
@@ -173,9 +196,9 @@ The tone score above is a text-based sentiment measure, extracted from language 
 \section{Naive Bayes and Document Classification}\index{Naive Bayes and Document Classification}
 \label{sec:naive-bayes-text}
 
-Chapter 6 introduced Naive Bayes as a generative classifier that estimates 
-$$\Pr(y=k \mid x_1,\ldots,x_p) \propto \Pr(y=k)\prod_{j=1}^p \Pr(x_j \mid y=k)$$ 
-and noted its particular suitability for text, where features are word counts and the conditional-independence assumption, while not literally true, distorts the result less than it might for correlated financial ratios. This section applies that model to a concrete document classification task: sorting sentences drawn from a 10-K's risk-factors section into ``Credit Risk'' or ``Market Risk'' categories, using only the counts of six vocabulary words (default, borrower, counterparty, volatility, rate, currency).
+Suppose a compliance team needs to sort thousands of sentences drawn from a 10-K's risk-factors section into ``Credit Risk'' or ``Market Risk'' categories, a task too large to do by hand every filing season but too nuanced for a simple keyword rule to get right on its own. Chapter 6 introduced Naive Bayes as a generative classifier that estimates
+$$\Pr(y=k \mid x_1,\ldots,x_p) \propto \Pr(y=k)\prod_{j=1}^p \Pr(x_j \mid y=k)$$
+and noted its particular suitability for text, where features are word counts and the conditional-independence assumption, while not literally true, distorts the result less than it might for correlated financial ratios. This section applies that model to exactly this document classification task, using only the counts of six vocabulary words (default, borrower, counterparty, volatility, rate, currency).
 
 Table~\ref{tab:nb_training_sentences} shows the six training sentences verbatim, three representative of each class, each written in the same style as an actual 10-K risk-factors disclosure.
 
@@ -273,7 +296,8 @@ Embeddings give each word a fixed vector regardless of context, but the same wor
 where $d_k$ is the dimension of the key vectors, included to keep the dot products from growing too large as $d_k$ increases, and softmax\index{softmax} rescales a vector of raw scores into positive weights that sum to exactly one, so the weighted combination of value vectors that follows is a genuine, interpretable average rather than an arbitrary weighted sum. This single mechanism, applied across many layers and attention ``heads,'' is the core computational building block inside BERT, GPT, and every other modern transformer-based language model. Figure~\ref{fig:qkv_architecture} lays out this computation as a diagram, the same three-projection, one-combination structure every attention layer repeats.
 
 \begin{figure}[htbp]
-    \centering
+\centering
+\begin{lrbox}{\bookmeasuredbox}
     \begin{tikzpicture}[>=latex,thick,node distance=1.1cm and 1.6cm]
         \node[draw,rounded corners,align=center,minimum width=3.0cm] (embed) {Token embedding $x$};
         \node[draw,rounded corners,align=center,minimum width=2.4cm,below left=of embed] (q) {Query\\$Q=xW^Q$};
@@ -289,8 +313,18 @@ where $d_k$ is the dimension of the key vectors, included to keep the dot produc
         \draw[->] (v) -- (attn);
         \draw[->] (attn) -- (out);
     \end{tikzpicture}
-    \caption{The self-attention computation as a diagram. The same token embedding $x$ is projected three ways through independently learned weight matrices $W^Q$, $W^K$, $W^V$; the resulting query, key, and value vectors are then combined by the attention formula into a single contextual representation.}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ffigbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
+    \caption{The self-attention computation as a diagram.}
     \label{fig:qkv_architecture}
+}
 \end{figure}
 
 \subsection*{A Worked Example: Self-Attention for a Three-Token Sentence}\index{Self-Attention for a Three-Token Sentence}
@@ -302,7 +336,8 @@ Consider the toy sentence ``stocks rallied today,'' with $d_k = 2$. Rather than 
 Figure~\ref{fig:attention_weights} draws these three attention weights directly, with edge thickness proportional to how much each token contributes. The token ``today,'' despite being a different word, contributes exactly as much to ``stocks'''s new representation as ``stocks'' contributes to itself, because their key vectors happen to align with the query, while ``rallied'' contributes far less, its value $(0,2)$ pulled in only weakly.
 
 \begin{figure}[htbp]
-    \centering
+\centering
+\begin{lrbox}{\bookmeasuredbox}
     \begin{tikzpicture}[thick]
         \node[draw,rounded corners,align=center,minimum width=2.6cm] (q) at (0,0) {``stocks'' (query)};
         \node[draw,rounded corners,align=center,minimum width=2.4cm] (k1) at (6,2.2) {``stocks''\\weight $0.4011$};
@@ -312,18 +347,28 @@ Figure~\ref{fig:attention_weights} draws these three attention weights directly,
         \draw[line width=1.0pt] (q) -- (k2);
         \draw[line width=2.4pt] (q) -- (k3);
     \end{tikzpicture}
-    \caption{Self-attention weights for the query token ``stocks'' over the three-token sentence ``stocks rallied today.'' Edge thickness is proportional to attention weight: ``stocks'' and ``today'' each contribute about twice as much as ``rallied'' to the query token's new, contextual representation, because their key vectors align more closely with the query.}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ffigbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
+    \caption{Self-attention weights for the query token ``stocks'' over the three-token sentence ``stocks rallied today,'' with edge thickness proportional to attention weight.}
     \label{fig:attention_weights}
+}
 \end{figure}
 
 This is exactly the mechanism that lets a transformer build a contextual representation of ``raise'' that differs depending on whether nearby tokens are ``rates'' or ``water levels'': a trained $W^K$ would give ``rates'' and ``raise'' well-aligned keys in a financial context and ``water'' and ``raise'' well-aligned keys in an environmental one, precisely the way this toy example's keys were aligned by construction rather than learned from data.
 
 \subsection*{Multi-Head Attention and Positional Encoding}\index{Multi-Head Attention and Positional Encoding}
 
-Two refinements turn this single calculation into the mechanism actually used in practice. First, a real transformer layer computes several 
-attention calculations in parallel, each with its own learned $Q$, $K$, $V$ projections, called attention heads, then concatenates their outputs. 
-One head might learn to attend primarily to nearby tokens (useful for local syntax), another to the subject of a distant 
-verb (useful for long-range dependencies such as connecting a hedge's description early in a paragraph to a number reported much later), 
+A single attention calculation forces every token to distribute its focus according to one shared notion of relevance, but relevance in a real sentence is not one-dimensional: local grammatical structure (which word modifies which noun) and long-range dependency (which earlier passage a later reference actually points back to) are two genuinely different kinds of relationship, and a single attention pattern has no way to represent both well at once. Two refinements turn this single calculation into the mechanism actually used in practice. First, a real transformer layer computes several
+attention calculations in parallel, each with its own learned $Q$, $K$, $V$ projections, called attention heads, then concatenates their outputs.
+One head might learn to attend primarily to nearby tokens (useful for local syntax), another to the subject of a distant
+verb (useful for long-range dependencies such as connecting a hedge's description early in a paragraph to a number reported much later),
 and the model combines all of these perspectives rather than relying on a single attention pattern. Second, the attention calculation above 
 treats the input as an unordered set: nothing in $Q \cdot K$ depends on token position, so ``the bank raised rates'' and ``rates 
 raised the bank'' would receive identical attention weights if given identical token embeddings. Positional encoding ($PE$) fixes this by 
@@ -362,14 +407,14 @@ The two representations of the identical word ``rallied,'' in the identical sent
 
 \subsection*{How These Models Are Trained, and Why They Eventually Need Retraining}\index{How These Models Are Trained, and Why They Eventually Need Retraining}
 
-None of the weight matrices in Figure~\ref{fig:qkv_architecture}, $W^Q$, $W^K$, $W^V$, or the many more inside a full transformer's feedforward and output layers, are hand-specified; every one of them is learned by ordinary gradient descent (Chapter 6's Section 6.5), applied not to a small labeled dataset but to a self-supervised objective computed directly from raw, unlabeled text at enormous scale. An encoder-only model is pretrained by masking a random fraction of tokens in each training sentence and learning to predict the missing token from its surrounding bidirectional context; a decoder-only model is pretrained on the simpler, single objective of predicting each next token from everything before it, applied repeatedly across a very large corpus of general text, exactly the causal-masked computation the worked example above just carried out by hand. This is what ``training'' actually means for a language model: no human labels the correct output token by token, the text itself supplies the training signal, which is precisely why these models can be pretrained on a vastly larger volume of data than any supervised model in this book has needed.
+No one hand-writes the rule that lets a model correctly guess which distant word a pronoun refers to, or which number a sentence's context makes most plausible; a model this large has to learn it, and the only training signal available at the necessary scale is the text itself, with no human labels attached. None of the weight matrices in Figure~\ref{fig:qkv_architecture}, $W^Q$, $W^K$, $W^V$, or the many more inside a full transformer's feedforward and output layers, are hand-specified; every one of them is learned by ordinary gradient descent (Chapter 6's Section 6.5), applied not to a small labeled dataset but to a self-supervised objective computed directly from raw, unlabeled text at enormous scale. An encoder-only model is pretrained by masking a random fraction of tokens in each training sentence and learning to predict the missing token from its surrounding bidirectional context; a decoder-only model is pretrained on the simpler, single objective of predicting each next token from everything before it, applied repeatedly across a very large corpus of general text, exactly the causal-masked computation the worked example above just carried out by hand. This is what ``training'' actually means for a language model: no human labels the correct output token by token, the text itself supplies the training signal, which is precisely why these models can be pretrained on a vastly larger volume of data than any supervised model in this book has needed.
 
 Pretraining is not, however, a one-time event a financial institution can complete and then ignore indefinitely. Financial language itself drifts: new instruments, regulations, tickers, and company names appear continuously, established terms occasionally acquire new meanings (a ``pandemic bond'' meant nothing before 2020), and the vocabulary a sentiment or classification model was pretrained on can gradually stop matching the vocabulary a live system actually encounters, a text-domain analogue of the concept drift Chapter 12's Section 12.17 and Chapter 16's population-stability-index discussion already raised for numeric models. Three responses are common in practice, roughly in increasing order of cost: prompting or retrieval (Section~\ref{sec:rag}) can supply current information to an otherwise-frozen model without touching its weights at all; parameter-efficient fine-tuning updates a small number of additional parameters on a modest, domain-specific dataset without repeating full pretraining; and continued pretraining resumes the original self-supervised objective on fresh text, updating the model's weights more thoroughly at proportionally higher computational cost. Which response is appropriate depends on whether the problem is a knowledge gap (the model simply lacks a recent fact, best fixed by retrieval) or a genuine shift in how language itself is used (better fixed by continued pretraining or fine-tuning), a diagnosis that itself requires the same kind of ongoing monitoring Chapter 16's model-governance discussion already established for every other model in this book.
 
 \section{Large Language Models in Finance: Capabilities, Generative Modeling, and Limits}\index{Large Language Models in Finance: Capabilities, Generative Modeling, and Limits}
 \label{sec:llms-finance}
 
-Chapter 6 noted that large language models are far more elaborate examples of the same generative-modeling principle behind Naive Bayes: both learn a probability distribution, Naive Bayes over word counts given a class, an LLM over the next token given all preceding tokens, and both can be used generatively, Naive Bayes to characterize what a document of a given class looks like, an LLM to produce entire new documents. An LLM is, mechanically, a very large stack of the self-attention layers developed in Section~\ref{sec:attention-transformers}, trained on enormous volumes of text to predict the next token, then further adapted (through instruction tuning and related techniques) to follow natural-language prompts.
+Suppose an analyst is handed a hundred-page merger filing an hour before a decision is due, or a portfolio manager wants a plain-English answer to a specific question buried somewhere inside it, tasks none of this chapter's classification or scoring tools, built to output a single label or score, can actually perform. Chapter 6 noted that large language models are far more elaborate examples of the same generative-modeling principle behind Naive Bayes: both learn a probability distribution, Naive Bayes over word counts given a class, an LLM over the next token given all preceding tokens, and both can be used generatively, Naive Bayes to characterize what a document of a given class looks like, an LLM to produce entire new documents. An LLM is, mechanically, a very large stack of the self-attention layers developed in Section~\ref{sec:attention-transformers}, trained on enormous volumes of text to predict the next token, then further adapted (through instruction tuning and related techniques) to follow natural-language prompts.
 
 In finance, this generative capability supports tasks well beyond the classification and scoring problems earlier sections addressed: summarizing a lengthy earnings call into a short brief, extracting a structured table of figures from an unstructured filing, drafting a first pass at a research note, or answering a natural-language question about a specific document. These are qualitatively different tasks from the fixed-output classification and scoring problems this book has otherwise emphasized, and they come with a correspondingly different failure mode: hallucination\index{Hallucination}, an LLM's tendency to generate fluent, confident-sounding text that is factually wrong, a specific number invented rather than retrieved, a filing detail misattributed, a summary that omits a covenant violation buried in a footnote. A classification model's failure mode is a wrong label with a computable error rate; an LLM's characteristic failure mode is a wrong but plausible-sounding answer, which is harder to detect automatically and more dangerous in a domain where a single invented figure in a research note or a summarized covenant can be individually consequential. The next four sections develop, in turn, the leading mitigation for hallucination (retrieval-augmented generation), how to instruct a generative model effectively (prompting), a second, distinct use of generative modeling that has nothing to do with text (synthetic data generation), and how a financial institution governs all of this in practice.
 
@@ -486,8 +531,8 @@ The base LLM described in Section~\ref{sec:llms-finance}, trained only to predic
 
 \subsection*{Fine-Tuning and Reinforcement Learning from Human Feedback}\index{Fine-Tuning and Reinforcement Learning from Human Feedback}
 
-After next-token pretraining, a model is typically further trained in two stages: supervised fine-tuning on curated (prompt, ideal response) pairs, 
-teaching it to follow instructions rather than merely continue text, and reinforcement learning from human feedback\index{reinforcement learning from 
+A model pretrained purely to predict the next token is, left as is, an unreliable assistant: asked a direct question, it may just as easily continue writing more text in the same style as actually answer it, since nothing in next-token prediction alone teaches it to follow an instruction or to prefer a helpful, honest response over a fluent but unhelpful one. After next-token pretraining, a model is typically further trained in two stages: supervised fine-tuning on curated (prompt, ideal response) pairs,
+teaching it to follow instructions rather than merely continue text, and reinforcement learning from human feedback\index{reinforcement learning from
 human feedback (RLHF)} (RLHF), which uses human preference judgments between pairs of candidate outputs to train a reward model, then adjusts the LLM 
 to produce outputs that reward model scores highly. The reward model itself is typically trained as a preference classifier: given two candidate 
 outputs with reward scores $r_A$ and $r_B$, the Bradley-Terry model\index{Bradley-Terry Model} estimates the probability that a human would prefer output $A$ as
@@ -509,7 +554,7 @@ a reduction factor of $16{,}777{,}216 / 65{,}536 = 256\times$ for this single ma
 
 \subsection*{LLM Agents and Tool Use}\index{LLM Agents and Tool Use}
 
-An agent extends a single-turn LLM call into a multi-step loop: the model can decide to call an external tool, a retrieval system, a calculator, a database query, or a trading API, observe the tool's result, and decide on a next action, repeating until it produces a final answer. This directly composes the retrieval mechanism of Section~\ref{sec:rag} with ordinary computation.
+Computing and cross-checking a company's P/E ratio requires looking up its current price, pulling its latest reported earnings from a filing, dividing the two, and comparing the result against a sector benchmark, a sequence of lookups and arithmetic no single LLM call, which only ever produces text in one pass, can carry out on its own. An agent extends a single-turn LLM call into a multi-step loop: the model can decide to call an external tool, a retrieval system, a calculator, a database query, or a trading API, observe the tool's result, and decide on a next action, repeating until it produces a final answer. This directly composes the retrieval mechanism of Section~\ref{sec:rag} with ordinary computation.
 
 \subsubsection*{A Worked Example: A Three-Step Agent Computing and Cross-Checking a P/E Ratio}
 Suppose an agent is asked, ``What is Company X's price-to-earnings ratio using its Q3 diluted EPS and quarter-end share price?'' The agent first calls a retrieval tool (exactly Section~\ref{sec:rag}'s mechanism) against the same kind of knowledge base, retrieving two facts: diluted EPS of \$3.15 and a quarter-end closing price of \$57.87. It then calls a calculator tool rather than attempting the arithmetic itself, computing $\text{P/E} = 57.87 / 3.15 \approx 18.37$. Delegating the arithmetic to a calculator tool, rather than having the LLM compute it directly, removes an entire category of arithmetic-hallucination risk, since a calculator's division is exact by construction, while an LLM asked to divide two numbers directly can still make an outright arithmetic error despite retrieving perfectly correct inputs.
@@ -522,7 +567,7 @@ exceeds a pre-set tolerance of, say, $2\%$, so rather than presenting either num
 
 \subsection*{Mixture-of-Experts: Scaling Without Proportional Compute}
 
-A mixture-of-experts\index{mixture of experts} (MoE) architecture replaces a single large feedforward network inside each transformer layer with several smaller ``expert'' networks and a router that sends each token to only a handful of them, letting total model capacity grow without a proportional increase in the compute needed per token.
+Making a language model more capable usually means making it larger, but a larger dense feedforward network makes every single token more expensive to process, whether or not that token's context actually needed the model's full capacity. A mixture-of-experts\index{mixture of experts} (MoE) architecture replaces a single large feedforward network inside each transformer layer with several smaller ``expert'' networks and a router that sends each token to only a handful of them, letting total model capacity grow without a proportional increase in the compute needed per token.
 
 \subsubsection*{A Worked Example: Sparse Activation Fraction}
 Consider a MoE layer with 8 experts of 6 billion parameters each (48 billion total expert parameters) that routes each token to only its top 2 experts. Each token activates $2 \times 6 = 12$ billion of the 48 billion expert parameters, an active fraction of $12/48 = 0.25$, or 25\%: the model has the representational capacity of a 48-billion-parameter feedforward layer while each token's forward pass costs only what a 12-billion-parameter layer would.

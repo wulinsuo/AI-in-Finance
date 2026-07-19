@@ -5,6 +5,7 @@
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{booktabs}
+\usepackage{floatrow}
 \usepackage{draftwatermark}
 
 \SetWatermarkText{Wulin.Suo@Queensu.ca}
@@ -96,7 +97,8 @@ Fitting the simple regression $\text{Revenue growth} = \alpha + \beta\,(\text{Ca
 A single alternative data source is rarely used alone in practice; a real alternative-data desk combines several sources into one model, both to average out any single source's idiosyncratic noise and to capture aspects of a firm's business a single proxy misses. Figure~\ref{fig:altdata_pipeline} sketches the resulting pipeline.
 
 \begin{figure}[htbp]
-    \centering
+\centering
+\begin{lrbox}{\bookmeasuredbox}
     \begin{tikzpicture}[>=latex,thick,node distance=0.7cm]
         \node[draw,rounded corners,minimum width=1.8cm,minimum height=0.9cm,align=center,font=\scriptsize] (raw) {Raw Alt Data\\(Image, Web, Card)};
         \node[draw,rounded corners,minimum width=1.9cm,minimum height=0.9cm,right=of raw,align=center,font=\scriptsize] (feat) {Feature\\Extraction\\(CNN/Aggregate)};
@@ -108,8 +110,18 @@ A single alternative data source is rarely used alone in practice; a real altern
         \draw[->] (align) -- (fuse);
         \draw[->] (fuse) -- (sig);
     \end{tikzpicture}
-    \caption{The alternative-data pipeline this chapter develops. Feature extraction (Section~\ref{sec:nn-structured-unstructured}) and temporal alignment (Section~\ref{sec:alt-data-quality}) are where most alternative-data projects actually fail.}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ffigbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
+    \caption{The alternative-data pipeline this chapter develops.}
     \label{fig:altdata_pipeline}
+}
 \end{figure}
 
 Extending Section~\ref{sec:satellite-example}'s example, suppose Cascade is also tracked by a web-traffic vendor (year-over-year growth in visits to Cascade's e-commerce site) and a card-panel vendor (year-over-year growth in aggregated card spending at Cascade's stores). Table~\ref{tab:multisource_signal} lists all three alternative-data growth rates alongside the resulting earnings surprise, actual revenue growth minus the analyst consensus estimate available at the time, and Cascade's stock return on the earnings-announcement day.
@@ -202,6 +214,7 @@ The two corner entries where a car cluster sits, $0.850$ (top right) and $0.800$
 
 \begin{figure}[htbp]
 \centering
+\begin{lrbox}{\bookmeasuredbox}
 \begin{tikzpicture}[font=\scriptsize]
     \matrix (img) [matrix of nodes, nodes={draw,minimum size=0.8cm,anchor=center}, column sep=-\pgflinewidth, row sep=-\pgflinewidth] {
         0.1 & 0.1 & 0.8 & 0.9 \\
@@ -226,8 +239,18 @@ The two corner entries where a car cluster sits, $0.850$ (top right) and $0.800$
     \draw[->,blue,thick] (patchA.east) to[bend left=15] (outA.west);
     \draw[->,orange,thick] (patchB.east) to[bend left=25] (outB.west);
 \end{tikzpicture}
-\caption{Sliding a $2\times2$ averaging filter across the $4\times4$ satellite patch $I$ at stride 1. The blue-highlighted patch (the top-left $2\times2$ block) averages to $0.100$; sliding the filter one column right, the orange-highlighted patch averages to $0.475$, the two feature-map entries worked out in the text. Repeating this for all nine filter positions produces the full $3\times3$ feature map, with the two car-cluster corners ($0.850$, $0.800$) standing out clearly from the two empty corners (both $0.100$).}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ffigbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
+\caption{Sliding a $2\times2$ averaging filter across the $4\times4$ satellite patch $I$ at stride 1.}
 \label{fig:cnn_convolution}
+}
 \end{figure}
 
 Stacking convolutional layers naively, however, runs into a practical training problem once a network gets deep: gradients computed by backpropagation\index{backpropagation} (Chapter 6) must flow back through every layer, and in a sufficiently deep plain CNN they can shrink toward zero long before reaching the earliest layers, leaving those layers essentially untrained, the vanishing-gradient problem\index{Vanishing-Gradient Problem}. The architecture that made very deep CNNs practical, the residual network\index{residual network (ResNet)} (ResNet), addresses this with a simple structural change: each block adds a shortcut connection carrying the block's input directly to its output, so the block only has to learn a residual adjustment on top of what already passed through unchanged, rather than having to learn the entire transformation from scratch, letting gradients flow through the shortcut even when a particular block's own learned transformation contributes little. This is the same practical instinct as Chapter 10's shrinkage-based portfolio methods, do not force a model to learn from nothing what could instead be inherited or only mildly adjusted, applied to network depth rather than portfolio weights.
@@ -250,6 +273,7 @@ Notice that $h_2$ is small, close to zero, not because $x_2$ was extreme (it was
 
 \begin{figure}[htbp]
 \centering
+\begin{lrbox}{\bookmeasuredbox}
 \begin{tikzpicture}[>=latex,thick,
     state/.style={draw,circle,minimum size=1.5cm,align=center,font=\small},
     inputnode/.style={draw,circle,minimum size=1.2cm,align=center,font=\small}]
@@ -277,8 +301,18 @@ Notice that $h_2$ is small, close to zero, not because $x_2$ was extreme (it was
     \node[font=\scriptsize,below=0.3cm of h3]{bias $b=0.1$};
     \node[font=\scriptsize,below=0.3cm of y]{bias $b_y=-0.3$};
 \end{tikzpicture}
-\caption{The single-hidden-unit RNN unrolled across its three time steps. Each hidden state $h_t$ combines the current input $x_t$ (weight $w_x$) with the previous hidden state $h_{t-1}$ (weight $w_h$) and a bias, then applies $\tanh$; the final hidden state $h_3$ feeds a sigmoid output layer producing $\hat y \approx 0.603$, matching the worked example in the text.}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ffigbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
+\caption{The single-hidden-unit RNN unrolled across its three time steps.}
 \label{fig:rnn_unrolled}
+}
 \end{figure}
 
 In practice, a plain RNN's memory decays quickly over long sequences, since each step multiplies the running influence of an early input by another factor less than one, a limitation addressed by the long short-term memory\index{long short-term memory (LSTM)} (LSTM) architecture. An LSTM maintains a separate cell state $c_t$, alongside the hidden state, updated as 
@@ -308,6 +342,7 @@ The forget gates $f_2=0.8785$ and $f_3=0.9082$ are the mechanism worth isolating
 
 \begin{figure}[htbp]
 \centering
+\begin{lrbox}{\bookmeasuredbox}
 \begin{tikzpicture}[>=latex,thick,node distance=1.0cm and 0.5cm,every node/.style={font=\small}]
     \node[draw,rounded corners,align=center,minimum width=5.4cm] (inputs) at (4.5,4.6) {Inputs at $t=1$: $h_0=0$, $x_1=0.5$};
     \node[draw,rounded corners,align=center,minimum width=2.0cm] (forget) at (0,2.3) {Forget gate\\$f_1=\sigma(2.15)$\\$=0.8957$};
@@ -326,8 +361,18 @@ The forget gates $f_2=0.8785$ and $f_3=0.9082$ are the mechanism worth isolating
     \draw[->] (output) -- (hidden);
     \draw[->] (cell) -- (hidden);
 \end{tikzpicture}
-\caption{The LSTM cell's first time step, computed from the worked example in the text. All four gates, forget, input, candidate, and output, are computed from the same inputs $(h_0,x_1)$; the forget and input gates combine with the candidate value to produce the new cell state $c_1$, and the output gate then determines how much of $c_1$ (passed through $\tanh$) becomes the new hidden state $h_1$.}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ffigbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
+\caption{The LSTM cell's first time step, computed from the worked example in the text.}
 \label{fig:lstm_cell}
+}
 \end{figure}
 
 \subsection*{Autoencoders for Unsupervised Anomaly Detection}\index{Autoencoders for Unsupervised Anomaly Detection}
@@ -338,6 +383,7 @@ Consider a simple linear autoencoder, encoder weights $w = (0.5, 0.3, 0.2)$ appl
 
 \begin{figure}[htbp]
 \centering
+\begin{lrbox}{\bookmeasuredbox}
 \begin{tikzpicture}[>=latex,thick,
     io/.style={draw,circle,minimum size=1.5cm,align=center,font=\small},
     bottleneck/.style={draw,circle,minimum size=1.3cm,align=center,font=\small,fill=gray!15}]
@@ -363,8 +409,18 @@ Consider a simple linear autoencoder, encoder weights $w = (0.5, 0.3, 0.2)$ appl
     \node[font=\small,below=1.9cm of z]{Bottleneck $z=w\cdot x$};
     \node[font=\small,below=1.9cm of rcard]{Decoder output $\hat x = z\,w$};
 \end{tikzpicture}
-\caption{The linear autoencoder applied to Q4's three alternative-data growth rates. The encoder compresses $x=(0.6,1.5,0.8)$ to a single bottleneck value $z=0.91$ using tied weights $w=(0.5,0.3,0.2)$; the decoder reconstructs $\hat x=(0.455,0.273,0.182)$ from that single number using the same weights. The gap between $x$ and $\hat x$ is the reconstruction error that flags Q4 as anomalous.}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ffigbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
+\caption{The linear autoencoder applied to Q4's three alternative-data growth rates.}
 \label{fig:autoencoder}
+}
 \end{figure}
 
 \subsection*{Transformers as a Unifying Architecture}\index{Transformers as a Unifying Architecture}
