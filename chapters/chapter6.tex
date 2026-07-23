@@ -26,7 +26,7 @@ Machine learning has become a central part of the quantitative toolkit in financ
 
 This chapter introduces the main ideas behind machine learning in a way that is accessible to readers who are mathematically trained but may be new to the subject. The focus is on understanding the core concepts, together with the underlying formulas, rather than on memorizing library calls. Two small worked examples run through the chapter: a regression problem relating a firm's leverage to its credit spread, and a classification problem predicting loan default. The discussion covers supervised and unsupervised learning, prediction and classification, overfitting\index{overfitting}, regularization, evaluation strategies, and the bias-variance tradeoff.
 
-By the end of the chapter, the reader will have seen how a model's parameters are actually found (via a closed-form solution or gradient descent\index{gradient descent}), how several qualitatively different algorithms, distance-based, margin-based, probabilistic, and tree-based, all address the same underlying prediction problem from different angles, and how to select among them and their hyperparameters without silently overfitting the selection process itself. These foundations are used directly and repeatedly in every applied chapter that follows: the credit models of Chapter 9, the portfolio methods of Chapter 10, the trading strategies of Chapters 11 and 12, the fraud detection systems of Chapter 13, and the text-based methods of Chapter 14 all build on the vocabulary and techniques introduced here, rather than re-deriving them from scratch.
+By the end of the chapter, the reader will have seen how a model's parameters are actually found (via a closed-form solution or gradient descent\index{gradient descent}), how several qualitatively different algorithms, distance-based, margin-based, probabilistic, and tree-based, all address the same underlying prediction problem from different angles, and how to select among them and their hyperparameters without silently overfitting the selection process itself. These foundations are used directly and repeatedly in every applied chapter that follows: the credit models of Chapter 9, the portfolio methods of Chapter 10, the trading strategies of Chapters 11 and 12, the fraud detection systems of Chapter 13, the text-based methods of Chapter 14, the deep-learning extensions of Chapter 15, the explainability tools of Chapter 16, and the end-to-end case study of Chapter 19 all build on the vocabulary and techniques introduced here, rather than re-deriving them from scratch.
 
 \section{What Machine Learning Is}\index{What Machine Learning Is}
 
@@ -228,11 +228,8 @@ Iteration & $\beta_0$ & $\beta_1$ \\
 
 
 After 10,000 iterations, gradient descent has converged to $\beta_0 \approx 20.00$ and $\beta_1 \approx 47.00$, matching the closed-form OLS solution computed directly in Section~\ref{sec:regression-example} up to rounding. This convergence is not a coincidence: for a quadratic loss function like this one, gradient descent is mathematically guaranteed to converge to the same global minimum that the closed-form formula finds directly, provided the learning rate is small enough to avoid overshooting.
-
 The learning rate itself involves a tradeoff that recurs throughout machine learning: too small, and convergence (as seen here) can require many thousands of iterations; too large, and the updates can overshoot the minimum and diverge rather than converge at all.
-
 In practice, $\eta$ is one of the most important hyperparameters to tune when training a model with gradient descent, including the neural networks discussed later in this chapter, and it is rarely fixed at a single value throughout training; adaptive variants that shrink the learning rate over time, or that use different effective rates for different parameters, are standard in modern deep learning software.
-
 The value of understanding gradient descent, even for a problem like linear regression where a closed-form solution already exists, is that the same algorithm scales to problems with no closed-form solution at all: logistic regression's log-loss, a neural network's loss function with millions of parameters, and many other models throughout this book are all fit using gradient descent or a close variant of it, making it arguably the single most important algorithm in modern machine learning.
 
 \section{Classification: A Worked Example}\index{Classification: A Worked Example}
@@ -609,13 +606,10 @@ These issues are not minor technicalities. They often determine whether a model 
 \section{Feature Engineering for Financial Data}\index{Feature Engineering for Financial Data}
 
 Every model in this chapter takes a fixed set of numerical features as input, but raw financial data, prices, financial statement line items, transaction records, are rarely usable directly, and the process of transforming raw data into informative model inputs, called feature engineering, is often as important to a model's performance as the choice of algorithm itself.
-
 Several patterns recur constantly when engineering features from financial data. Ratios, such as the debt-to-equity and margin ratios computed throughout Chapter 4, normalize raw dollar figures so that firms of very different sizes become comparable, exactly as the common-size statements in that chapter did.
 
 Lagged and rolling features, such as a 30-day rolling volatility or a 12-month trailing revenue growth rate, summarize recent history into a single number a model can consume, echoing the rolling-window calculations introduced in Chapter 2.
-
 Interaction features, such as leverage multiplied by an indicator for a recessionary period, allow a linear model to capture that the effect of one variable depends on the level of another, a relationship a plain linear model cannot represent on its own.
-
 Categorical features, such as industry sector, are typically converted into numerical form via one-hot encoding (a separate binary column for each category) before being used in most models, since the sector-specific behavior discussed in Chapter 4 needs to be represented numerically for a model to use it as a signal rather than an arbitrary label. Table~\ref{tab:feature_eng_raw} and Table~\ref{tab:feature_eng_derived} make these transformations concrete for a small cross-section of three firms.
 
 \begin{table}[htbp]
@@ -679,7 +673,6 @@ F_m(x) = F_{m-1}(x) + \nu \, h_m(x), \qquad m = 1, \dots, M,
 where $h_m$ is a new regression tree, not fit to the original target $y$, but fit to the current pseudo-residuals, $y_i - F_{m-1}(x_i)$ for squared-error loss (more generally, the negative gradient of the loss function with respect to the ensemble's current predictions $F_{m-1}(x_i)$, which is where the name ``gradient'' boosting comes from), so that each new tree specifically targets whatever the ensemble so far is still getting wrong.
 
 The learning rate $\nu \in (0,1]$, typically set well below 1 (commonly $0.01$ to $0.3$ in practice), then shrinks each tree's contribution before it is added: a smaller $\nu$ requires more trees $M$ to reach a given level of fit, but tends to generalize better, exactly the same regularization-driven bias-variance tradeoff the ridge and lasso penalties illustrated earlier in this chapter. Figure~\ref{fig:boosting_sequence} shows this sequential structure schematically, in direct contrast to a random forest's independently-grown, averaged trees: each boosting stage cannot be fit until the previous stage's pseudo-residuals are known, an inherently sequential dependency that random forests do not have, which is also why random forests parallelize trivially across trees while gradient boosting does not.
-
 Rather than reducing variance through averaging, boosting reduces bias by iteratively correcting the errors of the current model, and is typically combined with a small learning rate and a limited number of trees to control overfitting.
 
 \begin{figure}[htbp]

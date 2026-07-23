@@ -129,11 +129,8 @@ w_A &\approx 44.8\%, & w_B &\approx 14.2\%, & w_C &\approx 41.0\%,
 with a portfolio standard deviation of only about $0.050\%$, roughly six times lower than the equal-weighted three-asset portfolio's $0.297\%$ computed in Chapter 2.
 
 This result should be viewed with considerable suspicion rather than celebrated, and the reason is a genuinely important practical lesson.
-
 Chapter 2's three-asset dataset contains only four daily observations, far too few to estimate a $3\times 3$ covariance matrix (six distinct entries) reliably. The matrix-form optimizer above found weights that happen to nearly cancel out the sample's realized co-movements almost perfectly, but it is optimizing against estimation noise as much as against genuine risk, exactly the overfitting\index{overfitting} phenomenon Chapter 6 illustrated with a high-degree polynomial: with enough free parameters relative to the amount of data, a model (here, a portfolio optimizer) can achieve an excellent-looking in-sample result that will not repeat out of sample.
-
 This is widely recognized in practice as Markowitz optimization's central weakness: it is, in Michaud's memorable phrase, an ``estimation-error maximizer,'' since the optimizer actively seeks out and overweights exactly the asset pairs whose historical correlation was most favorable, which are disproportionately likely to be pairs whose favorable correlation was partly a statistical accident of the specific sample rather than a stable underlying relationship.
-
 Sections~\ref{sec:risk-parity} and~\ref{sec:black-litterman} introduce two of the standard practical responses to this problem.
 
 \subsection{Shrinkage Estimation of the Covariance Matrix}\index{Shrinkage Estimation of the Covariance Matrix}
@@ -176,7 +173,6 @@ Applying the same OLS formulas used throughout Chapter 6,
 \hat\beta = \frac{\sum_t (r_{m,t}-\bar r_m)(r_{i,t}-\bar r_i)}{\sum_t (r_{m,t}-\bar r_m)^2} \approx 1.19, \qquad \hat\alpha \approx -0.03\%, \qquad R^2 \approx 0.992.
 \end{equation*}
 The estimated beta of $1.19$ closely matches the value of $1.2$ that Chapter 5 simply assumed, which is a reassuring, if constructed, confirmation that the earlier chapter's assumption was reasonable, and it illustrates concretely where a CAPM beta actually comes from in practice: not from theory alone, but from a regression identical in form to the ones Chapter 6 introduced for entirely different applications.
-
 The near-zero estimated alpha is also economically meaningful: CAPM predicts that, after accounting for market exposure, no asset should offer a systematically positive or negative excess return, so a statistically significant nonzero alpha (checked using exactly the $t$-statistic and $p$-value machinery introduced in Chapter 6) is often interpreted either as evidence against CAPM or as a genuine mispricing an active manager might try to exploit.
 
 \subsection{Systematic versus Idiosyncratic Risk}\index{Systematic versus Idiosyncratic Risk}
@@ -188,7 +184,6 @@ The $R^2 \approx 0.992$ from the regression above has a direct risk-decompositio
 and $R^2$ is exactly the fraction of total variance that is systematic. For the stock in Table~\ref{tab:capm_data}, with returns expressed as decimals, $\text{Var}(r_m) \approx 0.00035$ and systematic variance is $\hat\beta^2\,\text{Var}(r_m) \approx (1.19)^2(0.00035) \approx 0.000494$, against total variance of about $0.000498$, leaving an idiosyncratic remainder of only about $0.0000038$, consistent with the regression's near-perfect fit.
 
 CAPM's central economic claim rests directly on this decomposition: idiosyncratic risk can be diversified away by holding many assets whose asset-specific shocks are independent of one another, exactly the diversification mechanism of Section~\ref{sec:diversification}, so a well-diversified investor should not expect to earn any additional compensation for bearing it.
-
 Systematic risk, by contrast, affects every asset simultaneously through the shared market factor and cannot be diversified away no matter how many assets are added to the portfolio, which is precisely why CAPM's expected-return formula compensates an asset only for its beta (systematic risk) and not for its total volatility; two assets with identical total volatility but different betas should, under CAPM, offer different expected returns, while two assets with identical betas but very different idiosyncratic volatility should offer the same expected return, a testable and occasionally violated prediction that motivated the multi-factor extensions discussed later in this chapter.
 
 \subsection{The Security Market Line}\index{Security Market Line}
@@ -222,7 +217,6 @@ This relationship between beta and expected return has a natural graphical repre
 \end{figure}
 
 An asset whose actual expected return plots above the Security Market Line is, under CAPM, undervalued: it offers more expected return than its systematic risk alone would justify, and the nonzero alpha from Section~\ref{sec:capm-beta}'s regression is exactly the vertical distance between an asset's actual position and the line. An asset plotting below the line is correspondingly overvalued.
-
 This is precisely the graphical version of the active-management logic introduced later in this chapter's discussion of the information ratio: an active manager's entire task can be described as searching for assets that plot persistently above the Security Market Line, and a manager who succeeds systematically is finding genuine mispricing rather than simply taking on more systematic risk than their benchmark, which the Security Market Line makes visually explicit in a way that a raw return comparison does not.
 
 \section{The Capital Market Line and the Sharpe Ratio}\index{Capital Market Line and the Sharpe Ratio}
@@ -267,7 +261,6 @@ Plotting every portfolio's Sharpe ratio against a combination of the risk-free a
 \end{figure}
 
 A central result of modern portfolio theory (the two-fund separation theorem\index{Two-Fund Separation Theorem}) is that every investor, regardless of their individual risk tolerance, should hold some combination of only the risk-free asset and this single tangency portfolio, differing only in how much of each they hold, not in the composition of the risky portion itself.
-
 A more risk-averse investor simply holds more of the risk-free asset and less of the tangency portfolio, while a less risk-averse investor may even borrow at the risk-free rate to hold more than $100\%$ of their wealth in the tangency portfolio, moving further out along the Capital Market Line in either direction without ever needing to change which risky assets they hold or in what proportion.
 
 \subsection{A Worked Example: Computing the Tangency Portfolio}\index{Tangency Portfolio}
@@ -284,7 +277,6 @@ w_A^{\text{tan}} &= 33.76\%, & w_B^{\text{tan}} &= 66.24\%,
 strikingly close to the minimum-variance weights of $34.05\%$ and $65.95\%$ computed in Section~\ref{sec:diversification}, with a Sharpe ratio of $2.849$, barely above the minimum-variance portfolio's own $2.848$.
 
 This near-coincidence is specific to this dataset, not a general property of the tangency portfolio, and it is worth seeing a case where the two portfolios genuinely differ to understand why.
-
 With $r_f\approx 0$ and both assets' mean returns small relative to their risk, the excess-return vector $\boldsymbol\mu - r_f\mathbf{1}$ that drives the tangency formula is nearly proportional to a constant vector, which makes $w^{\text{tan}}$ collapse close to the minimum-variance weights (driven purely by $\Sigma^{-1}\mathbf{1}$) almost by coincidence. Applying the identical formula to Section~\ref{sec:robo-advisors}'s equity/bond assumptions instead ($\sigma_e=16\%$, $\sigma_b=5\%$, $\rho_{eb}=-0.20$, $r_e=8\%$, $r_b=3\%$), with a more economically meaningful risk-free rate of $r_f=2\%$, gives a tangency portfolio of
 \begin{align*}
 w_e^{\text{tan}} &= 32.0\% \text{ equities}, & w_b^{\text{tan}} &= 68.0\% \text{ bonds}, & \text{Sharpe} &= 0.468,
@@ -307,9 +299,7 @@ the positive SMB loading indicates the asset behaves somewhat like a small-cap s
 Each additional factor in a model like this is, in effect, an additional explanatory variable in a multiple regression, and the model-selection and overfitting cautions from Chapter 6 apply directly: adding enough factors will always improve in-sample $R^2$, which is why serious factor-model research relies on economically motivated factors validated out of sample rather than a large, undisciplined search over every conceivable candidate factor, a practice sometimes derided in the finance literature as data mining for a ``factor zoo.''
 
 Multi-factor models have moved from academic research into everyday investment products through so-called ``smart beta'' or factor-based exchange-traded funds, which construct a portfolio designed to have deliberately high exposure to a specific factor, such as value, size, momentum, or low volatility, rather than simply weighting holdings by market capitalization as a traditional index fund does.
-
 The appeal of these products is direct: if a factor like SMB or HML has historically earned a return premium, an investor may prefer to capture that premium systematically and at low cost through a rules-based fund rather than paying an active manager to attempt the same thing through discretionary stock selection.
-
 The same overfitting caution above applies with particular force here, since a factor's historical premium, discovered through the kind of statistical search this section warns against, can weaken or disappear once it becomes widely known and systematically invested in, as more capital chasing the same factor exposure competes away the very mispricing the premium was compensating for, a dynamic with a direct analogue in Chapter 3's discussion of market efficiency: a genuinely exploitable pattern tends not to remain exploitable once it is discovered and traded on at scale.
 
 \section{Risk Parity: A Correlation-Light Alternative}\index{Risk Parity: A Correlation-Light Alternative}
@@ -324,9 +314,7 @@ Applied to AssetA and AssetB,
 w_A^{\text{RP}} &= 34.8\%, & w_B^{\text{RP}} &= 65.2\%, & \text{Sharpe} &\approx 2.84,
 \end{align*}
 remarkably close to the true minimum-variance weights of $34.1\%$ and $65.9\%$ (Sharpe ratio $2.85$) computed in Section~\ref{sec:diversification} despite using far less information (no correlation estimate at all).
-
 This is not a coincidence specific to this dataset: when volatilities differ substantially more than correlations do, as is common across many real asset classes, inverse-volatility weighting is a robust approximation to the mean-variance optimum that requires estimating only $n$ volatilities rather than the full $n(n-1)/2$ correlation pairs, each of which is an additional source of estimation error of exactly the kind that made the three-asset optimization in Section~\ref{sec:matrix-optimization} so unreliable.
-
 This tradeoff, accepting a method that is provably suboptimal under the classical theory's own assumptions in exchange for far greater robustness to violations of those assumptions, is a recurring and important theme in practical portfolio management.
 
 \section{Black-Litterman: Blending Views with Market Equilibrium}\index{Black-Litterman: Blending Views with Market Equilibrium}
@@ -338,7 +326,6 @@ A second standard response to mean-variance optimization's estimation-error prob
 \text{Posterior expected returns} = f(\text{market equilibrium returns}, \text{investor's views}, \text{confidence in each}).
 \end{equation*}
 An investor with no strong views at all recovers the market-equilibrium weights exactly, avoiding the wild, estimation-error-driven allocations Section~\ref{sec:matrix-optimization} demonstrated, while an investor with a specific, confidently held view (for example, ``I believe Asset C will outperform Asset A by 2\% over the next quarter'') can tilt the resulting portfolio away from equilibrium in a controlled way that reflects both the strength of the view and the investor's stated confidence in it, rather than in the unconstrained and often extreme way a purely historical-return-based optimizer would.
-
 This makes Black-Litterman particularly well suited to combining a systematic, data-driven baseline with the kind of qualitative, analyst-driven insight that a purely statistical model like the ones in Chapter 6 cannot generate on its own.
 
 \section{Practical Allocation Decisions: Constraints, Rebalancing, and Transaction Costs}\index{Practical Allocation Decisions: Constraints, Rebalancing, and Transaction Costs}
@@ -350,7 +337,6 @@ A concrete example shows exactly when this constraint binds. Consider two assets
 w_X^{\text{MV}} &\approx 145.5\%, & w_Y^{\text{MV}} &\approx -45.5\%, & \sigma_p &\approx 5.26\%,
 \end{align*}
 a substantial short position in Asset Y financing a leveraged long position in Asset X, achieving an unconstrained portfolio volatility below either individual asset's own volatility. A long-only mandate rules this out entirely, and because portfolio variance is monotonically decreasing in $w_X$ across the entire feasible range $w_X \in [0,1]$ on the way toward the (infeasible) unconstrained optimum, the best achievable long-only portfolio is the corner solution $w_X=100\%$, $w_Y=0\%$, with volatility equal to Asset X's own $8\%$.
-
 In this particular case, the long-only constraint does not merely reduce the benefit of diversification; it eliminates it completely, since every feasible long-only combination of the two assets is riskier than holding Asset X alone. This is a direct illustration of why the unconstrained formulas developed earlier in this chapter are a starting point for intuition rather than a literal prescription: real portfolio construction almost always requires solving a constrained optimization problem numerically, and the constraints themselves can qualitatively change the character of the optimal solution, not just its exact numerical weights.
 
 Even a well-constructed portfolio does not stay at its target weights on its own, since different assets earn different returns over time and weights drift accordingly, so rebalancing back to target weights is periodically necessary. Every rebalancing trade, however, incurs the transaction costs introduced in Chapter 3, including at least half the bid-ask spread\index{bid-ask spread} and any market impact\index{market impact} from the trade's size, so frequent rebalancing that chases small deviations from target weights can destroy more value in trading costs than it preserves in risk control.
@@ -412,7 +398,6 @@ The classical methods in this chapter estimate their inputs, expected returns, v
 \label{sec:ml-factor-ridge}
 
 Section~\ref{sec:factor-models}'s two-factor example uses only six months of data and two clearly distinct factors, too clean a setting to show a genuine estimation-error problem. A real factor library is rarely this well-behaved: candidate factors are often correlated with one another, momentum and a ``quality'' factor both partly reflect recent price strength, say, and a short history makes that collinearity far more damaging.
-
 The companion notebook extends the factor regression to twelve months and five candidate factors (market, SMB, HML, momentum, and quality), with quality \emph{constructed} as a near-linear combination of HML and momentum ($0.61$ and $0.89$ correlation respectively) to mimic exactly this real-world redundancy, and with known true exposures $\beta=(1.10, 0.30, 0.20, -0.10, 0.15)$ so that each estimator's error can be measured directly against ground truth rather than only against a single sample's noisy realized returns.
 
 Ordinary least squares, fit on all twelve months, badly overfits this short, collinear history:
@@ -426,28 +411,22 @@ getting the market exposure roughly right but the SMB sign backward, wildly over
 still imperfect, but with every coefficient pulled back toward a plausible order of magnitude and no wild sign reversal on a factor that should matter, an $88\%$ RMSE reduction against the five true exposures, mirroring almost exactly the covariance-shrinkage story of Section~\ref{sec:shrinkage}: the raw, unregularized estimator is not simply less precise but actively misleading, actively fitting the specific collinear noise pattern this one short sample happened to contain, while a modest shrinkage penalty trades a small amount of bias for a large reduction in exactly this kind of estimation-error blowup.
 
 Clustering methods, such as the $K$-means algorithm Chapter 6 applied to group firms by leverage and profit margin, can be applied instead to group assets by return co-movement before optimizing, an approach known as hierarchical risk parity\index{Hierarchical Risk Parity}: rather than inverting a single, potentially ill-conditioned covariance matrix across all assets simultaneously (the source of the estimation-error fragility in Section~\ref{sec:matrix-optimization}), the portfolio is built recursively, first allocating risk across clusters of similar assets and then within each cluster.
-
 This tends to produce allocations that are more stable and diversified than na\"ive full-matrix mean-variance optimization when the number of assets is large relative to the length of the available return history.
 
 More recent research has extended tree-based ensembles and neural networks (both introduced in Chapter 6) directly to return prediction and portfolio weight generation, training a model to output portfolio weights that maximize a risk-adjusted objective like the Sharpe ratio directly, rather than first predicting returns and then feeding those predictions into a separate mean-variance optimization step.
-
 This end-to-end approach can, in principle, avoid compounding two separate sources of error (prediction error and optimization error), but it inherits every overfitting and interpretability concern Chapter 6 raised, in a setting where an opaque, poorly validated model directly controls real capital allocation, exactly the model risk management\index{model risk management} concerns Chapter 8 discussed at length. As in every other application of machine learning to finance covered in this book, the message is not that these methods should be avoided, but that they must be validated, monitored, and understood by the people ultimately responsible for the capital they allocate, not deployed simply because they are available.
 
 A further, more experimental line of research frames the entire allocation and rebalancing decision as a sequential decision-making problem and applies reinforcement learning, an approach in which an algorithm learns a trading or allocation policy directly through simulated trial and error against a reward signal such as risk-adjusted return net of transaction costs, rather than through a single-shot prediction and optimization step.
-
 This framing is naturally suited to the rebalancing tradeoffs discussed later in this chapter, since a reinforcement learning agent can, in principle, learn to weigh the benefit of tracking target weights closely against the transaction-cost drag of trading too frequently within a single unified objective, rather than treating rebalancing policy and portfolio construction as two separate decisions.
-
 The same caution applies here with even greater force: a reinforcement learning agent trained in a simulated market environment inherits every assumption baked into that simulation, and a policy that performs well in simulation can fail unpredictably when deployed against real markets whose dynamics differ from the training environment in ways that were never anticipated, an especially acute version of the non-stationarity concern raised throughout this book.
 
 \section{International Diversification and Currency Risk}\index{International Diversification and Currency Risk}
 \label{sec:international-diversification}
 
 Every example so far in this chapter has implicitly assumed a single currency, but a portfolio that holds foreign assets introduces an additional risk factor absent from the domestic case: currency risk, the risk that movements in exchange rates change the domestic-currency value of a foreign holding independently of how that asset performs in its own local market.
-
 A US investor holding a European stock earns a return that combines the stock's local-currency performance with the euro's movement against the dollar over the same period, and these two components can partially offset or reinforce each other, so the same underlying stock can look like a very different investment once currency effects are included.
 
 International diversification is, in one sense, simply diversification as developed throughout this chapter applied across a wider opportunity set: an investor holding only domestic equities is implicitly betting that domestic economic conditions are the only source of risk worth diversifying, when in fact returns across countries are typically far from perfectly correlated, since different economies are exposed to different industry mixes, monetary policies, and business cycles.
-
 This is the same mechanism behind Section~\ref{sec:diversification}'s two-asset example, applied at the level of entire national markets rather than individual securities, and it is why most institutional portfolios hold meaningful allocations to international equities and bonds despite the added complexity of currency risk.
 
 A small numerical example shows how large the currency component can be. Suppose a US investor holds a European stock that returns $5\%$ in euro terms over the period, while the euro simultaneously depreciates $3\%$ against the US dollar. The unhedged US-dollar return combines both effects multiplicatively,
@@ -455,7 +434,6 @@ A small numerical example shows how large the currency component can be. Suppose
 r_{\text{USD}}^{\text{unhedged}} = (1 + r_{\text{local}})(1 + r_{\text{FX}}) - 1 = (1.05)(0.97) - 1 \approx 1.85\%,
 \end{equation*}
 more than three percentage points below the stock's own local-currency performance, purely because of currency movement. A fully currency-hedged position, using the forward contracts introduced in Chapter 3 to lock in today's exchange rate for the investment's future conversion back to dollars, would instead earn approximately the full $5\%$ local-currency return (less the hedge's own cost), isolating the stock-picking decision from the currency decision entirely.
-
 Whether to hedge is itself a portfolio decision, not a free choice: currency-hedged international exposure isolates the diversification benefit of holding foreign assets while removing the currency bet, at the cost of the hedge's own transaction costs, while unhedged exposure retains the currency bet as an additional, sometimes uncompensated, source of risk and occasionally return, and different institutional investors reach different conclusions about which side of that tradeoff suits their objectives.
 
 \section{Robo-Advisors: Automating Asset Allocation}
@@ -485,7 +463,6 @@ This is not a mistake in either number; it reflects two different objectives. Us
 so a young investor with a long horizon and years of future contributions ahead of them is being pointed toward a point further out on the efficient frontier of Figure~\ref{fig:efficient_frontier}, trading a lower Sharpe ratio for substantially higher expected growth, a trade a long-horizon investor is usually willing to make.
 
 This is worth flagging as a genuine, practical departure from Section~\ref{sec:sharpe-cml}'s two-fund separation theorem, which says every investor should hold the very same maximum-Sharpe tangency portfolio and differ only in how much of it they hold, using leverage if necessary to hold more than $100\%$ of it. A robo-advisor does not, in practice, offer a young client a leveraged position in a bond-heavy tangency portfolio; it instead shifts the mix of risky assets themselves toward more equity, a pragmatic response to the fact that most retail investors neither can nor will borrow at the risk-free rate to lever up a conservative portfolio, whatever the two-fund separation theorem recommends in principle.
-
 As a client approaches a stated goal, typically retirement, the target allocation is walked back toward bonds along a predetermined glide path, the same lifecycle logic behind a conventional target-date fund.
 
 \subsection*{Rebalancing and Tax-Loss Harvesting at Scale}
@@ -495,7 +472,6 @@ Section~\ref{sec:tracking-error}'s discussion above of the mechanics is worth re
 Tax-loss harvesting\index{Tax-Loss Harvesting}, a hallmark feature of the taxable (non-retirement) accounts these platforms offer, extends the same automation to a client's tax bill directly. When a held position falls in value, the platform sells it to realize the loss and immediately buys a similar, but not ``substantially identical,'' security, avoiding the wash-sale rule\index{Wash-Sale Rule} that would otherwise disallow the loss, while keeping the client's market exposure essentially unchanged.
 
 Suppose a client holds a \$50,000 equity-fund position that has fallen $10\%$, a \$5,000 realized loss. Under U.S. tax rules, up to \$3,000 of a net capital loss can offset ordinary income in the year it is realized, and any remainder offsets capital gains; at a $32\%$ marginal income-tax rate and a $15\%$ long-term capital-gains rate, this single harvesting event saves $\$3{,}000 \times 32\% = \$960$ against ordinary income and $\$2{,}000 \times 15\% = \$300$ against capital gains, a first-year tax saving of \$1,260 on this one position alone, generated automatically and, at the scale of hundreds of thousands of accounts, far more consistently than a human advisor manually reviewing each client's holdings once or twice a year could realistically match.
-
 Some platforms extend this idea to direct indexing, holding the individual stocks that make up an index directly, rather than a single index fund, specifically to multiply the number of individual tax lots available to harvest a loss from at any given time.
 
 \subsection*{Fee Structure and Long-Horizon Impact}
@@ -509,21 +485,16 @@ A typical robo-advisor charges roughly $0.25\%$ of assets annually, against roug
 The lower-cost automated option preserves \$135,288 more than the traditional-fee alternative over three decades, purely from a $75$-basis-point difference in annual cost, a concrete illustration of exactly the fee-drag-through-compounding mechanism Chapter 5's time-value-of-money material makes possible to quantify precisely, here applied to a management fee rather than a bond coupon or a discount rate.
 
 None of this makes a robo-advisor strictly superior to a human one. The risk-tolerance questionnaire is a considerably blunter instrument than the individualized judgment a skilled human advisor can bring to a client's full financial picture, including tax situations, estate planning, and major life events a standardized set of multiple-choice questions cannot capture, and self-reported risk tolerance is itself known to be unstable, shifting with recent market performance and how a question happens to be framed rather than reflecting a fixed underlying preference, which is exactly why some platforms now supplement the initial questionnaire with an ongoing, behavior-informed refinement of a client's risk profile rather than treating the onboarding survey as a one-time, permanent input.
-
 This is precisely where machine learning, beyond the return- and covariance-estimation applications already discussed in Section~\ref{sec:ml-portfolio}, does genuinely distinct work in a robo-advisor: a classifier trained on a client's actual observed behavior, whether they reduced contributions or attempted to sell equities during a past downturn, for instance, can produce a revealed-preference risk profile that predicts future behavior better than the stated questionnaire answer alone, and a similar optimization layer decides, lot by lot and continuously rather than on a fixed schedule, exactly which specific tax lots to harvest and which substitute security to buy, a genuinely large-scale constrained optimization problem well beyond what a human advisor reviewing client accounts manually could replicate at the same frequency.
-
 This is also why the industry has moved toward hybrid models, such as Vanguard's Personal Advisor Services and Betterment's premium tier, that layer a human advisor on top of the same automated core specifically for the situations the algorithm alone handles least well.
 
 \subsection*{Case Vignette: Schwab Intelligent Portfolios and the Cost of Undisclosed Cash Drag}\index{Schwab Intelligent Portfolios}
 
 In June 2022, the U.S. Securities and Exchange Commission announced that Charles Schwab \& Co.\ and an affiliated adviser would pay \$187 million, \$52 million in disgorgement and prejudgment interest and a \$135 million civil penalty, to settle charges concerning its robo-advisor, Schwab Intelligent Portfolios.
-
 From March 2015 through November 2018, the SEC found, Schwab's algorithm allocated a materially large share of client portfolios to cash, averaging about $12.5\%$ across accounts and ranging from roughly $6\%$ for the most aggressive risk profiles to nearly $24.9\%$ for the most conservative ones, without disclosing that Schwab's own internal analysis showed this allocation would very likely underperform a portfolio holding less cash under most market conditions.
-
 Schwab profited directly from the arrangement, earning an estimated \$46 million from the spread between what it paid depositors on that cash and what it earned investing it, income the cash allocation's own disclosed marketing materials did not adequately explain was a live consideration in how the portfolios were actually built.
 
 The episode is a direct illustration of a point Chapter 8's model risk governance material and Chapter 16's explainability material both made in different contexts: an algorithmic asset allocation model is still a model, and a cash allocation is still an asset allocation decision, one this chapter's own mean-variance and risk-parity machinery would need to justify on genuine risk-return grounds, not accept simply because the firm operating the algorithm has a separate balance-sheet incentive to hold more of it.
-
 A robo-advisor's principal selling point, that automation removes the conflicts of interest and behavioral biases a commission-driven human advisor might introduce, does not automatically hold if the automation itself is built, silently, around the platform operator's own incentives rather than the stated investment strategy alone, which is exactly why the same governance discipline Chapter 8 and Chapter 13 developed for other financial models, independent validation, clear disclosure, and ongoing monitoring against the model's own stated objective, applies to a robo-advisor's allocation engine with no less force than to a bank's credit-scoring or trading model.
 
 \section{Case Vignette: From the 60/40 Portfolio to the Endowment Model}\index{From the 60/40 Portfolio to the Endowment Model}
@@ -582,7 +553,6 @@ Several challenges recur across nearly every practical application of the method
 \textbf{Multiple testing across the factor literature.} Academic and practitioner research has, collectively, tested an enormous number of candidate factors against the same limited history of market data, and the multiple-testing concern raised in Chapters 6 and 7 applies at the level of the entire published literature, not just within a single study: with enough factors tested against the same data by enough independent researchers, some will appear statistically significant by chance alone, and a published factor with an impressive backtested premium is not automatically a genuine, exploitable phenomenon simply because it cleared a conventional significance threshold in one study.
 
 \textbf{Model risk in portfolio construction itself.} Every optimizer, shrinkage estimator, and factor model in this chapter is, in the sense developed at length in Chapter 8, itself a model requiring the same governance discipline, independent validation, ongoing monitoring, and honest documentation of known limitations, as a bank's VaR\index{Value at Risk (VaR)} or credit-scoring model.
-
 A portfolio construction process that treats its own optimizer as an unquestionable black box, rather than as one input to be checked against simpler benchmarks, economic intuition, and the specific estimation-error and non-stationarity concerns raised throughout this chapter, is exposed to exactly the same kind of undetected model risk that Chapter 8's case vignette described in the context of Value at Risk.
 
 \textbf{Liquidity mismatches.} This chapter's case vignette on the endowment model illustrated a specific version of a general hazard: any allocation to illiquid assets must be sized against the investor's own liquidity needs, not just against the assets' expected diversification benefit, and an institution that mismatches these two can find itself forced to sell its most liquid remaining holdings at the worst possible time precisely because its illiquid holdings cannot be sold at all, a dynamic closely related to the funding-liquidity risk discussed in Chapter 8.

@@ -26,13 +26,9 @@
 
 \section{Introduction}
 
-Every chapter in this book is built around a worked numerical example, and several of the later chapters, most notably Chapter 19's UCI credit-card default case study, are built around a real, publicly available dataset rather than a fictional one.
+Every chapter in this book is built around a worked numerical example, and several of the later chapters, most notably Chapter 19's UCI credit-card default case study, are built around a real, publicly available dataset rather than a fictional one. This appendix collects, in one place, the data sources a reader is most likely to reach for when reproducing this book's examples with real data or extending them into an independent project: what each source covers, how it is typically licensed or priced, and the specific API or library used to pull it into Python.
 
-This appendix collects, in one place, the data sources a reader is most likely to reach for when reproducing this book's examples with real data or extending them into an independent project: what each source covers, how it is typically licensed or priced, and the specific API or library used to pull it into Python.
-
-This appendix is deliberately organized around \emph{access mechanism} as much as content, since the practical difference between a dataset a reader can query in five minutes with a free API key and one that requires an institutional subscription is often the difference between a project that gets started and one that does not.
-
-Where this book's own companion notebooks already reach outside the book's fictional running examples for real data, chiefly Chapter 5's CBOE Volatility Index (VIX) history (Section~\ref{sec:appendix-market-data}, downloaded live via the \texttt{yfinance} library) and Chapter 19's UCI ``Default of Credit Card Clients'' dataset (Section~\ref{sec:appendix-credit-data}), this appendix cross-references the relevant chapter directly.
+This appendix is deliberately organized around \emph{access mechanism} as much as content, since the practical difference between a dataset a reader can query in five minutes with a free API key and one that requires an institutional subscription is often the difference between a project that gets started and one that does not. Where this book's own companion notebooks already reach outside the book's fictional running examples for real data, chiefly Chapter 5's CBOE Volatility Index (VIX) history (Section~\ref{sec:appendix-market-data}, downloaded live via the \texttt{yfinance} library) and Chapter 19's UCI ``Default of Credit Card Clients'' dataset (Section~\ref{sec:appendix-credit-data}), this appendix cross-references the relevant chapter directly.
 
 \begin{figure}[htbp]
     \centering
@@ -52,13 +48,9 @@ Where this book's own companion notebooks already reach outside the book's ficti
 \section{Market Price and Trading Data}
 \label{sec:appendix-market-data}
 
-\index{yfinance}Table~\ref{tab:appendix-market-data} summarizes the most commonly used sources for equity, index, foreign exchange, and derivatives price data. Yahoo Finance, accessed through the \texttt{yfinance} Python library, is the source this book itself uses: Chapter 5's implied-volatility section downloads the actual daily history of the VIX this way, with no API key required.
+\index{yfinance}Table~\ref{tab:appendix-market-data} summarizes the most commonly used sources for equity, index, foreign exchange, and derivatives price data. Yahoo Finance, accessed through the \texttt{yfinance} Python library, is the source this book itself uses: Chapter 5's implied-volatility section downloads the actual daily history of the VIX this way, with no API key required. It is an unofficial wrapper around Yahoo Finance's public website rather than a documented, versioned API, which is precisely why it is free; the tradeoff, discussed further in Section~\ref{sec:appendix-challenges}, is that it can change behavior or break without notice whenever Yahoo changes its own site.
 
-It is an unofficial wrapper around Yahoo Finance's public website rather than a documented, versioned API, which is precisely why it is free; the tradeoff, discussed further in Section~\ref{sec:appendix-challenges}, is that it can change behavior or break without notice whenever Yahoo changes its own site.
-
-\index{Refinitiv Datastream}Where CRSP and Compustat are US-centric, Refinitiv Datastream (a product of the London Stock Exchange Group since its 2021 acquisition of Refinitiv) is the closest institutional equivalent for international and cross-country work: decades of equity, index, bond, and FX price history across essentially every major market, not just the US, together with the Worldscope database of global company fundamentals bundled into the same platform.
-
-Like WRDS, it is licensed rather than freely available, typically through a university or employer subscription, and is accessed either through its legacy Excel add-in or through the Datastream Web Service (DSWS), a REST API with an official \texttt{DatastreamPy} Python client.
+\index{Refinitiv Datastream}Where CRSP and Compustat are US-centric, Refinitiv Datastream (a product of the London Stock Exchange Group since its 2021 acquisition of Refinitiv) is the closest institutional equivalent for international and cross-country work: decades of equity, index, bond, and FX price history across essentially every major market, not just the US, together with the Worldscope database of global company fundamentals bundled into the same platform. Like WRDS, it is licensed rather than freely available, typically through a university or employer subscription, and is accessed either through its legacy Excel add-in or through the Datastream Web Service (DSWS), a REST API with an official \texttt{DatastreamPy} Python client.
 
 \begin{table}[htbp]
 \centering
@@ -85,9 +77,7 @@ Refinitiv Datastream (LSEG) & Institutional subscription (typically via a univer
 
 \index{OptionMetrics}Options data deserves its own treatment because it is structurally different from equity price data: a single underlying can have hundreds of simultaneously listed contracts across many strikes and expirations, and the quantity most useful for the work in Chapter 5 (pricing, the Greeks, implied volatility) and Chapter 8 (delta-normal and delta-gamma VaR for an options position) is not the raw quoted price but the implied volatility and Greeks computed from it, which not every source provides pre-computed.
 
-OptionMetrics, accessed through WRDS as the IvyDB US database, is the main dataset academic options research is built on, occupying essentially the same role for options that CRSP occupies for equities (Section~\ref{sec:appendix-market-data}): daily, exchange-sourced, precomputed implied volatilities and Greeks for every listed US equity and index option going back to 1996, standardized enough that a result computed on it is directly comparable across studies.
-
-It is not free, licensed only through an institutional WRDS subscription, which is precisely why Table~\ref{tab:appendix-options} also lists several lighter-weight alternatives, from a free but shallow current-chain snapshot to paid practitioner-oriented vendors, for a reader without WRDS access.
+OptionMetrics, accessed through WRDS as the IvyDB US database, is the main dataset academic options research is built on, occupying essentially the same role for options that CRSP occupies for equities (Section~\ref{sec:appendix-market-data}): daily, exchange-sourced, precomputed implied volatilities and Greeks for every listed US equity and index option going back to 1996, standardized enough that a result computed on it is directly comparable across studies. It is not free, licensed only through an institutional WRDS subscription, which is precisely why Table~\ref{tab:appendix-options} also lists several lighter-weight alternatives, from a free but shallow current-chain snapshot to paid practitioner-oriented vendors, for a reader without WRDS access.
 
 \begin{table}[htbp]
 \centering
@@ -110,11 +100,7 @@ CME DataMine & Paid & Bulk download / API & Historical futures and futures-optio
 
 \section{Fundamental and Financial Statement Data}
 
-\index{SEC EDGAR}The U.S. Securities and Exchange Commission's EDGAR system\index{Securities and Exchange Commission (SEC)} is the single most important free source of fundamental data for U.S. public companies, and it is directly relevant to Chapter 4's treatment of the income statement, balance sheet, and cash flow statement.
-
-Beyond the human-readable filings, the SEC exposes two machine-readable APIs at \url{data.sec.gov}: a full-text search API for locating specific language across filings (directly usable for Chapter 14's 10-K risk-factor classification example), and an XBRL ``company facts'' API that returns every structured financial figure, revenue, COGS, CFO, and so on, that a company has ever reported, tagged and time-stamped, for a given ticker or CIK (Central Index Key).
-
-Because these figures come directly from a company's own regulatory filings, they require no scraping or vendor licensing, only a descriptive \texttt{User-Agent} header identifying the requester, which the SEC requires of all automated EDGAR access.
+\index{SEC EDGAR}The U.S. Securities and Exchange Commission's EDGAR system\index{Securities and Exchange Commission (SEC)} is the single most important free source of fundamental data for U.S. public companies, and it is directly relevant to Chapter 4's treatment of the income statement, balance sheet, and cash flow statement. Beyond the human-readable filings, the SEC exposes two machine-readable APIs at \url{data.sec.gov}: a full-text search API for locating specific language across filings (directly usable for Chapter 14's 10-K risk-factor classification example), and an XBRL ``company facts'' API that returns every structured financial figure, revenue, COGS, CFO, and so on, that a company has ever reported, tagged and time-stamped, for a given ticker or CIK (Central Index Key). Because these figures come directly from a company's own regulatory filings, they require no scraping or vendor licensing, only a descriptive \texttt{User-Agent} header identifying the requester, which the SEC requires of all automated EDGAR access.
 
 \begin{table}[htbp]
 \centering
@@ -134,9 +120,7 @@ Macrotrends, StockAnalysis.com & Free (web only) & No official API & Convenient 
 
 \section{Macroeconomic and Interest Rate Data}
 
-\index{FRED (Federal Reserve Economic Data)}FRED, the Federal Reserve Bank of St. Louis's Federal Reserve Economic Data service, is the standard free source for the interest-rate and macroeconomic series this book uses conceptually in Chapter 5's term-structure discussion and Chapter 8's stress-testing scenarios.
-
-A free API key registered at \url{fred.stlouisfed.org} grants access to its REST API, and the community-maintained \texttt{fredapi} Python package wraps it in a single function call that returns a time-indexed \texttt{pandas} series, matching the data structures this book's notebooks already use throughout.
+\index{FRED (Federal Reserve Economic Data)}FRED, the Federal Reserve Bank of St. Louis's Federal Reserve Economic Data service, is the standard free source for the interest-rate and macroeconomic series this book uses conceptually in Chapter 5's term-structure discussion and Chapter 8's stress-testing scenarios. A free API key registered at \url{fred.stlouisfed.org} grants access to its REST API, and the community-maintained \texttt{fredapi} Python package wraps it in a single function call that returns a time-indexed \texttt{pandas} series, matching the data structures this book's notebooks already use throughout.
 
 \begin{table}[htbp]
 \centering
@@ -157,9 +141,7 @@ U.S. Bureau of Labor Statistics & Free, key optional & REST API (\url{bls.gov}) 
 \section{Credit, Lending, and Consumer Finance Data}
 \label{sec:appendix-credit-data}
 
-\index{UCI Machine Learning Repository}This is the category with the deepest overlap with this book's own worked examples. The UCI ``Default of Credit Card Clients'' dataset is already Chapter 19's own running case study, downloaded programmatically by that chapter's notebook rather than committed to this repository.
-
-The other datasets in Table~\ref{tab:appendix-credit} are natural extensions for the capstone project ideas Chapter 19 closes with.
+\index{UCI Machine Learning Repository}This is the category with the deepest overlap with this book's own worked examples. The UCI ``Default of Credit Card Clients'' dataset is already Chapter 19's own running case study, downloaded programmatically by that chapter's notebook rather than committed to this repository. The other datasets in Table~\ref{tab:appendix-credit} are natural extensions for the capstone project ideas Chapter 19 closes with.
 
 \begin{table}[htbp]
 \centering
@@ -198,9 +180,7 @@ OFAC Sanctions Lists & Free & Bulk data files and a REST search API via the US T
 
 \section{Text, News, and Sentiment Data}
 
-\index{Loughran-McDonald dictionary}Chapter 14's treatment of sentiment scoring rests on the Loughran-McDonald Master Dictionary, a word list purpose-built for financial text (ordinary sentiment dictionaries misclassify routine financial vocabulary, such as ``liability'' or ``tax,'' as negative), freely downloadable from its maintainer's University of Notre Dame page.
-
-Table~\ref{tab:appendix-text} lists this and the other text sources most relevant to that chapter.
+\index{Loughran-McDonald dictionary}Chapter 14's treatment of sentiment scoring rests on the Loughran-McDonald Master Dictionary, a word list purpose-built for financial text (ordinary sentiment dictionaries misclassify routine financial vocabulary, such as ``liability'' or ``tax,'' as negative), freely downloadable from its maintainer's University of Notre Dame page. Table~\ref{tab:appendix-text} lists this and the other text sources most relevant to that chapter.
 
 \begin{table}[htbp]
 \centering
@@ -222,9 +202,7 @@ X (formerly Twitter) API & Paid tiers & REST and streaming API & Social sentimen
 
 \section{Alternative Data}
 
-\index{alternative data}Chapter 15's case vignette on satellite-derived retail and commodity signals (RS Metrics, UBS, and Orbital Insight's oil-storage monitoring) is representative of this entire category: the underlying vendor data is almost always enterprise-priced and licensed rather than available through a simple API key, since it is expensive to produce and its main customers are institutional investors, not students.
-
-Table~\ref{tab:appendix-altdata} separates the handful of alternative-data sources that are genuinely free or low-cost from the enterprise vendors that are not, so a reader does not spend time chasing a free tier that does not exist.
+\index{alternative data}Chapter 15's case vignette on satellite-derived retail and commodity signals (RS Metrics, UBS, and Orbital Insight's oil-storage monitoring) is representative of this entire category: the underlying vendor data is almost always enterprise-priced and licensed rather than available through a simple API key, since it is expensive to produce and its main customers are institutional investors, not students. Table~\ref{tab:appendix-altdata} separates the handful of alternative-data sources that are genuinely free or low-cost from the enterprise vendors that are not, so a reader does not spend time chasing a free tier that does not exist.
 
 \begin{table}[htbp]
 \centering
@@ -244,9 +222,7 @@ MSCI ESG, Sustainalytics, Refinitiv ESG & Paid & Vendor API & ESG scores and und
 
 \section{High-Frequency and Market Microstructure Data}
 
-\index{LOBSTER}Reconstructing an actual limit order book, the exercise Chapter 3 introduces by hand and Chapters 11 and 12 build trading strategies on top of, requires message-level data that most retail-facing APIs simply do not provide.
-
-LOBSTER, an academic data service built on top of NASDAQ's own historical ITCH data, is the most accessible source of genuine, reconstructed limit-order-book data: it offers a free academic tier (typically a handful of sample days for a limited set of tickers) alongside paid access to its full history.
+\index{LOBSTER}Reconstructing an actual limit order book, the exercise Chapter 3 introduces by hand and Chapters 11 and 12 build trading strategies on top of, requires message-level data that most retail-facing APIs simply do not provide. LOBSTER, an academic data service built on top of NASDAQ's own historical ITCH data, is the most accessible source of genuine, reconstructed limit-order-book data: it offers a free academic tier (typically a handful of sample days for a limited set of tickers) alongside paid access to its full history.
 
 \begin{table}[htbp]
 \centering
@@ -265,9 +241,7 @@ WRDS: NYSE TAQ & Institutional subscription & Web query tool, plus SAS/Python/R 
 
 \section{Factor, Index, and Portfolio Data}
 
-\index{Ken French Data Library}No source is more central to Chapter 10's factor-model examples than the Ken French Data Library, maintained by Dartmouth's Tuck School of Business, which has published the Fama-French factor returns (market, size, value, and their later extensions) and a large set of industry-sorted portfolios as free, direct-download CSV and ZIP files for over two decades.
-
-It has no formal REST API, but its file layout and URLs have been stable for so long that the \texttt{pandas-datareader} package includes a dedicated reader for it.
+\index{Ken French Data Library}No source is more central to Chapter 10's factor-model examples than the Ken French Data Library, maintained by Dartmouth's Tuck School of Business, which has published the Fama-French factor returns (market, size, value, and their later extensions) and a large set of industry-sorted portfolios as free, direct-download CSV and ZIP files for over two decades. It has no formal REST API, but its file layout and URLs have been stable for so long that the \texttt{pandas-datareader} package includes a dedicated reader for it.
 
 \begin{table}[htbp]
 \centering
@@ -286,9 +260,7 @@ S\&P Dow Jones Indices & Free (delayed) + paid (full) & Vendor portal & Index me
 
 \section{Putting It Together: A Chapter-by-Chapter Dataset Map}
 
-Table~\ref{tab:appendix-chapter-map} condenses the sections above into a single reference: for each chapter of this book, which of the sources above is the most natural place to look for real data to extend that chapter's fictional examples.
-
-Chapter 19's own closing list of capstone project ideas already names several of these sources directly; this table extends that same mapping to every other chapter.
+Table~\ref{tab:appendix-chapter-map} condenses the sections above into a single reference: for each chapter of this book, which of the sources above is the most natural place to look for real data to extend that chapter's fictional examples. Chapter 19's own closing list of capstone project ideas already names several of these sources directly; this table extends that same mapping to every other chapter.
 
 \begin{table}[htbp]
 \centering
@@ -326,21 +298,13 @@ Chapter & Most relevant data sources \\
 
 Pulling real data into a project is rarely as simple as calling an API and moving on; several recurring problems are worth flagging explicitly.
 
-\textbf{Point-in-time and look-ahead bias.} Most free APIs return a security's or company's data as it is known \emph{today}, not as it was actually known on the date being studied.
+\textbf{Point-in-time and look-ahead bias.} Most free APIs return a security's or company's data as it is known \emph{today}, not as it was actually known on the date being studied. Fundamentals get restated after the fact, index membership changes, and a company's own name or ticker can change; naively joining ``current'' fundamentals to historical prices silently leaks future information into a backtest, exactly the look-ahead-bias problem Chapter 15 raises directly.
 
-Fundamentals get restated after the fact, index membership changes, and a company's own name or ticker can change; naively joining ``current'' fundamentals to historical prices silently leaks future information into a backtest, exactly the look-ahead-bias problem Chapter 15 raises directly.
+\textbf{Survivorship bias.} A free API that only lists currently-traded tickers implicitly excludes every company that has since been delisted, gone bankrupt, or been acquired, which biases any historical universe built from it toward survivors. CRSP's paid, point-in-time data is the academic standard specifically because it avoids this.
 
-\textbf{Survivorship bias.} A free API that only lists currently-traded tickers implicitly excludes every company that has since been delisted, gone bankrupt, or been acquired, which biases any historical universe built from it toward survivors.
+\textbf{Licensing and redistribution restrictions.} Most vendor terms of service prohibit redistributing raw data even for non-commercial or educational use, which is exactly why this book's own real-dataset chapters (Chapter 19, and this appendix's own Chapter 5 VIX example) download data programmatically at run time rather than committing it to the repository. The same discipline is worth following in any derivative project.
 
-CRSP's paid, point-in-time data is the academic standard specifically because it avoids this.
-
-\textbf{Licensing and redistribution restrictions.} Most vendor terms of service prohibit redistributing raw data even for non-commercial or educational use, which is exactly why this book's own real-dataset chapters (Chapter 19, and this appendix's own Chapter 5 VIX example) download data programmatically at run time rather than committing it to the repository.
-
-The same discipline is worth following in any derivative project.
-
-\textbf{API and vendor instability.} Unofficial APIs such as \texttt{yfinance} work by interacting with a public website rather than a documented, contractually stable interface, so they can change behavior or stop working without notice whenever the underlying site changes.
-
-Even official free tiers are periodically discontinued or replaced outright, as has happened repeatedly across the market-data-vendor landscape. Every specific vendor and endpoint named in this appendix should therefore be treated as illustrative rather than permanent: verify current availability and terms directly with the provider before building anything on top of one.
+\textbf{API and vendor instability.} Unofficial APIs such as \texttt{yfinance} work by interacting with a public website rather than a documented, contractually stable interface, so they can change behavior or stop working without notice whenever the underlying site changes. Even official free tiers are periodically discontinued or replaced outright, as has happened repeatedly across the market-data-vendor landscape. Every specific vendor and endpoint named in this appendix should therefore be treated as illustrative rather than permanent: verify current availability and terms directly with the provider before building anything on top of one.
 
 \textbf{Rate limits and cost tiers.} Free tiers are typically rate-limited (a fixed number of calls per minute or per day), which matters when a project needs to pull data for hundreds of tickers rather than one; budgeting for a paid tier, or batching and caching requests locally, is often unavoidable at scale.
 

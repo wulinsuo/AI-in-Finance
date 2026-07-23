@@ -37,7 +37,6 @@ Nearly every later chapter in this book that touches a time-ordered quantity, GA
 \section{Why Time Series Analysis Matters in Finance}\index{Why Time Series Analysis Matters in Finance}
 
 Financial data are overwhelmingly time series: daily prices, quarterly earnings, monthly inflation, tick-by-tick trades. Three features of financial time series make them harder to work with than the typical machine learning dataset. First, observations are not independent; today's return is statistically related to yesterday's, even if only weakly, which violates the independent-and-identically-distributed assumption behind many standard statistical procedures. Second, the variance of returns is itself time-varying, quiet periods are followed by quiet periods and volatile periods by volatile periods, a phenomenon called volatility clustering.
-
 Third, the underlying process generating the data can change over time (Chapter 6's non-stationarity concern), so a model fit on one period may not describe the next.
 
 Time series methods exist precisely to handle these features rather than assume them away. They also underpin much of the rest of this book: the risk models in Chapter 8 need a volatility forecast, the portfolio methods in Chapter 10 need a covariance forecast, and the trading strategies in Chapter 11 need to know whether a signal is transient noise or a persistent pattern.
@@ -55,12 +54,10 @@ Suppose an analyst fits a seemingly solid model relating an interest rate series
 \end{equation*}
 Stationarity matters because most time series models, including every model in this chapter, are built on the assumption that the statistical relationships estimated from the past will continue to hold; without it, there is no reason to expect a fitted model to generalize at all.
 
-White noise is the simplest stationary process: a sequence $\varepsilon_t$ with mean zero, constant variance $\sigma^2$, and zero covariance at every nonzero lag, $\text{Cov}(\varepsilon_t, \varepsilon_{t-k}) = 0$ for $k \ne 0$. White noise is unpredictable by construction and serves as the building block, the ``noise,'' in every model that follows. 
-
+White noise is the simplest stationary process: a sequence $\varepsilon_t$ with mean zero, constant variance $\sigma^2$, and zero covariance at every nonzero lag, $\text{Cov}(\varepsilon_t, \varepsilon_{t-k}) = 0$ for $k \ne 0$. White noise is unpredictable by construction and serves as the building block, the ``noise,'' in every model that follows.
 A slightly stronger notion, strict stationarity, requires that the entire joint probability distribution of any collection of observations be unaffected by shifting them in time, not just their first two moments (mean and variance); weak stationarity, defined above, is what almost all of the practical models in this chapter actually rely on, since it is both easier to verify from data and sufficient for the estimation methods used throughout.
 
 A random walk is $P_t = P_{t-1} + \varepsilon_t$, and it is not stationary: its variance grows with $t$ (specifically $\text{Var}(P_t) = t\sigma^2$ if $P_0$ is fixed), so its statistical behavior genuinely changes over time.
-
 Asset prices behave approximately like random walks, which is exactly why Chapter 2 worked with returns, $R_t = (P_t - P_{t-1})/P_{t-1}$, rather than price levels: returns are much closer to stationary, since they do not inherit the ever-growing variance of the price level. This is not a minor technical preference; fitting a stationary-series model such as AR or ARMA directly to a non-stationary price level produces meaningless, unstable estimates, which is why the first step in almost any time series analysis is to check whether the series needs to be differenced (transformed to $\Delta X_t = X_t - X_{t-1}$) or converted to returns before modeling.
 
 \section{Testing for Stationarity: The Augmented Dickey-Fuller Test}\index{Testing for Stationarity: The Augmented Dickey-Fuller Test}
@@ -192,7 +189,6 @@ is wide, spanning nearly the entire plausible range from very weak to very stron
 This is the same small-sample fragility flagged when the Dickey-Fuller test in Section~\ref{sec:adf-test} failed to reject a unit root despite $\hat\phi = 0.71$ visually suggesting real mean reversion: a $t$-statistic, a $p$-value, and a confidence interval are three views of the same underlying estimation uncertainty, and with only $8$ observations, that uncertainty is simply large. Applying the identical method to the intercept gives $SE(\hat c) \approx 1.750$, $t \approx 0.68$, and $p \approx 0.526$, so the intercept is not statistically distinguishable from zero at conventional significance levels, a much weaker result than the slope's.
 
 Chapter 6's Section 6.4 already flagged the two practical warnings that apply here without modification: statistical significance is not the same as economic or financial significance, and testing many coefficients or candidate models against the same data inflates the chance that at least one spuriously crosses the $5\%$ threshold by pure luck.
-
 That second warning is exactly the multiple-testing problem Section~\ref{sec:cointegration}'s discussion of pairs selection revisits concretely, fulfilling the forward pointer Chapter 6 itself made to this section: a single $p$-value below $0.05$ is far less persuasive when it is the best of twenty candidate pairs tried rather than the only pair considered.
 
 \section{Multi-Step Forecasting and the Growth of Uncertainty}\index{Multi-Step Forecasting and the Growth of Uncertainty}
@@ -225,7 +221,6 @@ Q = n(n+2)\sum_{k=1}^h \frac{\hat\rho_k^2}{n-k},
 where $\hat\rho_k$ is the residuals' own sample autocorrelation at lag $k$ (computed exactly as in Section~\ref{sec:acf-section}, but applied to the residuals rather than the raw series) and $n$ is the number of residuals. Under the null hypothesis of a correctly specified model, $Q$ follows a chi-squared distribution with $h-p-q$ degrees of freedom, where $p$ and $q$ are the number of AR and MA parameters already estimated, subtracted because fitting those parameters already accounts for some of the dependence the test would otherwise attribute to unmodeled autocorrelation.
 
 Applying this to the AR(1) model fitted above ($\hat\phi=0.71$, $\hat c=1.19$), the seven residuals are $(0.42, 0.13, 0.84,$ $-1.16, 1.26, -1.45, -0.03)$, giving residual autocorrelations $\hat\rho_1 = -0.68$ and $\hat\rho_2 = 0.49$, both considerably larger in magnitude than a well-fitting model's residuals should show. With $h=2$ lags and $p=1$ AR parameter, $Q = 7.91$ against a chi-squared distribution with $2-1=1$ degree of freedom, giving $p \approx 0.005$, comfortably below the conventional 5\% threshold.
-
 The AR(1) model's residuals, in other words, are not well described as white noise: some genuine structure remains unmodeled.
 
 This motivates asking whether a higher-order model captures more of that structure. Fitting an AR(2) model,
@@ -240,7 +235,6 @@ with $n=6$ throughout ($k=2$ and $k=3$ parameters for AR(1) and AR(2), respectiv
 \text{BIC}_{\text{AR(1)}} &= 3.17, & \text{BIC}_{\text{AR(2)}} &= -3.39:
 \end{align*}
 both criteria favor AR(2) by a wide margin, even after the extra parameter's complexity penalty.
-
 Yet this conclusion should be read with real caution rather than taken as a settled upgrade: an AR(2) model on only six observations is already using half of the sample's data points as estimated parameters ($k=3$ against $n=6$), precisely the ``limited effective sample size'' and ``model selection versus overfitting'' concerns raised later in this chapter's challenges section, so a dramatically lower AIC/BIC here is at least as likely to reflect a small sample's capacity to fit its own noise as it is a genuinely better-specified model. In a longer series, this same Ljung-Box-then-AIC/BIC workflow, fit a candidate model, test whether its residuals are white noise, and if not, compare a higher-order alternative using an information criterion, remains standard practice; it is only the tiny sample size here that makes the specific numerical conclusion (prefer AR(2)) less trustworthy than the procedure itself.
 
 \section{Moving Averages and Exponential Smoothing}\index{Moving Averages and Exponential Smoothing}
@@ -256,7 +250,6 @@ Exponential smoothing addresses both issues by weighting all past observations, 
 \hat X_{t+1} = \alpha X_t + (1-\alpha)\hat X_t, \qquad 0 < \alpha < 1,
 \end{equation*}
 which can be expanded to show that $\hat X_{t+1}$ is a weighted average of every past observation, with weight $\alpha(1-\alpha)^i$ on the observation $i$ periods back.
-
 A larger $\alpha$ makes the forecast react quickly to new information at the cost of more noise; a smaller $\alpha$ produces a smoother but slower-reacting forecast. Applied to Table~\ref{tab:ar1_data} with $\alpha = 0.4$ and an initial forecast $\hat X_1 = X_1 = 9.0$, the recursion produces a smoothed forecast that tracks the series' gradual decline without reacting sharply to any single observation, in contrast to the AR(1) model, which explicitly ties the forecast to the estimated mean-reversion coefficient $\hat\phi$ rather than only to recent history.
 
 Simple exponential smoothing has an important limitation: because it forecasts using only a smoothed level, it always predicts a flat, unchanging line into the future, which performs poorly for a series with a clear trend, exactly the kind of gradual decline visible in Table~\ref{tab:ar1_data}. Holt's linear trend method\index{Holt's Linear Trend Method} addresses this by smoothing two components separately, a level $L_t$ and a trend $T_t$:
@@ -269,7 +262,6 @@ and forecasts $h$ steps ahead as $\hat X_{t+h} = L_t + h T_t$, explicitly projec
 \hat X_9 = L_8 + T_8 \approx 3.45 - 0.82 \approx 2.64.
 \end{equation*}
 This is noticeably lower than both the simple exponential smoothing forecast (about 4.50, computed above) and the AR(1) forecast (4.03, computed in Section~\ref{sec:ar1-example}), because Holt's method explicitly extrapolates the series' downward trend rather than assuming the series will revert toward a stable mean, as the AR(1) model does, or stay flat, as simple exponential smoothing does.
-
 Which forecast is more appropriate depends entirely on whether the analyst believes the series is genuinely trending or is instead a mean-reverting process passing through a temporarily low patch, a judgment call that no single mechanical formula can resolve and that connects directly back to the stationarity testing in Section~\ref{sec:adf-test}: a trending (non-stationary) series is better suited to Holt's method, while a mean-reverting (stationary) series is better suited to the AR(1) approach. A further extension, Holt-Winters smoothing, adds a third seasonal component to handle the kind of periodic patterns discussed in the SARIMA section below.
 
 \section{ARIMA Models}\index{ARIMA Models}
@@ -344,7 +336,6 @@ Note that this regression-based approach generalizes the simple $A_t - B_t$ spre
 This relationship is the foundation of pairs trading, a strategy covered in more depth in Chapter 11. In practice, the spread is standardized into a $z$-score, $z_t = (s_t - \bar s)/\hat\sigma_s$, so that trading rules can be stated in terms of standard deviations rather than the spread's raw units, which vary from one pair to the next. For the data in Table~\ref{tab:pairs_trading}, the final spread of 3 has a $z$-score of $z_6 = (3 - 2.5)/0.548 \approx 0.91$; a common rule of thumb opens a trade when $|z_t|$ exceeds roughly 2 (signaling an unusually wide or narrow spread) and closes it once $z_t$ reverts close to zero, so this particular spread, at just under one standard deviation from its mean, would not yet trigger a new trade under such a rule.
 
 When the spread is unusually wide relative to its historical mean and standard deviation, a trader shorts the relatively expensive stock (here, $A$) and buys $\hat\beta$ shares of the relatively cheap one ($B$) for every share of $A$, betting that the spread will revert toward its mean; when the spread is unusually narrow, the trader takes the opposite position.
-
 Because the strategy trades the spread rather than the direction of either stock, it is designed to profit regardless of whether the overall market rises or falls, a property called market neutrality, provided the cointegrating relationship itself remains stable, which is exactly the kind of assumption that can silently break down, a risk explored further when Chapter 11 discusses the practical risks of statistical arbitrage strategies.
 
 \section{Vector Autoregression: Modeling Several Series Jointly}\index{Vector Autoregression: Modeling Several Series Jointly}
@@ -378,7 +369,6 @@ and continuing this recursion gives
 X_3 = 0.254, \qquad Y_3 = 0.129, \qquad X_4 = 0.178, \qquad Y_4 = 0.116.
 \end{equation*}
 Two features of this impulse response are worth noting. First, even though the exchange rate was not shocked directly, it responds immediately, rising from $0$ to $0.1$ in a single period, purely through the cross-series coefficient $a_{21}=0.1$; this is exactly the kind of spillover a collection of separate, univariate ARIMA models, each blind to the other series, could never capture.
-
 Second, the exchange rate's response does not simply fade monotonically alongside the interest rate's own decay: it initially rises further, from $0.1$ to $0.13$, before declining, because it continues to absorb the (still-elevated) interest rate for a second period even as the direct shock itself has already started to fade, a lagged-peak pattern that is a hallmark signature of genuine cross-series transmission rather than each series simply reverting independently.
 
 Both series in this example do eventually decay back toward zero, which is not guaranteed by the individual coefficients alone; it depends on the stability of the whole coefficient matrix 
@@ -462,7 +452,6 @@ Figure~\ref{fig:yield_curve_pca_loadings} shows exactly this level-slope-curvatu
 PC3's loadings are positive at both ends of the curve ($0.52$ at 3 months, $0.45$ at 10 years) and negative in the middle ($-0.46$ at both 2 and 3 years), a hump-shaped pattern called the \emph{curvature} factor, since a positive PC3 shock bends the belly of the curve down relative to both ends.
 
 Because level, slope, and curvature are themselves just time series, each extracted by projecting every day's curve onto its corresponding loading vector, they can be forecast with exactly the same univariate tools developed earlier in this chapter, then mapped back to a curve-wide forecast through the loadings. Consider the dominant factor, PC1. Testing its level directly with the Augmented Dickey-Fuller test of Section~\ref{sec:adf-test} gives a test statistic of $-2.295$ ($p = 0.174$), failing to reject the unit-root null: the level factor, like the interest-rate levels of Section~\ref{sec:cointegration} and the raw interest-rate VAR discussed above, is itself non-stationary and cannot be fed directly into an AR model.
-
 Differencing it once and re-testing gives a test statistic of $-16.474$ ($p < 0.0001$), decisively stationary, exactly the same diagnose-then-difference discipline this chapter has applied to every other series.
 
 Fitting an AR(1) model to the differenced level factor $\Delta\text{PC1}_t$ by OLS gives
@@ -470,11 +459,9 @@ Fitting an AR(1) model to the differenced level factor $\Delta\text{PC1}_t$ by O
 \Delta\text{PC1}_t = -0.0011 + 0.0411\,\Delta\text{PC1}_{t-1} + \varepsilon_t,
 \end{equation*}
 with the AR(1) coefficient statistically significant ($p = 0.0002$) thanks to the enormous sample size, $8{,}502$ daily changes, but economically tiny: $R^2 = 0.0017$, meaning the previous day's move in the level factor explains under one-fifth of one percent of the next day's move.
-
 On the last trading day of the sample (December 29, 2023), the level factor stood at $3.063$ after a daily change of $-0.023$; the fitted model forecasts the next change as $-0.0011 + 0.0411(-0.023) \approx -0.002$, an essentially negligible parallel shift. Mapped back through the PC1 loadings in Figure~\ref{fig:yield_curve_pca_loadings}, this forecasts each of the eight maturities to move by only about $-0.0007$ to $-0.0008$ percentage points the next day, an order of magnitude smaller than a single basis point.
 
 This is an honest result, not a disappointing one. A statistically significant but practically negligible $R^2$ is precisely what an efficient, highly liquid market should produce: if daily changes in the level of the Treasury curve were meaningfully predictable from their own recent history, that predictability would itself be a trading opportunity large market participants would compete away, the same random-walk logic introduced for individual asset prices in Section~\ref{sec:random-walk} now confirmed directly on 34 years of real term-structure data.
-
 The genuine payoff of the PCA step is not that it makes the level factor easy to predict, nothing makes daily interest-rate changes easy to predict, but that it replaces an unwieldy eight-maturity forecasting problem with a three-factor one, and that whatever structure a more sophisticated model (a GARCH specification on the level factor's volatility, for instance, using the tools of Section~\ref{sec:garch} directly on $\Delta\text{PC1}_t$) does find can be mapped back to every maturity on the curve at once through the same fixed loadings, rather than requiring eight separate models to stay mutually consistent by construction.
 
 \section{Volatility Clustering and the GARCH Family}\index{Volatility Clustering and the GARCH Family}
@@ -601,7 +588,6 @@ the fitted model beats the naive benchmark by a wide margin on both metrics, rou
 Several challenges recur across almost every time series application in finance.
 
 \textbf{Regime changes and structural breaks.} A model estimated over a calm period, including the AR(1) and GARCH parameters estimated above, can become badly miscalibrated\index{calibration} once the underlying regime shifts, for example when a central bank changes policy or a market enters a crisis. Unlike the smooth, gradual change assumed by a stationary model, a structural break is a sudden shift in the data-generating process itself.
-
 Formal tests exist for detecting a structural break at a known or unknown date (the Chow test and the CUSUM test are two classical examples), but in practice, a combination of periodic re-estimation and the walk-forward validation discipline introduced above is usually a more robust defense than trying to detect every break in real time, since a break severe enough to matter economically is typically also severe enough to show up as a sudden deterioration in walk-forward forecast accuracy.
 
 \textbf{Limited effective sample size.} Financial time series often look large (years of daily data) but contain far less independent information than the raw observation count suggests, because nearby observations are highly correlated. This limits how many parameters can be reliably estimated and is part of why simple, low-order models (AR(1), GARCH(1,1)) so often perform competitively against more elaborate alternatives.
@@ -617,9 +603,7 @@ Formal tests exist for detecting a structural break at a known or unknown date (
 \textbf{Model misspecification in multivariate systems.} A VAR model's conclusions, including any Granger-causality test, are sensitive to which variables are included and how many lags are used; omitting a relevant variable that actually drives both series in the system can produce a spurious Granger-causality finding, incorrectly suggesting one included variable predicts another when both are really being driven by the omitted one.
 
 \textbf{Classical models versus neural sequence models.} Every model in this chapter, AR(1), ARIMA, GARCH, and VAR, is a classical statistical model with a small number of interpretable parameters, estimated by OLS or maximum likelihood. A recurrent neural network can, in principle, learn a considerably more flexible mapping from a series' own history to its next value than any fixed linear, fixed-lag-order model this chapter introduced, and Chapter 15 works through exactly such a model, a hand-computed RNN forward pass, in detail.
-
 That added flexibility is not a free upgrade, however: a neural sequence model has many more parameters to fit from data that, as this section's limited-effective-sample-size challenge already noted, contains far less independent information than its raw observation count suggests, so the added flexibility often costs more in overfitting risk than it returns in genuine forecast accuracy unless it is disciplined with exactly the walk-forward validation this chapter introduced.
-
 The practical choice between a classical time series model and a neural sequence model is therefore rarely settled by which is more sophisticated in the abstract, but by which one a limited, noisy financial dataset can actually support without simply memorizing its own history.
 
 \section{A Practical Workflow for Building a Time Series Model}\index{Practical Workflow for Building a Time Series Model}

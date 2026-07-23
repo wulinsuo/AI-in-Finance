@@ -23,30 +23,22 @@
 \section{Introduction}
 
 Every model in this book so far has focused on estimating a quantity of interest: a price, a return, a probability of default, a forecast. Risk management asks a different, complementary question: not ``what do we expect to happen,'' but ``how bad could it get, and how often.'' A portfolio manager who only forecasts expected returns and ignores the distribution of possible losses is flying blind, since the same expected return can come from a smooth, low-volatility strategy or from a strategy that is usually flat but occasionally loses everything.
-
 This chapter introduces the standard toolkit for quantifying and managing that downside for market risk specifically: Value at Risk\index{Value at Risk (VaR)} and Expected Shortfall\index{Expected Shortfall}, maximum drawdown, volatility forecasting, backtesting, liquidity risk, and the model governance and capital adequacy concepts that let a firm and its regulators judge whether it can survive its own worst days.
-
 Chapter 9 develops the parallel toolkit for credit risk, probability of default, loss given default, and credit scoring, since the two risk types, while related, call for genuinely different tools and are large enough topics to deserve their own dedicated treatment.
 
 One worked example runs through most of the chapter: a twenty-day return history for a \$10 million equity portfolio, used to compute and compare parametric, historical, Monte Carlo\index{Monte Carlo simulation}, and GARCH-based risk measures, backtest them, and stress-test the resulting portfolio. As in earlier chapters, every numerical claim below was computed in Python first and is reproduced exactly in the companion notebook.
 
 The chapter builds its toolkit in the order a risk desk would actually deploy it: a taxonomy of risk types (Section~\ref{sec:risk-types}) to establish what is and is not in scope, Value at Risk itself (Section~\ref{sec:var}) computed three different ways and then extended to a full portfolio (Section~\ref{sec:matrix-var}), a volatility-adjusted version that updates with Chapter 7's GARCH forecasts (Section~\ref{sec:garch-var}), and the backtesting discipline (Section~\ref{sec:backtesting-var}) that checks whether any of this actually worked out of sample.
-
 Later sections extend the same VaR machinery to options positions via the Greeks (Section~\ref{sec:delta-normal}), to hypothetical crises the historical sample never contained (Section~\ref{sec:stress-testing}), and, in Section~\ref{sec:ml-vol-forecast}, to a direct, honest test of whether a more flexible machine learning model can out-forecast GARCH at its own game. Chapter 9 develops the analogous toolkit for credit risk using the same governance and validation philosophy introduced here.
 
 \section{Types of Financial Risk}\index{Types of Financial Risk}
 \label{sec:risk-types}
 
 Suppose a risk manager reports simply that the fund ``lost money because of risk.'' The statement is true but useless: it does not say whether the loss came from prices moving against a held position, a counterparty failing to pay what it owed, or a position becoming impossible to sell without moving its own price further down, three genuinely different problems that call for three different responses. Financial risk is not a single quantity but a family of related concerns, and confusing one type for another is a common and costly mistake.
-
 Market risk is the risk of loss from movements in prices, rates, or volatilities that a firm is exposed to through the positions it holds; it is the subject of this chapter.
-
 Credit risk is the risk that a counterparty, whether a bond issuer, a loan borrower, or a derivatives counterparty, fails to meet a contractual obligation; Chapter 5 already introduced the pricing consequence of credit risk, and Chapter 9 develops the risk-measurement side of the same problem.
-
 Liquidity risk comes in two related forms: funding liquidity risk, the risk that a firm cannot meet its own cash obligations as they come due, and market liquidity risk, the risk that a position cannot be sold quickly without moving its price significantly against the seller, directly connected to the bid-ask spread\index{bid-ask spread} and market depth concepts of Chapter 3.
-
 Operational risk covers losses from failed internal processes, systems, human error, or external events, including the kind of model risk flagged throughout this book whenever a model's assumptions are quietly violated by a changing environment; Chapter 9 covers a standard capital treatment for it.
-
 A single adverse event often touches more than one category at once: a large, sudden market move (market risk) can trigger a wave of defaults among leveraged counterparties (credit risk) precisely when many firms are simultaneously forced to sell into an illiquid market (liquidity risk), which is exactly the contagion dynamic behind the financial crises discussed in Chapter 3.
 
 Table~\ref{tab:risk_taxonomy} summarizes each risk type alongside its standard measurement tool and where in this book that tool is developed, giving a preview of this chapter's structure organized by risk type rather than by technique.
@@ -107,9 +99,7 @@ The historical method instead makes no distributional assumption at all: it simp
 \begin{equation*}
 \text{VaR}_{95\%}^{\text{historical}} = -(-0.0155) \times 10{,}000{,}000 = \$155{,}000.
 \end{equation*}
-The historical and parametric VaR estimates disagree by more than \$30,000 here, which is not a contradiction but a direct illustration of a persistent tension in risk measurement: the parametric method borrows statistical strength from the entire sample and produces a smooth estimate, but it assumes normality, which can be a poor description of returns with heavier tails than a normal distribution predicts, echoing the fat-tails caveat raised in Chapter 7's discussion of GARCH model\index{GARCH model}s.
-
-The historical method makes no such assumption, but with only twenty observations, its estimate depends heavily on a single data point (here, the $-1.55\%$ return) and would be considerably more stable with a longer history, typically one to several years of daily data in practice.
+The historical and parametric VaR estimates disagree by more than \$30,000 here, which is not a contradiction but a direct illustration of a persistent tension in risk measurement: the parametric method borrows statistical strength from the entire sample and produces a smooth estimate, but it assumes normality, which can be a poor description of returns with heavier tails than a normal distribution predicts, echoing the fat-tails caveat raised in Chapter 7's discussion of GARCH model\index{GARCH model}s. The historical method makes no such assumption, but with only twenty observations, its estimate depends heavily on a single data point (here, the $-1.55\%$ return) and would be considerably more stable with a longer history, typically one to several years of daily data in practice.
 
 \subsection{Portfolio VaR with the Variance-Covariance Matrix}\index{Portfolio VaR with the Variance-Covariance Matrix}
 \label{sec:matrix-var}
@@ -147,7 +137,6 @@ summing to the portfolio variance of $0.000034$ exactly as required. Scaling the
 \text{Component VaR}_A \approx \$30{,}468, \qquad \text{Component VaR}_B \approx -\$11{,}285,
 \end{equation*}
 which sum back to the \$19,182 total, exactly as the decomposition guarantees. AssetB's component is \emph{negative}, even though AssetB has positive standalone volatility on its own, because AssetB's strongly negative correlation with AssetA (Section~\ref{sec:stress-testing} computes it as $\rho\approx-0.896$) makes it a diversifier within this specific portfolio: adding more of AssetB, holding AssetA fixed, would actually \emph{reduce} total portfolio risk, not add to it, a fact the standalone volatility figures for AssetA and AssetB alone could never reveal.
-
 This is precisely why risk limits at a real trading firm are typically set and monitored using component or marginal VaR rather than standalone position size or standalone volatility: a position's true risk contribution depends on how it interacts with everything else already in the book, not on how risky it looks in isolation.
 
 \section{Expected Shortfall: Going Beyond VaR}\index{Expected Shortfall: Going Beyond VaR}
@@ -165,7 +154,6 @@ The parametric Expected Shortfall under normality has a closed-form expression i
 \text{ES}_\alpha = \left(\hat\sigma \frac{\phi(z_\alpha)}{1-\alpha} - \bar r\right) \times V,
 \end{equation*}
 which for $\alpha=95\%$ gives $\text{ES}_{95\%} \approx \$225{,}366$, noticeably larger than the parametric VaR$_{95\%}$ of \$186,195, exactly as it should be, since ES averages over the full tail rather than reporting only its edge.
-
 Because ES is a coherent risk measure\index{Coherent Risk Measure} in a precise mathematical sense that VaR is not (it satisfies a subadditivity property guaranteeing that diversification can never increase measured risk, which VaR can occasionally violate in pathological cases), banking regulators have shifted market-risk capital requirements from VaR toward Expected Shortfall in recent years, a change explored further in this chapter's discussion of regulatory capital. Figure~\ref{fig:var_es_tail} shows why the two measures differ: VaR marks only the boundary of the shaded loss tail, while ES averages over the entire tail beyond it.
 
 \begin{figure}[htbp]
@@ -211,17 +199,14 @@ Applying this to the cumulative value path implied by Table~\ref{tab:portfolio_r
 \text{MDD} = \frac{10{,}048{,}025 - 9{,}371{,}210}{10{,}048{,}025} \approx 6.74\%, \qquad \text{a peak-to-trough decline of } \$676{,}815.
 \end{equation*}
 This is a materially different, and arguably more decision-relevant, number than the portfolio's cumulative return over the full twenty days, only $-6.29\%$: the extra $0.45$ percentage points of drawdown reflect the fact that the portfolio was briefly \emph{up} \$48,025 before its losses began, so an investor who happened to hold the position from Day 2 onward experienced a larger peak-to-trough decline than a naive start-to-end comparison alone would reveal.
-
 This is exactly the sense in which maximum drawdown captures something the chapter's daily VaR figures cannot: a portfolio whose losses on every individual day comfortably clear a well-calibrated 95\% VaR threshold can still suffer a large, sustained drawdown if enough of those daily losses occur consecutively rather than being offset by intervening gains, exactly the pattern in this example's final four days.
 
 Maximum drawdown is used throughout this book wherever a full return path, not just a single day's distribution, is the natural object of interest: Chapter 11 uses it directly, alongside the Sharpe ratio and hit rate, to evaluate a backtested trading strategy's worst peak-to-trough decline, and asset managers and hedge funds routinely report it as a standard risk statistic precisely because, unlike VaR, it requires no distributional assumption at all, only a value path, and it is immediately interpretable to an investor asking, in plain language, ``how much could I have lost had I been unlucky enough to enter at the worst possible time.''
-
 Its main limitation mirrors that same simplicity: a single realized maximum drawdown is one historical observation of a path-dependent statistic, not an estimate of a full distribution the way VaR or Expected Shortfall are, so comparing two strategies' historical maximum drawdowns says less about their future worst-case risk than comparing their VaR or Expected Shortfall figures would, the same small-sample caution raised throughout this chapter's backtesting discussion.
 
 \section{Monte Carlo Simulation for Risk Measurement}\index{Monte Carlo Simulation for Risk Measurement}
 
 A third approach, Monte Carlo simulation, sits between the parametric and historical methods: it assumes a distributional model, as the parametric method does, but instead of relying on a closed-form formula, it simulates a very large number of hypothetical return scenarios from that model and reads VaR and ES directly off the simulated distribution, exactly as the historical method reads them off the observed one.
-
 Simulating 100,000 draws from a normal distribution with the same mean and standard deviation as Table~\ref{tab:portfolio_returns} ($\bar r=-0.32\%$, $\hat\sigma=0.937\%$) gives $\text{VaR}_{95\%} \approx \$187{,}460$, $\text{VaR}_{99\%} \approx \$251{,}690$, and $\text{ES}_{95\%} \approx \$226{,}378$, all close to the parametric formulas above, as they should be: with enough simulated draws, Monte Carlo VaR converges to the exact parametric answer whenever the underlying model is one for which a closed form exists at all.
 
 The method's real value emerges precisely when no such closed form is available, for example a portfolio containing options (whose payoffs are nonlinear in the underlying price, a case Section~\ref{sec:delta-normal} returns to directly) or a model with fat tails, jumps, or time-varying volatility of the kind introduced in Chapter 7's GARCH models. In those cases, Monte Carlo simulation remains straightforward, simulate many paths under the more realistic model and read off the empirical percentile, while a closed-form parametric formula either does not exist or requires a much more complex derivation.
@@ -241,11 +226,9 @@ an increase of about $6.7\%$ in a single day, purely from the GARCH model's own 
 \subsection{Filtered Historical Simulation: Combining the Two Methods}\index{Filtered Historical Simulation}
 
 The historical method (Section~\ref{sec:var}) and the GARCH-based method just introduced solve two different problems well: the historical method captures the actual shape of the return distribution, its skew and fat tails, without imposing a normal-distribution assumption, while GARCH captures how much that distribution's width is currently elevated or depressed relative to its long-run average.
-
 Filtered historical simulation combines both strengths in a single procedure. Each historical return $r_t$ is first standardized by the GARCH volatility estimate prevailing on that same day, $z_t = r_t/\sigma_t$, producing a series of standardized residuals that should be roughly free of volatility clustering if the GARCH model is well specified; VaR is then read off the appropriate percentile of this standardized series, and rescaled by \emph{today's} GARCH forecast volatility rather than whatever volatility happened to prevail on the day each historical return was originally observed.
 
 Applying this logic to the two GARCH forecasts already computed, $\sigma_3=1.95\%$ (pre-shock) and $\sigma_4=2.08\%$ (post-shock): a large historical return observed during the calmer $t=3$ regime, divided by that day's own small $\sigma_t$, contributes a large standardized residual, exactly as it should, since that return was unusually large \emph{relative to its own volatility regime}, not just in absolute terms.
-
 Rescaling that same standardized residual by today's forecast volatility, whatever it currently is, produces a properly scaled hypothetical return for today's actual conditions, avoiding both the plain historical method's problem (treating every day's return as if it occurred under today's volatility) and the plain parametric method's problem (imposing normality on a shape that raw historical data might contradict). Filtered historical simulation is exactly the kind of practical middle ground large trading desks use in production VaR systems, requiring the same GARCH machinery already developed above, applied across an entire historical return series rather than to a single day's forecast.
 
 \section{Backtesting Value at Risk Models}\index{Backtesting Value at Risk Models}
@@ -262,7 +245,6 @@ LR_{\text{POF}} = -2\ln\left[\frac{(1-p)^{n-x}p^x}{(1-x/n)^{n-x}(x/n)^x}\right],
 which is compared against a chi-squared distribution with one degree of freedom (critical value $3.841$ at the conventional 95\% test level) under the null. For the twenty-day sample above, with $p=0.05$, $n=20$, and $x=1$ exception, the observed rate $x/n=1/20=0.05$ exactly equals the target $p$, so the numerator and denominator are identical and $LR_{\text{POF}}=0$, nowhere close to rejecting the null.
 
 This looks like a perfect endorsement of the model, but it is really a demonstration of the same small-sample caution raised throughout this book: a single additional bad day would move the observed rate to $2/20=10\%$, and even that doubled exception rate would not, by itself, generate enough evidence at only twenty observations to reliably distinguish a well-calibrated model from a miscalibrated one. Kupiec's test, and the Basel traffic-light framework built on the same underlying logic, require a considerably longer history, typically the full one-year, 250-observation window described below, before they have any real statistical power.
-
 This is the same small-sample caution that applied to the Dickey-Fuller stationarity test in Chapter 7: a test can be constructed and interpreted correctly and still lack the statistical power to detect a real problem when the available sample is short.
 
 Backtesting failures are taken seriously by regulators: under the Basel framework\index{Basel Accords}, a bank whose internal VaR model produces too many exceptions in a rolling one-year window can be required to hold additional regulatory capital, using a multiplier applied directly to the reported VaR figure, which creates a direct financial incentive for banks to calibrate their risk models honestly rather than reporting an artificially low VaR to reduce capital requirements.
@@ -270,11 +252,9 @@ Backtesting failures are taken seriously by regulators: under the Basel framewor
 \subsection{The Basel Traffic-Light Backtesting Framework}\index{Basel Traffic-Light Backtesting Framework}
 
 Basel formalizes this backtesting logic into a three-zone ``traffic light'' system, based on the number of VaR exceptions observed over a rolling 250-trading-day window at the 99\% confidence level, where $0.01 \times 250 = 2.5$ exceptions are expected on average if the model is correctly calibrated. Zero to four exceptions fall in the green zone, requiring no action beyond continued monitoring and leaving the baseline capital multiplier of 3 unchanged.
-
 Five to nine exceptions fall in the yellow zone, triggering closer supervisory scrutiny and an increased capital multiplier that scales up within the zone; and ten or more exceptions fall in the red zone, where the model is presumed flawed and the multiplier rises to its maximum regulatory level of 4.
 
 This framework only works as intended over its full 250-day design window, which is worth underscoring using this chapter's own toy example: Table~\ref{tab:portfolio_returns}'s twenty-day, one-exception sample cannot be classified into a zone at all, since the traffic-light thresholds are calibrated to 250 observations, not twenty.
-
 Naively extrapolating the observed rate ($1/20=5\%$) to a full year would suggest roughly twelve or thirteen exceptions, which would fall well into the red zone, but doing so would repeat exactly the small-sample overreach Section~\ref{sec:backtesting-var} just cautioned against: twenty days is nowhere near enough data to support that extrapolation, and the traffic-light system is explicitly designed to be read only once a full 250-day window has actually been observed, not inferred from a short sample no matter how suggestive it looks.
 
 \subsection{Backtesting Expected Shortfall}\index{Backtesting Expected Shortfall}
@@ -303,7 +283,6 @@ The independence assumption behind this shortcut, however, is exactly the assump
 which for $T=10$ gives a true 10-day volatility about $9.4\%$ higher than the square-root-of-time rule assumes, and correspondingly a true 10-day 99\% VaR of about \$865,413 rather than \$790,824: the square-root-of-time shortcut, applied to autocorrelated returns, quietly understates the regulatory capital a bank should actually hold, in exactly the direction that matters (understating risk, not overstating it).
 
 Economic capital extends this same time-scaling logic one step further, from a 10-day regulatory horizon to a full one-year horizon calibrated to a much higher confidence level, typically 99.9\% or higher, chosen to be consistent with the default probability of the credit rating (commonly single-A or double-A) a bank wants its own solvency to reflect; Chapter 9 develops the analogous calculation directly for credit portfolios using the Vasicek model.
-
 Unlike the regulatory VaR multiplier in Section~\ref{sec:backtesting-var}, which is a supervisory capital charge computed from a specific, prescribed methodology, economic capital is a bank's own internal estimate of how much capital its entire risk-taking business genuinely needs to survive a severe, low-probability year, and is used internally for capital allocation and performance measurement, a desk generating a given return on a smaller economic-capital charge is, all else equal, using the firm's scarce capital more efficiently, as much as for regulatory compliance.
 
 \section{Liquidity Risk and Liquidity-Adjusted VaR}\index{Liquidity Risk and Liquidity-Adjusted VaR}
@@ -317,7 +296,6 @@ where the spread is expressed as a fraction of position value and the factor of 
 \frac{1}{2}(0.0030)(2{,}000{,}000) = \$3{,}000, \qquad \text{LVaR}_{95\%} = 19{,}182 + 3{,}000 = \$22{,}182,
 \end{equation*}
 an increase of roughly 16\% over the standard parametric VaR of \$19,182.
-
 This adjustment matters most precisely in the conditions where it is most often ignored: during a market-wide liquidity crunch, bid-ask spreads themselves widen sharply (recall from Chapter 3 that spreads compensate market makers for inventory risk and adverse selection, both of which increase during stressed markets), so the true cost of liquidating a position exactly when a firm most needs to reduce risk can be far higher than a liquidity adjustment calibrated on calm-market spreads would suggest, another instance of the procyclicality problem discussed later in this chapter.
 
 Market liquidity risk, the focus above, is distinct from funding liquidity risk, the risk that a firm cannot meet its own near-term cash obligations, and Basel III addresses the latter directly with the Liquidity Coverage Ratio (LCR)\index{Liquidity Coverage Ratio (LCR)},
@@ -325,7 +303,6 @@ Market liquidity risk, the focus above, is distinct from funding liquidity risk,
 \text{LCR} = \frac{\text{High-Quality Liquid Assets}}{\text{Total Net Cash Outflows over 30 days}} \ge 100\%,
 \end{equation*}
 which requires a bank to hold enough genuinely liquid assets (cash and high-grade government bonds, broadly) to survive 30 days of a specified stress scenario without needing to raise new funding. A bank with \$50 million in high-quality liquid assets and projected net cash outflows of \$40 million over a 30-day stress scenario has $\text{LCR} = 50/40 = 125\%$, comfortably above the regulatory minimum.
-
 The LCR is best understood as a funding-side complement to the market-side liquidity-adjusted VaR above: liquidity-adjusted VaR asks how much a specific position would cost to sell, while the LCR asks whether the firm as a whole has enough liquid resources on hand to avoid being a forced seller of anything at all during a period of stress, which is precisely the scenario, forced selling into an already-stressed and illiquid market, that turned market liquidity risk into a systemic problem during the 2008 crisis discussed later in this chapter.
 
 Basel III pairs the LCR with a second, longer-horizon ratio, the Net Stable Funding Ratio (NSFR)\index{Net Stable Funding Ratio (NSFR)},
@@ -333,9 +310,7 @@ Basel III pairs the LCR with a second, longer-horizon ratio, the Net Stable Fund
 \text{NSFR} = \frac{\text{Available Stable Funding}}{\text{Required Stable Funding}} \ge 100\%,
 \end{equation*}
 which asks essentially the same question as the LCR, does the bank have enough stable funding on hand, but over a one-year horizon rather than 30 days, and weighted toward the structural mismatch between how long a bank's assets take to mature (loans, often years) and how quickly its liabilities could be withdrawn (deposits, often on demand).
-
 Available stable funding weights a bank's capital and liabilities by how reliably they will still be there in a year (retail deposits are weighted as more stable than short-term wholesale borrowing, for instance), while required stable funding weights its assets by how long they are locked up (a long-dated loan requires more stable funding backing it than an overnight reverse repo).
-
 Where the LCR addresses a sudden, short-term liquidity run, the NSFR addresses the slower-moving risk of a bank funding long-term assets with short-term, flighty liabilities, exactly the maturity-transformation mismatch that turned a funding problem into a solvency problem for several institutions during the 2008 crisis once wholesale funding markets froze.
 
 \subsection{VaR for Nonlinear Portfolios: The Delta-Normal Approximation and Its Limits}\index{Delta-Normal Approximation}
@@ -344,7 +319,6 @@ Where the LCR addresses a sudden, short-term liquidity run, the NSFR addresses t
 Every VaR calculation so far has assumed a linear portfolio: one whose value moves in direct, constant proportion to the underlying risk factor. A portfolio containing options violates this assumption, and Chapter 5's Greeks give the vocabulary to see exactly how.
 
 Consider a market maker short 1,000 of the one-year, \$50-strike calls priced in Chapter 5 ($S_0=K=\$50$, $r=4\%$, $\sigma=30\%$, $C_0\approx\$6.88$, $\Delta=0.6115$, $\Gamma=0.0255$). The delta-normal method approximates the position's one-day loss using only delta, treating the option price as locally linear in the stock price.
-
 Converting the annual volatility to a daily figure the standard way, $\sigma_{\text{daily}} = 0.30/\sqrt{252} \approx 1.90\%$, the position's delta-implied one-day dollar standard deviation is
 \begin{equation*}
 \Delta \times S_0 \times \sigma_{\text{daily}} \times 1{,}000 = 0.6115 \times 50 \times 0.0190 \times 1{,}000 \approx \$577.85,
@@ -352,7 +326,6 @@ Converting the annual volatility to a daily figure the standard way, $\sigma_{\t
 giving $\text{VaR}_{95\%}^{\text{delta-normal}} \approx 1.645(577.85) \approx \$950.56$ and $\text{VaR}_{99\%}^{\text{delta-normal}} \approx 2.326(577.85) \approx \$1{,}344.08$.
 
 Full revaluation instead reprices the same option with the same Black-Scholes-Merton formula at a stressed stock price, holding strike, rate, volatility, and time to maturity fixed (a simplification that ignores one day of time decay, isolating the delta and gamma effect this example is meant to illustrate).
-
 The worst case for a short call is the stock rising, so at the 95\% stressed price $S_0(1+z_{0.95}\sigma_{\text{daily}}) \approx \$51.55$, the same option reprices to \$7.86, a position loss of \$980.79, about $3.2\%$ \emph{more} than the delta-normal estimate. At the more extreme 99\% stressed price of \$52.20, the option reprices to \$8.28, a loss of \$1,403.99, now about $4.5\%$ more than delta-normal predicted.
 
 A delta-gamma approximation\index{Delta-Gamma Approximation} closes most of this gap without requiring a full revaluation, by adding a quadratic correction term built directly from the same gamma already computed in Chapter 5,
@@ -365,16 +338,13 @@ With $\Delta S_{95} = S_0 z_{0.95}\sigma_{\text{daily}} \approx \$1.554$ and $\D
 1{,}000\left(0.6115(2.198) + \tfrac{1}{2}(0.0255)(2.198)^2\right) &\approx \$1{,}405.80,
 \end{align*}
 within a few cents of the full-revaluation figures of \$980.79 and \$1,403.99, compared to delta-normal's \$950.56 and \$1,344.08. The quadratic term costs only one extra number, gamma, already available from Chapter 5's Greeks, and recovers nearly all of the accuracy a full repricing would have provided, which is exactly why delta-gamma VaR, rather than delta-normal alone or full revaluation of every position, is the standard compromise used in practice for portfolios with too many options to reprice individually at every stressed scenario.
-
 This growing gap is exactly gamma's effect: delta describes the option's slope at the current stock price, but a genuinely large move travels far enough along the price-value curve that the slope itself has changed by the time the move is complete, and gamma measures precisely that curvature.
-
 The delta-normal method is a reasonable, cheap approximation for small moves or a portfolio with little gamma exposure relative to its size, but it systematically understates risk for a portfolio with meaningful gamma, understating it more severely the larger and more extreme the move being measured, exactly why the 99\% gap above is proportionally wider than the 95\% gap. A trading desk with substantial options exposure therefore typically supplements delta-normal VaR with full revaluation, or with a second-order delta-gamma approximation that adds a quadratic correction term, precisely to correct for this shortfall.
 
 \section{Stress Testing and Scenario Analysis}\index{Stress Testing and Scenario Analysis}
 \label{sec:stress-testing}
 
 VaR and Expected Shortfall are inherently backward-looking in an important sense: even the parametric and Monte Carlo versions are calibrated to a historical mean and standard deviation, so they implicitly assume that the future will statistically resemble the recent past.
-
 Stress testing addresses this by asking a different question entirely: not ``how bad are the worst outcomes the historical distribution suggests,'' but ``what would happen to this portfolio under a specific, named adverse scenario,'' whether historical (such as replaying the return pattern from the 2008 financial crisis or the 2020 COVID-19 market shock) or hypothetical (such as a sudden 200-basis-point rate shock or a 30\% equity market decline).
 
 Applying a historical stress scenario, a single-day return of $-7\%$, comparable to some of the worst individual trading days during the 2008 crisis, to the \$10 million portfolio in Table~\ref{tab:portfolio_returns} gives a stressed loss of
@@ -384,15 +354,12 @@ Applying a historical stress scenario, a single-day return of $-7\%$, comparable
 nearly three times the parametric 99\% VaR of \$250,081 computed in Section~\ref{sec:var}.
 
 This gap is not a sign that the VaR calculation was wrong; it is the entire point of stress testing. VaR, by construction, describes a specific quantile of a specific assumed distribution, while a stress scenario deliberately explores an outcome that a short, calm historical sample may never have contained at all.
-
 Regulators require large financial institutions to run exactly this kind of exercise (in the United States, the Federal Reserve's Comprehensive Capital Analysis and Review, or CCAR\index{Comprehensive Capital Analysis and Review (CCAR)}, is a prominent example) precisely because a risk model calibrated only on recent, relatively calm data can systematically understate the likelihood and severity of a genuine crisis, the same non-stationarity concern raised about financial time series models throughout Chapter 7.
 
 Standard stress testing, as above, starts from a scenario and asks how much the firm would lose; reverse stress testing\index{Reverse Stress Testing} runs the same logic backward, starting from a specific outcome, such as the firm's capital falling below the regulatory minimum or the firm becoming insolvent entirely, and asking what combination of market moves, defaults, or funding shocks would be required to produce it.
-
 This reframing is deliberately designed to counteract a subtle bias in forward stress testing: scenario designers, drawing on recent history and their own intuition about what a bad year looks like, tend to generate scenarios that resemble past crises rather than genuinely novel ones, while reverse stress testing forces an explicit search over the space of outcomes the firm cannot survive, regardless of whether any such scenario has ever actually occurred, and then asks the risk committee to judge how plausible that outcome really is.
 
 Concretely, suppose the desk running the \$10 million portfolio in Table~\ref{tab:portfolio_returns} has been allocated a risk capital cushion of \$500,000 specifically to absorb this book's trading losses before it would need additional capital from elsewhere in the firm. Reverse stress testing asks directly: what single-day return would exhaust this cushion? Since $\text{Loss} = |r| \times \$10{,}000{,}000$, solving $500{,}000 = |r| \times 10{,}000{,}000$ gives $|r| = 5\%$, a single-day move of $-5\%$ or worse.
-
 Comparing this to the $-7\%$ historical stress scenario used above, the reverse stress test reveals something the forward scenario alone did not make explicit: the historical stress scenario, if it recurred, would not merely breach this cushion but exceed it by $\$700{,}000 - \$500{,}000 = \$200{,}000$, a genuine capital shortfall rather than a mere limit breach, information a risk committee needs well before such a day actually arrives rather than discovering it only after the fact.
 
 \subsection{Correlation Stress Testing: Quantifying ``Correlations Go to One''}\index{Correlation Stress Testing}
@@ -406,7 +373,6 @@ a strongly diversifying, negative relationship, which is exactly why the equally
 \sigma_p^{\text{stress}} = \sqrt{w^\top \Sigma_{\text{stress}} w} \approx 1.372\%,
 \end{equation*}
 more than double the calm-period figure of $0.583\%$, so that $\text{VaR}_{95\%}^{\text{stress}} \approx 1.645(0.01372)(2{,}000{,}000) \approx \$45{,}141$, roughly $2.35$ times the calm-period parametric VaR of \$19,182 computed earlier, with neither asset's own volatility having changed at all.
-
 This is the quantitative content behind the vignette's qualitative warning: a diversification benefit that looks substantial under calm-period correlations can shrink dramatically, and portfolio risk can more than double, purely because assets that used to move independently, or even oppositely, start moving together, exactly the mechanism that made 2008 more dangerous for diversified portfolios than their pre-crisis risk models suggested.
 
 \subsection{Climate Risk: Physical and Transition Scenarios}\index{Climate Risk: Physical and Transition Scenarios}
@@ -417,7 +383,6 @@ Suppose a bank's standard VaR model, calibrated on a decade of relatively climat
 Two distinct channels are usually separated. \textbf{Physical risk}\index{Physical Risk (Climate)} is direct damage from climate events, a flood or wildfire destroying collateral, a hurricane disrupting an insurer's claims, or chronic effects such as declining agricultural yields under sustained higher temperatures. \textbf{Transition risk}\index{Transition Risk (Climate)} is the financial impact of the policy, technology, and consumer-preference shifts required to actually reduce emissions, a carbon tax, a ban on new internal-combustion vehicles, or investors simply repricing high-emissions assets ahead of either.
 
 The Network for Greening the Financial System (NGFS)\index{Network for Greening the Financial System (NGFS)}, a consortium of over $130$ central banks and supervisors founded in 2017, publishes reference scenarios central banks now use for supervisory climate stress tests, organized into three families: \emph{orderly} scenarios (climate policy tightens early and gradually, keeping both physical and transition risk relatively contained), \emph{disorderly} scenarios (policy action is delayed or fragmented across jurisdictions, forcing a much sharper, later repricing to reach the same eventual emissions target), and \emph{hot house world} scenarios (insufficient policy action at all, trading transition risk for severe, worsening physical risk instead).
-
 The methodological point worth isolating is that a disorderly scenario is not simply ``a bigger version'' of an orderly one; delay is precisely what converts a gradual, absorbable transition into an abrupt, stress-test-worthy one.
 
 A worked example makes this concrete using the same $\$10$ million scale as Table~\ref{tab:portfolio_returns}. Suppose the portfolio is instead a bank's equity holdings split across three sectors by carbon exposure, $\$3$ million in utilities and energy (carbon-intensive), $\$4$ million in technology (low-carbon), and $\$3$ million in diversified industrials (moderate), and each sector has an illustrative sensitivity to a rising carbon price: utilities and energy lose $8\%$ of equity value per $\$50$-per-ton carbon price increase, industrials lose $4\%$, and technology loses only $1\%$.
@@ -454,9 +419,7 @@ The companion notebook tests this directly: it simulates 750 days of returns fro
 Both models then forecast one step ahead across the remaining 150 days, and because the true simulated variance path is known exactly (it is not observable in real markets, which is precisely why this test requires simulated rather than real data), each forecast can be scored directly against it.
 
 The result is a genuine surprise only if one assumes flexibility always wins: the misspecified, symmetric GARCH(1,1) achieves a forecast-variance RMSE of $2.416\times10^{-5}$, beating the sign-aware, cross-validated gradient-boosting model's RMSE of $3.830\times10^{-5}$ by $36.9\%$, even though the gradient-boosting model had direct access to exactly the information (the shock's sign) that GARCH(1,1) cannot use.
-
 The gradient-boosting model does still beat a naive constant-variance benchmark ($4.202\times10^{-5}$ RMSE) by $8.8\%$, so it is not learning nothing, but a correctly-structured recursive model, propagating variance forward one term at a time exactly as the true data-generating process does, retains a large practical advantage over a generic tree ensemble learning from a lagged-feature window, even when that ensemble is given the one piece of information it needs and is tuned carefully rather than left at default settings.
-
 This is a genuinely useful, sobering result, not a failure of the exercise: it is exactly why volatility forecasting in practice tends to augment GARCH-family models with richer inputs (implied volatility, order flow, cross-asset signals) rather than replace the recursion outright with an off-the-shelf ML model trained on lagged returns alone, and it is a concrete illustration of the overfitting and interpretability tradeoff this section already warned a more flexible model carries.
 
 A second application addresses a purely computational bottleneck: full revaluation of a large options book, of the kind Section~\ref{sec:delta-normal} performed for a single position, becomes prohibitively slow once thousands of positions must be repriced at thousands of simulated Monte Carlo scenarios, so some trading desks train a neural network as a fast pricing surrogate, learned once from a pricing model like Black-Scholes-Merton or a full Monte Carlo engine, then queried repeatedly at simulation speed rather than re-solving the original pricing model at every scenario.
@@ -470,9 +433,7 @@ In every one of these applications, the underlying discipline is unchanged from 
 Every quantitative method in this chapter, VaR, Expected Shortfall, GARCH-based volatility forecasting, liquidity adjustment, is a model in the specific sense introduced in Chapter 1: a simplified representation of reality whose outputs are only as trustworthy as its assumptions. Model risk management is the discipline of formally governing this fact, treating every model used to make a material financial decision as an object requiring independent scrutiny before deployment and ongoing monitoring afterward, rather than trusting a model simply because it was built by a competent team.
 
 A mature model risk management\index{model risk management} framework, closely following supervisory guidance such as the U.S. Federal Reserve and OCC's SR 11-7\index{SR 11-7}, organizes this scrutiny around three activities. Independent validation requires that a model be reviewed by staff who did not build it, checking the conceptual soundness of its assumptions (does a normal-distribution assumption make sense for this portfolio's return history), the correctness of its implementation (does the code actually compute what the mathematical specification says it should), and its outcomes (does backtesting, as in Section~\ref{sec:backtesting-var}, confirm the model performs as claimed).
-
 Ongoing monitoring tracks a model's performance after deployment, since a model validated as sound at launch can degrade as market conditions change, exactly the non-stationarity concern raised throughout this book, and a monitoring program exists specifically to catch that degradation before it causes a material loss rather than after.
-
 Model inventory and documentation maintain a complete, current record of every model in use, its owner, its validation status, and its known limitations, since a firm that does not know how many models it has, or where they are used, cannot possibly govern the risk they collectively pose.
 
 In practice, a firm with hundreds of models cannot validate all of them with equal intensity, so most model risk management frameworks tier models by materiality, for example classifying a model whose output could plausibly affect more than \$50 million of capital or reported risk as Tier 1, requiring full independent validation and annual revalidation, while a narrowly scoped model with less than \$5 million of potential impact might be Tier 3, revalidated only every two to three years; the portfolio VaR model developed in this chapter, given its direct role in regulatory capital calculations, would almost certainly sit in the highest tier at any bank of meaningful size.
@@ -508,39 +469,29 @@ Every quantitative method in this chapter, VaR, Expected Shortfall, economic cap
 \end{figure}
 
 The first line of defense is the business unit that actually takes the risk, a trading desk or a lending team, and is responsible for managing it day to day within approved limits.
-
 The second line is an independent risk management and compliance function, organizationally separate from the business units it oversees, that builds and maintains models like the VaR and economic capital methods introduced in this chapter and the credit-scoring methods of Chapter 9, sets risk limits, and monitors whether the first line is operating within them.
-
 The third line, internal audit, periodically and independently verifies that the first two lines are functioning as intended, checking not just whether a number was computed correctly but whether the entire risk management process was followed. This structure exists specifically to prevent the single point of failure that arises when the people generating revenue from a risk position are also the people responsible for measuring and reporting that risk, a conflict of interest that has been implicated in numerous historical risk management failures.
 
 A model like the ones developed in this chapter is only as trustworthy as the governance structure that surrounds it: a perfectly specified VaR model computed by a risk function with no real independence from the trading desk it monitors provides little genuine protection.
-
 The second line of defense is typically led by a Chief Risk Officer (CRO), a senior executive with direct reporting access to the board of directors' risk committee, independent of the chief executive and business-line management, specifically so that a risk concern can reach the board without first being filtered by the same management chain whose performance the concern might reflect poorly on.
-
 This reporting-line independence is not a bureaucratic formality: several well-documented historical risk management failures trace back to a risk function that identified a genuine problem internally but lacked the organizational standing or independence to have that concern acted on before it caused a material loss, which is precisely why modern governance codes and regulatory guidance treat CRO independence, board-level risk reporting, and the second line's authority to veto or unwind a position as essential features of a credible risk management function rather than optional best practices.
 
 A concrete limit example shows how these three lines actually interact day to day. Suppose the second line has approved a daily 99\% VaR limit of \$300,000 for the desk running the \$10 million portfolio from Table~\ref{tab:portfolio_returns}. The parametric $99\%$ VaR of \$250,081 computed in Section~\ref{sec:var} represents a limit utilization of $250{,}081/300{,}000 \approx 83.4\%$, comfortably within the approved limit, so the first line continues trading within its normal risk-taking mandate and the second line's monitoring is routine.
-
 Now suppose realized volatility rises sharply enough, following the volatility-adjusted VaR logic of Section~\ref{sec:garch-var}, that the desk's VaR the next day increases to \$340,000, a breach of \$40,000, or roughly $13.3\%$ over the approved limit.
-
 This is precisely the event the three-lines structure exists to catch: the breach must be reported to the second line the same day, which independently assesses whether the increase reflects a temporary, defensible spike in market volatility or a genuine change in the desk's risk profile that warrants an immediate position reduction, and a limit breach that recurs or is not promptly remediated is exactly the kind of finding the third line's periodic audit is designed to flag even if the second line's day-to-day response was otherwise adequate.
 
 \section{Case Vignette: When Value at Risk Meets a Genuine Crisis}\index{When Value at Risk Meets a Genuine Crisis}
 
 The 2008 financial crisis is the standard cautionary tale about the limits of the methods developed in this chapter, and it is worth walking through precisely why, since the failure was not a matter of arithmetic errors. Many large banks entered 2008 with VaR models built and validated exactly as this chapter describes: parametric or historical methods, calibrated on several years of historical returns, backtested against the kind of exception-counting procedure in Section~\ref{sec:backtesting-var}, and generally passing those backtests during the calm years leading up to the crisis.
-
 Several major banks subsequently reported, in hindsight, that they experienced multiple trading days during the crisis with losses their models had classified as ``25-standard-deviation events,'' occurrences that a normal distribution assigns a probability of essentially zero, and that should therefore not occur even once across the entire history of the universe under the model's own assumptions, let alone several times in a single year.
 
 This did not mean the underlying arithmetic was wrong; it meant the normality assumption, the same parametric assumption used throughout Section~\ref{sec:var} of this chapter, was a poor description of returns during a genuine crisis, exactly the fat-tails caveat flagged repeatedly throughout this book. A model calibrated on a multi-year window that happened not to include a severe crisis will, by construction, underestimate the frequency of extreme moves, since it has literally never observed one in its training data, the same finite-sample problem behind this chapter's caution about short backtesting windows.
-
 Compounding this, correlations between asset classes that had appeared low or stable during calm periods rose sharply during the crisis, a pattern sometimes summarized as ``correlations go to one in a crisis,'' which meant that diversification benefits assumed by portfolio-level VaR calculations, including the variance-covariance approach in Section~\ref{sec:matrix-var}, provided far less protection than historical correlations had suggested they would.
 
 The lesson this vignette is meant to leave is not that VaR or Expected Shortfall are poor tools, both remain standard, required practice at every major financial institution today, but that every method in this chapter answers the question it was designed to answer only as well as its underlying assumptions hold, and a serious risk management practice treats stress testing, backtesting, and the qualitative judgment of an independent second line of defense as necessary complements to any single statistical model, not optional extras.
 
 The regulatory response to exactly this episode is worth naming explicitly, since it shaped the risk management landscape this chapter describes.
-
 The Basel Committee's Fundamental Review of the Trading Book (FRTB)\index{Fundamental Review of the Trading Book (FRTB)}, finalized in the years following the crisis and phased in at internationally active banks through the early 2020s, replaced VaR with Expected Shortfall as the basis for market-risk capital calculations precisely because ES, unlike VaR, is sensitive to the severity of losses beyond the threshold, not merely their frequency, addressing directly the ``25-standard-deviation event'' problem described above: a VaR-based capital charge is blind to how much worse the tail beyond the VaR threshold actually is, while an ES-based charge is not.
-
 FRTB also requires banks to calibrate their models using a period of significant historical stress, rather than only recent, potentially calm data, a direct regulatory response to the finite-sample, calm-period-calibration problem this vignette illustrates, and introduces a more granular desk-level model approval process so that a single bank-wide model validation can no longer mask weaknesses in how any one specific trading desk's risk is measured. None of this makes the statistical methods in this chapter obsolete; it makes them subject to a considerably more demanding, and more explicitly crisis-aware, regulatory standard than the pre-2008 VaR framework was.
 
 \section{Challenges in Market Risk Management}
@@ -548,11 +499,9 @@ FRTB also requires banks to calibrate their models using a period of significant
 Several challenges recur across nearly every market risk management application, and Chapter 9 revisits several of them in a credit-risk setting.
 
 \textbf{Model risk in the risk model itself.} Every method in this chapter, parametric VaR's normality assumption, the GARCH recursion's own parametric structure, the delta-normal method's linearity assumption, is itself a model with assumptions that can fail exactly when they matter most, during a crisis. A risk model that works well in calm markets can dramatically understate risk in a crisis precisely because crises are, by definition, unusual, low-probability events that a model calibrated on typical conditions was never designed to capture.
-
 The gap between a linear approximation and a full, nonlinear revaluation, small for a modest move, can widen substantially exactly when the move being measured is largest.
 
 \textbf{Correlation and tail dependence.} Individual risk measures often look reasonable in isolation, but a real portfolio becomes dangerous when many positions move together at the worst possible time, a pattern called tail dependence.
-
 This chapter's own case vignette showed a concrete, historically documented instance: correlations that looked low and stable during calm markets rose sharply during the 2008 crisis, eroding the diversification benefit the variance-covariance VaR of Section~\ref{sec:matrix-var} assumed. Estimating tail dependence directly, rather than assuming a single, stable correlation matrix, is both statistically difficult and highly consequential for the resulting risk estimate.
 
 \textbf{Procyclicality.} Risk measures calibrated on recent data tend to show low risk during calm periods (encouraging more risk-taking and leverage) and high risk immediately after a shock has already occurred (forcing deleveraging precisely when the system can least afford it), an amplifying feedback loop that has been implicated in several historical financial crises and that no purely statistical risk measure resolves on its own.
