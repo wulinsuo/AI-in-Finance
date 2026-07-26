@@ -30,22 +30,22 @@ Two worked examples run through the chapter: a short, hand-computable interest-r
 
 Before closing, it returns to a promise made in Chapter 6: why cross-validation\index{cross-validation}, as normally practiced in machine learning, must be modified for time series data.
 
-The chapter follows the same order an analyst would actually work through a new series: first establish whether it is stationary (Section~\ref{sec:adf-test}) and how strongly it depends on its own past (Section~\ref{sec:acf-section}), then fit and forecast a model on that basis (Section~\ref{sec:ar1-example}), quantifying the uncertainty around that forecast rather than reporting a single number (Section~\ref{sec:ci-pvalue}). The chapter then widens the lens from one series to several at once, cointegration (Section~\ref{sec:cointegration}) for pairs that move together, and the Kalman filter\index{Kalman filter} (Section~\ref{sec:kalman-example}) for a state that evolves and is only noisily observed, before closing with the walk-forward validation discipline that Chapters 8 and 11 both depend on directly.
+The chapter follows the same order an analyst would actually work through a new series: first establish whether it is stationary (Section~\ref{sec:adf-test}) and how strongly it depends on its own past (Section~\ref{sec:acf-section}), then fit and forecast a model on that basis (Section~\ref{sec:ar1-example}), quantifying the uncertainty around that forecast rather than reporting a single number (Section~\ref{sec:ci-pvalue}). The chapter then widens the lens from one series to several at once, cointegration (Section~\ref{sec:cointegration}) for pairs that move together, and the Kalman filter\index{Kalman filter} (Section~\ref{sec:kalman-example}) for a state that evolves and is only noisily observed, before closing with the walk-forward validation discipline that Chapters 8 and 13 both depend on directly.
 
-Nearly every later chapter in this book that touches a time-ordered quantity, GARCH-based volatility in Chapter 8, momentum and mean-reversion trading signals in Chapter 11, cites this chapter's vocabulary rather than re-deriving it.
+Nearly every later chapter in this book that touches a time-ordered quantity, GARCH-based volatility in Chapter 8, momentum and mean-reversion trading signals in Chapter 13, cites this chapter's vocabulary rather than re-deriving it.
 
-\section{Why Time Series Analysis Matters in Finance}\index{Why Time Series Analysis Matters in Finance}
+\section{Why Time Series Analysis Matters in Finance}
 
 Financial data are overwhelmingly time series: daily prices, quarterly earnings, monthly inflation, tick-by-tick trades. Three features of financial time series make them harder to work with than the typical machine learning dataset. First, observations are not independent; today's return is statistically related to yesterday's, even if only weakly, which violates the independent-and-identically-distributed assumption behind many standard statistical procedures. Second, the variance of returns is itself time-varying, quiet periods are followed by quiet periods and volatile periods by volatile periods, a phenomenon called volatility clustering.
 Third, the underlying process generating the data can change over time (Chapter 6's non-stationarity concern), so a model fit on one period may not describe the next.
 
-Time series methods exist precisely to handle these features rather than assume them away. They also underpin much of the rest of this book: the risk models in Chapter 8 need a volatility forecast, the portfolio methods in Chapter 10 need a covariance forecast, and the trading strategies in Chapter 11 need to know whether a signal is transient noise or a persistent pattern.
+Time series methods exist precisely to handle these features rather than assume them away. They also underpin much of the rest of this book: the risk models in Chapter 8 need a volatility forecast, the portfolio methods in Chapter 12 need a covariance forecast, and the trading strategies in Chapter 13 need to know whether a signal is transient noise or a persistent pattern.
 
 It is worth being explicit about what makes this chapter's models different from the regression and classification models of Chapter 6, even though both ultimately involve fitting parameters to minimize a loss function. A standard machine learning model assumes each training observation is drawn independently from the same underlying distribution as every other observation, which is precisely the assumption a time-ordered dataset violates: today's return is not independent of yesterday's, and a model that ignores this dependence, for example by randomly shuffling a time series before splitting it into training and test sets, will produce badly misleading performance estimates.
 
 Every technique in this chapter, from the correlogram to GARCH to walk-forward validation, exists specifically to model, exploit, or correctly evaluate a model in the presence of this dependence, rather than assuming it away.
 
-\section{Stationarity, White Noise, and Random Walks}\index{Stationarity, White Noise, and Random Walks}
+\section{Stationarity, White Noise, and Random Walks}
 \label{sec:random-walk}
 
 Suppose an analyst fits a seemingly solid model relating an interest rate series to its own past values, only to find the fitted relationship falls apart the moment new data arrives, not because the estimation was done incorrectly, but because the series itself was never behaving consistently enough to model in the first place. This section makes precise exactly what kind of consistency a time series needs for a fitted model to have any hope of generalizing. A time series $\{X_t\}$ is weakly stationary if its mean and variance do not change over time and the covariance between $X_t$ and $X_{t-k}$ depends only on the lag $k$, not on $t$ itself:
@@ -60,26 +60,26 @@ A slightly stronger notion, strict stationarity, requires that the entire joint 
 A random walk is $P_t = P_{t-1} + \varepsilon_t$, and it is not stationary: its variance grows with $t$ (specifically $\text{Var}(P_t) = t\sigma^2$ if $P_0$ is fixed), so its statistical behavior genuinely changes over time.
 Asset prices behave approximately like random walks, which is exactly why Chapter 2 worked with returns, $R_t = (P_t - P_{t-1})/P_{t-1}$, rather than price levels: returns are much closer to stationary, since they do not inherit the ever-growing variance of the price level. This is not a minor technical preference; fitting a stationary-series model such as AR or ARMA directly to a non-stationary price level produces meaningless, unstable estimates, which is why the first step in almost any time series analysis is to check whether the series needs to be differenced (transformed to $\Delta X_t = X_t - X_{t-1}$) or converted to returns before modeling.
 
-\section{Testing for Stationarity: The Augmented Dickey-Fuller Test}\index{Testing for Stationarity: The Augmented Dickey-Fuller Test}
+\section{Testing for Stationarity: The Augmented Dickey-Fuller Test}
 \label{sec:adf-test}
 
-Deciding whether a series is stationary should not rest on visual inspection alone; the standard formal test is the (augmented) Dickey-Fuller test\index{Dickey-Fuller Test}. The test rewrites the AR(1) model 
-$$X_t = c + \phi X_{t-1} + \varepsilon_t$$ 
+Deciding whether a series is stationary should not rest on visual inspection alone; the standard formal test is the (augmented) Dickey-Fuller test\index{Dickey-Fuller Test}. The test rewrites the AR(1) model
+$$X_t = c + \phi X_{t-1} + \varepsilon_t$$
 in first-difference form,
 \begin{equation*}
 \Delta X_t = \alpha + \gamma X_{t-1} + \varepsilon_t, \qquad \gamma = \phi - 1,
 \end{equation*}
-and tests the null hypothesis $H_0: \gamma = 0$ (equivalent to $\phi = 1$, a unit root, meaning the series is a non-stationary random walk) against the alternative $H_1: \gamma < 0$ (meaning $\phi < 1$, so the series is stationary and mean-reverting). The ``augmented'' version adds lagged difference terms 
-$$\Delta X_{t-1}, \Delta X_{t-2}, \ldots$$ 
+and tests the null hypothesis $H_0: \gamma = 0$ (equivalent to $\phi = 1$, a unit root, meaning the series is a non-stationary random walk) against the alternative $H_1: \gamma < 0$ (meaning $\phi < 1$, so the series is stationary and mean-reverting). The ``augmented'' version adds lagged difference terms
+$$\Delta X_{t-1}, \Delta X_{t-2}, \ldots$$
 to the right-hand side to account for additional autocorrelation, but the core logic, testing whether $\gamma$ is significantly negative, is unchanged.
 
 Applying the (non-augmented) test to the interest-rate deviation series in Table~\ref{tab:ar1_data} means regressing $\Delta X_t$ on $X_{t-1}$:
 \begin{equation*}
 \hat\gamma = -0.290, \qquad SE(\hat\gamma) = 0.259, \qquad t\text{-statistic} = \frac{\hat\gamma}{SE(\hat\gamma)} \approx -1.12.
 \end{equation*}
-Notice that $\hat\gamma = -0.290$ is consistent with the AR(1) coefficient fitted earlier, since 
-$$\hat\phi - 1 = 0.710 - 1 = -0.290$$ 
-exactly. Critically, the Dickey-Fuller test does not use standard normal or $t$-distribution critical values, because under the null hypothesis of a unit root the test statistic has a nonstandard distribution; the relevant critical value at the 5\% level (with a constant term and no trend) is approximately $-2.89$, not the familiar $-1.96$. 
+Notice that $\hat\gamma = -0.290$ is consistent with the AR(1) coefficient fitted earlier, since
+$$\hat\phi - 1 = 0.710 - 1 = -0.290$$
+exactly. Critically, the Dickey-Fuller test does not use standard normal or $t$-distribution critical values, because under the null hypothesis of a unit root the test statistic has a nonstandard distribution; the relevant critical value at the 5\% level (with a constant term and no trend) is approximately $-2.89$, not the familiar $-1.96$.
 
 Since $|-1.12| < 2.89$, this test fails to reject the null hypothesis of a unit root, even though the AR(1) coefficient of 0.71 and the visibly decaying correlogram both suggest genuine mean reversion. This apparent contradiction is not a flaw in the test; it is a direct consequence of the sample size: with only 8 observations, the Dickey-Fuller test has very little statistical power to distinguish a stationary process from a unit-root process, exactly the ``limited effective sample size'' challenge flagged later in this chapter. In practice, the ADF test is typically applied to series with many more observations than this illustrative example, where its power to detect stationarity is much greater.
 
@@ -100,7 +100,7 @@ Because $\hat\rho_k$ is estimated from a finite sample, it is subject to samplin
 
 In other words, even the largest, most visually striking autocorrelation in this chapter's own worked example is not, strictly speaking, statistically distinguishable from zero at conventional confidence levels, purely because the sample is so small. This is not a contradiction of the chapter's earlier claim that the correlogram shows a clear AR(1) pattern; rather, it is a reminder, consistent with the ADF test's failure to reject a unit root in Section~\ref{sec:adf-test}, that with only 8 observations essentially no time series diagnostic can be fully trusted, and that the qualitative pattern (geometric decay) is more informative here than any individual significance test.
 
-\section{A Worked Example: Fitting and Forecasting an AR(1) Model}\index{Fitting and Forecasting an AR(1) Model}
+\section{A Worked Example: Fitting and Forecasting an AR(1) Model}
 \label{sec:ar1-example}
 
 This section works through the full lifecycle of a small time series model: fitting it to data, checking that its correlogram behaves as theory predicts, and using it to produce both a point forecast and, later in the chapter, a sense of how that forecast's uncertainty grows with the horizon. An autoregressive model of order 1, AR(1), expresses the current value as a linear function of the immediately preceding value plus noise:
@@ -171,10 +171,10 @@ Since $|\hat\phi| = 0.71 < 1$, the fitted process is stationary, with an implied
 \end{equation*}
 This is the essential logic of every autoregressive forecast: today's fitted relationship, applied to the most recent observation, produces tomorrow's point forecast.
 
-\subsection{Confidence Intervals and P-Values for Model Parameters}\index{Confidence Intervals and P-Values for Model Parameters}
+\subsection{Confidence Intervals and P-Values for Model Parameters}
 \label{sec:ci-pvalue}
 
-A point estimate such as $\hat\phi = 0.71$ is only half the story; without some sense of how precisely $\hat\phi$ is known, it is impossible to say whether the fitted mean reversion is a genuine feature of the process or an artifact of a short, noisy sample. 
+A point estimate such as $\hat\phi = 0.71$ is only half the story; without some sense of how precisely $\hat\phi$ is known, it is impossible to say whether the fitted mean reversion is a genuine feature of the process or an artifact of a short, noisy sample.
 
 Chapter 6's Section 6.4 built the standard-error, $t$-statistic, $p$-value, and confidence-interval machinery for exactly this purpose, including the correct (and the common incorrect) ways to state what a confidence interval means; that machinery applies here unchanged, since $\hat\phi$ is itself just an OLS slope, of $X_t$ on $X_{t-1}$, so this section applies the method rather than re-deriving it. For the AR(1) regression fitted above, with $n=7$ usable pairs and $2$ estimated parameters (so $n-2=5$ residual degrees of freedom),
 \begin{equation*}
@@ -191,7 +191,7 @@ This is the same small-sample fragility flagged when the Dickey-Fuller test in S
 Chapter 6's Section 6.4 already flagged the two practical warnings that apply here without modification: statistical significance is not the same as economic or financial significance, and testing many coefficients or candidate models against the same data inflates the chance that at least one spuriously crosses the $5\%$ threshold by pure luck.
 That second warning is exactly the multiple-testing problem Section~\ref{sec:cointegration}'s discussion of pairs selection revisits concretely, fulfilling the forward pointer Chapter 6 itself made to this section: a single $p$-value below $0.05$ is far less persuasive when it is the best of twenty candidate pairs tried rather than the only pair considered.
 
-\section{Multi-Step Forecasting and the Growth of Uncertainty}\index{Multi-Step Forecasting and the Growth of Uncertainty}
+\section{Multi-Step Forecasting and the Growth of Uncertainty}
 
 The one-step-ahead forecast above answers ``what happens next period,'' but many financial decisions require forecasting several periods ahead. For an AR(1) model, this is done recursively: use the one-step forecast $\hat X_9$ as if it were the actual next observation to produce $\hat X_{10} = \hat c + \hat\phi \hat X_9$, and continue in the same way for as many steps as needed. Applying this to the fitted model ($\hat\phi=0.71$, $\hat c=1.19$) starting from $X_8=4.0$ gives the forecasts in Table~\ref{tab:multistep}.
 
@@ -237,7 +237,7 @@ with $n=6$ throughout ($k=2$ and $k=3$ parameters for AR(1) and AR(2), respectiv
 both criteria favor AR(2) by a wide margin, even after the extra parameter's complexity penalty.
 Yet this conclusion should be read with real caution rather than taken as a settled upgrade: an AR(2) model on only six observations is already using half of the sample's data points as estimated parameters ($k=3$ against $n=6$), precisely the ``limited effective sample size'' and ``model selection versus overfitting'' concerns raised later in this chapter's challenges section, so a dramatically lower AIC/BIC here is at least as likely to reflect a small sample's capacity to fit its own noise as it is a genuinely better-specified model. In a longer series, this same Ljung-Box-then-AIC/BIC workflow, fit a candidate model, test whether its residuals are white noise, and if not, compare a higher-order alternative using an information criterion, remains standard practice; it is only the tiny sample size here that makes the specific numerical conclusion (prefer AR(2)) less trustworthy than the procedure itself.
 
-\section{Moving Averages and Exponential Smoothing}\index{Moving Averages and Exponential Smoothing}
+\section{Moving Averages and Exponential Smoothing}
 
 Before turning to ARIMA and GARCH, it is worth introducing two much simpler forecasting tools that remain widely used because of their transparency. A simple moving average forecast uses the average of the most recent $m$ observations as the forecast for the next period,
 \begin{equation*}
@@ -270,37 +270,37 @@ Suppose a shock, a one-time data-reporting glitch, say, appears to influence a s
 \begin{equation*}
 X_t = \mu + \varepsilon_t + \theta_1 \varepsilon_{t-1} + \cdots + \theta_q \varepsilon_{t-q},
 \end{equation*}
-and combining autoregressive and moving-average terms gives an ARMA($p,q$) model. Because many financial series (prices, but also many macroeconomic series) 
-are non-stationary in levels 
-but stationary after differencing, the ARIMA($p,d,q$) model applies an ARMA($p,q$) model to the series after 
-differencing $d$ times: $d=1$ removes a linear trend, $d=2$ removes a quadratic trend, and so on. In practice, $d$ is rarely more than 1 or 2 for financial data, 
+and combining autoregressive and moving-average terms gives an ARMA($p,q$) model. Because many financial series (prices, but also many macroeconomic series)
+are non-stationary in levels
+but stationary after differencing, the ARIMA($p,d,q$) model applies an ARMA($p,q$) model to the series after
+differencing $d$ times: $d=1$ removes a linear trend, $d=2$ removes a quadratic trend, and so on. In practice, $d$ is rarely more than 1 or 2 for financial data,
 since returns (a $d=1$ difference of log prices) are already close to stationary.
 
-The MA($q$) component has a theoretical autocorrelation structure that is the mirror image of the AR($p$) process introduced earlier in this chapter, and this 
-contrast is precisely what makes the ACF and PACF useful diagnostic tools together. For an MA(1) process $X_t = \mu + \varepsilon_t + \theta \varepsilon_{t-1}$, 
-the theoretical autocorrelation is $\rho_1 = \theta/(1+\theta^2)$ and $\rho_k=0$ for every lag $k>1$; for $\theta=0.6$, this gives $\rho_1 = 0.6/1.36 \approx 0.441$ and 
-then an abrupt drop to zero at lag 2, in sharp contrast to the AR(1) correlogram in Figure~\ref{fig:acf}, whose autocorrelations decay gradually across every lag 
-rather than cutting off sharply. This is the basis of the Box-Jenkins identification rule: a correlogram (ACF) that cuts off sharply after lag $q$ suggests an 
-MA($q$) model, while a partial autocorrelation function that cuts off sharply after lag $p$ suggests an AR($p$) model; a series where both decay gradually 
+The MA($q$) component has a theoretical autocorrelation structure that is the mirror image of the AR($p$) process introduced earlier in this chapter, and this
+contrast is precisely what makes the ACF and PACF useful diagnostic tools together. For an MA(1) process $X_t = \mu + \varepsilon_t + \theta \varepsilon_{t-1}$,
+the theoretical autocorrelation is $\rho_1 = \theta/(1+\theta^2)$ and $\rho_k=0$ for every lag $k>1$; for $\theta=0.6$, this gives $\rho_1 = 0.6/1.36 \approx 0.441$ and
+then an abrupt drop to zero at lag 2, in sharp contrast to the AR(1) correlogram in Figure~\ref{fig:acf}, whose autocorrelations decay gradually across every lag
+rather than cutting off sharply. This is the basis of the Box-Jenkins identification rule: a correlogram (ACF) that cuts off sharply after lag $q$ suggests an
+MA($q$) model, while a partial autocorrelation function that cuts off sharply after lag $p$ suggests an AR($p$) model; a series where both decay gradually
 suggests a mixed ARMA($p,q$) model, for which the specific orders are typically chosen by comparing information criteria across a small number of candidates
  rather than by reading the correlogram alone.
 
-Choosing the orders $p$, $d$, and $q$ is traditionally done with the Box-Jenkins methodology\index{Box-Jenkins Methodology}: examine the ACF and its partial-autocorrelation 
-counterpart (the PACF\index{Partial Autocorrelation Function (PACF)}, which measures the correlation between $X_t$ and $X_{t-k}$ after removing the influence of the 
-intervening lags) to identify candidate orders, fit several candidate models, and compare them using an information criterion such as AIC or BIC, which penalize 
-model complexity to avoid simply picking the model with the most parameters. This is the time series analogue of the model-selection problem in Chapter 6: 
+Choosing the orders $p$, $d$, and $q$ is traditionally done with the Box-Jenkins methodology\index{Box-Jenkins Methodology}: examine the ACF and its partial-autocorrelation
+counterpart (the PACF\index{Partial Autocorrelation Function (PACF)}, which measures the correlation between $X_t$ and $X_{t-k}$ after removing the influence of the
+intervening lags) to identify candidate orders, fit several candidate models, and compare them using an information criterion such as AIC or BIC, which penalize
+model complexity to avoid simply picking the model with the most parameters. This is the time series analogue of the model-selection problem in Chapter 6:
 more lags will always fit the training data at least as well, but a model with too many lags overfits sample noise exactly as a high-degree polynomial does.
 
-Many financial and economic series also exhibit seasonality, a repeating pattern at a fixed period, such as retail sales spiking every December or trading 
-volume dipping every summer. SARIMA (Seasonal ARIMA)\index{SARIMA (Seasonal ARIMA)} extends ARIMA by adding a second set of autoregressive, differencing, and 
-moving-average terms operating at the seasonal period $s$, denoted $\text{SARIMA}(p,d,q)(P,D,Q)_s$: the non-seasonal part $(p,d,q)$ captures short-run 
-dynamics exactly as before, while the seasonal part $(P,D,Q)_s$ captures dependence at lags $s, 2s, 3s, \ldots$. For example, a monthly retail sales 
-series might be modeled as $\text{SARIMA}(1,1,1)(1,1,1)_{12}$, where the seasonal terms specifically model the relationship between each month and 
-the same month one year ($s=12$ months) earlier, on top of the ordinary month-to-month dynamics the non-seasonal terms capture. 
+Many financial and economic series also exhibit seasonality, a repeating pattern at a fixed period, such as retail sales spiking every December or trading
+volume dipping every summer. SARIMA (Seasonal ARIMA)\index{SARIMA (Seasonal ARIMA)} extends ARIMA by adding a second set of autoregressive, differencing, and
+moving-average terms operating at the seasonal period $s$, denoted $\text{SARIMA}(p,d,q)(P,D,Q)_s$: the non-seasonal part $(p,d,q)$ captures short-run
+dynamics exactly as before, while the seasonal part $(P,D,Q)_s$ captures dependence at lags $s, 2s, 3s, \ldots$. For example, a monthly retail sales
+series might be modeled as $\text{SARIMA}(1,1,1)(1,1,1)_{12}$, where the seasonal terms specifically model the relationship between each month and
+the same month one year ($s=12$ months) earlier, on top of the ordinary month-to-month dynamics the non-seasonal terms capture.
 
-Seasonal differencing, $\Delta_s X_t = X_t - X_{t-s}$, is the seasonal analogue of the ordinary differencing introduced above, and it is applied when a series 
-exhibits a seasonal unit root, an extension of the stationarity testing in Section~\ref{sec:adf-test} to the seasonal frequency. Most asset return series in 
-finance show little seasonality at the daily frequency, which is why the GARCH and ARIMA examples elsewhere in this chapter do not require a seasonal extension, 
+Seasonal differencing, $\Delta_s X_t = X_t - X_{t-s}$, is the seasonal analogue of the ordinary differencing introduced above, and it is applied when a series
+exhibits a seasonal unit root, an extension of the stationarity testing in Section~\ref{sec:adf-test} to the seasonal frequency. Most asset return series in
+finance show little seasonality at the daily frequency, which is why the GARCH and ARIMA examples elsewhere in this chapter do not require a seasonal extension,
 but seasonality is common and important in macroeconomic series (retail sales, employment, seasonally-adjusted GDP) that feed into the fundamental analysis of
  Chapter 4 and the macroeconomic risk factors of Chapters 8 and 9.
 
@@ -333,12 +333,12 @@ which for this data gives $\hat\alpha = -12.5$ and $\hat\beta = 1.3$, and then a
 
 Note that this regression-based approach generalizes the simple $A_t - B_t$ spread used above (which implicitly assumes $\beta=1$) to an estimated hedge ratio $\hat\beta$, the number of shares of $B$ needed to offset one share of $A$; the simple difference is a reasonable approximation only when the two series move roughly one-for-one, which happens to be nearly true here since $\hat\beta=1.3$ is fairly close to 1.
 
-This relationship is the foundation of pairs trading, a strategy covered in more depth in Chapter 11. In practice, the spread is standardized into a $z$-score, $z_t = (s_t - \bar s)/\hat\sigma_s$, so that trading rules can be stated in terms of standard deviations rather than the spread's raw units, which vary from one pair to the next. For the data in Table~\ref{tab:pairs_trading}, the final spread of 3 has a $z$-score of $z_6 = (3 - 2.5)/0.548 \approx 0.91$; a common rule of thumb opens a trade when $|z_t|$ exceeds roughly 2 (signaling an unusually wide or narrow spread) and closes it once $z_t$ reverts close to zero, so this particular spread, at just under one standard deviation from its mean, would not yet trigger a new trade under such a rule.
+This relationship is the foundation of pairs trading, a strategy covered in more depth in Chapter 13. In practice, the spread is standardized into a $z$-score, $z_t = (s_t - \bar s)/\hat\sigma_s$, so that trading rules can be stated in terms of standard deviations rather than the spread's raw units, which vary from one pair to the next. For the data in Table~\ref{tab:pairs_trading}, the final spread of 3 has a $z$-score of $z_6 = (3 - 2.5)/0.548 \approx 0.91$; a common rule of thumb opens a trade when $|z_t|$ exceeds roughly 2 (signaling an unusually wide or narrow spread) and closes it once $z_t$ reverts close to zero, so this particular spread, at just under one standard deviation from its mean, would not yet trigger a new trade under such a rule.
 
 When the spread is unusually wide relative to its historical mean and standard deviation, a trader shorts the relatively expensive stock (here, $A$) and buys $\hat\beta$ shares of the relatively cheap one ($B$) for every share of $A$, betting that the spread will revert toward its mean; when the spread is unusually narrow, the trader takes the opposite position.
-Because the strategy trades the spread rather than the direction of either stock, it is designed to profit regardless of whether the overall market rises or falls, a property called market neutrality, provided the cointegrating relationship itself remains stable, which is exactly the kind of assumption that can silently break down, a risk explored further when Chapter 11 discusses the practical risks of statistical arbitrage strategies.
+Because the strategy trades the spread rather than the direction of either stock, it is designed to profit regardless of whether the overall market rises or falls, a property called market neutrality, provided the cointegrating relationship itself remains stable, which is exactly the kind of assumption that can silently break down, a risk explored further when Chapter 13 discusses the practical risks of statistical arbitrage strategies.
 
-\section{Vector Autoregression: Modeling Several Series Jointly}\index{Vector Autoregression: Modeling Several Series Jointly}
+\section{Vector Autoregression: Modeling Several Series Jointly}
 
 Every model so far in this chapter describes a single series in terms of its own past. A vector autoregression (VAR) extends the AR($p$) framework to several series simultaneously, allowing each variable to depend on its own past values and the past values of every other variable in the system. A VAR(1) model for two series $X_t$ and $Y_t$ is
 \begin{align*}
@@ -371,13 +371,13 @@ X_3 = 0.254, \qquad Y_3 = 0.129, \qquad X_4 = 0.178, \qquad Y_4 = 0.116.
 Two features of this impulse response are worth noting. First, even though the exchange rate was not shocked directly, it responds immediately, rising from $0$ to $0.1$ in a single period, purely through the cross-series coefficient $a_{21}=0.1$; this is exactly the kind of spillover a collection of separate, univariate ARIMA models, each blind to the other series, could never capture.
 Second, the exchange rate's response does not simply fade monotonically alongside the interest rate's own decay: it initially rises further, from $0.1$ to $0.13$, before declining, because it continues to absorb the (still-elevated) interest rate for a second period even as the direct shock itself has already started to fade, a lagged-peak pattern that is a hallmark signature of genuine cross-series transmission rather than each series simply reverting independently.
 
-Both series in this example do eventually decay back toward zero, which is not guaranteed by the individual coefficients alone; it depends on the stability of the whole coefficient matrix 
-$$A = \begin{bmatrix} a_{11} & a_{12} \\ a_{21} & a_{22} \end{bmatrix}$$ 
+Both series in this example do eventually decay back toward zero, which is not guaranteed by the individual coefficients alone; it depends on the stability of the whole coefficient matrix
+$$A = \begin{bmatrix} a_{11} & a_{12} \\ a_{21} & a_{22} \end{bmatrix}$$
 jointly. The multivariate generalization of the univariate AR(1) stationarity condition $|\phi|<1$ is that every eigenvalue of $A$ must lie strictly inside the unit circle. For this system, $A$'s eigenvalues are exactly $0.5$ and $0.8$, both comfortably below $1$ in absolute value, confirming that the impulse response above must decay to zero eventually rather than explode, exactly as the numerical values $0.6, 0.38, 0.254, 0.178$ for $X$ and $0.1, 0.13, 0.129, 0.116$ for $Y$ already suggested.
 
 A VAR fitted to real, non-stationary financial series (interest rate levels rather than changes, for example) can easily produce a coefficient matrix with an eigenvalue at or above 1, in which case the whole system is unstable and any impulse response or multi-step forecast built from it, however precisely computed, describes an explosive process rather than a meaningful economic dynamic. This is the direct multivariate analogue of the unit-root problem the Dickey-Fuller test in Section~\ref{sec:adf-test} is designed to detect in a single series, and it is exactly why a VAR, like an ARIMA model, is normally fit to differenced or otherwise stationary series rather than to raw levels.
 
-\section{A Worked Example: PCA and Forecasting the Term Structure of Interest Rates}\index{PCA and Forecasting the Term Structure of Interest Rates}
+\section{A Worked Example: PCA and Forecasting the Term Structure of Interest Rates}
 \label{sec:pca-term-structure}
 
 The VAR framework above handles two or three interconnected series comfortably, but Chapter 5's yield curve is not two series, it is a whole curve, one yield for every maturity a government issues debt at. Modeling eight or more maturities as a single high-dimensional VAR is possible in principle but wasteful in practice, because adjacent points on a yield curve are extremely highly correlated: the 2-year and 3-year yields, for instance, almost always move together.
@@ -464,7 +464,7 @@ On the last trading day of the sample (December 29, 2023), the level factor stoo
 This is an honest result, not a disappointing one. A statistically significant but practically negligible $R^2$ is precisely what an efficient, highly liquid market should produce: if daily changes in the level of the Treasury curve were meaningfully predictable from their own recent history, that predictability would itself be a trading opportunity large market participants would compete away, the same random-walk logic introduced for individual asset prices in Section~\ref{sec:random-walk} now confirmed directly on 34 years of real term-structure data.
 The genuine payoff of the PCA step is not that it makes the level factor easy to predict, nothing makes daily interest-rate changes easy to predict, but that it replaces an unwieldy eight-maturity forecasting problem with a three-factor one, and that whatever structure a more sophisticated model (a GARCH specification on the level factor's volatility, for instance, using the tools of Section~\ref{sec:garch} directly on $\Delta\text{PC1}_t$) does find can be mapped back to every maturity on the curve at once through the same fixed loadings, rather than requiring eight separate models to stay mutually consistent by construction.
 
-\section{Volatility Clustering and the GARCH Family}\index{Volatility Clustering and the GARCH Family}
+\section{Volatility Clustering and the GARCH Family}
 \label{sec:garch}
 
 A defining stylized fact of financial returns is that their variance is not constant: large price moves tend to be followed by more large moves (of either sign), and calm periods tend to persist, a pattern called volatility clustering. This directly affects the option pricing models in Chapter 5, which assumed a single constant volatility $\sigma$; GARCH model\index{GARCH model}s exist to make that assumption realistic by letting volatility evolve with the data.
@@ -506,7 +506,7 @@ The GARCH(1,1) model treats a positive and a negative return of the same magnitu
 
 Extensions such as the EGARCH (exponential GARCH) and GJR-GARCH models address this by allowing the volatility recursion to respond asymmetrically to the sign of the previous shock, not just its magnitude, at the cost of additional parameters to estimate. These extensions are not developed in detail here, but recognizing that the basic GARCH(1,1) model implicitly assumes symmetry is important context for interpreting its forecasts, particularly around market downturns, when this symmetry assumption is most likely to be violated.
 
-\section{State-Space Models and the Kalman Filter}\index{State-Space Models and the Kalman Filter}
+\section{State-Space Models and the Kalman Filter}
 \label{sec:kalman-example}
 
 Suppose a fund re-estimates a stock's market beta from a rolling regression each quarter and finds the estimate bouncing around noticeably from one quarter to the next. Some of that bounce is pure estimation noise, sampling variation that would appear even if the true beta never changed at all, but part of it might be the true beta itself genuinely drifting over time as the company's business evolves, and a single quarter's estimate cannot tell the two apart.
@@ -530,7 +530,7 @@ Deriving the filter's update equations from first principles is beyond the scope
 
 Notice also that the Kalman gain $K_t$ shrinks slightly across the two updates in this example, from $0.313$ to $0.245$, reflecting the filter's growing confidence in its running estimate as more observations accumulate, even though the process noise $Q$ continually reintroduces some uncertainty at every step to prevent the estimate from becoming overconfident and failing to adapt to genuine future changes in the underlying beta.
 
-\section{Walk-Forward Validation for Time Series}\index{Walk-Forward Validation for Time Series}
+\section{Walk-Forward Validation for Time Series}
 
 Chapter 6 introduced $k$-fold cross-validation and noted that it can be misleading for time series, because a random split can train a model on data from after the validation period, information that would never be available at the time a real forecast was made. Walk-forward validation avoids this by always keeping the training window entirely before the validation window in time, then rolling both windows forward, as shown in Figure~\ref{fig:walk_forward}.
 
@@ -563,7 +563,7 @@ Chapter 6 introduced $k$-fold cross-validation and noted that it can be misleadi
 
 At each step, the model is refit (or updated) using only data available up to that point, produces a forecast for the next period, and that forecast is scored against the realized outcome once it arrives. The process repeats, rolling forward through the entire sample, and the reported performance is the average across all these genuinely out-of-sample forecasts. This is more computationally expensive than a single train-test split, since the model may be refit many times, but it is the only evaluation procedure that mimics how a forecasting model would actually be used in practice, one period at a time, without ever peeking ahead.
 
-\section{Evaluating Forecast Accuracy}\index{Evaluating Forecast Accuracy}
+\section{Evaluating Forecast Accuracy}
 
 Once walk-forward validation has produced a sequence of genuinely out-of-sample forecasts, they must be scored using a metric appropriate to the forecasting problem. Beyond the mean squared error used elsewhere in this book, two metrics are especially common in time series work. The root mean squared error (RMSE)\index{Root Mean Squared Error (RMSE)},
 \begin{equation*}
@@ -602,11 +602,13 @@ Formal tests exist for detecting a structural break at a known or unknown date (
 
 \textbf{Model misspecification in multivariate systems.} A VAR model's conclusions, including any Granger-causality test, are sensitive to which variables are included and how many lags are used; omitting a relevant variable that actually drives both series in the system can produce a spurious Granger-causality finding, incorrectly suggesting one included variable predicts another when both are really being driven by the omitted one.
 
-\textbf{Classical models versus neural sequence models.} Every model in this chapter, AR(1), ARIMA, GARCH, and VAR, is a classical statistical model with a small number of interpretable parameters, estimated by OLS or maximum likelihood. A recurrent neural network can, in principle, learn a considerably more flexible mapping from a series' own history to its next value than any fixed linear, fixed-lag-order model this chapter introduced, and Chapter 15 works through exactly such a model, a hand-computed RNN forward pass, in detail.
+\textbf{Classical models versus neural sequence models.} Every model in this chapter, AR(1), ARIMA, GARCH, and VAR, is a classical statistical model with a small number of interpretable parameters, estimated by OLS or maximum likelihood. A recurrent neural network can, in principle, learn a considerably more flexible mapping from a series' own history to its next value than any fixed linear, fixed-lag-order model this chapter introduced, and Chapter 17 works through exactly such a model, a hand-computed RNN forward pass, in detail.
 That added flexibility is not a free upgrade, however: a neural sequence model has many more parameters to fit from data that, as this section's limited-effective-sample-size challenge already noted, contains far less independent information than its raw observation count suggests, so the added flexibility often costs more in overfitting risk than it returns in genuine forecast accuracy unless it is disciplined with exactly the walk-forward validation this chapter introduced.
 The practical choice between a classical time series model and a neural sequence model is therefore rarely settled by which is more sophisticated in the abstract, but by which one a limited, noisy financial dataset can actually support without simply memorizing its own history.
 
-\section{A Practical Workflow for Building a Time Series Model}\index{Practical Workflow for Building a Time Series Model}
+The newest entrant in this debate sidesteps the limited-sample objection in an interesting way. \textbf{Time-series foundation models}\index{Time-Series Foundation Models}, large neural sequence models pretrained once on enormous corpora of diverse time series (retail demand, energy load, traffic, weather, and much else) and then applied to a new series with little or no additional fitting, arrived in the mid-2020s under names like Chronos and TimesFM, borrowing directly from the pretrain-then-adapt recipe Chapter 16 describes for language models. Because the heavy parameter fitting happened on the pretraining corpus rather than on the forecaster's own short series, the overfitting arithmetic above changes: the model brings pattern knowledge in rather than extracting it all from the sample at hand, and on generic forecasting benchmarks these models produce respectable zero-shot forecasts of series they have never seen. What has not changed is anything specific to finance: published evaluations to date show them competitive with, not dominant over, well-tuned classical baselines on financial series, whose low signal-to-noise ratio and regime shifts are exactly the features a pretraining corpus of mostly non-financial series does little to prepare a model for. A practitioner should treat such a model as one more candidate forecaster to be judged inside the same walk-forward, benchmark-against-naive discipline this chapter built, not as an exemption from it.
+
+\section{A Practical Workflow for Building a Time Series Model}
 
 With this many tools introduced across the chapter, it is useful to close with a single, concrete workflow that ties them together in the order they would typically be applied in practice, summarized in Figure~\ref{fig:ts_workflow}.
 
@@ -655,7 +657,7 @@ This workflow applies equally to the single-series models (AR, ARIMA, GARCH) and
 
 Time series methods extend the statistical toolkit of Chapter 6 to data where order matters. Stationarity is the property that makes a fitted model meaningful for the future, and checking for it, formally with the Dickey-Fuller test or informally via the correlogram, is usually the first step in any analysis. The AR(1) example showed how a model's coefficients are estimated by the same OLS logic as any regression, while the GARCH example showed how volatility itself can be modeled and forecast, directly feeding the option pricing and risk models in the chapters that follow.
 
-The cointegration and VAR material extended these ideas from a single series to relationships between series, previewing the pairs-trading strategies of Chapter 11 and the multivariate risk factor models of Chapter 8.
+The cointegration and VAR material extended these ideas from a single series to relationships between series, previewing the pairs-trading strategies of Chapter 13 and the multivariate risk factor models of Chapter 8.
 
 The chapter's closing lesson, walk-forward validation, scored with metrics like RMSE and MAPE and always benchmarked against a naive forecast, is a direct consequence of a single principle repeated throughout this book: a model should never be evaluated using information it would not have had in real time, and it should never be trusted simply because it outperforms a strawman rather than a genuinely competitive baseline.
 
@@ -663,7 +665,7 @@ Several smaller but recurring lessons are worth restating explicitly. The Dickey
 
 The comparison between the AR(1) forecast, the simple exponential smoothing forecast, and the Holt's-method forecast for the same series illustrated that different, individually reasonable modeling choices (mean-reversion versus trend extrapolation) can produce meaningfully different point forecasts from identical data, and that choosing between them requires economic judgment about the series' likely future behavior, not just a mechanical best fit to the past.
 
-Finally, the progression from a single series (AR, ARIMA, GARCH) to relationships between series (cointegration, VAR) mirrors a pattern that recurs throughout this book: understanding one object in isolation is usually a prerequisite for, but not a substitute for, understanding how it interacts with the other objects around it, whether those are two cointegrated stock prices here or the many assets in the portfolios of Chapter 10.
+Finally, the progression from a single series (AR, ARIMA, GARCH) to relationships between series (cointegration, VAR) mirrors a pattern that recurs throughout this book: understanding one object in isolation is usually a prerequisite for, but not a substitute for, understanding how it interacts with the other objects around it, whether those are two cointegrated stock prices here or the many assets in the portfolios of Chapter 12.
 
 \section{Suggested Exercises}
 
@@ -703,6 +705,7 @@ The exercises below span the full range of tools introduced in this chapter, fro
     \item Hyndman and Athanasopoulos, \emph{Forecasting: Principles and Practice}. A highly practical, freely available online text covering exponential smoothing, ARIMA, and forecast evaluation with an emphasis on applied forecasting workflows like the one in Figure~\ref{fig:ts_workflow}.
     \item Engle and Granger, ``Co-integration and Error Correction: Representation, Estimation, and Testing,'' \emph{Econometrica}. The original paper introducing the cointegration concept and the Engle-Granger two-step testing procedure used in Section~\ref{sec:cointegration}.
     \item Sims, ``Macroeconomics and Reality,'' \emph{Econometrica}. The influential 1980 paper introducing vector autoregression as an alternative to large-scale structural macroeconomic models, foundational to the VAR and Granger-causality material in this chapter.
+    \item Ansari et al., ``Chronos: Learning the Language of Time Series,'' \emph{Transactions on Machine Learning Research}. The paper introducing one of the pretrained time-series foundation models discussed in this chapter's closing challenges, applying the language-model pretraining recipe to zero-shot forecasting.
     \item Litterman and Scheinkman, ``Common Factors Affecting Bond Returns,'' \emph{Journal of Fixed Income}. The original paper documenting the level, slope, and curvature factor structure of the yield curve reproduced in Section~\ref{sec:pca-term-structure}.
 \end{itemize}
 

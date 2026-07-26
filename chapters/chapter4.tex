@@ -30,7 +30,7 @@ Meridian Fabrication Inc., a fictional manufacturing firm, runs through the enti
 
 This progression matters beyond the two companies themselves. The ratio toolkit built here is the same toolkit Chapter 9's credit scoring and Chapter 6's classification models eventually formalize statistically; Section~\ref{sec:valuation-connection} makes the link to Chapter 5's valuation models explicit, since a discounted-cash-flow model is only as trustworthy as the financial-statement forecasts feeding it; and the accounting-quality cautions raised late in the chapter, that reported numbers reflect choices and estimates, not just facts, are worth carrying into every later chapter that treats a financial statement's numbers as clean model inputs rather than as the product of a real, sometimes discretionary, reporting process.
 
-\section{Why Financial Statements Matter}\index{Why Financial Statements Matter}
+\section{Why Financial Statements Matter}
 
 A firm is a system for converting resources into cash flows. It buys inputs, hires labor, invests in equipment, and sells products or services. In the process, it makes decisions about financing, operations, and strategy. Financial statements are the records that summarize these decisions. They allow stakeholders to ask essential questions: How much debt does the firm carry? Is it profitable? Is it generating enough cash to fund operations? What portion of the business is financed by owners versus lenders? Is growth coming from genuine operating improvement or from financial engineering?
 
@@ -188,7 +188,7 @@ A particularly important concept is free cash flow\index{Free Cash Flow (FCF)}, 
 \end{equation*}
 For Meridian, free cash flow in Year 2 is $6.0 - 14.0 = -\$8.0$ million. This single number tells a sharper story than net income alone: despite reporting a \$9.0 million profit, Meridian generated negative \$8.0 million of free cash flow and had to borrow to cover the shortfall. Free cash flow is closely related to valuation because firms that generate consistent free cash flow can support dividends, debt repayment, or reinvestment without external financing. Many valuation frameworks explicitly use free cash flows rather than accounting earnings because the latter can be distorted by non-cash charges and discretionary accounting choices.
 
-\section{Working Capital and Liquidity}\index{Working Capital and Liquidity}
+\section{Working Capital and Liquidity}
 
 Liquidity refers to the ability of a firm to meet short-term obligations. It is one of the clearest indicators of short-run financial health. A business that cannot pay suppliers, employees, or creditors on time may face operational disruption even if the long-term outlook is strong. Analysts therefore pay close attention to current assets, current liabilities, and the cycle of converting inventory and receivables into cash.
 
@@ -198,10 +198,10 @@ Working capital is defined as
 \end{equation*}
 For Meridian, working capital rose from $52.0 - 20.0 = \$32.0$ million in Year 1 to $63.0 - 25.0 = \$38.0$ million in Year 2. On its own this looks like a healthy increase in resources, but combined with the cash flow statement it is clear that most of this increase is simply cash trapped in receivables and inventory rather than cash sitting in the bank. Too little working capital can cause distress, while too much may indicate inefficiency or, as in Meridian's case, a buildup that has not yet been converted back into cash.
 
-In practice, working capital is actively managed, not just measured after the fact. A treasury or finance team can accelerate collections by offering early-payment discounts to customers, negotiate longer payment terms with suppliers, or use inventory management techniques such as just-in-time ordering to reduce the amount of cash tied up in stock at any given time. Each of these levers maps directly onto one of the three components of the cash conversion cycle computed below: 
+In practice, working capital is actively managed, not just measured after the fact. A treasury or finance team can accelerate collections by offering early-payment discounts to customers, negotiate longer payment terms with suppliers, or use inventory management techniques such as just-in-time ordering to reduce the amount of cash tied up in stock at any given time. Each of these levers maps directly onto one of the three components of the cash conversion cycle computed below:
 shortening DSO (days sales outstanding) through faster collections, lengthening DPO (days payable outstanding) through supplier negotiation, or shortening DIO (days inventory outstanding) through leaner
- inventory management. Working capital financing, such as a revolving credit facility sized specifically to bridge 
-the gap between paying suppliers and collecting from customers, is also common precisely because this gap, as Meridian's 
+ inventory management. Working capital financing, such as a revolving credit facility sized specifically to bridge
+the gap between paying suppliers and collecting from customers, is also common precisely because this gap, as Meridian's
 cash flow statement demonstrates, can consume substantial cash even for a fundamentally healthy and growing business.
 
 The cash conversion cycle\index{Cash Conversion Cycle} is a useful way to quantify this. It is commonly expressed as
@@ -236,7 +236,7 @@ For Meridian in Year 2, total debt is short-term debt plus long-term debt, $8.0 
 
 Leverage is not inherently good or bad. It depends on the firm's business model, cash-flow stability, and access to financing. A utility can often carry significant debt because its revenues are stable. A startup in a volatile industry may be unable to support much debt. The key is understanding whether leverage amplifies the firm's strengths or magnifies its weaknesses, and for Meridian, the fact that new debt was needed to fund a cash shortfall driven by working-capital growth is a signal worth investigating rather than ignoring.
 
-\section{Sector-Specific Considerations in Ratio Analysis}\index{Sector-Specific Considerations in Ratio Analysis}
+\section{Sector-Specific Considerations in Ratio Analysis}
 
 The chapter has repeatedly warned that ratios must be interpreted in context, and it is worth being specific about what that context looks like across a few contrasting industries, since a large-scale, cross-sectional financial model cannot apply a single set of thresholds to every firm it scores.
 
@@ -250,7 +250,7 @@ The practical implication for any model built across many firms is that ratios s
 
 This has a direct, quantitative consequence for a distress score like Altman's Z$'$: a formula whose coefficients were estimated primarily on manufacturing and industrial firms will systematically misclassify a bank, whose debt-to-equity ratio, and therefore $X_4$, would sit far below any threshold intended for an industrial company, even for a perfectly healthy bank. Neither Meridian's Z$'$-score of 2.41 nor Solstice's 4.33, computed earlier in this chapter, would be directly comparable to a Z$'$-score computed for a bank or a capital-intensive utility using the same coefficients, which is exactly why credit-scoring models built for a specific sector, such as the bank-focused credit risk material in Chapter 9, are estimated on sector-specific data rather than reusing a general-purpose formula like Altman's across every industry.
 
-\section{How Firms Create Value}\index{How Firms Create Value}
+\section{How Firms Create Value}
 
 Suppose a firm doubles its revenue and its balance sheet over five years, yet its shareholders end up no wealthier than if the firm had stayed the same size. Growth alone, it turns out, says nothing about whether a firm is actually creating value, because growth has to be paid for with capital, and that capital has a cost, whether it comes from lenders demanding interest or shareholders demanding a competitive return on their investment. A firm creates value only when it earns returns on invested capital that exceed the cost of that capital; if a company invests in projects that earn more than the required return, value is created, and if it invests in projects that earn less than the required return, value is destroyed no matter how much bigger the firm gets in the process. This is one of the most important ideas in corporate finance, and a common way to express it is through economic profit\index{Economic Profit},
 \begin{equation*}
@@ -261,7 +261,7 @@ where ROIC is the return on invested capital and WACC is the weighted average co
 \begin{figure}[htbp]
 \centering
 \begin{lrbox}{\bookmeasuredbox}
-    \begin{tikzpicture}[>=latex,thick,node distance=2.2cm]
+    \begin{tikzpicture}[>=latex,thick,node distance=0.9cm]
         \node[draw,rounded corners,minimum width=2.2cm,minimum height=0.8cm] (capital) {Capital};
         \node[draw,rounded corners,minimum width=2.2cm,minimum height=0.8cm,right=of capital] (project) {Projects};
         \node[draw,rounded corners,minimum width=2.2cm,minimum height=0.8cm,right=of project] (value) {Value};
@@ -292,7 +292,7 @@ The statements alone cannot supply a cost of capital, but they can supply everyt
 \end{equation*}
 If Meridian's weighted average cost of capital, estimated using the methods of Chapter 5, were $8\%$, its economic profit would be $112.0 \times (0.107 - 0.08) \approx \$3.0$ million: modestly positive, meaning Meridian is creating a small amount of value on top of its cost of capital despite the cash-flow strain documented earlier in this chapter. This is an important, if initially counterintuitive, distinction: a firm can be a genuine (if marginal) value creator by this economic-profit measure while simultaneously burning cash and increasing leverage, because ROIC versus WACC answers whether capital is being deployed productively, while free cash flow answers a different question, whether the firm is generating or consuming cash in the short run. A machine learning model trained to predict ``financial health'' from statement data needs to be clear about which of these two, economically distinct, questions it is actually answering.
 
-\section{Common Financial Ratios and What They Reveal}\index{Common Financial Ratios and What They Reveal}
+\section{Common Financial Ratios and What They Reveal}
 \label{sec:ratios}
 
 Financial ratios are one of the simplest ways to convert raw statements into interpretable measures. They help analysts compare firms, track trends over time, and identify areas of concern. Ratios can be grouped into categories such as profitability, liquidity, efficiency, solvency, and valuation. Table~\ref{tab:ratio_summary} collects the main ratio families together with their formulas and Meridian's Year 2 values.
@@ -301,7 +301,7 @@ Financial ratios are one of the simplest ways to convert raw statements into int
 \centering
 \caption{Summary of common financial ratios, applied to Meridian, Year 2}
 \label{tab:ratio_summary}
-\begin{tabular}{p{3.4cm}p{5.4cm}r}
+\begin{tabular}{p{3.8cm}p{5.4cm}r}
 \toprule
 Ratio & Formula & Meridian Value \\
 \midrule
@@ -445,7 +445,7 @@ X_5 &= \text{Sales}/\text{Total assets}. & &
 \end{align*}
 Assuming, for illustration, that all of Meridian's \$54.0 million in equity represents retained earnings, the components are
 \begin{equation*}
-X_1 = \frac{38.0}{129.0} = 0.295, \quad X_2 = \frac{54.0}{129.0} = 0.419, \quad X_3 = \frac{16.0}{129.0} = 0.124, 
+X_1 = \frac{38.0}{129.0} = 0.295, \quad X_2 = \frac{54.0}{129.0} = 0.419, \quad X_3 = \frac{16.0}{129.0} = 0.124,
 \end{equation*}
 
 \begin{equation*}
@@ -470,7 +470,7 @@ Z' = 0.717(0.550) + 0.847(0.750) + 3.107(0.270) + 0.420(3.000) + 0.998(1.200) \a
 \end{equation*}
 Solstice's score of 4.33 sits comfortably in Altman's ``safe'' zone, in sharp contrast to Meridian's 2.41 grey-zone score, and for exactly the reasons the rest of this chapter has already surfaced: Solstice carries far less leverage ($X_4 = 3.00$ versus Meridian's 0.72) and a far larger cushion of retained earnings and working capital relative to its asset base. The two companies' Z-scores agree with, and quantitatively summarize, everything the DuPont decomposition and ratio comparison in Table~\ref{tab:comparison} showed qualitatively: two firms can reach similar headline profitability, or in this case very different profitability, through very different combinations of margin, efficiency, and leverage, and a single distress score is only as informative as an analyst's understanding of which of those components is driving it.
 
-\section{Connecting Financial Statements to Valuation}\index{Connecting Financial Statements to Valuation}
+\section{Connecting Financial Statements to Valuation}
 \label{sec:valuation-connection}
 
 The ultimate purpose of financial statement analysis is often valuation. Investors estimate the value of a firm by examining the cash flows it can generate and discounting them appropriately. The statements help identify these cash flows. Revenues, margins, working capital needs, investment requirements, and financing choices all affect the future cash flows that matter to investors.
@@ -498,7 +498,7 @@ FCFF is the natural input to an enterprise-value calculation discounted at the W
 
 This connection is especially important for AI applications in finance. A machine learning system can identify patterns in balance sheet data or cash flow data, but those patterns must be interpreted in economic terms. A model that predicts distress should be grounded in real indicators such as falling liquidity, rising leverage, declining margins, and weak cash generation. Otherwise it may be capturing noise rather than economic reality.
 
-\section{Accounting Quality and the Limits of Reported Numbers}\index{Accounting Quality and the Limits of Reported Numbers}
+\section{Accounting Quality and the Limits of Reported Numbers}
 
 One of the most important lessons in financial statement analysis is that reported numbers are not always fully transparent. Accounting rules allow management some discretion, particularly in areas such as revenue recognition, depreciation, reserves, and provisioning. A firm may use aggressive accounting policies to smooth earnings or to present a stronger balance sheet than the underlying reality supports.
 
@@ -513,7 +513,7 @@ A single year's accruals ratio, as computed here for Meridian, is only weak evid
 
 Accounting quality matters for AI as well. A machine learning model trained on financial statements may learn patterns that are partly an artifact of accounting conventions rather than economic reality. The analyst must therefore understand the reporting environment and remain skeptical of overly simplistic interpretations.
 
-\section{Forecasting from Statements}\index{Forecasting from Statements}
+\section{Forecasting from Statements}
 
 Financial statement analysis becomes especially valuable when it is used to forecast future performance. Analysts often project revenues, costs, margins, capital expenditures, and working capital needs. These projections then feed into valuation models. A well-constructed forecast can reveal whether a firm is likely to create value, consume cash, or require external financing.
 

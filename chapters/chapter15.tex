@@ -1,7 +1,7 @@
 \documentclass[../ai_in_finance]{subfiles}
 \usepackage[margin=1in]{geometry}
 \usepackage{tikz}
-\usetikzlibrary{positioning,matrix,fit}
+\usetikzlibrary{positioning}
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{booktabs}
@@ -18,107 +18,386 @@
 
 \begin{document}
 
-\chapter{Alternative Data and Deep Learning in Finance}
+\chapter{Fraud Detection, Compliance, and Financial Crime}
 
 \section{Introduction}
 
-Chapter 1 introduced a table of the major categories of financial data this book draws on, and set aside one row, alternative data, non-traditional sources such as satellite imagery, web traffic, or shipping data that proxy for economic activity, for this chapter. Chapter 3 noted that large asset managers already parse filings and calls faster than human analysts; this chapter turns to data sources that did not exist, in usable form, a generation ago, and to the deep learning architectures built to extract signal from them. Chapter 4 observed that alternative data can supplement the delayed, discretionary numbers in financial statements; Chapter 6 introduced the feedforward neural network and its forward pass; Chapter 14 developed the transformer architecture\index{transformer architecture} for text. This chapter extends the neural network toolkit to two more data shapes, grid-structured images and ordered sequences, and works through the full pipeline from raw alternative data to a usable financial signal, while treating the biases specific to this kind of data as a first-class topic rather than an afterthought.
+Chapter 1 previewed this chapter with a single number: a fraud detection model that correctly flags 95\% of actual fraud and mistakenly flags only 3\% of legitimate transactions still produces a flagged transaction that is fraudulent only about 24\% of the time, because fraud is rare enough that even a small false-positive rate generates many more false alarms than true detections. That number is not a curiosity; it is the central operating constraint of every fraud detection and anti-money-laundering (AML) system in the financial industry, and this chapter is built around understanding and managing it. Chapter 6 developed classification models and the confusion matrix\index{confusion matrix} in the abstract, using loan default as the running example; Chapter 9 applied a closely related toolkit, logistic regression\index{logistic regression}, scoring, and rating models, to credit risk. This chapter applies the same statistical machinery to a different, related family of problems: detecting fraud, laundered money, and other financial crime, where the base rate of the event being detected is typically far lower than a loan portfolio's default rate, and where the operational and legal consequences of a false positive or a missed detection are correspondingly distinct.
 
-Thirteen worked examples run through the chapter, each computed in Python first and reproduced exactly in the companion notebook: a subscription cost-benefit calculation weighing a data vendor's licensing cost against the expected trading edge it buys; a simple regression of a retailer's revenue growth on a satellite-derived parking-lot car-count proxy; a multi-source regression that combines that satellite proxy with web-traffic and card-transaction growth into an earnings-surprise signal, evaluated the way Chapter 11 evaluates any trading strategy; a direct comparison of that signal built the naive way versus the way that respects real-world data-delivery lag; a peer-relative normalization of the same satellite proxy against a sector benchmark. A hand-computed two-dimensional convolution over a stylized satellite image patch; a hand-computed recurrent neural network\index{recurrent neural network (RNN)} forward pass over a short sequence of web-traffic readings; a hand-computed autoencoder\index{autoencoder} reconstruction used to flag a data-quality anomaly; a Loughran-McDonald tone score built directly from a company's own risk-factor disclosures, illustrating both the appeal and the limits of building an ESG-style signal in-house rather than buying one; and, going a level deeper still, a transfer-learning fine-tuning step, a graph neural network\index{graph neural network (GNN)} update over a shell-company network, a cross-attention fusion of three data modalities into one representation, and a contrastive-pretraining probability calculation showing how a labeled-data-free encoder learns to tell same-image crops apart from different-image crops.
+Four worked examples run through the chapter, each computed in Python first and reproduced exactly in the companion notebook. The Bayes' theorem\index{Bayes' theorem} calculation from Chapter 1 is scaled up to a full day of transaction volume, converting an abstract posterior probability into a concrete daily confusion matrix and an alert queue a compliance team actually has to work through. A small fraud-scoring logistic regression, in the same spirit as Chapter 6's confusion matrix example and Chapter 9's credit-scoring model, illustrates how a handful of transaction features combine into a fraud probability, and where such a model can still miss a genuine case. A Kaplan-Meier\index{Kaplan-Meier estimator} survival analysis, a technique new to this book, estimates how long flagged accounts typically remain active before a confirmed fraud closes them, introducing censored observations, data this book has not previously had to handle. Finally, a structuring example shows how AML monitoring rules are built around a specific, legally defined reporting threshold, and how criminals attempt to evade it.
 
-This chapter's structure mirrors the arc of a real alternative-data project, and is worth previewing before working through the details. It begins where any such project begins, deciding what alternative data even is and how a fund acquires and evaluates it (Sections~\ref{sec:alt-data-sources} and~\ref{sec:vendor-ecosystem}), before turning to the analytics itself: a single-source regression, a multi-source signal, the point-in-time discipline that keeps that signal honest, and the seasonal and peer-relative adjustments that make raw readings usable in the first place (Sections~\ref{sec:satellite-example} through~\ref{sec:altdata-feature-engineering}).
+\section{The Landscape of Financial Crime and Where AI Fits}
+\label{sec:crime-taxonomy}
 
-It then turns to the deep learning architectures that extract features from raw images and sequences rather than from a vendor's already-processed number (Section~\ref{sec:nn-structured-unstructured}), the data-quality and governance problems specific to this kind of data (Section~\ref{sec:alt-data-quality}), a worked example on building an ESG-style text signal in-house as a partial, auditable response to those same governance problems (Section~\ref{sec:esg-text-signal}), and a set of more advanced architectures, transfer learning, graph neural networks, cross-attention fusion, and contrastive pretraining, that represent where the field is moving beyond the basics (Section~\ref{sec:advanced-altdata}). A real-world case vignette and a closing set of challenges tie the chapter's techniques back to the genuine economic and regulatory stakes of using data that, in most cases, did not exist in usable form before this decade.
+Suppose a bank builds an excellent fraud-scoring model, one that catches nearly every stolen-card transaction, and considers its detection obligations largely satisfied, only to later face a regulatory fine for failing to flag an unrelated money-laundering scheme that a fraud model was never designed to catch in the first place. ``Fraud detection'' understates the breadth of what financial institutions are legally required to monitor for.
 
-\section{What Counts as Alternative Data}\index{What Counts as Alternative Data}
-\label{sec:alt-data-sources}
-
-Suppose a hedge fund wants to know how a retailer's holiday-quarter sales are trending three months before the retailer itself reports earnings, information that would be extremely valuable if the fund could act on it early and worthless the moment everyone else has it too. Traditional market, fundamental, and macroeconomic data (Chapter 1's Table 1.6) cannot answer this: market data only reflects what the market already knows, and fundamental data about this quarter will not exist until the retailer files it.
-
-Alternative data exists to fill exactly this gap. In financial industry usage, it means any data source used to inform an investment or credit decision that falls outside the traditional trio of market data, fundamental data, and macroeconomic data. The term is a moving target: yesterday's alternative data becomes today's mainstream input once enough market participants adopt it, so the boundary is defined by current practice rather than any fixed technical property. Table~\ref{tab:alt_data_sources} catalogues the categories most widely used in practice.
+Table~\ref{tab:crime_taxonomy} organizes the main categories of financial crime this book touches on, the detection approach each typically relies on, and where it is developed.
 
 \begin{table}[htbp]
 \centering
-\caption{Major categories of alternative data}
-\label{tab:alt_data_sources}
-\begin{tabular}{p{2.6cm}p{6.2cm}p{5.4cm}}
+\caption{A taxonomy of financial crime and detection approaches}
+\label{tab:crime_taxonomy}
+\begin{tabular}{p{2.8cm}p{5.6cm}p{4.0cm}}
 \toprule
-Category & Examples & Typical financial use \\
+Crime type & Typical detection approach & Developed in \\
 \midrule
-Satellite and aerial imagery & Parking-lot car counts, crop health indices, oil-storage tank levels, construction progress & Retail sales nowcasting, commodity supply estimation, real-estate tracking \\
-Web and app data & Website traffic, app downloads and reviews, job postings, e-commerce pricing & Revenue nowcasting, hiring-trend and competitive signals \\
-Transaction and card-panel data & Aggregated, anonymized consumer card-spending panels & Same-store sales nowcasting ahead of earnings \\
-Geolocation and foot traffic & Mobile-device location pings at store or venue locations & Foot-traffic proxies for retail, dining, and travel \\
-Shipping and logistics & Vessel-tracking (AIS) data, port congestion, rail and truck telemetry & Commodity flow and trade-volume forecasting \\
-Social and search data & Social-media posts, review platforms, search-trend indices & Consumer-sentiment and brand-momentum signals \\
+Card and payment fraud & Real-time transaction scoring, anomaly detection & Sections~\ref{sec:anomaly-bayes}, \ref{sec:fraud-scoring} \\
+Account takeover & Behavioral biometrics, device and login anomaly detection & Section~\ref{sec:risk-tiering} \\
+Money laundering & Rule-based transaction monitoring, network analysis, structuring detection & Section~\ref{sec:aml-structuring} \\
+Market manipulation (spoofing, layering) & Order-book pattern surveillance & Chapter 14's spoofing case vignette \\
+Insider trading & Anomaly detection linking trading activity to material news events & Chapter 1's Bayesian updating, extended here \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Two properties distinguish alternative data from the data types earlier chapters used. First, it usually arrives already partially processed by a vendor, a satellite imagery provider sells car counts, not raw pixels, so the modeler inherits whatever assumptions and errors are baked into that proprietary processing step, typically without visibility into it. Second, it is available at a frequency and granularity, individual stores, individual weeks, that traditional fundamental data (quarterly, firm-level) simply does not offer, which is precisely why it is valuable: it lets an analyst estimate a firm's performance before the firm itself reports it.
+Every row in Table~\ref{tab:crime_taxonomy} shares the same underlying statistical structure: a rare, adversarial event must be distinguished from an overwhelming volume of legitimate activity, and the adversary actively adapts once a detection method becomes known, a dynamic this book has not emphasized as strongly elsewhere. A credit-scoring model's population of borrowers, Chapter 9's subject, is not trying to defeat the model; a money launderer designing a transaction pattern specifically to stay under a reporting threshold is. This adversarial quality is why financial crime detection combines the statistical tools of Chapters 6 and 9 with rule-based systems, network analysis, and a regulatory reporting apparatus that has no real counterpart in the credit-scoring literature, all developed in this chapter.
 
-\section{The Alternative-Data Vendor Ecosystem}\index{Alternative-Data Vendor Ecosystem}
-\label{sec:vendor-ecosystem}
+\section{Anomaly Detection in Transactions}\index{Anomaly Detection in Transactions}
+\label{sec:anomaly-bayes}
 
-Unlike the market and fundamental data of Chapters 2 through 5, which arrive through well-established exchange feeds and regulatory filings, alternative data is procured through a comparatively young and heterogeneous vendor market, and how a fund evaluates and integrates a vendor matters almost as much as the underlying data source itself. A typical procurement process runs through several stages.
+Suppose a bank wants to stop a stolen credit card from being drained before the legitimate cardholder even notices it is missing, deciding, transaction by transaction and in real time, whether each new charge looks like the actual cardholder or a thief. The simplest fraud detection systems built for exactly this decision are rule-based: a transaction is flagged if it exceeds a fixed dollar threshold, occurs in a country the cardholder has never transacted in, or arrives within seconds of another transaction from the same account in a physically distant location, a velocity check.
 
-First, a fund identifies a candidate hypothesis, does satellite-derived parking-lot data actually predict Cascade's revenue, and requests a trial dataset covering a historical period the vendor already has on file. Second, the fund backtests that trial data against known, already-reported outcomes, exactly the exercise Section~\ref{sec:satellite-example} works through by hand, before paying for a live subscription; a vendor unwilling to provide a meaningful historical trial, or one whose trial-period performance does not hold up when checked, is a warning sign rather than a mere inconvenience. Third, if the trial is convincing, the fund negotiates a licensing agreement that specifies not just price but exclusivity (is this data available to other subscribers, and how many), delivery latency (Section~\ref{sec:alt-data-quality} returns to why this matters enormously), and historical backfill (how far back the vendor can provide data, which determines how much history is available for the fund's own model validation).
+Rule-based systems are transparent and easy to audit, which matters enormously for the regulatory reasons discussed later in this chapter, but they are also brittle: a threshold set to catch genuine fraud will also catch a legitimate customer's unusual but innocent purchase. A threshold known publicly (a \$10,000 reporting trigger, discussed in Section~\ref{sec:aml-structuring}, is a matter of public record) can simply be engineered around.
 
-This procurement cycle is itself a source of adverse selection\index{Adverse Selection} worth naming directly: a vendor has every incentive to showcase the historical period and the subset of covered firms where its data performed best, since that is what sells subscriptions, so a trial dataset's strong backtested performance is not automatically evidence that the data will perform as well in the future or across firms the trial period did not happen to include. This is a version of the multiple-testing concern Chapter 6 raised about a researcher's own model search, now applied to a vendor's marketing rather than a researcher's specification search.
+Statistical anomaly detection improves on a fixed rule by asking whether a transaction is unusual relative to a customer's own historical behavior rather than relative to a fixed, population-wide threshold, computing something like a $z$-score for transaction amount, location, or timing against that customer's own rolling mean and standard deviation, or applying the unsupervised clustering methods Chapter 6 introduced to flag transactions that do not resemble any of a customer's usual behavioral clusters. Both approaches, rule-based and statistical, ultimately produce the same kind of output as Chapter 6's classifiers: a binary flag, or a continuous risk score thresholded into one, and are therefore subject to exactly the same trade-off Chapter 1's Bayes' theorem example quantified.
 
-A subscription decision ultimately comes down to a cost-benefit calculation, whether the expected trading edge, scaled to the capital actually deployed on it, exceeds the data's licensing cost. Suppose a fund would deploy a \$50 million position whenever Section~\ref{sec:alt-data-pipeline}'s signal fires long, which happened in five of the eight quarters in Table~\ref{tab:multisource_signal}, and that the signal's incremental edge over an unconditional baseline is the 0.54 percentage points computed there (the 0.88\% average return on signaled quarters minus the 0.34\% average return across all quarters). With four earnings releases per year and a $5/8$ signal frequency, the fund expects roughly $4 \times 5/8 = 2.5$ signaled events annually, for an expected incremental profit of $\$50\text{M} \times 0.54\% \times 2.5 \approx \$678{,}000$ per year. Against Section~\ref{sec:case-vignette-satellite}'s subscription-cost range, a satellite feed at \$250,000 per year plus a smaller web and card-panel bundle at \$150,000 per year, total data costs of \$400,000, the net expected benefit is roughly \$278,000 per year, a genuine but modest edge once data costs are netted out, and one that Section~\ref{sec:alt-data-quality} warns will shrink further as more funds license the same feeds and compete the edge away.
+\subsection*{A Worked Example: The Bayes' Theorem Result at Full Transaction Volume}
 
-This same arithmetic underlies a build-versus-buy decision many larger funds eventually face: once expected trading volume across many similar signals is large enough, building an in-house satellite-analytics or web-scraping team, rather than paying a vendor's margin on top of the same underlying imagery or logs, can be cheaper in the long run, at the cost of taking on the computer-vision and data-engineering work Section~\ref{sec:nn-structured-unstructured} describes directly rather than buying an already-processed feature. Smaller funds typically lack the scale to justify this fixed cost and remain vendor customers indefinitely, one more way, alongside Section~\ref{sec:case-vignette-satellite}'s subscription-cost figures, that alternative data's advantages concentrate among larger, better-resourced market participants.
+Chapter 1's example assumed a bank where 1\% of transactions are fraudulent, a model correctly flags 95\% of actual fraud, and incorrectly flags 3\% of legitimate transactions, and found that a flagged transaction is fraudulent only about 24.2\% of the time. That posterior probability is easy to underestimate in its practical significance until it is scaled up to the volume a real institution actually processes.
 
-\section{A Worked Example: Satellite Imagery and Retailer Revenue}\index{Satellite Imagery and Retailer Revenue}
-\label{sec:satellite-example}
+Suppose the bank handles $500{,}000$ transactions in a day. At a 1\% fraud rate, this implies $5{,}000$ fraudulent and $495{,}000$ legitimate transactions, and applying the model's 95\% true-positive rate and 3\% false-positive rate gives
+\begin{equation*}
+TP = 5{,}000 \times 0.95 = 4{,}750, \qquad FN = 5{,}000 \times 0.05 = 250,
+\end{equation*}
+\begin{equation*}
+FP = 495{,}000 \times 0.03 = 14{,}850, \qquad TN = 495{,}000 \times 0.97 = 480{,}150.
+\end{equation*}
+The model flags $4{,}750 + 14{,}850 = 19{,}600$ transactions in a single day, of which only $4{,}750$ are genuine fraud, giving
+\begin{equation*}
+\text{Precision} = \frac{4{,}750}{19{,}600} \approx 0.2423, \qquad \text{Recall} = \frac{4{,}750}{5{,}000} = 0.95,
+\end{equation*}
+exactly matching, up to rounding, Chapter 1's $24.2\%$ posterior probability, since precision and $\Pr(\text{Fraud}\mid\text{Flag})$ are the same
+quantity computed two different ways. The $F_1$ score, $2\times0.2423\times0.95/(0.2423+0.95)\approx0.386$, is a useful single-number summary for
+comparing models, but it is the raw count, $19{,}600$ flagged transactions in one day, that a compliance team must actually staff and review, and
+Section~\ref{sec:alert-economics} returns to exactly this operational cost.
 
-Suppose a hypothetical home-improvement retailer, Cascade Home\index{Cascade Home \& Garden} \& Garden, is followed by a data vendor that counts cars in a representative sample of its store parking lots from satellite imagery, in the manner Section~\ref{sec:case-vignette-satellite} describes being done for real retailers since 2010. Table~\ref{tab:satellite_regression} lists eight quarters of year-over-year car-count growth alongside Cascade's subsequently reported year-over-year revenue growth.
+This scaled-up version of Chapter 1's example makes concrete why fraud detection systems almost never rely on a single model or a single threshold
+in isolation: a bank that simply lowered its false-positive rate to improve precision would, by the same arithmetic, also lower recall and let more
+genuine fraud through unless it simultaneously improved the model's underlying discriminative power, precisely the motivation for combining several
+distinct signals, transaction-level scoring, behavioral risk tiering, and time-based survival modeling, developed in the rest of this chapter, rather
+than relying on any one of them alone.
+
+\subsection*{A Second Application: Insider Trading Surveillance}\index{Insider Trading Surveillance}
+
+The same Bayesian structure applies well beyond transaction fraud. Market surveillance teams monitor for insider trading, trading ahead of material
+non-public information, largely by flagging statistically abnormal trading volume or price movement in the days immediately preceding a public announcement
+(an earnings release, a merger, a regulatory decision), the same kind of anomaly-detection logic Chapter 14's order-flow-imbalance model applied to
+microstructure data, now applied to a much lower-frequency, event-driven setting.
+
+Suppose that, across all announcements a surveillance team reviews
+in a year, genuine insider trading actually precedes about $2\%$ of them, a volume-anomaly detector correctly flags $75\%$ of these genuine cases, and
+it also flags $8\%$ of announcements with no insider trading at all, a somewhat higher false-positive rate than Section~\ref{sec:anomaly-bayes}'s
+transaction-fraud example, reflecting how much noisier pre-announcement trading volume is compared to a single card transaction. Applying Bayes'
+theorem exactly as in Chapter 1,
+\begin{equation*}
+\Pr(\text{Flag}) = 0.75(0.02) + 0.08(0.98) = 0.0934, \qquad \Pr(\text{Insider}\mid\text{Flag}) = \frac{0.75(0.02)}{0.0934} \approx 0.1606,
+\end{equation*}
+so a flagged announcement reflects genuine insider trading only about $16.1\%$ of the time, even lower than Section~\ref{sec:anomaly-bayes}'s $24.2\%$
+figure. The interesting comparison is \emph{why} it is lower: this example's true-positive rate ($75\%$) is actually worse than the
+transaction-fraud example's ($95\%$), which on its own would push precision down only modestly, but its false-positive rate ($8\%$) is more
+than double the transaction-fraud example's ($3\%$), and it is this difference that dominates the result.
+
+At a low base rate, precision is far
+more sensitive to the false-positive rate than to the true-positive rate, since the false-positive rate is multiplied by the (much larger) population
+of non-events; a surveillance system's design effort is therefore almost always better spent tightening false-positive rates than chasing marginal
+improvements in true-positive rates, a general lesson that applies equally to the transaction-fraud and AML alert systems developed elsewhere in this
+chapter.
+
+\section{A Worked Example: Fraud Scoring with Logistic Regression}\index{Fraud Scoring with Logistic Regression}
+\label{sec:fraud-scoring}
+
+Section~\ref{sec:anomaly-bayes}'s example treated the detection model as a black box with a fixed true- and false-positive rate; this section
+builds one explicitly, using exactly the logistic regression Chapter 6 introduced and Chapter 9 applied to credit scoring.
+Table~\ref{tab:fraud_scoring_data} records ten transactions, each with three features: the transaction amount expressed as a $z$-score
+relative to the cardholder's typical spending, the distance from the cardholder's home address in hundreds of kilometers, and a late-night
+indicator (1 if the transaction occurred between midnight and 5 a.m. local time), together with whether the transaction was actually fraudulent.
 
 \begin{table}[htbp]
 \centering
-\caption{Satellite car-count growth and Cascade's reported revenue growth, by quarter}
-\label{tab:satellite_regression}
-\begin{tabular}{lcc}
+\caption{Ten transactions used to fit a fraud-scoring logistic regression}
+\label{tab:fraud_scoring_data}
+\begin{tabular}{lrrrrr}
 \toprule
-Quarter & Car-count growth (\%) & Revenue growth (\%) \\
+Transaction & Amount $z$-score & Distance (100s km) & Late night & Actual fraud & Predicted \\
 \midrule
-Q1 & 2.1 & 1.5 \\
-Q2 & $-1.5$ & $-0.3$ \\
-Q3 & 4.8 & 4.5 \\
-Q4 & 0.6 & 1.0 \\
-Q5 & 6.2 & 4.0 \\
-Q6 & $-3.0$ & $-1.0$ \\
-Q7 & 3.5 & 3.8 \\
-Q8 & 1.0 & $-0.2$ \\
+1 & 3.1 & 8.0 & 1 & 1 & 1 \\
+2 & 0.2 & 0.1 & 0 & 0 & 0 \\
+3 & 2.8 & 6.5 & 1 & 1 & 1 \\
+4 & 1.9 & 6.0 & 0 & 0 & 0 \\
+5 & 0.4 & 0.2 & 0 & 0 & 0 \\
+6 & 3.4 & 9.2 & 1 & 1 & 1 \\
+7 & 0.1 & 0.4 & 0 & 0 & 0 \\
+8 & 0.6 & 0.1 & 1 & 0 & 0 \\
+9 & 1.2 & 0.3 & 1 & 1 & 0 \\
+10 & 0.3 & 0.2 & 0 & 0 & 0 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Fitting the simple regression $\text{Revenue growth} = \alpha + \beta\,(\text{Car-count growth})$ by ordinary least squares, following Chapter 6's Section 6.4 method, gives $\bar x = 1.7125$, $\bar y = 1.6625$, $S_{xy} = \sum(x_i - \bar x)(y_i - \bar y) = 34.09625$, $S_{xx} = \sum(x_i-\bar x)^2 = 52.24875$, so $\hat\beta = S_{xy}/S_{xx} = 0.6528$ and $\hat\alpha = \bar y - \hat\beta \bar x = 0.5446$.
+Fitting a logistic regression
+$$\Pr(\text{Fraud}) = \sigma(\beta_0 + \beta_1 z + \beta_2 d + \beta_3 n)$$
+using the sigmoid function introduced in Chapter 6, to these ten observations gives coefficients $\hat\beta_0 \approx -2.57$, $\hat\beta_1 \approx 0.83$ (amount $z$-score), $\hat\beta_2 \approx 0.15$ (distance), and $\hat\beta_3 \approx 0.82$ (late night), all with the intuitively correct sign: an unusually large purchase, made far from home, late at night, all independently raise the predicted fraud probability.
 
-The fitted line, $\widehat{\text{Revenue growth}} = 0.5446 + 0.6528\,(\text{Car-count growth})$, achieves $R^2 = 0.870$, car-count growth alone explains 87\% of the quarter-to-quarter variation in Cascade's revenue growth in this sample, genuinely strong for a single proxy variable, but, consistent with this book's practice of not overstating a model's fit, still leaves 13\% of the variation unexplained.
+At a 0.5 classification threshold, the model correctly flags transactions 1, 3, and 6 (true positives) and correctly clears transactions 2, 4, 5, 7, 8, and 10 (true negatives), but assigns transaction 9 a predicted probability of only about $33\%$, below the threshold, missing a genuine fraud case (a false negative) despite the late-night flag being present, because the transaction's amount and distance from home were both unremarkable. There are no false positives in this small sample, giving
+\begin{equation*}
+\text{Precision} = \frac{3}{3+0} = 1.00, \qquad \text{Recall} = \frac{3}{3+1} = 0.75,
+\end{equation*}
+\begin{equation*}
+ F_1 = \frac{2(1.00)(0.75)}{1.00+0.75} \approx 0.857,
+\end{equation*}
+a recall figure that, by design, exactly mirrors Chapter 6's own loan-default confusion matrix example, three true positives, one false negative, out of four actual positive cases.
 
-Suppose satellite data for a ninth quarter arrives showing 5.0\% car-count growth, three weeks before Cascade's earnings release. The regression predicts $\widehat{\text{Revenue growth}} = 0.5446 + 0.6528(5.0) = 3.809\%$, a concrete, tradeable estimate of a number the market will not see officially for three more weeks.
+Transaction 9 is instructive precisely because it illustrates a structural limitation of any single-transaction scoring model: a fraudulent transaction that looks unremarkable in isolation, an ordinary amount at a nearby location, will not be caught by a model that only ever looks at one transaction at a time, no matter how well it is fit, which is exactly why Section~\ref{sec:risk-tiering} layers a behavioral, account-level risk score on top of transaction-level scoring, and why Section~\ref{sec:survival-fraud} tracks how account risk accumulates over time rather than resetting with every new transaction.
 
-\section{Combining Alternative Data Sources: A Multi-Source Earnings Signal}\index{Combining Alternative Data Sources: A Multi-Source Earnings Signal}
-\label{sec:alt-data-pipeline}
+\subsection*{The Threshold Choice: A Precision-Recall Trade-off}
 
-A single alternative data source is rarely used alone in practice; a real alternative-data desk combines several sources into one model, both to average out any single source's idiosyncratic noise and to capture aspects of a firm's business a single proxy misses. Figure~\ref{fig:altdata_pipeline} sketches the resulting pipeline.
+The 0.5 threshold used above is a modeling choice, not a mathematical requirement, and moving it trades precision against recall in exactly the way Chapter 6 described in the abstract. Table~\ref{tab:threshold_tradeoff} recomputes the same ten-transaction confusion matrix at two alternative thresholds.
+
+\begin{table}[htbp]
+\centering
+\caption{Precision-recall trade-off at three classification thresholds}
+\label{tab:threshold_tradeoff}
+\begin{tabular}{lrrrr}
+\toprule
+Threshold & Precision & Recall & $F_1$ \\
+\midrule
+0.30 & 0.800 & 1.000 & 0.889 \\
+0.50 & 1.000 & 0.750 & 0.857 \\
+0.85 & 1.000 & 0.500 & 0.667 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Lowering the threshold to $0.30$ now also flags transaction 4 (predicted probability $0.470$, actually legitimate), turning it into a false positive, but it catches transaction 9 as well, raising recall to a perfect $100\%$ at the cost of precision falling from $1.00$ to $0.80$. Raising the threshold to $0.85$ moves in the opposite direction: transaction 3 (predicted probability $0.822$) now also falls below the bar and becomes a second false negative, so recall drops to $50\%$ while precision stays perfect, since the model is now flagging only the two most unambiguous cases. Neither threshold is objectively correct; the right choice depends on the same alert-economics trade-off Section~\ref{sec:alert-economics} quantifies at full scale, a lower threshold means more alerts and more investigator hours per genuine fraud caught, while a higher threshold means fewer alerts but more fraud slipping through entirely, and a bank sets its operating threshold by weighing the dollar cost of a missed fraud against the staffing cost of an additional false-positive investigation, not by any property of the model itself.
+
+\section{Advanced Models and Techniques for Class Imbalance}
+\label{sec:advanced-imbalance}
+
+Every example so far has used ordinary logistic regression at a default decision threshold to make the underlying statistical issue, extreme class imbalance\index{class imbalance}, as transparent as possible. Production fraud and AML systems typically go further, using both more expressive models and dedicated techniques for the imbalance problem itself, and it is worth being precise about what each one actually does, since they solve different parts of the problem and are frequently combined rather than used as substitutes for one another.
+
+\subsection*{Cost-Sensitive Learning: Class Weighting}
+
+The most direct fix reweights the training loss itself so that a missed fraud case (a false negative) counts for more than a missed legitimate transaction (a false positive) during model fitting, rather than treating every observation equally. Refitting Section~\ref{sec:fraud-scoring}'s logistic regression on the same ten transactions in Table~\ref{tab:fraud_scoring_data}, but with each class weighted inversely to its frequency,
+\begin{align*}
+\text{Weight (legitimate)} &= 10/(2\times6) \approx 0.83, & \text{Weight (fraud)} &= 10/(2\times4) = 1.25,
+\end{align*}
+shifts the fitted coefficients to
+\begin{align*}
+\hat\beta_0 &\approx -2.25, & \hat\beta_1 &\approx 0.86, & \hat\beta_2 &\approx 0.13, & \hat\beta_3 &\approx 0.85,
+\end{align*}
+and raises transaction 9's predicted probability from $33\%$ to about $41.7\%$, still short of the default $0.5$ threshold. At the unchanged $0.5$ threshold, class weighting alone actually makes this small sample's confusion matrix worse, transaction 4 now also crosses into a false positive, giving precision $0.75$, recall unchanged at $0.75$, and $F_1\approx0.75$, below the original model's $0.857$. This is an important, honest limitation to see clearly: class weighting reshapes the decision boundary, but it does not guarantee that every previously missed case crosses whatever threshold is already in place, and on a sample this small its effect is noisy.
+
+Combined with the threshold adjustment from Section~\ref{sec:fraud-scoring}'s Table~\ref{tab:threshold_tradeoff}, lowering the threshold to $0.40$ alongside the reweighted coefficients does catch transaction 9 (now at $41.7\%$) while still flagging transaction 4, giving precision $0.80$, recall $1.00$, and $F_1\approx0.889$, exactly the same operating point Table~\ref{tab:threshold_tradeoff} reached by lowering the unweighted model's threshold to $0.30$. The practical lesson is that class weighting and threshold selection are not independent choices, for a linear model like logistic regression they move the decision boundary in closely related ways, and a compliance team tuning one should generally revisit the other rather than treating either as a complete solution on its own.
+
+\subsection*{Resampling: Undersampling and SMOTE\index{SMOTE}}
+
+A second family of techniques changes the training data rather than the loss function. Random undersampling simply discards a random subset of majority-class (legitimate) observations until the training set is more balanced, cheap and simple, but wasteful, since it throws away real information about legitimate behavior that later helps the model avoid false positives. The Synthetic Minority Oversampling Technique (SMOTE) instead grows the minority class by generating synthetic fraud examples: for each real fraud case, it finds its nearest neighbors among other fraud cases (exactly Chapter 6's $k$-nearest-neighbors distance calculation, applied here to construct new training points rather than to classify a new one) and creates new synthetic points along the line segments connecting them. This gives a model more minority-class examples to learn from without discarding legitimate-transaction data, but it carries its own risk: a synthetic point interpolated between two real fraud cases is not a real transaction, and if the two real cases it was interpolated between do not actually represent a coherent fraud pattern, SMOTE can teach a model to recognize a combination of features that does not correspond to any real fraud behavior at all, a subtler version of the overfitting\index{overfitting} risk Chapter 6 introduced for an overly flexible model fit to too little data.
+
+Applying SMOTE directly to Table~\ref{tab:fraud_scoring_data}'s four real fraud cases (transactions 1, 3, 6, and 9), asking for two additional synthetic points using $k=3$ neighbors, produces exactly this interpolation mechanically:
+\begin{align*}
+\text{Synthetic point 1:} &\quad (1.836,\ 2.763,\ 1), \ \ 39.7\% \text{ from transaction 9's } (1.2, 0.3, 1) \\
+&\quad \text{toward transaction 3's } (2.8, 6.5, 1), \\
+\text{Synthetic point 2:} &\quad (3.263,\ 8.654,\ 1), \ \ 54.5\% \text{ from transaction 1's } (3.1, 8.0, 1) \\
+&\quad \text{toward transaction 6's } (3.4, 9.2, 1),
+\end{align*}
+exactly the linear interpolation the algorithm is defined to perform, verified here by solving for each point's interpolation fraction $\lambda$ along the amount-$z$-score axis and confirming it reproduces the distance coordinate exactly. Neither synthetic point corresponds to an actual observed transaction, which is precisely the risk described above: both happen to fall between genuinely similar fraud cases here, but SMOTE has no way to know whether that will hold for every pair it selects on a larger, messier dataset.
+
+\subsection*{More Expressive Models: Ensembles and Unsupervised Anomaly Detection}
+
+Logistic regression's score is additive in its features, amount, distance, and lateness each contribute independently, which is part of why Section~\ref{sec:fraud-scoring}'s coefficients are easy to interpret, but real fraud often depends on \emph{combinations} of features interacting in ways an additive model can only approximate. Chapter 6's tree-based ensembles, Random Forest and gradient boosting\index{gradient boosting}, split the feature space recursively and can represent a rule like ``flag this transaction only if the amount is unusual \emph{and} it occurs at an unusual location \emph{and} at an unusual time, but not if only one of these is true,'' a genuinely nonlinear interaction a single logistic regression coefficient vector cannot express directly. This added flexibility does not, on its own, solve class imbalance, a gradient-boosted model trained on the same skewed data will show the same base-rate problem Section~\ref{sec:anomaly-bayes} quantified unless it is also combined with class weighting or resampling, and it comes at the cost of the interpretability Section~\ref{sec:governance-3lod}'s challenges flagged as a regulatory constraint on model choice.
+
+The companion notebook tests this claim directly, since the ten-transaction sample is too small to show a genuine ensemble advantage. It simulates 5,000 transactions with exactly the kind of three-way interaction described above built into the true fraud-generating process, amount, distance, and lateness each contribute a modest amount on their own, but fraud probability jumps sharply only when all three are simultaneously unusual, and evaluates a logistic regression and a gradient-boosted ensemble, both given matched class weighting and neither given any information about the true interaction structure, on a genuinely held-out test set using precision-recall AUC, the metric argued for below.
+
+Logistic regression, unable to represent the three-way interaction no matter how its single coefficient vector is fit, reaches a PR-AUC of $0.2847$; gradient boosting, which can split on combinations of features, reaches $0.3821$, a $34.2\%$ relative improvement, with feature importances of $0.408$ (amount), $0.490$ (distance), and $0.101$ (lateness) confirming it is using all three features jointly rather than leaning on any single one. This is a genuine, honest improvement, not the trivial in-sample perfection Chapter 9's Gini-coefficient/AUC validation example (using its own six-applicant credit dataset) warned against, precisely because it is measured on data the ensemble never saw during training.
+
+A fundamentally different approach abandons supervised labels altogether. Isolation Forest\index{Isolation Forest} and autoencoder\index{autoencoder}-based anomaly detection instead learn what \emph{normal} transaction or account behavior looks like from the (overwhelmingly legitimate) data itself, without ever being told which historical cases were confirmed fraud, and flag new observations that are statistically isolated or poorly reconstructed relative to that learned notion of normal. This matters for a reason specific to this chapter: Section~\ref{sec:survival-fraud}'s Kaplan-Meier analysis showed that confirmed-fraud labels can take weeks to arrive even after an account is flagged, and the adversarial adaptation described in this chapter's challenges means a labeled training set is always describing yesterday's fraud patterns. An unsupervised anomaly detector does not need a confirmed label to flag a new, never-before-seen pattern as unusual, at the cost of a real trade-off: an unsupervised flag only says ``this looks statistically unusual,'' not ``this is fraud,'' so it typically produces an even lower precision than the supervised models in Section~\ref{sec:fraud-scoring}, feeding directly into the same alert queue and alert-economics cost Section~\ref{sec:alert-economics} quantified, and is best used as one additional signal alongside, not a replacement for, the supervised and behavioral scoring developed earlier in this chapter.
+
+Fitting an Isolation Forest to the same simulated training transactions, with the fraud labels never shown to it at all, and scoring the held-out test transactions confirms this is more than a theoretical possibility: the 34 held-out fraud cases receive a mean anomaly score of $0.5525$ versus $0.4658$ for legitimate transactions, and the unsupervised score alone achieves a ROC-AUC of $0.7428$ against the labels it never saw during fitting, genuine (if modest, exactly as expected) discriminatory power obtained without ever training on a single confirmed fraud label.
+
+\subsection*{Evaluating Models Under Imbalance: Precision-Recall AUC, Not ROC-AUC\index{ROC curve}}
+
+One evaluation pitfall deserves its own mention. The receiver operating characteristic (ROC) curve plots the true-positive rate against the false-positive rate across every possible threshold, and its area under the curve (ROC-AUC) is a common single-number summary of a classifier's overall ranking ability. Under the severe class imbalance this entire chapter has emphasized, ROC-AUC can look deceptively good: because the false-positive rate is computed as a share of an enormous legitimate population, even a model that performs only modestly well at actually ranking fraud can still show a low false-positive rate and a high ROC-AUC, precisely the same base-rate distortion Section~\ref{sec:anomaly-bayes}'s Bayes' theorem example exposed for a fixed confusion matrix. The precision-recall (PR) curve, plotting precision against recall across thresholds, and its area (PR-AUC), does not have this blind spot, since precision is computed directly against the number of \emph{predicted} positives rather than against the (huge) total negative population, making it the more informative single-number summary whenever the event being detected is rare, exactly the situation this chapter's fraud, insider-trading, and AML examples all share.
+
+\section{Behavioral Risk Frameworks and Customer Risk Tiering}
+\label{sec:risk-tiering}
+
+Chapter 9's credit-scoring model mapped a continuous predicted default probability into discrete letter-grade ratings for portfolio and pricing purposes; financial institutions apply an analogous mapping in the fraud and AML context, called customer risk tiering, but built from behavioral features accumulated over an entire account relationship rather than a single transaction.
+
+Typical inputs include the account's transaction velocity (how the frequency and size of transactions this month compares to its own trailing average, directly analogous to Section~\ref{sec:fraud-scoring}'s amount $z$-score, but computed account-wide rather than transaction-by-transaction), geographic diversity of counterparties, the presence of newly added payees or beneficiaries, and, in the anti-money-laundering context developed in Section~\ref{sec:aml-structuring}, whether the customer's declared occupation and expected transaction volume, gathered during onboarding under Know-Your-Customer (KYC)\index{Know-Your-Customer (KYC)} requirements, are consistent with actual observed activity.
+
+Table~\ref{tab:risk_tiers} shows an illustrative risk-tiering scheme built from a composite behavioral score on a 0-100 scale, combining several such features with weights an institution calibrates from its own historical fraud and AML case data, in the same spirit as Chapter 9's letter-grade rating buckets.
+
+\begin{table}[htbp]
+\centering
+\caption{An illustrative customer risk-tiering scheme}
+\label{tab:risk_tiers}
+\begin{tabular}{lll}
+\toprule
+Composite score & Risk tier & Typical monitoring response \\
+\midrule
+0--29 & Low & Standard, periodic account review \\
+30--59 & Medium & Increased transaction monitoring sensitivity \\
+60--84 & High & Manual review of new activity; tighter velocity limits \\
+85--100 & Enhanced due diligence & Senior compliance review; may restrict or close account \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+A concrete composite score makes Table~\ref{tab:risk_tiers} usable rather than purely illustrative. Suppose an institution combines three behavioral sub-scores, each already normalized to a 0-100 scale, using weights calibrated from its own historical case data: a transaction-velocity sub-score (how far this month's activity deviates from the account's own trailing average), a geographic-diversity sub-score (how unusual the mix of counterparty locations is relative to the account's history), and a KYC-consistency sub-score (how far observed activity deviates from what the customer declared at onboarding), weighted $40\%$, $35\%$, and $25\%$ respectively based on the institution's own back-tested case outcomes.
+
+For an account with a velocity sub-score of $70$ (transaction volume well above its own recent average), a geographic-diversity sub-score of $50$ (a moderate increase in counterparty locations), and a KYC-consistency sub-score of $90$ (activity far exceeding what the customer declared at onboarding), the composite score is
+\begin{equation*}
+0.40(70) + 0.35(50) + 0.25(90) = 28.0 + 17.5 + 22.5 = 68.0,
+\end{equation*}
+placing the account in the High tier of Table~\ref{tab:risk_tiers}, triggering manual review of new activity and tighter velocity limits, even though no single sub-score alone (velocity at $70$, geographic diversity at only $50$) would necessarily have triggered that response in isolation.
+
+This is exactly the point of a composite, weighted score: the KYC-consistency mismatch, the largest single contributor here at $22.5$ of the $68.0$ total, combines with two more moderate signals to cross a review threshold that no individual behavioral signal alone was large enough to reach, precisely the kind of accumulating, multi-signal evidence the sequential Bayesian updating example in Chapter 1 introduced in the context of combining several independent fraud signals.
+
+This tiering scheme changes what a fraud or AML system optimizes for compared to Section~\ref{sec:fraud-scoring}'s per-transaction model: rather than asking whether \emph{this} transaction looks fraudulent, it asks whether \emph{this account}, taken as a whole, has become risky enough to warrant tighter monitoring of everything it does going forward, which is precisely the right framework for catching a transaction like Table~\ref{tab:fraud_scoring_data}'s transaction 9, unremarkable on its own but potentially the first sign of a compromised account whose behavioral score has already begun drifting upward.
+
+Regulators, discussed further in Section~\ref{sec:aml-structuring}, generally require this kind of ongoing, risk-based customer due diligence rather than a one-time onboarding check precisely because a customer's true risk, like a firm's credit risk in Chapter 9's rating-transition framework, evolves over time rather than being fixed at account opening.
+
+\section{Survival Models: Time to Detection and Account Risk Over Time}
+\label{sec:survival-fraud}
+
+Every classification model in this book, including Section~\ref{sec:fraud-scoring}'s logistic regression, answers a yes-or-no question at a single point in time. A genuinely new question, and one financial institutions care about operationally, is how long a flagged or compromised account survives before fraud is actually confirmed and the account is closed, information that helps a compliance team prioritize which alerts to investigate first and helps a fraud team estimate how much exposure a typical compromised account accumulates before detection.
+
+Survival analysis, developed originally in biostatistics to study time until death or disease recurrence, answers exactly this kind of question, and this chapter introduces it because no earlier chapter has needed a method for data in which the outcome of interest, here fraud confirmation, has not yet happened for every observation by the time the data are analyzed.
+
+The key complication survival analysis handles, and that ordinary regression cannot, is censoring: some accounts in a monitoring sample are closed for unrelated reasons (voluntary closure, non-fraud-related risk exit) or are simply still open and unresolved at the time the data are pulled, meaning the true time-to-fraud-confirmation for those accounts is only known to be \emph{at least} as long as the observed time, not exactly equal to it.
+
+Simply dropping censored observations, or treating them as if fraud were confirmed at the moment of censoring, both bias the resulting estimate; the Kaplan-Meier estimator instead uses every observation, censored or not, up until the point it is censored. The estimator computes the survival function, the probability an account remains unconfirmed (open, or closed for reasons unrelated to fraud) beyond time $t$, as a product of conditional survival probabilities at each observed event time,
+\begin{equation*}
+\hat S(t) = \prod_{t_i \le t} \left(1 - \frac{d_i}{n_i}\right),
+\end{equation*}
+where $\hat S(t)$ is the estimated probability that an account survives, meaning it remains unconfirmed as fraud, beyond time $t$, $n_i$ is the number of accounts still under observation (not yet closed or censored) just before time $t_i$, and $d_i$ is the number of confirmed-fraud closures exactly at time $t_i$.
+
+\subsection*{A Worked Example: Kaplan-Meier Survival of Flagged Accounts}\index{Kaplan-Meier Survival of Flagged Accounts}
+
+Suppose a bank's fraud team tracks 12 accounts flagged by Section~\ref{sec:risk-tiering}'s risk-tiering system, recording, for each, the number of days until either a confirmed fraud closure (an event) or an unrelated account closure or the end of the observation window (a censored observation, marked with a $+$): 5, 8, 8$^+$, 12, 15, 15$^+$, 20, 24$^+$, 30, 30$^+$, 35, 40$^+$. Table~\ref{tab:km_table} works through the Kaplan-Meier calculation at each day on which a confirmed fraud closure actually occurred.
+
+\begin{table}[htbp]
+\centering
+\caption{Kaplan-Meier survival calculation for 12 flagged accounts}
+\label{tab:km_table}
+\begin{tabular}{lrrrr}
+\toprule
+Day $t_i$ & At risk $n_i$ & Fraud closures $d_i$ & Factor $(1-d_i/n_i)$ & $\hat S(t_i)$ \\
+\midrule
+5  & 12 & 1 & 0.9167 & 0.9167 \\
+8  & 11 & 1 & 0.9091 & 0.8333 \\
+12 & 9  & 1 & 0.8889 & 0.7407 \\
+15 & 8  & 1 & 0.8750 & 0.6481 \\
+20 & 6  & 1 & 0.8333 & 0.5401 \\
+30 & 4  & 1 & 0.7500 & 0.4051 \\
+35 & 2  & 1 & 0.5000 & 0.2025 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Two features of Table~\ref{tab:km_table} are worth pausing on. First, the number at risk, $n_i$, drops not only when a fraud closure occurs but also whenever a censored observation passes that day, which is exactly why $n_i$ falls from 12 to 9 between day 5 and day 12 even though only two confirmed closures occurred in between (day 8's censored account and no additional confirmed closures reduce the count without contributing a $d_i$ term).
+
+This is precisely the mechanism by which censored observations still contribute information, they remain in the risk set for as long as they are actually observed, without being incorrectly counted as either a confirmed event or an assumed survivor beyond their last observed day.
+
+Second, the estimated probability that a flagged account survives (remains unconfirmed) beyond 35 days is only about $20.3\%$, meaning roughly $80\%$ of accounts in this sample that are eventually confirmed as fraud are confirmed within a little over a month of being flagged, a concrete, evidence-based number a compliance team can use to set service-level targets for how quickly a flagged account's investigation should be completed, and to recognize that an account still open and unresolved well beyond that horizon is behaving atypically relative to the rest of the flagged population, an idea developed further next.
+
+\subsection*{How Precise Is $\hat S(t)$? Greenwood's Formula}\index{Greenwood's Formula}
+
+A survival estimate like $\hat S(35)\approx0.2025$ is, exactly like every other point estimate in this book, only half the story without some sense of how precisely it is known from only 12 accounts.
+
+Greenwood's formula gives the standard error of the Kaplan-Meier estimator at any time $t$,
+\begin{equation*}
+\widehat{\text{Var}}[\hat S(t)] = \hat S(t)^2 \sum_{t_i \le t} \frac{d_i}{n_i(n_i-d_i)},
+\end{equation*}
+built from exactly the same at-risk counts $n_i$ and event counts $d_i$ already tabulated in Table~\ref{tab:km_table}, so no new data are required to compute it. Applying this at $t=20$, where $\hat S(20)\approx0.5401$, the summed term $\sum d_i/(n_i(n_i-d_i))$ across the five event times up to and including day 20 is approximately $0.0818$, giving $\widehat{\text{Var}}[\hat S(20)] \approx 0.5401^2(0.0818) \approx 0.02385$ and a standard error of $\text{SE}\approx0.154$, so a normal-approximation 95\% confidence interval is $0.540\pm1.96(0.154)\approx(0.237,\,0.843)$, already wide enough to span nearly the entire plausible range of survival probabilities.
+
+At $t=35$, the final event time, $\hat S(35)\approx0.2025$ with $\text{SE}\approx0.165$, giving a 95\% interval of approximately $(0.000,\,0.526)$ once the lower bound is truncated at zero (a known limitation of the normal approximation applied to a probability, since the true interval cannot extend below zero or above one): the point estimate of roughly $20\%$ is consistent with a true 35-day survival probability anywhere from essentially zero to over $50\%$.
+
+This is precisely the small-sample caution raised throughout this book, at the AR(1) confidence interval in Chapter 7 and the collateral-coverage regression in Chapter 9, applied here to survival analysis: with only 12 flagged accounts and just 7 confirmed fraud closures, the Kaplan-Meier curve's later points, computed from a shrinking risk set as accounts are censored or resolved, carry genuinely large uncertainty even though the point estimate itself looks perfectly precise to four decimal places.
+
+A compliance team setting the service-level target mentioned above should treat the estimated $80\%$-confirmed-within-35-days figure as a useful planning number derived from a small pilot sample, not a precise population parameter, and should expect that figure to firm up considerably, its confidence interval narrowing, as more flagged accounts accumulate observed outcomes over time.
+
+\section{Anti-Money Laundering: Structuring, Monitoring, and Regulation}
+\label{sec:aml-structuring}
+
+Money laundering, disguising the origin of funds obtained from criminal activity so that they appear to come from a legitimate source, is a distinct problem from transaction fraud, since the funds involved are often not stolen from the institution itself, and the crime being concealed frequently occurred entirely outside the financial system (drug trafficking, corruption, sanctions evasion) before the money ever reached a bank.
+
+In the United States, the Bank Secrecy Act\index{Bank Secrecy Act (BSA)} requires banks to file a Currency Transaction Report (CTR)\index{Currency Transaction Report (CTR)} for any cash transaction exceeding \$10,000, and a Suspicious Activity Report (SAR)\index{Suspicious Activity Report (SAR)} for any transaction pattern, regardless of size, that appears designed to evade reporting requirements or otherwise suggests criminal activity; equivalent frameworks exist in most jurisdictions under the international standards set by the Financial Action Task Force (FATF)\index{Financial Action Task Force (FATF)}.
+
+\subsection*{A Worked Example: Detecting Structuring}\index{Detecting Structuring}
+
+Structuring\index{Structuring} (sometimes called ``smurfing'') is the practice of deliberately breaking a large cash transaction into several smaller ones, each below the CTR reporting threshold, specifically to avoid triggering a report. Suppose a customer makes five cash deposits of \$9,500 each over three days, each individually \$500 below the \$10,000 CTR threshold,
+\begin{equation*}
+\text{Total deposited} = 5 \times \$9{,}500 = \$47{,}500,
+\end{equation*}
+an amount that, deposited as a single transaction, would unambiguously trigger a CTR, and that, spread across five transactions each safely under the threshold, triggers none individually. This is exactly why AML monitoring systems cannot rely solely on Section~\ref{sec:anomaly-bayes}'s single-transaction threshold rules: a rule of the form ``flag any transaction over \$10,000'' is by construction blind to a pattern engineered specifically to stay under it.
+
+Effective structuring detection instead applies a rule across a rolling window of activity, for example, flagging any customer with three or more cash deposits within a seven-day period each falling within \$1,000 of the reporting threshold, which the five \$9,500 deposits above would trigger even though no single deposit would. This is a direct illustration of the behavioral, account-level monitoring philosophy introduced in Section~\ref{sec:risk-tiering}: the relevant signal is a pattern across transactions and across time, not any single transaction viewed in isolation.
+
+\subsection*{Placement, Layering, and Integration: A Network Example}
+
+Structuring is the classic technique for the first of three stages regulators and investigators use to describe how illicit funds are laundered: \emph{placement}, introducing cash into the financial system in the first place, exactly the deposit pattern in the worked example above. \emph{Layering} follows placement: moving the placed funds through a chain of transactions and accounts, often across several institutions and jurisdictions, specifically to obscure the connection between the funds and their criminal origin.
+
+\emph{Integration} is the final stage, reintroducing the now-layered funds into the legitimate economy, for example through a real estate purchase or an investment in a legitimate business, at which point the funds are, for most practical purposes, indistinguishable from legitimately earned money.
+
+Layering is where the network-based detection approach flagged in Table~\ref{tab:crime_taxonomy} becomes necessary, because no single account's activity, viewed in isolation, looks obviously suspicious. Suppose \$500,000 in placed funds moves through four shell entities, Alpha, Beta, Gamma, and Delta, each receiving the funds and forwarding $98\%$ of what it received onward within 24 hours (retaining $2\%$, nominally a service or consulting fee), a repeating pattern that Table~\ref{tab:layering_network} traces hop by hop.
+
+\begin{table}[htbp]
+\centering
+\begin{lrbox}{\bookmeasuredbox}
+\begin{tabular}{lrrr}
+\toprule
+Entity & Received & Forwarded (98\%) & Retained (2\%) \\
+\midrule
+Alpha & \$500{,}000.00 & \$490{,}000.00 & \$10{,}000.00 \\
+Beta  & \$490{,}000.00 & \$480{,}200.00 & \$9{,}800.00 \\
+Gamma & \$480{,}200.00 & \$470{,}596.00 & \$9{,}604.00 \\
+Delta & \$470{,}596.00 & \$461{,}184.08 & \$9{,}411.92 \\
+\bottomrule
+\end{tabular}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ttabbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
+\caption{A four-hop layering chain: funds received, forwarded, and retained at each shell entity}
+\label{tab:layering_network}
+}
+\end{table}
 
 \begin{figure}[htbp]
 \centering
 \begin{lrbox}{\bookmeasuredbox}
-    \begin{tikzpicture}[>=latex,thick,node distance=0.7cm]
-        \node[draw,rounded corners,minimum width=1.8cm,minimum height=0.9cm,align=center,font=\scriptsize] (raw) {Raw Alt Data\\(Image, Web, Card)};
-        \node[draw,rounded corners,minimum width=1.9cm,minimum height=0.9cm,right=of raw,align=center,font=\scriptsize] (feat) {Feature\\Extraction\\(CNN/Aggregate)};
-        \node[draw,rounded corners,minimum width=1.7cm,minimum height=0.9cm,right=of feat,align=center,font=\scriptsize] (align) {Temporal\\Alignment};
-        \node[draw,rounded corners,minimum width=1.9cm,minimum height=0.9cm,right=of align,align=center,font=\scriptsize] (fuse) {Fusion with\\Fundamentals};
-        \node[draw,rounded corners,minimum width=1.7cm,minimum height=0.9cm,right=of fuse,align=center,font=\scriptsize] (sig) {Model /\\Signal};
-        \draw[->] (raw) -- (feat);
-        \draw[->] (feat) -- (align);
-        \draw[->] (align) -- (fuse);
-        \draw[->] (fuse) -- (sig);
+    \begin{tikzpicture}[>=latex,thick,node distance=1.7cm]
+        \node[draw,rounded corners,align=center,font=\small] (place) {Placement\\\$500{,}000};
+        \node[draw,rounded corners,align=center,font=\small,right=of place] (alpha) {Alpha};
+        \node[draw,rounded corners,align=center,font=\small,right=of alpha] (beta) {Beta};
+        \node[draw,rounded corners,align=center,font=\small,right=of beta] (gamma) {Gamma};
+        \node[draw,rounded corners,align=center,font=\small,right=of gamma] (delta) {Delta};
+        \node[draw,rounded corners,align=center,font=\small,right=of delta] (integ) {Integration\\\$461{,}184.08};
+        \draw[->] (place) -- node[above,font=\scriptsize] {\$500.0k} (alpha);
+        \draw[->] (alpha) -- node[above,font=\scriptsize] {\$490.0k} (beta);
+        \draw[->] (beta) -- node[above,font=\scriptsize] {\$480.2k} (gamma);
+        \draw[->] (gamma) -- node[above,font=\scriptsize] {\$470.6k} (delta);
+        \draw[->] (delta) -- node[above,font=\scriptsize] {\$461.2k} (integ);
+        \draw[->] (alpha) -- ++(0,-1.1) node[below,font=\scriptsize] {retains \$10.0k};
+        \draw[->] (beta) -- ++(0,-1.1) node[below,font=\scriptsize] {retains \$9.8k};
+        \draw[->] (gamma) -- ++(0,-1.1) node[below,font=\scriptsize] {retains \$9.6k};
+        \draw[->] (delta) -- ++(0,-1.1) node[below,font=\scriptsize] {retains \$9.4k};
     \end{tikzpicture}
 \end{lrbox}
 \ifdim\wd\bookmeasuredbox<0.65\linewidth
@@ -129,531 +408,252 @@ A single alternative data source is rarely used alone in practice; a real altern
 \ffigbox[\bookcapwidth]{
 \usebox{\bookmeasuredbox}
 }{
-    \caption{The alternative-data pipeline this chapter develops.}
-    \label{fig:altdata_pipeline}
+    \caption{The four-hop layering chain of Table~\ref{tab:layering_network} as a network.}
+    \label{fig:layering_network}
 }
 \end{figure}
 
-Extending Section~\ref{sec:satellite-example}'s example, suppose Cascade is also tracked by a web-traffic vendor (year-over-year growth in visits to Cascade's e-commerce site) and a card-panel vendor (year-over-year growth in aggregated card spending at Cascade's stores). Table~\ref{tab:multisource_signal} lists all three alternative-data growth rates alongside the resulting earnings surprise, actual revenue growth minus the analyst consensus estimate available at the time, and Cascade's stock return on the earnings-announcement day.
+After four hops, $\$461{,}184.08$, over $92\%$ of the original placed amount, reaches its ultimate destination, with only $\$38{,}815.92$ lost to the network's own retained ``fees'' along the way, having passed through four legally separate entities in under a week. Figure~\ref{fig:layering_network} draws this chain as the network it actually is, rather than as four separate, individually unremarkable rows in a table.
+
+No individual hop in Table~\ref{tab:layering_network} looks obviously wrong; each is a plausible-looking business payment of a plausible size. What is anomalous is the pattern viewed as a network: a near-total pass-through ratio (each entity forwards almost exactly what it received, rather than retaining or redeploying it as a genuine operating business would), extremely short dwell time between receipt and forwarding, and a chain topology, each entity receiving from only one source and sending to only one destination, that has no obvious legitimate business rationale.
+
+This is precisely why anti-money-laundering systems increasingly supplement Section~\ref{sec:risk-tiering}'s per-account behavioral scoring with network or graph-based analysis, examining the structure of relationships between accounts rather than any single account's activity alone, since a layering scheme is, by design, constructed so that every individual node in the chain looks unremarkable.
+
+\subsection*{Extending Layering Detection to the Blockchain: Clustering and Mixing Services}\index{Blockchain Forensics}
+\label{sec:blockchain-forensics}
+
+Table~\ref{tab:layering_network}'s Alpha-Beta-Gamma-Delta chain is easy to analyze precisely because each hop is already labeled with the name of a legally distinct entity. A public blockchain such as Bitcoin's gives an investigator no such labels: transactions are public and permanently recorded, but every party is identified only by a pseudonymous address, a string of characters with no inherent link to a real-world identity.
+
+The layering technique the chain illustrates, however, transfers directly onto this pseudonymous ledger, and the first tool blockchain forensics analysts use to unwind it is exactly the network-clustering logic Figure~\ref{fig:layering_network} already applies to named entities, adapted to work from raw addresses alone.
+
+The starting point is the \emph{common-input-ownership heuristic}\index{Common-Input-Ownership Heuristic}, formalized by Meiklejohn et al. (2013): if two or more addresses are jointly spent as inputs to the same transaction, the transaction's cryptographic signature requirements mean all of those addresses' private keys must have been available to whoever constructed it, so the addresses are assumed to belong to a single real-world owner.
+
+Applying this rule repeatedly across many transactions merges addresses into clusters, exactly the way Table~\ref{tab:layering_network}'s four names group what could otherwise have been dozens of legally separate shell accounts. A small worked example makes this concrete. Suppose an investigator observes eight raw addresses, A1 through A8, and five transactions that each jointly spend two of them as inputs,
+\begin{equation*}
+(A1, A2), \quad (A2, A3), \quad (A4, A5), \quad (A6, A7), \quad (A7, A8).
+\end{equation*}
+Treating each pair as an edge and taking connected components, exactly the union-find structure standard in blockchain-clustering software, collapses these eight addresses into three inferred real-world entities,
+\begin{equation*}
+\{A1, A2, A3\}, \qquad \{A4, A5\}, \qquad \{A6, A7, A8\},
+\end{equation*}
+recovering the same kind of entity-level view Table~\ref{tab:layering_network} started with, but built up from public transaction data alone rather than assumed. This is the core technique behind commercial blockchain-analytics platforms such as Chainalysis and Elliptic, and it is also why criminals who launder funds on-chain cannot simply spread activity across many addresses the way structuring spreads cash across many small deposits (Section~\ref{sec:aml-structuring}'s worked example above). Unless every address is funded and spent with total isolation from every other, the transaction graph itself reveals the clustering.
+
+That isolation is exactly what a \emph{mixing service}\index{Mixing Service} is designed to provide. In a CoinJoin-style mix, several unrelated participants jointly construct a single transaction with many inputs and many equal-value outputs, so that the common-input-ownership heuristic's premise, that jointly-spent inputs share an owner, is deliberately violated: the inputs genuinely belong to different people, and the equal-sized outputs make it statistically ambiguous which output pays which participant.
+
+With $n$ participants each contributing and receiving an identical amount, and no side information such as timing correlation or address reuse, every one of the $n!$ possible input-to-output pairings is equally consistent with the transaction alone, so the probability that any specific output belongs to any specific input collapses to a uniform $1/n$, versus certainty for an ordinary, unmixed transaction,
+\begin{equation*}
+P(\text{output } j \text{ pays input } i \mid \text{unmixed}) = 1, \qquad P(\text{output } j \text{ pays input } i \mid \text{mixed}, \, n=5) = \frac{1}{5} = 0.20.
+\end{equation*}
+This is precisely Chapter 1's Bayesian-updating framework run in reverse: mixing does not remove the transaction from the public ledger, it engineers the likelihood term so that the posterior probability of any single input-output link falls all the way back to the uninformative prior over the mix's anonymity set, here five equally likely pairings instead of one certain match. A larger mix (larger $n$) buys a proportionally smaller per-pairing probability and therefore stronger deniability, which is exactly why forensic tools have moved beyond the transaction graph alone: maintaining known-mixer address lists compiled from prior investigations, correlating amounts and timing across a suspected mix's inputs and outputs, and, ultimately, subpoenaing the off-chain, KYC-linked exchange records where mixed funds are eventually cashed out, since Section~\ref{sec:aml-structuring}'s Customer Due Diligence obligations still bind any regulated exchange the funds pass through on either side of the mix.
+
+Table~\ref{tab:layering_network}'s chain topology itself, one source, one destination, a near-total pass-through ratio at every hop, has a direct on-chain analogue that investigators call a \emph{peeling chain}\index{Peeling Chain}: a single address receives a large amount, forwards nearly all of it to the next address in sequence while ``peeling off'' a small remainder, and the pattern repeats for many hops, functionally identical to the Alpha-Beta-Gamma-Delta sequence above but executed with addresses instead of shell companies.
+
+The largest cryptocurrency-laundering case prosecuted to date combined exactly these techniques: after the 2016 Bitfinex exchange hack, in which $119{,}754$ bitcoin were stolen, the U.S. Department of Justice's 2022 seizure recovered roughly $95{,}000$ of those bitcoin, then worth approximately \$3.6 billion, from wallets controlled by Ilya Lichtenstein and Heather Morgan, who had spent years moving the funds through peeling chains, fictitious identities, automated transaction-splitting tools, darknet-market deposits, mixing services, and ``chain-hopping,'' converting bitcoin into other cryptocurrencies specifically to break the address-clustering trail described above. Both defendants pleaded guilty in 2023, a case blockchain-analytics investigators frequently cite as proof that persistent, patient graph analysis, applied over years rather than days, can still unwind on-chain layering even at a scale no institution's own internal monitoring system, built to watch its own accounts rather than a public ledger, was ever designed to see.
+
+Figure~\ref{fig:crime_pipeline} places this rule-based structuring and layering detection, on-chain or off, alongside the statistical and behavioral tools developed earlier in the chapter, showing how a real institution's monitoring system typically combines several distinct signals before a case ever reaches a human investigator.
+
+\begin{figure}[htbp]
+\centering
+\begin{lrbox}{\bookmeasuredbox}
+    \begin{tikzpicture}[>=latex,thick,node distance=0.9cm]
+        \node[draw,rounded corners,minimum width=1.85cm,minimum height=0.9cm,align=center,font=\scriptsize] (txn) {Transaction /\\Account Activity};
+        \node[draw,rounded corners,minimum width=1.85cm,minimum height=0.9cm,right=of txn,align=center,font=\scriptsize] (score) {Scoring, Rules,\\Behavioral Risk};
+        \node[draw,rounded corners,minimum width=1.85cm,minimum height=0.9cm,right=of score,align=center,font=\scriptsize] (alert) {Alert\\Queue};
+        \node[draw,rounded corners,minimum width=1.85cm,minimum height=0.9cm,right=of alert,align=center,font=\scriptsize] (invest) {Investigator\\Review};
+        \node[draw,rounded corners,minimum width=1.85cm,minimum height=0.9cm,right=of invest,align=center,font=\scriptsize] (report) {CTR / SAR\\Filing or Clear};
+        \draw[->] (txn) -- (score);
+        \draw[->] (score) -- (alert);
+        \draw[->] (alert) -- (invest);
+        \draw[->] (invest) -- (report);
+    \end{tikzpicture}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ffigbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
+    \caption{The fraud and AML monitoring pipeline.}
+    \label{fig:crime_pipeline}
+}
+\end{figure}
+
+Beyond structuring, AML regulation imposes an ongoing due-diligence obligation that goes beyond fraud detection's largely reactive posture: Customer Due Diligence (CDD)\index{Customer Due Diligence (CDD)} at onboarding establishes a customer's expected activity profile (Section~\ref{sec:risk-tiering}'s KYC inputs), Enhanced Due Diligence (EDD)\index{Enhanced Due Diligence (EDD)} applies heightened scrutiny to higher-risk customers such as politically exposed persons or those in high-risk jurisdictions, and ongoing monitoring compares actual behavior against that expected profile continuously, exactly the account-level, time-varying risk view Section~\ref{sec:survival-fraud}'s survival framework formalizes.
+
+Sanctions screening, checking counterparties against government-maintained lists of prohibited individuals, entities, and countries, is a related but distinct compliance obligation, typically implemented as a direct name-matching rule rather than a statistical model, precisely because a sanctioned-party match is a binary legal fact rather than a probabilistic risk estimate.
+
+\section{Privacy-Preserving Collaboration: Federated Learning Across Institutions}
+\label{sec:federated-aml}
+
+The layering networks above expose a structural weakness in single-institution detection: a laundering scheme deliberately spreads its transactions across many banks precisely so that no single bank sees enough of the pattern to recognize it. The obvious remedy, pooling transaction data across institutions, is largely prohibited: bank-secrecy and data-protection law restricts sharing customer data, and no bank wants its transaction records in a competitor's hands. Federated learning\index{federated learning} is the machine-learning answer to this impasse: institutions jointly train one shared model \emph{without any of them ever transmitting its underlying data}, by exchanging only model updates. Each bank fits the current shared model to its own private transactions, sends back only the resulting parameter estimates, and a coordinator combines them, most simply by federated averaging\index{federated averaging}, a sample-size-weighted mean of the local estimates, into the next version of the shared model.
+
+A hand-checkable round makes the mechanics concrete. Suppose three banks jointly train the fraud-scoring logistic regression of Section~\ref{sec:fraud-scoring} on a shared structuring-intensity feature, holding $2{,}000$, $5{,}000$, and $3{,}000$ labeled transactions respectively. Their local coefficient estimates come back as $0.90$, $1.30$, and $1.10$: each bank's view is real but partial, and the smallest bank's estimate is the noisiest. Federated averaging weights each estimate by its sample share,
+\begin{equation*}
+\hat\beta_{\text{fed}} \;=\; \frac{2{,}000 \times 0.90 + 5{,}000 \times 1.30 + 3{,}000 \times 1.10}{10{,}000} \;=\; \frac{11{,}600}{10{,}000} \;=\; 1.16,
+\end{equation*}
+against a naive unweighted mean of $1.10$; the weighting matters because it lets the estimate lean toward the banks with the most evidence. The payoff is easiest to see from the smallest bank's seat: scoring a transaction with structuring intensity $x=2$ (with intercept $-3$), its own local model flags it with probability $\sigma(-3 + 0.90 \times 2) \approx 0.2315$, while the federated model assigns $\sigma(-3 + 1.16 \times 2) \approx 0.3363$, a meaningfully sharper detector obtained without a single customer record leaving any bank.
+
+Model updates are not automatically harmless, though: a parameter estimate computed from a small dataset can itself leak information about the records behind it, so production systems add differential privacy\index{differential privacy}, calibrated random noise added to each institution's update before transmission, sized so that no observer of the update can reliably infer whether any single transaction was present in the underlying data. The aggregation step is what makes this affordable: perturbing the three local estimates above by illustrative noise draws of $+0.04$, $-0.02$, and $+0.01$ changes the federated coefficient only from $1.16$ to $1.161$, because independent noise largely cancels in a weighted average even while masking each individual contribution. The privacy-utility trade-off does bind, more noise means more privacy and a worse model, and federated systems inherit new operational questions of their own (a malicious participant could poison the shared model through its updates, exactly the adversarial dynamic Chapter 18's robustness discussion examines, transplanted into the training loop), but the core bargain, most of the pooled-data detection gain at none of the pooled-data legal exposure, is why cross-institution federated AML pilots have moved from research into supervised production trials.
+
+\section{Alert Economics and the Cost of Low Precision}
+\label{sec:alert-economics}
+
+Section~\ref{sec:anomaly-bayes} showed that a single bank's fraud model can generate $19{,}600$ flagged transactions in a single day; AML monitoring systems, layering rule-based structuring checks, behavioral risk scores, and sanctions screening on top of transaction scoring, typically generate a comparably large alert volume relative to the number that ultimately warrant a filed report.
+
+Suppose a bank's combined monitoring system generates $8{,}000$ alerts in a typical month, of which $240$ are ultimately investigated and filed as SARs,
+\begin{equation*}
+\text{Alert-to-SAR conversion rate} = \frac{240}{8{,}000} = 3.0\%,
+\end{equation*}
+a precision figure of the same qualitative magnitude as Section~\ref{sec:anomaly-bayes}'s $24.2\%$ fraud-flag precision, and considerably lower once every layer of monitoring is combined, since each additional rule or model adds its own false-positive rate. If each alert requires an average of 20 minutes of an investigator's time to review, even the $97\%$ of alerts that are ultimately cleared as false positives,
+\begin{equation*}
+\text{Analyst hours per month} = \frac{8{,}000 \times 20 \text{ minutes}}{60} \approx 2{,}667 \text{ hours},
+\end{equation*}
+equivalent to roughly 16 to 17 full-time analysts working a standard month purely to clear the alert queue this single monitoring system generates. At a fully loaded compliance-analyst cost of \$45 per hour, a common industry rule of thumb once salary, benefits, training, and overhead are included, this translates directly into a monthly labor cost of
+\begin{equation*}
+2{,}666.67 \times \$45 \approx \$120{,}000,
+\end{equation*}
+or roughly \$1.44 million annually, purely to staff alert review for one monitoring system at one institution, before accounting for the cost of the underlying data infrastructure, the models themselves, or the SAR-filing process that follows a confirmed case. This dollar figure is what makes precision improvements a direct cost-reduction lever rather than merely a statistical nicety.
+
+If a model improvement doubled precision from $3.0\%$ to $6.0\%$ while holding recall (and therefore the $240$ SARs actually filed) fixed, the same $240$ confirmed cases would require only $240/0.06 = 4{,}000$ alerts to surface, exactly half of the original $8{,}000$, cutting analyst hours to $4{,}000 \times 20/60 \approx 1{,}333$ hours and monthly labor cost to $1{,}333 \times \$45 \approx \$60{,}000$, precisely half of the original \$120,000, since cost scales linearly with alert count once recall (and therefore the fixed number of investigations that must occur regardless of precision) is held constant.
+
+This is exactly why a bank's compliance technology budget and its model-development priorities are, in practice, set jointly rather than by the compliance and modeling functions independently: a data-science team's precision improvement translates directly, dollar for dollar, into the compliance department's staffing budget in a way few other model performance metrics do. This is precisely why the layered approach developed in this chapter, transaction scoring (Section~\ref{sec:fraud-scoring}), behavioral risk tiering (Section~\ref{sec:risk-tiering}), and survival-informed prioritization (Section~\ref{sec:survival-fraud}), matters as much for its operational cost efficiency as for its detection accuracy: a monitoring system that better ranks alerts by true risk, even without changing its overall recall, lets a fixed investigative staff spend its limited hours on the alerts most likely to be genuine, exactly the same precision-recall trade-off Chapter 6 introduced, now expressed directly in analyst-hours and dollars rather than as an abstract statistical metric.
+
+\section{Governance: Model Risk Management and the Three Lines of Defense}
+\label{sec:governance-3lod}
+
+Chapters 8 and 9 introduced model risk management\index{model risk management}, independent validation, ongoing performance monitoring, and clear accountability for a model's use, in the context of market and credit risk models; Chapter 14 revisited the same discipline for algorithmic trading systems after the Knight Capital\index{Knight Capital trading glitch} vignette. Fraud and AML models carry an additional governance obligation beyond the purely financial risk those earlier chapters addressed: a poorly governed AML program exposes the institution itself to direct regulatory and criminal liability, not merely financial loss, since failing to detect and report money laundering is, in most jurisdictions, itself a legal violation regardless of whether the institution profited from it.
+
+Banks and regulators structure this accountability using a widely adopted governance framework called the three lines of defense\index{three lines of defense}, illustrated in Figure~\ref{fig:three_lines_defense}: the business unit that owns customer relationships and transaction processing is the first line, directly responsible for day-to-day monitoring and following established procedures. A dedicated compliance and risk management function is the second line, independently setting policy, building and validating the scoring and monitoring models this chapter has developed, and challenging the first line's judgment calls; and internal audit is the third line, periodically and independently testing whether the first two lines are actually functioning as designed, reporting directly to the board rather than to management responsible for day-to-day operations.
+
+\begin{figure}[htbp]
+\centering
+\begin{lrbox}{\bookmeasuredbox}
+    \begin{tikzpicture}[>=latex,thick,node distance=0.6cm]
+        \node[draw,rounded corners,minimum width=6.5cm,minimum height=0.9cm,align=center] (first) {First Line: Business Units\\(Day-to-day monitoring and controls)};
+        \node[draw,rounded corners,minimum width=6.5cm,minimum height=0.9cm,below=of first,align=center] (second) {Second Line: Compliance and Risk Management\\(Policy, model development, independent challenge)};
+        \node[draw,rounded corners,minimum width=6.5cm,minimum height=0.9cm,below=of second,align=center] (third) {Third Line: Internal Audit\\(Independent testing, reports to the board)};
+        \draw[->] (first) -- (second);
+        \draw[->] (second) -- (third);
+    \end{tikzpicture}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ffigbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
+    \caption{The three lines of defense governance framework for fraud and AML programs.}
+    \label{fig:three_lines_defense}
+}
+\end{figure}
+
+This structure is a direct, institutionalized answer to a failure mode this chapter's case vignette illustrates concretely: a monitoring system can exist on paper, and even generate the alert volumes quantified in Section~\ref{sec:alert-economics}, while still failing in practice if the first line lacks the incentive or staffing to act on alerts, if the second line's independent challenge is weak or under-resourced, or if the third line's audits are not, in fact, independent of the business they are reviewing.
+
+\subsection*{Model Monitoring: Precision Drift and Adversarial Adaptation}
+
+Chapter 14 introduced concept drift, a predictive model's fitted relationship growing stale as market conditions change, as a reason high-frequency trading models require frequent retraining. Fraud and AML models face a related but distinct version of the same problem: because Section~\ref{sec:crime-taxonomy} identified financial crime as adversarial, fraudsters and launderers who learn (directly or by trial and error) which transaction patterns a bank's model tends to flag will deliberately shift their behavior away from those patterns, degrading the model's precision even if the underlying population of legitimate customers has not changed at all. Table~\ref{tab:precision_drift} illustrates a stylized six-month trajectory for the fraud-scoring model of Section~\ref{sec:fraud-scoring}, holding its classification threshold fixed.
 
 \begin{table}[htbp]
 \centering
-\small
-\caption{Multi-source alternative data, earnings surprise, and next-day return, by quarter}
-\label{tab:multisource_signal}
-\begin{tabular}{lccccccc}
+\begin{lrbox}{\bookmeasuredbox}
+\begin{tabular}{lrrrrrr}
 \toprule
-Quarter & Car (\%) & Web (\%) & Card (\%) & Surprise (\%) & Fitted (\%) & Signal & Return (\%) \\
-\midrule
-Q1 & 2.1 & 3.0 & 1.5 & 0.5 & 0.48 & Long & 1.1 \\
-Q2 & $-1.5$ & $-0.5$ & $-1.0$ & $-1.3$ & $-1.08$ & Flat & $-0.6$ \\
-Q3 & 4.8 & 5.5 & 3.0 & 2.5 & 1.95 & Long & 2.0 \\
-Q4 & 0.6 & 1.5 & 0.8 & 0.0 & $-0.44$ & Flat & 0.3 \\
-Q5 & 6.2 & 4.0 & 4.5 & 2.0 & 2.46 & Long & $-0.4$ \\
-Q6 & $-3.0$ & $-2.0$ & $-1.8$ & $-1.5$ & $-1.92$ & Flat & $-1.4$ \\
-Q7 & 3.5 & 2.5 & 2.0 & 2.3 & 1.66 & Long & 1.5 \\
-Q8 & 1.0 & 2.0 & 0.5 & $-0.3$ & 0.18 & Long & 0.2 \\
+Month & 1 & 2 & 3 & 4 & 5 & 6 \\
+Precision & 24.2\% & 22.5\% & 20.8\% & 19.6\% & 18.3\% & 17.1\% \\
 \bottomrule
 \end{tabular}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ttabbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
+\caption{A stylized six-month precision drift at a fixed classification threshold}
+\label{tab:precision_drift}
+}
 \end{table}
 
-Regressing surprise on the three alternative-data growth rates by ordinary least squares, using the normal equations
-\begin{equation*}
-\hat\beta = (X^\top X)^{-1}X^\top y,
-\end{equation*}
-with $X$'s columns an intercept, car-count growth, web-traffic growth, and card growth, gives
-\begin{equation*}
-\hat\beta = (-0.291,\ 1.092,\ -0.113,\ -0.792), \qquad R^2 = 0.837.
-\end{equation*}
-The negative coefficient on card growth is not a mistake: with car-count and web-traffic growth already in the regression, card growth's own explanatory power is largely redundant with theirs, and its small residual coefficient partly offsets collinear noise the other two variables share, a common occurrence when several correlated proxies for the same underlying quantity are entered into one regression together, and a reminder that individual coefficients in a multi-source model should not be read as clean, isolated effects the way Chapter 6's Section 6.4 single-variable coefficient can be.
+If the second line has set a minimum acceptable precision floor of $20\%$ below which the alert-economics burden of Section~\ref{sec:alert-economics} is judged too costly relative to the fraud actually being caught, Table~\ref{tab:precision_drift} crosses that floor between month 3 and month 4, which should trigger a specific, pre-defined governance response, refitting the model on recent data, adding new features that capture the fraudsters' apparent behavioral shift, or tightening the classification threshold, rather than allowing the model to keep running unchanged simply because no single month's decline looks alarming on its own. This is precisely the kind of ongoing performance monitoring Chapter 8's model risk management framework requires, and it is the second line's specific responsibility under the three-lines-of-defense structure above to define the precision floor in advance and act automatically once it is breached, rather than leaving the decision to the first-line staff who are, understandably, focused on clearing today's alert queue rather than questioning whether the underlying model still works.
 
-Column ``Fitted'' reports each quarter's fitted surprise from this regression, and column ``Signal'' converts a positive fitted surprise into a long position taken ahead of the earnings release (flat otherwise), the same logic Chapter 14's Section 14.5 applied to a sentiment score. Five of the eight quarters signal long; of those, four (Q1, Q3, Q7, Q8) are followed by a positive next-day return and one (Q5) by a negative return despite a strongly positive fitted surprise, an 80\% hit rate.
+\section{Case Vignette: The Danske Bank\index{Danske Bank Estonia scandal} Estonia Case}\index{Danske Bank Estonia Case}
 
-The signaled quarters average a 0.88\% next-day return versus 0.34\% across all eight quarters, a real edge, but, exactly as Chapter 6 and Chapter 14's Section 14.5 both emphasize, a probabilistic one: Q5's miss shows that even a well-fitted, multi-source alternative-data model does not eliminate the risk that a single quarter's price reaction depends on something the data could not capture, guidance issued alongside the earnings release, for instance. A ninth quarter with car, web, and card growth of 5.0\%, 4.5\%, and 3.5\% respectively yields a fitted surprise of
-\begin{equation*}
--0.291 + 1.092(5.0) - 0.113(4.5) - 0.792(3.5) = 1.888\%,
-\end{equation*}
-again a tradeable estimate available before the official release.
+Between roughly 2007 and 2015, the Estonian branch of Danske Bank, Denmark's largest bank, processed an estimated 200 billion euros in payments through a portfolio of non-resident customers, many with connections to Russia and other former Soviet states, that was later found to include large volumes of transactions with no plausible legitimate economic purpose. The branch had inherited this non-resident customer portfolio through an earlier acquisition and, rather than winding it down as a high-risk legacy business, continued serving and even expanding it, drawn by the fee income a small branch's outsized transaction volume generated. An internal whistleblower first raised concerns in 2013; an external investigation the bank itself later commissioned found extensive, longstanding failures in customer due diligence, ongoing monitoring, and the bank's own internal escalation of red flags, precisely the first- and second-line failures Section~\ref{sec:governance-3lod}'s three-lines-of-defense framework is designed to prevent. Estonian authorities ultimately required the branch's closure in 2019, and in 2022 Danske Bank pleaded guilty in the United States to fraud charges connected to the case, agreeing to forfeit and pay roughly \$2 billion.
 
-\section{Point-in-Time Alignment and the Cost of Look-Ahead Bias}\index{Point-in-Time Alignment and the Cost of Look-Ahead Bias}
-\label{sec:point-in-time}
+The case is instructive for this chapter specifically because it was not, primarily, a failure of statistical modeling: rule-based transaction monitoring, of the kind Section~\ref{sec:aml-structuring} describes, was reportedly in place at the branch, but generated so many alerts, echoing Section~\ref{sec:alert-economics}'s alert-economics discussion, relative to the compliance staff available to review them, that a large fraction went uninvestigated or were cleared without adequate scrutiny. It is also a case study in correspondent banking risk specifically: much of the flagged activity moved through the branch's relationships with other banks acting as intermediaries for the ultimate, often difficult-to-identify beneficial owners of the funds, a structural feature of international payments that makes a single bank's own customer due diligence, however well executed, an incomplete safeguard on its own. The case's lasting regulatory legacy has been a much closer supervisory focus, across the European Union and beyond, on exactly the governance question Section~\ref{sec:governance-3lod} formalizes: not merely whether a monitoring system technically exists, but whether an institution can demonstrate, to an independent third line and ultimately to a regulator, that alerts are being investigated and reported at a standard consistent with the risk the underlying customer base actually presents.
 
-Section~\ref{sec:alt-data-pipeline}'s regression silently assumed that all three growth rates for a given quarter were genuinely available before that quarter's earnings release. In reality, a card-panel vendor's data is typically delayed: the panel for a given quarter is often not fully assembled and delivered to subscribers until well after that quarter's earnings have already been reported, because the underlying card issuers themselves need time to compile and anonymize transaction records. A backtest that uses the current quarter's card figure as if it had been available in time, when in fact only the prior quarter's card figure would genuinely have been in hand, is committing look-ahead bias, using information the backtest could not actually have had.
+\section{Challenges in Fraud Detection, Compliance, and Financial Crime}
 
-To see how much this matters, refit Section~\ref{sec:alt-data-pipeline}'s regression on quarters Q2 through Q8 (seven quarters, dropping Q1 since it has no prior quarter to lag from) two ways. The naive version uses each quarter's own, contemporaneous card growth, exactly as before:
-\begin{align*}
-\hat\beta_{\text{naive}} &= (-0.290,\ 1.102,\ -0.119,\ -0.802), & R^2 &= 0.837,
-\end{align*}
-with four quarters signaling long (Q3, Q5, Q7, Q8) and a 75\% hit rate. The realistic version instead uses, for each quarter, the card growth reported one quarter earlier, the figure that would genuinely have been available before that quarter's earnings release:
-\begin{align*}
-\hat\beta_{\text{realistic}} &= (0.251,\ 0.424,\ -0.100,\ -0.286), & R^2 &= 0.873,
-\end{align*}
-but Q8 no longer signals long once the lag is respected, leaving only three quarters (Q3, Q5, Q7) with a 66.7\% hit rate, and a higher average return (1.03\% versus 0.83\%) on that smaller, more selective set of trades.
+Several challenges recur across nearly every application in this chapter, and many connect directly to themes developed elsewhere in this book.
 
-The lesson is not that the lagged, realistic version is simply worse, its $R^2$ is actually higher and its average signaled return is larger, but that it is a \emph{different} model making \emph{different} trading decisions than the naive version, on the very same underlying quarters. A backtest run on the naive, contemporaneous-card version would report performance for trades the fund could never actually have placed, since the card data those trades depend on was not yet in hand, regardless of whether that misspecified backtest happens to look better or worse than the honest one. This is why Section~\ref{sec:alt-data-quality} treats delivery lag as a data-quality issue rather than a mere modeling nuance: the direction of the resulting bias is not predictable in general, but the fact that ignoring real-world delivery timing invalidates the backtest as a measure of tradeable performance is completely general, and point-in-time data discipline, using, for every historical date, only the data vintage that would genuinely have been available on that date, is the standard defense against it.
+\textbf{Extreme class imbalance makes accuracy a misleading metric.} As Section~\ref{sec:anomaly-bayes}'s scaled Bayes' theorem example showed concretely, even a highly accurate-sounding model produces a large number of false positives in absolute terms whenever the event being detected is rare, which is precisely why this chapter, like Chapter 6's imbalanced-classification discussion, insists on precision, recall, and alert-volume economics rather than raw accuracy.
 
-\section{Feature Engineering for Alternative Data}\index{Feature Engineering for Alternative Data}
-\label{sec:altdata-feature-engineering}
+\textbf{The adversary adapts, which most of this book's other models do not have to contend with.} A credit-scoring model's population of borrowers (Chapter 9) is not actively trying to defeat the model; a launderer engaged in structuring (Section~\ref{sec:aml-structuring}) is specifically designing behavior to evade a known detection rule, meaning a fraud or AML model's effectiveness can decay not just through the ordinary concept drift Chapter 14 discussed for order-flow models, but through deliberate, targeted evasion once a detection threshold becomes known or guessable.
 
-Raw alternative-data readings, like the raw market and fundamental data of Chapters 2 through 4, are rarely used exactly as delivered; Section~\ref{sec:point-in-time} addressed when a reading becomes usable, and this section addresses what should be done to it before it is usable at all.
+\textbf{Data across institutions and jurisdictions is fragmented.} The correspondent-banking structure behind this chapter's case vignette illustrates a recurring practical limit: any single institution's monitoring system, however well built, only observes its own slice of a transaction chain that may span several banks and countries, which is why network-level and cross-institutional information sharing, within the legal limits privacy and banking secrecy law impose, materially improves detection relative to any one institution acting alone.
 
-\textbf{Seasonal adjustment.} Web traffic, foot traffic, and card-transaction volumes all carry strong calendar effects, day-of-week patterns, holiday spikes, and back-to-school or year-end shopping seasons, that have nothing to do with a firm's underlying performance. Comparing a raw reading against the same period one year earlier, exactly what year-over-year growth rates such as Section~\ref{sec:satellite-example}'s car-count growth already do, removes most of this seasonality automatically, provided the calendar aligns cleanly (a retailer's Thanksgiving week, for instance, falls on a different date each year, which can distort a naive year-over-year comparison unless the alignment is done by trading day or holiday-relative position rather than by calendar date).
+\textbf{False positives carry a real customer and reputational cost, not just an operational one.} Every incorrectly frozen account or declined transaction identified in Section~\ref{sec:alert-economics}'s alert queue is also a legitimate customer temporarily denied normal use of their own funds, a cost that does not show up in a precision or recall statistic but matters directly to customer relationships and, in aggregate, to regulatory scrutiny of whether a program's false-positive rate is itself proportionate.
 
-\textbf{Peer-relative normalization.} A retailer's car-count or web-traffic growth reflects both firm-specific performance and sector-wide conditions, gasoline prices, general consumer spending, weather, that affect every retailer in the sector simultaneously. Subtracting a sector-average benchmark from a firm's own reading isolates the firm-specific component a stock-picking strategy actually cares about.
+\textbf{Explainability requirements constrain model choice.} As Chapter 18 develops further, a suspicious activity report or an account closure decision frequently must be explained to a regulator or, in some jurisdictions, to the customer, which limits how much a fraud or AML program can rely on the least interpretable models Chapter 6 introduced, in tension with those models' potential accuracy advantage.
 
-Suppose sector-average car-count growth for Cascade's peer group across the same eight quarters of Table~\ref{tab:satellite_regression} is $(1.0, -0.5, 2.0, 0.3, 2.5, -1.0, 1.5, 0.5)$; subtracting it from Cascade's own car-count growth gives a peer-adjusted series $(1.1, -1.0, 2.8, 0.3, 3.7, -2.0, 2.0, 0.5)$. Refitting Section~\ref{sec:satellite-example}'s regression with this peer-adjusted series as the predictor gives $\hat\beta = 1.064$, $\hat\alpha = 0.678$, and $R^2 = 0.867$, essentially unchanged from the raw series' $R^2 = 0.870$. In this particular sample sector-wide movements were fairly small relative to Cascade's own idiosyncratic variation, so peer-adjustment does not change the fit much here, but the adjustment matters far more in a period when the whole sector moves together, a broad consumer-spending downturn, a fuel-price spike depressing driving-based foot traffic sector-wide, where an un-adjusted signal would mistake a sector-wide move for firm-specific news.
-
-\section{Neural Networks for Structured and Unstructured Data}\index{Neural Networks for Structured and Unstructured Data}
-\label{sec:nn-structured-unstructured}
-
-Section~\ref{sec:satellite-example} treated the vendor's car count as a finished number, but the vendor itself had to produce that count from raw satellite pixels, and Section~\ref{sec:alt-data-pipeline}'s web-traffic and card figures likewise start from raw logs or transaction records. Chapter 6 introduced the feedforward network, in which every input feeds every hidden unit with its own independent weight; that architecture ignores two kinds of structure alternative data routinely has, the two-dimensional grid structure of an image and the ordered, sequential structure of a time-stamped log, and specialized architectures were developed to exploit each, alongside a third architecture that needs no labeled target at all.
-
-\subsection*{Convolutional Neural Networks for Grid-Structured Data}\index{Convolutional Neural Networks for Grid-Structured Data}
-
-Suppose a vendor wants to teach a model to count cars automatically in a million-pixel satellite tile rather than paying an analyst to do it by eye. A feedforward network, of the kind Chapter 6 covers, could in principle treat every one of those million pixels as an independent input feature, but it would need a separate learned weight connecting each pixel to each hidden unit, and it would have to relearn from scratch that a cluster of bright pixels in the top-left corner and the identical cluster in the bottom-right corner both mean the same thing, a car, since nothing in a feedforward network's structure tells it that a pattern's meaning does not depend on where in the image it sits.
-
-A convolutional neural network\index{convolutional neural network (CNN)} (CNN) exploits exactly this redundancy: a useful pattern in an image, a car's outline, an edge, a texture, can appear anywhere in the frame, so instead of learning a separate weight for every pixel-hidden-unit pair, a CNN learns a small filter (or kernel) and slides it across the entire image, reusing the same weights at every position. This weight sharing is what makes CNNs practical for images: a $1000\times1000$-pixel satellite tile has a million pixels, far too many for a feedforward network's per-pixel weights to be learned from any realistic training set, but a $2\times2$ filter has only four weights to learn regardless of image size.
-
-Consider a stylized $4\times4$ satellite image patch of a single parking lot, with pixel intensities between 0 (dark asphalt) and 1 (a car's bright roof), containing two clusters of parked cars in opposite corners:
-\begin{equation*}
-I = \begin{pmatrix} 0.1 & 0.1 & 0.8 & 0.9 \\ 0.1 & 0.1 & 0.9 & 0.8 \\ 0.7 & 0.8 & 0.1 & 0.1 \\ 0.8 & 0.9 & 0.1 & 0.1 \end{pmatrix}.
-\end{equation*}
-Convolving this image with a $2\times2$ averaging filter 
-$$K = \begin{pmatrix}0.25 & 0.25\\ 0.25 & 0.25\end{pmatrix}$$ 
-at stride 1 (sliding the filter one pixel at a time, computing the elementwise product with each $2\times2$ patch and summing) produces a $3\times3$ feature map. The top-left entry, for instance, averages the patch 
-$$\begin{pmatrix}0.1&0.1\\0.1&0.1\end{pmatrix}$$ 
-to $0.1$; the entry one column to the right averages 
-$$\begin{pmatrix}0.1&0.8\\0.1&0.9\end{pmatrix}$$ 
-to $(0.1+0.8+0.1+0.9)/4 = 0.475$. Carrying this out for all nine positions gives
-\begin{equation*}
-\text{Feature map} = \begin{pmatrix} 0.100 & 0.475 & 0.850 \\ 0.425 & 0.475 & 0.475 \\ 0.800 & 0.475 & 0.100 \end{pmatrix}.
-\end{equation*}
-The two corner entries where a car cluster sits, $0.850$ (top right) and $0.800$ (bottom left), stand out clearly above the two empty corners, both $0.100$, and above the mixed-boundary middle entries, which is exactly what this filter is designed to do: highlight regions of concentrated brightness.
-
-A real, trained CNN learns many such filters simultaneously (edge detectors, corner detectors, texture detectors), stacks several convolutional layers so that later layers respond to increasingly complex combinations of earlier layers' features, and typically applies a ReLU activation and a pooling step (taking, say, the maximum of each $2\times2$ block of the feature map) after each convolution, reducing the map's size while keeping its strongest responses, before finally feeding the result into feedforward layers of the kind Chapter 6 described to produce a single number, an estimated car count.
-
-\begin{figure}[htbp]
-\centering
-\begin{lrbox}{\bookmeasuredbox}
-\begin{tikzpicture}[font=\scriptsize]
-    \matrix (img) [matrix of nodes, nodes={draw,minimum size=0.8cm,anchor=center}, column sep=-\pgflinewidth, row sep=-\pgflinewidth] {
-        0.1 & 0.1 & 0.8 & 0.9 \\
-        0.1 & 0.1 & 0.9 & 0.8 \\
-        0.7 & 0.8 & 0.1 & 0.1 \\
-        0.8 & 0.9 & 0.1 & 0.1 \\
-    };
-    \node[above=0.15cm of img.north] {\normalsize $4\times4$ image patch $I$};
-
-    \matrix (fmap) [matrix of nodes, nodes={draw,minimum size=0.8cm,anchor=center}, column sep=-\pgflinewidth, row sep=-\pgflinewidth, right=3.4cm of img] {
-        0.100 & 0.475 & 0.850 \\
-        0.425 & 0.475 & 0.475 \\
-        0.800 & 0.475 & 0.100 \\
-    };
-    \node[above=0.15cm of fmap.north] {\normalsize $3\times3$ feature map};
-
-    \node[draw=blue,thick,fit=(img-1-1)(img-2-2),inner sep=1pt] (patchA) {};
-    \node[draw=orange,thick,fit=(img-1-2)(img-2-3),inner sep=1pt] (patchB) {};
-    \node[draw=blue,thick,fit=(fmap-1-1),inner sep=1pt] (outA) {};
-    \node[draw=orange,thick,fit=(fmap-1-2),inner sep=1pt] (outB) {};
-
-    \draw[->,blue,thick] (patchA.east) to[bend left=15] (outA.west);
-    \draw[->,orange,thick] (patchB.east) to[bend left=25] (outB.west);
-\end{tikzpicture}
-\end{lrbox}
-\ifdim\wd\bookmeasuredbox<0.65\linewidth
-\setlength{\bookcapwidth}{0.65\linewidth}
-\else
-\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
-\fi
-\ffigbox[\bookcapwidth]{
-\usebox{\bookmeasuredbox}
-}{
-\caption{Sliding a $2\times2$ averaging filter across the $4\times4$ satellite patch $I$ at stride 1.}
-\label{fig:cnn_convolution}
-}
-\end{figure}
-
-Stacking convolutional layers naively, however, runs into a practical training problem once a network gets deep: gradients computed by backpropagation\index{backpropagation} (Chapter 6) must flow back through every layer, and in a sufficiently deep plain CNN they can shrink toward zero long before reaching the earliest layers, leaving those layers essentially untrained, the vanishing-gradient problem\index{Vanishing-Gradient Problem}.
-
-The architecture that made very deep CNNs practical, the residual network\index{residual network (ResNet)} (ResNet), addresses this with a simple structural change: each block adds a shortcut connection carrying the block's input directly to its output, so the block only has to learn a residual adjustment on top of what already passed through unchanged, rather than having to learn the entire transformation from scratch, letting gradients flow through the shortcut even when a particular block's own learned transformation contributes little. This is the same practical instinct as Chapter 10's shrinkage-based portfolio methods, do not force a model to learn from nothing what could instead be inherited or only mildly adjusted, applied to network depth rather than portfolio weights.
-
-\subsection*{Recurrent Neural Networks for Sequential Data}\index{Recurrent Neural Networks for Sequential Data}
-
-Suppose an analyst wants to judge whether Cascade's web traffic is accelerating going into its next earnings release using the last several weeks of readings rather than just the most recent one, since a single week's number cannot distinguish a steady climb from a spike that is about to reverse. A feedforward network could take all several weeks as separate input features, but it would treat them as an unordered bag, with nothing in its structure telling it that the reading from three weeks ago came before the reading from last week.
-
-A recurrent neural network (RNN) addresses exactly this: an ordered sequence, such as several successive weeks of web-traffic readings, in which the order itself carries information a feedforward network, which treats its inputs as an unordered set of features, would discard. An RNN processes a sequence one step at a time, maintaining a hidden state $h_t$ that is passed forward and updated at every step,
-\begin{equation*}
-h_t = \tanh(w_x x_t + w_h h_{t-1} + b),
-\end{equation*}
-so that $h_t$ is, in principle, a function of every input the network has seen so far, $x_1, \ldots, x_t$, not just the current one, giving the network a form of memory that Chapter 7's autoregressive and GARCH recursions share in spirit, each also defines a current value as a function of a prior state plus new information, but that Chapter 6's feedforward network has no analogue for.
-
-Suppose Cascade's e-commerce site shows three successive weekly readings of normalized web-traffic growth in the final three weeks before its next earnings release, $x_1 = 0.5$, $x_2 = -0.2$, $x_3 = 0.9$, and a single-hidden-unit RNN with weights $w_x = 0.6$, $w_h = 0.4$, $b = 0.1$, and initial hidden state $h_0 = 0$. Step by step:
-\begin{align*}
-h_1 &= \tanh(0.6(0.5) + 0.4(0) + 0.1) = \tanh(0.400) = 0.3799, \\
-h_2 &= \tanh(0.6(-0.2) + 0.4(0.3799) + 0.1) = \tanh(0.13196) = 0.1312, \\
-h_3 &= \tanh(0.6(0.9) + 0.4(0.1312) + 0.1) = \tanh(0.69248) = 0.5996.
-\end{align*}
-Notice that $h_2$ is small, close to zero, not because $x_2$ was extreme (it was mildly negative) but because it also carries a damped memory of $h_1$; the hidden state genuinely blends past and present rather than reacting to the latest input alone.
-
-Passing the final hidden state through an output layer, $\hat y = \sigma(w_y h_3 + b_y)$ with $w_y = 1.2$ and $b_y = -0.3$, gives $\hat y = \sigma(1.2(0.5996) - 0.3) = \sigma(0.4195) = 0.6034$, which might, for instance, be interpreted as a 60.3\% estimated probability that Cascade's upcoming quarter shows accelerating (rather than decelerating) revenue growth. Figure~\ref{fig:rnn_unrolled} unrolls this same computation across its three time steps, making explicit how each hidden state depends on both the current input and the previous hidden state.
-
-\begin{figure}[htbp]
-\centering
-\begin{lrbox}{\bookmeasuredbox}
-\begin{tikzpicture}[>=latex,thick,
-    state/.style={draw,circle,minimum size=1.5cm,align=center,font=\small},
-    inputnode/.style={draw,circle,minimum size=1.2cm,align=center,font=\small}]
-    \node[state] (h0) at (0,0) {$h_0$\\$=0$};
-    \node[state] (h1) at (3.3,0) {$h_1$\\$=0.3799$};
-    \node[state] (h2) at (6.6,0) {$h_2$\\$=0.1312$};
-    \node[state] (h3) at (9.9,0) {$h_3$\\$=0.5996$};
-    \node[state] (y) at (13.2,0) {$\hat y$\\$=0.6034$};
-
-    \node[inputnode] (x1) at (3.3,2.6) {$x_1$\\$=0.5$};
-    \node[inputnode] (x2) at (6.6,2.6) {$x_2$\\$=-0.2$};
-    \node[inputnode] (x3) at (9.9,2.6) {$x_3$\\$=0.9$};
-
-    \draw[->] (h0) -- node[above,font=\scriptsize]{$w_h=0.4$} (h1);
-    \draw[->] (h1) -- node[above,font=\scriptsize]{$w_h=0.4$} (h2);
-    \draw[->] (h2) -- node[above,font=\scriptsize]{$w_h=0.4$} (h3);
-    \draw[->] (h3) -- node[above,font=\scriptsize]{$w_y=1.2$} (y);
-
-    \draw[->] (x1) -- node[right,font=\scriptsize]{$w_x=0.6$} (h1);
-    \draw[->] (x2) -- node[right,font=\scriptsize]{$w_x=0.6$} (h2);
-    \draw[->] (x3) -- node[right,font=\scriptsize]{$w_x=0.6$} (h3);
-
-    \node[font=\scriptsize,below=0.3cm of h1]{bias $b=0.1$};
-    \node[font=\scriptsize,below=0.3cm of h2]{bias $b=0.1$};
-    \node[font=\scriptsize,below=0.3cm of h3]{bias $b=0.1$};
-    \node[font=\scriptsize,below=0.3cm of y]{bias $b_y=-0.3$};
-\end{tikzpicture}
-\end{lrbox}
-\ifdim\wd\bookmeasuredbox<0.65\linewidth
-\setlength{\bookcapwidth}{0.65\linewidth}
-\else
-\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
-\fi
-\ffigbox[\bookcapwidth]{
-\usebox{\bookmeasuredbox}
-}{
-\caption{The single-hidden-unit RNN unrolled across its three time steps.}
-\label{fig:rnn_unrolled}
-}
-\end{figure}
-
-In practice, a plain RNN's memory decays quickly over long sequences, since each step multiplies the running influence of an early input by another factor less than one, a limitation addressed by the long short-term memory\index{long short-term memory (LSTM)} (LSTM) architecture. An LSTM maintains a separate cell state $c_t$, alongside the hidden state, updated as 
-$$c_t = f_t \odot c_{t-1} + i_t \odot \tilde c_t,$$
-where 
-$$f_t = \sigma(W_f[h_{t-1},x_t] + b_f)$$ 
-is a forget gate controlling how much of the previous cell state to retain, 
-$$i_t = \sigma(W_i[h_{t-1},x_t]+b_i)$$ 
-is an input gate controlling how much of a new candidate value $\tilde c_t$ to admit, and $\odot$ denotes elementwise multiplication; a third, output gate 
-$$o_t = \sigma(W_o[h_{t-1},x_t]+b_o)$$ then controls how much of $c_t$ is exposed as the hidden state 
-$$h_t = o_t \odot \tanh(c_t).$$
- Because the cell state's update is additive rather than the plain RNN's fully multiplicative recursion, a forget gate near 1 lets information pass across many more time steps largely undamped, directly addressing the memory-decay limitation the single-unit example above illustrates, at the cost of three times as many weights to learn as the plain recurrent unit.
-
-A worked numerical example makes this concrete rather than leaving it as a qualitative claim. Applying a single-unit LSTM to the identical three-week input sequence used for the plain RNN above ($x_1=0.5$, $x_2=-0.2$, $x_3=0.9$, $h_0=0$, $c_0=0$), with illustrative gate weights $w_{f,h}=0.5$, $w_{f,x}=0.3$, $b_f=2.0$ (a deliberately large bias, chosen so the forget gate stays close to $1$ and the memory-retention effect is visible) and $w_{i,h}=w_{i,x}=w_{c,h}=w_{c,x}=w_{o,h}=w_{o,x}=0.5$ with all other biases at $0$, the first step gives
-\begin{align*}
-f_1 &= \sigma(2.15) = 0.8957, & i_1 &= \sigma(0.25) = 0.5622, & \tilde c_1 &= \tanh(0.25) = 0.2449, \\
-c_1 &= f_1(0) + i_1\tilde c_1 = 0.1377, & o_1 &= \sigma(0.25) = 0.5622, & h_1 &= o_1\tanh(c_1) = 0.0769.
-\end{align*}
-Continuing this recursion through the second and third steps gives
-\begin{align*}
-f_2 &= 0.8785, & c_2 &= 0.0912, & h_2 &= 0.0441, \\
-f_3 &= 0.9082, & c_3 &= 0.3537, & h_3 &= 0.2092;
-\end{align*}
-passing $h_3$ through the same output layer as the plain RNN example ($w_y=1.2$, $b_y=-0.3$) gives $\hat y=\sigma(1.2(0.2092)-0.3)=0.4878$.
-
-The forget gates $f_2=0.8785$ and $f_3=0.9082$ are the mechanism worth isolating: their product, $0.8785\times0.9082\approx0.7979$, is the fraction of the original cell state $c_1$ that survives, purely through the forget gate's own multiplicative decay, two additional time steps later, versus only $w_h^2=0.4^2=0.16$ for the plain RNN's equivalent two-step decay of its hidden state's direct dependence on $h_1$.
-
-Roughly $80\%$ of $c_1$'s information survives to $c_3$ in the LSTM, against roughly $16\%$ of the plain RNN's analogous quantity, a concrete, order-of-magnitude illustration of exactly the memory-decay fix the forget gate is designed to provide: not that information never decays in an LSTM, the forget gate is still strictly less than $1$, but that a well-trained forget gate can be pushed close enough to $1$ that memory persists over many more steps than a plain RNN's fixed recurrent weight allows. Figure~\ref{fig:lstm_cell} draws the first step of this same computation as a cell diagram, showing all four gates computed from the identical inputs before they combine into the new cell and hidden states.
-
-\begin{figure}[htbp]
-\centering
-\begin{lrbox}{\bookmeasuredbox}
-\begin{tikzpicture}[>=latex,thick,node distance=1.0cm and 0.5cm,every node/.style={font=\small}]
-    \node[draw,rounded corners,align=center,minimum width=5.4cm] (inputs) at (4.5,4.6) {Inputs at $t=1$: $h_0=0$, $x_1=0.5$};
-    \node[draw,rounded corners,align=center,minimum width=2.0cm] (forget) at (0,2.3) {Forget gate\\$f_1=\sigma(2.15)$\\$=0.8957$};
-    \node[draw,rounded corners,align=center,minimum width=2.0cm] (input) at (3.0,2.3) {Input gate\\$i_1=\sigma(0.25)$\\$=0.5622$};
-    \node[draw,rounded corners,align=center,minimum width=2.0cm] (cand) at (6.0,2.3) {Candidate\\$\tilde c_1=\tanh(0.25)$\\$=0.2449$};
-    \node[draw,rounded corners,align=center,minimum width=2.0cm] (output) at (9.0,2.3) {Output gate\\$o_1=\sigma(0.25)$\\$=0.5622$};
-    \node[draw,rounded corners,align=center,minimum width=3.4cm] (cell) at (3.0,0) {New cell state\\$c_1=f_1c_0+i_1\tilde c_1=0.1377$};
-    \node[draw,rounded corners,align=center,minimum width=3.4cm] (hidden) at (9.0,0) {New hidden state\\$h_1=o_1\tanh(c_1)=0.0769$};
-    \draw[->] (inputs) -- (forget);
-    \draw[->] (inputs) -- (input);
-    \draw[->] (inputs) -- (cand);
-    \draw[->] (inputs) -- (output);
-    \draw[->] (forget) -- (cell);
-    \draw[->] (input) -- (cell);
-    \draw[->] (cand) -- (cell);
-    \draw[->] (output) -- (hidden);
-    \draw[->] (cell) -- (hidden);
-\end{tikzpicture}
-\end{lrbox}
-\ifdim\wd\bookmeasuredbox<0.65\linewidth
-\setlength{\bookcapwidth}{0.65\linewidth}
-\else
-\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
-\fi
-\ffigbox[\bookcapwidth]{
-\usebox{\bookmeasuredbox}
-}{
-\caption{The LSTM cell's first time step, computed from the worked example in the text.}
-\label{fig:lstm_cell}
-}
-\end{figure}
-
-\subsection*{Autoencoders for Unsupervised Anomaly Detection}\index{Autoencoders for Unsupervised Anomaly Detection}
-
-Suppose a data-quality analyst wants to flag whenever a quarter's alternative-data readings look unusual, without knowing in advance what ``unusual'' means and without a single labeled historical example of a bad reading to train against, an unsupervised problem the CNN and RNN examples above cannot address, since both are supervised, trained toward a known target, an estimated car count, a probability of accelerating growth.
-
-An autoencoder is trained without any label at all: it learns an encoder that compresses an input down to a small bottleneck representation and a decoder that reconstructs the original input from that bottleneck, with the reconstruction error itself as the only training signal. Once trained on typical, well-behaved data, an autoencoder reconstructs anomalous inputs poorly, since its bottleneck was never shaped to represent whatever made them unusual, which makes reconstruction error a natural anomaly score, extending Chapter 13's classification-based anomaly detection to a setting with no labeled examples of what an anomaly looks like.
-
-Consider a simple linear autoencoder, encoder weights $w = (0.5, 0.3, 0.2)$ applied to Table~\ref{tab:multisource_signal}'s three alternative-data growth rates $x = (\text{car}, \text{web}, \text{card})$ for each quarter, producing a single bottleneck code $z = w \cdot x$, and a tied-weight decoder that reconstructs $\hat x = z\, w$. For Q4, $x = (0.6, 1.5, 0.8)$, so $z = 0.5(0.6) + 0.3(1.5) + 0.2(0.8) = 0.91$, and $\hat x = 0.91(0.5, 0.3, 0.2) = (0.455, 0.273, 0.182)$, giving a reconstruction error $\sum(x_i - \hat x_i)^2 = (0.6-0.455)^2 + (1.5-0.273)^2 + (0.8-0.182)^2 = 1.909$.
-
-Carrying this out for all eight quarters and expressing each quarter's error relative to its own total energy $\sum x_i^2$ (so that quarters with naturally larger growth rates are not automatically flagged just for being larger) gives relative errors ranging from 39.5\% (Q7) to 58.7\% (Q4). Q4 stands out as the quarter whose alternative-data pattern the autoencoder reconstructs worst, not because its numbers are the largest in absolute terms, Q5's raw error of 30.9 is far larger, but because Q4's web-traffic growth (1.5\%) is unusually large relative to its car-count and card growth (0.6\% and 0.8\%), a pattern this particular bottleneck direction does not represent well.
-
-In practice, this would be exactly the kind of quarter a data-quality analyst should investigate first, is the web-traffic reading itself an error, a one-time promotional spike, or a genuine early signal the other two sources have not yet picked up, before that quarter's data is trusted in a downstream model.
-
-\begin{figure}[htbp]
-\centering
-\begin{lrbox}{\bookmeasuredbox}
-\begin{tikzpicture}[>=latex,thick,
-    io/.style={draw,circle,minimum size=1.5cm,align=center,font=\small},
-    bottleneck/.style={draw,circle,minimum size=1.3cm,align=center,font=\small,fill=gray!15}]
-    \node[io] (xcar) at (0,2.4) {car\\$=0.6$};
-    \node[io] (xweb) at (0,0) {web\\$=1.5$};
-    \node[io] (xcard) at (0,-2.4) {card\\$=0.8$};
-
-    \node[bottleneck] (z) at (4.8,0) {$z$\\$=0.91$};
-
-    \node[io] (rcar) at (9.6,2.4) {$\hat{\text{car}}$\\$=0.455$};
-    \node[io] (rweb) at (9.6,0) {$\hat{\text{web}}$\\$=0.273$};
-    \node[io] (rcard) at (9.6,-2.4) {$\hat{\text{card}}$\\$=0.182$};
-
-    \draw[->] (xcar) -- node[above,sloped,font=\scriptsize]{$0.5$} (z);
-    \draw[->] (xweb) -- node[above,font=\scriptsize]{$0.3$} (z);
-    \draw[->] (xcard) -- node[below,sloped,font=\scriptsize]{$0.2$} (z);
-
-    \draw[->] (z) -- node[above,sloped,font=\scriptsize]{$0.5$} (rcar);
-    \draw[->] (z) -- node[above,font=\scriptsize]{$0.3$} (rweb);
-    \draw[->] (z) -- node[below,sloped,font=\scriptsize]{$0.2$} (rcard);
-
-    \node[font=\small,below=1.9cm of xcard]{Encoder input $x$};
-    \node[font=\small,below=1.9cm of z]{Bottleneck $z=w\cdot x$};
-    \node[font=\small,below=1.9cm of rcard]{Decoder output $\hat x = z\,w$};
-\end{tikzpicture}
-\end{lrbox}
-\ifdim\wd\bookmeasuredbox<0.65\linewidth
-\setlength{\bookcapwidth}{0.65\linewidth}
-\else
-\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
-\fi
-\ffigbox[\bookcapwidth]{
-\usebox{\bookmeasuredbox}
-}{
-\caption{The linear autoencoder applied to Q4's three alternative-data growth rates.}
-\label{fig:autoencoder}
-}
-\end{figure}
-
-\subsection*{Transformers as a Unifying Architecture}\index{Transformers as a Unifying Architecture}
-
-Chapter 14 developed the transformer architecture and its self-attention\index{self-attention} mechanism (Section 14.8) for text, where each token attends to every other token in a sequence. The same mechanism generalizes beyond text: a vision transformer (ViT)\index{Vision Transformer (ViT)} divides an image into fixed-size patches, treats each patch the way a transformer treats a word token, and applies self-attention across patches instead of convolution across pixels, letting a satellite image classifier weigh a distant part of the image against the current patch directly, something a CNN's local filters only do indirectly, through many stacked layers.
-
-The companion notebook makes this concrete by splitting the same $4\times4$ satellite image the CNN example convolved into four non-overlapping $2\times2$ patches, treating each as a token exactly as Chapter 14 treated a word, and computing scaled dot-product self-attention across them. Querying from patch 2 (the top-right car cluster, mean brightness $0.85$) against keys built from each patch's own brightness, patch 2 attends to itself with weight $0.6174$ and to patch 3 (the bottom-left car cluster, mean brightness $0.80$, diagonally the farthest patch in the image) with weight $0.3817$, while the two empty patches 1 and 4 (mean brightness $0.10$ each) receive a combined weight of only $0.001$.
-
-This is the claim above made numerical: patch 2's most relevant neighbor is patch 3, a content-similar patch on the opposite corner of the image, not either of the two empty patches nearer to it, and self-attention identifies that relevance in a single step rather than requiring several stacked convolutional layers to propagate information across that same distance. In current practice, CNNs remain common for smaller or highly structured image tasks (including much car-counting and object-detection work), while transformer-based architectures increasingly dominate both large-scale image classification and the web-traffic and card-transaction sequence modeling that once used RNNs, so that a single architectural family, self-attention, now spans text (Chapter 14), images, and sequences alike.
-
-\section{Data Quality, Bias, and Integration Challenges}\index{Data Quality, Bias, and Integration Challenges}
-\label{sec:alt-data-quality}
-
-Alternative data's advantages, frequency, granularity, and a genuine informational edge before official reporting, come with distinctive quality problems that do not have close analogues in the market and fundamental data earlier chapters used.
-
-\textbf{Coverage bias.} A satellite vendor can only cover stores it has usable imagery for, typically larger, freestanding locations with visible parking lots, so its car-count sample systematically underrepresents smaller-format or mall-based stores, and a model trained only on the covered subset may not generalize to a retailer's business as a whole.
-
-\textbf{Vendor black-box processing.} As Section~\ref{sec:alt-data-sources} noted, a vendor typically sells an already-processed feature, a car count, a traffic index, not raw pixels or logs, so an analyst inherits whatever computer-vision or aggregation errors are baked into that pipeline without being able to inspect or correct them directly; a vendor's undisclosed methodology change between periods can look, in the data, indistinguishable from a genuine change in the underlying business.
-
-\textbf{Delivery lag and look-ahead bias.} A backtest that assumes alternative data was available on the date it describes, rather than the (often later) date it was actually delivered to subscribers, silently uses information that would not have been tradeable in real time; Section~\ref{sec:alt-data-pipeline}'s multi-source signal, for instance, is only genuinely useful if all three data sources reach a trading desk before the earnings release they are meant to anticipate, not merely before the quarter ends.
-
-\textbf{Licensing cost and alpha decay.} High-quality alternative data is expensive, often licensed exclusively or semi-exclusively, and Section~\ref{sec:case-vignette-satellite}'s case documents a genuine 4-5\% informational edge around earnings from satellite car counts; as more funds license the same feed and trade on the same signal, that edge is competed away over time in exactly the way Chapter 6 described a known profitable pattern eroding once it becomes widely traded, so an alternative-data edge, like any other, has a shelf life.
-
-\textbf{Privacy and legal exposure.} Card-panel and geolocation data are aggregated and anonymized before sale, but reconstructing individual behavior from supposedly anonymized data has repeatedly proven possible in other domains, so a vendor's privacy practices, and a buyer's own legal exposure, are due-diligence questions that market and fundamental data never raised.
-
-\textbf{The line between alternative data and material non-public information is not always bright.} Card-panel and web-traffic vendors aggregate across many individual cardholders or visitors specifically so that no single company's non-public information is being sold, but the boundary is a matter of legal judgment rather than a fixed technical threshold, and a narrowly enough scoped feed, transaction data from only a handful of a firm's largest customers, say, can approach material non-public information even though it never touches the firm's own systems and no insider ever leaks anything, a genuinely new compliance risk that Chapter 13's insider-trading discussion, framed entirely around information leaking from inside a firm, did not anticipate.
-
-\section{Building an ESG Signal Directly from Disclosure Text}\index{Building an ESG Signal Directly from Disclosure Text}
-\label{sec:esg-text-signal}
-
-Chapter 10 showed that six major ESG rating providers agree with one another only weakly, an average pairwise correlation\index{ESG rating divergence} of just 38\% to 71\%, and traced most of that disagreement to providers measuring different underlying facts about a company and weighting them differently, not to noisy measurement of an otherwise agreed-upon concept. Section~\ref{sec:vendor-ecosystem}'s build-versus-buy logic applies to this problem exactly as it applies to satellite imagery: rather than purchasing a vendor's already-computed ESG score and inheriting whatever undisclosed methodology produced it, a fund can build its own narrow, transparent environmental-tone signal directly from a company's public disclosures, using the same text-analysis tools Chapter 14 developed for a different purpose.
-
-Suppose Meridian Fabrication\index{Meridian Fabrication}, the manufacturer whose ratio analysis Chapter 4 worked through in detail, files a 10-K whose risk-factors section runs to several pages. Extending Chapter 14's Naive Bayes\index{Naive Bayes} classifier (Section 14.6) with a third training class, Environmental Risk, built from a small set of sentences using vocabulary (emissions, environmental, climate, remediation) that neither the original Credit Risk nor Market Risk class's training sentences ever mention, the retrained classifier flags four sentences in Meridian's filing as Environmental Risk with high confidence, each keying on at least one environment-specific term the other two classes' training vocabulary lacks entirely:
-
-\begin{quote}
-\small
-S1: ``Management remains confident that planned facility upgrades will reduce our emissions, but continued regulatory headwinds could still increase compliance costs.''\\
-S2: ``We remain cautious about the pace of emissions reduction given persistent supply chain headwinds affecting our environmental capital projects.''\\
-S3: ``Emissions declined for the third consecutive year, reflecting strong progress on our environmental targets despite a challenging regulatory backdrop.''\\
-S4: ``Physical risks from climate change, including potential flooding at our coastal facility, remain a weak point in our disaster preparedness planning and a continuing concern for the board.''
-\end{quote}
-
-Applying Chapter 14's Loughran-McDonald dictionary\index{Loughran-McDonald dictionary} tone score (Section 14.4) to each of these four flagged sentences, using the same small positive word set \{strong, growth, exceeded, confident, improved\} and negative word set \{cautious, headwinds, decline, declined, weak, concern, concerns\} Chapter 14 used to score its two earnings-call transcripts, gives
-\begin{align*}
-\text{S1: } & (1-1)/20 = 0.0, \\
-\text{S2: } & (0-2)/19 \approx -0.1053, \\
-\text{S3: } & (1-1)/19 = 0.0, \\
-\text{S4: } & (0-2)/28 \approx -0.0714,
-\end{align*}
-an average environmental tone score of $-0.0442$ across the four sentences, a mildly cautious reading of Meridian's own environmental disclosure.
-
-This exercise surfaces a genuinely new data-quality problem, distinct from anything Section~\ref{sec:alt-data-quality} catalogued, that is specific to building ESG signals from generic financial-sentiment tools: the Loughran-McDonald lexicon was built to score revenue and earnings language, where a word like ``declined'' is reliably bad news, but the same word describes unambiguously good environmental news in sentence S3, emissions falling for a third consecutive year, and the lexicon cannot tell the difference. S3's tone score of $0.0$ is, if anything, understating how positive that sentence actually is; a lexicon purpose-built for environmental disclosure, distinguishing a decline in emissions from a decline in revenue, would be needed to fix this, and no such standardized, publicly available dictionary exists yet the way Loughran-McDonald's does for general financial tone.
-
-Comparing this section's result to Chapter 10's worked example makes the deeper point. Chapter 10's three fictional assets were scored on a common, if arbitrary, $0$-to-$100$ composite scale, and its worked example varied only the \emph{weight} providers place on the same three E, S, and G sub-scores, one of three sources of divergence Berg, Kölbel, and Rigobon identify. This section's $-0.0442$ tone score is not on that scale at all, and is not directly comparable to it: it measures something narrower (the tone of language in one filing's risk-factors section) using an entirely different method (word counting rather than a proprietary composite index), which is exactly the \emph{scope} and \emph{measurement} divergence the same paper identifies as the larger share of why ESG ratings disagree. Building an in-house, transparent signal like this one does not resolve the disagreement documented in Chapter 10; it adds a fourth, differently-scoped measurement to a field that, per that same evidence, already has too many mutually inconsistent ones.
-
-What it buys instead is auditability: unlike a vendor's black-box score, every step from raw sentence to final number in this section can be inspected, recomputed, and defended to a model validator in exactly the way Chapter 8's model-risk-management framework requires.
-
-\section{Advanced Topics: Transfer Learning, Graphs, and Fusion}\index{Advanced Topics: Transfer Learning, Graphs, and Fusion}
-\label{sec:advanced-altdata}
-
-Three further techniques extend the neural network toolkit of Section~\ref{sec:nn-structured-unstructured} in directions that matter increasingly in real alternative-data practice: reusing an already-trained model instead of training from scratch, exploiting network structure between entities rather than treating each firm in isolation, and combining several data modalities into one representation.
-
-\subsection*{Transfer Learning: Fine-Tuning a Pretrained Vision Backbone}\index{Transfer Learning: Fine-Tuning a Pretrained Vision Backbone}
-
-Section~\ref{sec:alt-data-quality} noted that a newly available alternative-data feed typically has only a short history, too little, on its own, to train a large CNN's millions of weights from scratch. Transfer learning sidesteps this: a CNN already trained on a large, general image dataset (which has already learned generic filters for edges, textures, and shapes) is reused as a frozen feature extractor, and only a small final layer, mapping its output features to the task at hand, car count, cloud cover, construction status, is trained on the limited task-specific data available. Because the frozen backbone contributes no gradient updates, this final-layer training is a direct application of Chapter 6's gradient descent\index{gradient descent} to far fewer parameters than training a full network would require.
-
-Suppose a pretrained backbone, frozen, produces a two-dimensional feature vector $f = (0.7, 0.3)$ for a new satellite image patch, and the task is to fine-tune a final logistic layer, currently $w = (0.4, 0.4)$, $b = -0.1$, to predict whether the patch contains a car cluster (label $y=1$ for this patch). The current prediction is 
-$$\hat y = \sigma(w \cdot f + b) = \sigma(0.4(0.7) + 0.4(0.3) - 0.1) = \sigma(0.30) = 0.5744.$$ 
-Following Chapter 6's gradient descent update with learning rate $\eta = 0.5$, the gradient of the log-loss with respect to $w$ is 
-$$(\hat y - y)f = (0.5744-1)(0.7, 0.3) = (-0.298, -0.128),$$
-and with respect to $b$ is $\hat y - y = -0.426$, giving updated weights 
-$$w \leftarrow (0.4, 0.4) - 0.5(-0.298,-0.128) = (0.549, 0.464)$$ 
-and 
-$$b \leftarrow -0.1 - 0.5(-0.426) = 0.113.$$ 
-Recomputing the prediction with these updated weights gives 
-$$\hat y = \sigma(0.549(0.7) + 0.464(0.3) + 0.113) = \sigma(0.636) = 0.6539,$$ 
-closer to the true label of 1 after a single gradient step on a handful of parameters, illustrating why transfer learning lets a fund with only a few hundred labeled satellite patches still fine-tune a usable classifier, rather than needing the millions of labeled images a full CNN would require if trained from scratch.
-
-\subsection*{Graph Neural Networks for Ownership and Counterparty Networks}\index{Graph Neural Networks for Ownership and Counterparty Networks}
-
-Chapter 13 modeled a shell-company layering network as a static sequence of hops, one entity moving funds to the next. A graph neural network (GNN) treats such a network as a live computational structure: each node's representation is updated by aggregating its neighbors' representations, so that risk (or any other property) genuinely propagates through the network rather than being assessed for each entity in isolation, exactly the structure alternative data increasingly captures, common addresses, shared directors, correlated transaction timing, that a purely tabular model discards. A single GNN layer updates node $v$'s representation as 
-$$h_v = \sigma(w_1 x_v + w_2 \cdot \text{mean}_{u \in N(v)}(x_u) + b),$$
-where $N(v)$ is the set of $v$'s neighbors in the graph.
-
-Consider a four-node layering chain, $A \to B \to C \to D$, extending Chapter 13's shell-company example, with initial suspicion scores $x_A = 0.9$ (a flagged placement account), $x_B = 0.2$, $x_C = 0.1$, and $x_D = 0.05$ (an apparently unremarkable integration account), and neighbor sets 
-$$N(A)=\{B\},\ N(B)=\{A,C\},\ N(C)=\{B,D\},\  N(D)=\{C\}.$$
- With weights $w_1=0.6$, $w_2=0.8$, $b=-0.05$, one round of mean-aggregation gives 
-$$h_B = \sigma\big(0.6(0.2) + 0.8\cdot\tfrac{0.9+0.1}{2} - 0.05\big) = \sigma(0.47) = 0.6154$$ and 
-$$h_C = \sigma\big(0.6(0.1) + 0.8\cdot\tfrac{0.2+0.05}{2} - 0.05\big) = \sigma(0.11) = 0.5275,$$ 
-compared to $h_A = \sigma(0.65) = 0.6570$ and $h_D = \sigma(0.06) = 0.5150$. Node B's updated score, 0.615, is far higher than its own raw feature of 0.2 would suggest, purely because it is one hop from the flagged account A, and even node C, two hops away, shows a modest elevation to 0.528 from a raw 0.1; a model that scored each account independently, the way Chapter 13's original logistic regression\index{logistic regression} did, would miss exactly this kind of network-propagated risk.
-
-\subsection*{Multi-Modal Fusion via Cross-Attention}\index{Multi-Modal Fusion via Cross-Attention}
-
-A single financial decision often draws on several alternative-data modalities at once, an image feature from Section~\ref{sec:nn-structured-unstructured}'s CNN, a sentiment embedding from Chapter 14's text pipeline, and a tabular alternative-data summary like Section~\ref{sec:alt-data-pipeline}'s regression inputs, and combining them well matters as much as extracting each one individually. Cross-attention, a direct extension of Chapter 14's self-attention mechanism (Section 14.8), treats one modality's representation as the query and the other modalities as key-value pairs to attend over: 
-$$\text{Attention}(Q,K,V) = \text{softmax}(QK^\top/\sqrt{d_k})V,$$ 
-exactly as before, but now fusing modalities instead of fusing word tokens.
-
-Suppose a tabular query vector $Q = (0.6, 0.8)$ (summarizing Cascade's alternative-data growth direction) attends over an image modality with key $K_{\text{img}} = (0.9, 0.1)$ and value $V_{\text{img}} = (0.7, 0.2)$, and a text-sentiment modality with key $K_{\text{txt}} = (0.2, 0.9)$ and value $V_{\text{txt}} = (-0.3, 0.6)$ (a mildly cautious sentiment reading). With $d_k = 2$, the scaled dot-product scores are 
-$$Q \cdot K_{\text{img}}/\sqrt{2} = 0.62/1.4142 = 0.4385$$ 
-and 
-$$Q \cdot K_{\text{txt}}/\sqrt{2} = 0.84/1.4142 = 0.5941;$$ 
-applying softmax gives attention weights $0.4612$ on the image modality and $0.5388$ on the text modality. The fused representation is 
-$$0.4612(0.7,0.2) + 0.5388(-0.3,0.6) = (0.161, 0.416),$$
-a single vector that leans slightly more on the cautious text signal than on the image signal, and that a downstream model, a trading rule in the spirit of Section~\ref{sec:alt-data-pipeline}, a credit decision, a fraud flag, can consume in place of either modality alone, without the analyst having to hand-specify how much weight each modality deserves.
-
-\subsection*{Self-Supervised Contrastive Pretraining}\index{Self-Supervised Contrastive Pretraining}
-
-Section~\ref{sec:advanced-altdata}'s transfer-learning example assumed a pretrained backbone was already available; contrastive pretraining is one common way such a backbone gets trained in the first place, without any human-provided labels at all, which matters enormously for satellite imagery, where labeled examples (this patch definitely contains three cars) are far scarcer than the raw imagery itself. The idea is to take two randomly augmented views of the same image, a small crop and rotation, say, and train the encoder so that these two views' embeddings are pulled close together (a positive pair), while embeddings of a different image are pushed apart (a negative pair), using only this relative structure, same image versus different image, as the training signal.
-
-Suppose an encoder produces embedding $a = (0.6, 0.8)$ for one crop of a satellite patch, $p = (0.55, 0.83)$ for a second, differently augmented crop of the \emph{same} patch, and $n = (0.1, 0.9)$ for a crop of a genuinely different patch. Using Chapter 14's cosine similarity (Section 14.7), $\cos(a,p) = 0.9983$ and $\cos(a,n) = 0.8614$, the same view of the same underlying scene is, as intended, geometrically closer than a different scene.
-
-A contrastive loss converts these similarities into a probability that the positive pair is correctly identified among the candidates, $\Pr(\text{positive}) = \exp(\cos(a,p)/\tau) / \big[\exp(\cos(a,p)/\tau) + \exp(\cos(a,n)/\tau)\big]$, a softmax over similarities exactly analogous to Section~\ref{sec:advanced-altdata}'s cross-attention softmax, with a temperature parameter $\tau$ controlling how sharply the model is pushed to separate positive from negative. With $\tau = 0.1$, $\Pr(\text{positive}) = e^{9.983}/(e^{9.983} + e^{8.614}) = 0.797$, already favoring the true positive pair well above chance (50\%) even before any training, and training drives this probability further toward 1 by adjusting the encoder's weights so that same-image crops end up even closer together, and different-image crops even farther apart, than they start.
-
-Once trained this way on a large, unlabeled archive of satellite imagery, the resulting encoder is exactly the frozen backbone Section~\ref{sec:advanced-altdata}'s transfer-learning example fine-tuned with only a handful of labeled examples, closing the loop between this chapter's two ways of coping with scarce alternative-data labels.
-
-\section{Case Vignette: Satellite Imagery and the Rise of Alternative Data}\index{Satellite Imagery and the Rise of Alternative Data}
-\label{sec:case-vignette-satellite}
-
-The parking-lot car-count example this chapter has used throughout is not hypothetical in its origins. In 2009, brothers Tom and Alex Diamond conceived the idea of counting cars in retailer parking lots from satellite imagery to anticipate revenue, and founded RS Metrics\index{RS Metrics} to sell the resulting data, beginning with car counts at McDonald's locations and later covering Lowe's, Home Depot, and dozens of other retailers. The approach reached wider attention in 2010, when UBS analyst Neil Currie purchased parking-lot counts for 100 Walmart store locations and published them ahead of Walmart's earnings release, an early, public demonstration that satellite-derived alternative data could anticipate a reported number before the company itself disclosed it. A later academic study using RS Metrics imagery from 2011 to 2017, covering 44 major U.S. retailers including Walmart, Target, Costco, and Whole Foods, confirmed that year-over-year change in parking-lot car counts reliably predicts quarterly sales, and quantified the resulting informational edge at 4\% to 5\% in the three trading days surrounding a quarterly earnings announcement, a substantial return for such a short window, corroborating this chapter's own worked example (Section~\ref{sec:satellite-example}) at genuinely large scale.
-
-A separate study of the same satellite coverage's introduction across retailers found that its capital-market effects went beyond simply rewarding the funds that subscribed to it: retailers who gained satellite coverage subsequently saw more informed short-selling activity, less-informed individual investor buying, and lower stock liquidity around their earnings reports, evidence that unequal access to alternative data can widen the information gap between sophisticated and ordinary investors without necessarily making prices more accurate any faster, precisely the access-asymmetry concern Section~\ref{sec:alt-data-quality} raises about licensing cost and exclusivity.
-
-Satellite-derived alternative data extends well beyond retail. Orbital Insight\index{Orbital Insight} built a comparable business around commodity markets: by measuring the shadows cast by the floating roofs used on many crude-oil storage tanks, a floating roof sits directly atop the stored oil and its height reveals how full the tank is, the firm estimates inventory levels across more than 27,000 tanks worldwide, work that, during the demand shock of the early 2020s pandemic period, revealed global storage utilization running at roughly 55\% of an estimated six-billion-barrel total capacity, a supply-side data point no single government agency could have produced as quickly. Today, satellite-based financial data services are estimated to generate over \$500 million in annual revenue, within a broader alternative-data market Wall Street is estimated to spend roughly \$3 billion on annually, and a single institutional satellite subscription can run from \$50,000 to \$500,000 per year, underscoring Section~\ref{sec:alt-data-quality}'s point that this edge is available primarily to well-capitalized participants able to pay for exclusive or near-exclusive access.
-
-\section{Challenges in Alternative Data and Deep Learning in Finance}
-
-Several challenges recur across this chapter's techniques and connect directly to themes from earlier chapters.
-
-\textbf{A short history limits statistical confidence.} Section~\ref{sec:satellite-example} and Section~\ref{sec:alt-data-pipeline} fit regressions on only eight quarters, two years of data, because that is genuinely all the history a newly available alternative-data feed typically has; Chapter 6's warnings about overfitting\index{overfitting} with few observations relative to model complexity apply with particular force here, since a vendor's dataset is often too new to have lived through a full economic cycle.
-
-\textbf{Non-stationarity compounds with vendor changes.} Chapter 6 noted that financial relationships can shift as markets evolve; alternative data adds a second source of instability on top of that, a vendor can silently change its imagery source, its computer-vision model, or its store coverage, so a model's apparent degradation may reflect a data-generating-process change at the vendor rather than a change in the underlying financial relationship.
-
-\textbf{Deep architectures trade interpretability for representational power.} A CNN's learned filters and an RNN's hidden state are far less directly interpretable than the single regression coefficient of Section~\ref{sec:satellite-example}, a tension Chapter 16 develops in depth, and one that matters more, not less, once a model's input is something as opaque to manual review as a stack of satellite pixels.
-
-\textbf{Integration is usually the hard part, not modeling.} As Section~\ref{sec:alt-data-quality} emphasized, aligning several data sources in time and by firm identity, and confirming each was genuinely available before, not after, the date being modeled, typically consumes more effort in a real alternative-data project than fitting the model itself, the reverse of the balance in the market-data-only settings of Chapters 10 and 11.
-
-\textbf{Cost and exclusivity concentrate the advantage.} Section~\ref{sec:case-vignette-satellite}'s subscription costs mean alternative data's edge accrues disproportionately to well-resourced funds able to license multiple exclusive feeds, an access asymmetry with no real counterpart in the publicly available market and fundamental data most of this book has used.
-
-\textbf{Model risk governance now has to reach the vendor, not just the model.} Chapter 13's three-lines-of-defense framework was built to validate a single model's inputs, outputs, and ongoing performance; an alternative-data pipeline like Section~\ref{sec:alt-data-pipeline}'s adds an entire additional layer that framework must now cover, the vendor relationship itself, since a governed model's validation is only as good as the vendor's coverage, delivery timing, and processing methodology sitting upstream of it, none of which the fund directly controls or, in most cases, can fully observe.
+\textbf{Governance failures, not modeling failures, are the more common root cause of large-scale enforcement actions.} The Danske Bank Estonia case, like the Knight Capital vignette in Chapter 13, illustrates that the binding constraint is frequently not the sophistication of the detection model but whether the organization around it, staffing, escalation, independent challenge, and audit, actually functions as the three-lines-of-defense framework in Section~\ref{sec:governance-3lod} assumes it does on paper.
 
 \section{Key Takeaways}
 
-Alternative data, satellite imagery, web traffic, card-transaction panels, and the like, fills the row Chapter 1's data-ecosystem table reserved for it: non-traditional sources that proxy for economic activity ahead of its official reporting. Section~\ref{sec:satellite-example} showed that even a single such proxy, satellite-derived parking-lot car counts, can explain a large share (87\% in the chapter's worked example) of a retailer's quarterly revenue variation, and Section~\ref{sec:alt-data-pipeline} showed that combining several sources into one regression produces a genuinely useful, if imperfect (an 80\% hit rate, not 100\%), earnings-surprise signal in the same trading-signal-evaluation framework Chapter 11 established. Before any of this modeling happens, Section~\ref{sec:altdata-feature-engineering} showed that raw alternative-data readings typically need seasonal adjustment and peer-relative normalization to isolate firm-specific signal from calendar effects and sector-wide movements.
+Fraud detection and anti-money-laundering compliance apply the classification tools Chapter 6 developed and Chapter 9 specialized to credit risk to a domain defined by extreme class imbalance and an adversary that actively adapts to known detection rules. Beyond a single logistic regression, production systems draw on a broader toolkit developed in Section~\ref{sec:advanced-imbalance}: class weighting and resampling techniques such as SMOTE address the imbalance directly, tree-based ensembles capture nonlinear feature interactions a purely additive model misses, unsupervised anomaly detection catches patterns no confirmed label yet describes, and precision-recall AUC, not ROC-AUC, is the evaluation metric suited to a rare-event problem like this one.
 
-Extracting such signals from raw alternative data, rather than from a vendor's already-processed number, requires neural network architectures beyond Chapter 6's plain feedforward network: convolutional neural networks (Section~\ref{sec:nn-structured-unstructured}) exploit an image's grid structure through weight-shared filters, recurrent neural networks exploit a sequence's ordering through a hidden state carried from step to step, and transformer-based self-attention, introduced for text in Chapter 14, increasingly unifies both roles. None of this changes the fact, developed in Section~\ref{sec:alt-data-quality} and the chapter's closing challenges, that alternative data carries its own distinctive quality problems, coverage bias, vendor black-box processing, look-ahead bias from delivery lag, and cost-driven alpha decay, that a modeler must treat as seriously as the modeling itself, a lesson this chapter's case vignette on satellite-derived retail and commodity data illustrated at real-world scale.
+Chapter 1's Bayes' theorem fraud example, scaled to a full day of transaction volume and re-applied to insider trading surveillance, shows concretely why even an apparently accurate model generates a large false-positive alert queue, and that precision at a low base rate is far more sensitive to the false-positive rate than to the true-positive rate, so alert economics, not just statistical accuracy, must guide how a fraud or AML program is designed and staffed.
 
-Section~\ref{sec:point-in-time} showed concretely that respecting real-world data-delivery lag changes which trades a model actually recommends, not merely how good its backtest looks, and Section~\ref{sec:nn-structured-unstructured}'s autoencoder showed that the same deep learning toolkit that extracts a signal can also be turned, unsupervised, on the data itself to flag a quarter worth double-checking before it is trusted. Section~\ref{sec:esg-text-signal} applied this same lesson to a specific and increasingly important alternative-data category: rather than buying a vendor's already-computed ESG score, whose disagreement with competing providers Chapter 10 documented at $38\%$ to $71\%$ pairwise correlation, a fund can build a narrow, auditable environmental-tone signal directly from a company's own disclosures using Chapter 14's Naive Bayes classifier and Loughran-McDonald tone score, at the cost of adding one more, differently-scoped measurement to a field that already has too many mutually inconsistent ones rather than resolving the disagreement outright.
+A single-transaction scoring model, however well fit, structurally cannot catch a fraud that looks unremarkable in isolation, which motivates account-level behavioral risk tiering and, this chapter's methodologically new contribution, survival analysis, the Kaplan-Meier estimator, to characterize how account risk accumulates and resolves over time using both confirmed events and censored observations.
 
-Section~\ref{sec:advanced-altdata} went one level deeper still: transfer learning lets a CNN's frozen, already-learned features be fine-tuned on a small alternative-data sample rather than requiring millions of labeled images, contrastive pretraining shows how that frozen backbone can itself be trained with no labels at all, graph neural networks let risk propagate across a network of related entities the way Chapter 13's static layering chain could only describe, not compute, and cross-attention, the same mechanism Chapter 14 used to fuse word tokens, fuses image, text, and tabular alternative-data modalities into one representation without an analyst having to hand-specify how much each deserves.
+Anti-money-laundering regulation adds a reporting and due-diligence apparatus, CTRs, SARs, KYC, and sanctions screening, with no direct counterpart in ordinary credit or fraud risk modeling, built specifically around legally defined thresholds that launderers attempt to evade through the placement-layering-integration sequence, structuring at the placement stage and shell-entity network chains at the layering stage. The Danske Bank Estonia case shows that the binding constraint on a compliance program is at least as often organizational, whether the three lines of defense actually function independently, as it is statistical, and that governance discipline, not just modeling sophistication, is what separates a monitoring system that works on paper from one that works in practice.
 
 \section{Suggested Exercises}
 
 \begin{enumerate}
-    \item Using Section~\ref{sec:satellite-example}'s method, refit the regression after adding a ninth quarter with car-count growth of $-2.0\%$ and revenue growth of $-1.5\%$, and report the new slope, intercept, and $R^2$.
-    \item Explain, using Table~\ref{tab:satellite_regression}, why an $R^2$ of 0.870 from a single alternative-data proxy is considered strong in this context, contrasting it with Chapter 6's discussion of low signal-to-noise ratios in financial prediction generally.
-    \item Using Section~\ref{sec:alt-data-pipeline}'s fitted coefficients, compute the predicted surprise for a tenth quarter with car, web, and card growth of $-2.0\%$, $-1.0\%$, and $-1.5\%$ respectively, and state whether the resulting signal is long or flat.
-    \item Explain, using Q5 in Table~\ref{tab:multisource_signal}, why a strongly positive fitted surprise (2.46\%) can still be followed by a negative next-day return ($-0.4\%$), and describe one piece of earnings-day information the alternative-data model in this chapter cannot capture.
-    \item Using Section~\ref{sec:nn-structured-unstructured}'s convolution example, recompute the $3\times3$ feature map using a $2\times2$ filter of all $0.5$s instead of all $0.25$s, and explain how the result relates to the original feature map.
-    \item Using the same convolution example, apply $2\times2$ max pooling (taking the maximum of each non-overlapping $2\times2$ block) to the original $3\times3$ feature map's top-left $2\times2$ block, and state the resulting pooled value.
-    \item Using Section~\ref{sec:nn-structured-unstructured}'s RNN example, recompute $h_1$, $h_2$, and $h_3$ if $w_h$ is increased from 0.4 to 0.8 (holding $w_x$, $b$, and the inputs fixed), and explain in words how a larger $w_h$ changes how much the hidden state is influenced by earlier time steps versus the current input.
-    \item Explain, in a short paragraph, why a convolutional neural network's weight sharing makes it far more practical than a plain feedforward network for a $1000\times1000$-pixel satellite image, referencing the parameter-count argument in Section~\ref{sec:nn-structured-unstructured}.
-    \item Using this chapter's case vignette, explain why the 2010 UBS Walmart parking-lot report is a natural precedent for Section~\ref{sec:satellite-example}'s worked example, and describe, in your own words, why the same informational edge tends to shrink as more funds license the same data source.
-    \item Pick two of the data-quality issues in Section~\ref{sec:alt-data-quality} and describe a concrete scenario, not already used in the text, in which that issue could cause an alternative-data-based trading or credit model to fail despite technically correct code.
-    \item Compare this chapter's satellite car-count regression (Section~\ref{sec:satellite-example}) to Chapter 5's binomial and Black-Scholes-Merton\index{Black-Scholes-Merton Model} option-pricing models in terms of what each treats as the source of uncertainty, and explain why alternative-data models are typically evaluated by out-of-sample predictive accuracy rather than by no-arbitrage argument.
-    \item Using Section~\ref{sec:point-in-time}'s method, explain in your own words why the realistic, lagged-card model's higher $R^2$ (0.873 versus 0.837) does not mean it is simply the better trading model, referencing the difference in which quarters each version actually signals.
-    \item Using Section~\ref{sec:altdata-feature-engineering}'s method, recompute the peer-adjusted regression's slope and $R^2$ if the sector-average car-count growth for Q5 is revised from 2.5\% to 5.0\% (a sector-wide surge that quarter), holding all other quarters fixed, and explain why the peer-adjusted model's $R^2$ falls even though Cascade's own reported revenue growth has not changed.
-    \item A vendor offers a trial dataset covering only the three quarters (of Table~\ref{tab:multisource_signal}) in which its data predicted the following quarter's earnings surprise correctly. Using Section~\ref{sec:vendor-ecosystem}'s discussion, explain what is wrong with evaluating the vendor's data quality using only this trial.
-    \item Using Section~\ref{sec:vendor-ecosystem}'s cost-benefit method, recompute the expected net annual benefit if the fund can only deploy a \$20 million position per signaled event (instead of \$50 million), holding the signal frequency, edge, and data costs fixed, and state whether the subscription is still worth its \$400,000 annual cost.
-    \item Using Section~\ref{sec:nn-structured-unstructured}'s autoencoder example, compute the reconstruction error and relative error for Q2 ($\text{car}=-1.5$, $\text{web}=-0.5$, $\text{card}=-1.0$) using the same encoder/decoder weights $w=(0.5,0.3,0.2)$, and state whether Q2 would be flagged ahead of Q7 (relative error 39.5\%) for data-quality review.
-    \item Using Section~\ref{sec:advanced-altdata}'s transfer-learning example, perform a second gradient-descent step starting from the updated weights $w=(0.549,0.464)$, $b=0.113$, and report the new prediction, confirming that it continues to move toward the true label of 1.
-    \item Using Section~\ref{sec:advanced-altdata}'s graph neural network example, compute $h_A$ and $h_D$'s updated scores using the same weights, and explain, using the network's chain structure $A \to B \to C \to D$, why $h_D$'s score barely moves from its raw feature while $h_B$'s moves substantially.
-    \item Using Section~\ref{sec:advanced-altdata}'s cross-attention example, recompute the fused output if the text modality's key becomes $K_{\text{txt}} = (0.8, 0.2)$ (a much less distinctive key vector, more similar to $K_{\text{img}}$), and explain in words why the two attention weights move closer to 50/50.
-    \item Explain, in a short paragraph, why a graph neural network's mean-aggregation step (Section~\ref{sec:advanced-altdata}) is a more direct computational analogue of ``guilt by association'' than Chapter 13's original, per-account fraud-scoring logistic regression.
-    \item Using Section~\ref{sec:advanced-altdata}'s contrastive-pretraining example, recompute $\Pr(\text{positive})$ if the temperature $\tau$ is raised from 0.1 to 1.0 (holding the two cosine similarities fixed), and explain in words why a higher temperature makes the model's implied preference for the true positive pair less extreme.
-    \item Using Section~\ref{sec:nn-structured-unstructured}'s LSTM worked example, recompute the forget gate $f_1$ and the resulting fraction of $c_1$ surviving to $c_3$ (that is, $f_2\times f_3$) if the forget-gate bias $b_f$ were $0.5$ instead of $2.0$, holding every other weight fixed, and explain why a smaller bias makes the LSTM behave more like the plain RNN example earlier in this section.
-    \item Explain, in your own words, why the plain RNN's memory-decay problem is a consequence of its hidden state being fully overwritten by a multiplicative recursion at every step, while the LSTM's cell state update is additive, and describe what would happen to the LSTM's own memory retention if its forget gate were trained to a value close to $0$ instead of close to $1$.
-    \item Using Section~\ref{sec:esg-text-signal}'s method, recompute the tone score for a fifth sentence, ``The board remains confident that emissions will decline further even as regulatory headwinds intensify,'' using the same positive and negative word lists, and explain why this sentence's mixed vocabulary makes its tone score a poor summary of whether the sentence is good or bad news.
-    \item Explain, in your own words, why Section~\ref{sec:esg-text-signal}'s in-house tone score and Chapter 10's vendor-style ESG scores are not directly comparable even though both are commonly described as ``an ESG measurement,'' and describe which one of Berg, Kölbel, and Rigobon's three sources of rating divergence, scope, measurement, or weight, this incomparability illustrates.
-    \item \textbf{Challenge (real data).} Download at least two years of weekly Google Trends search-interest data (via \texttt{pytrends} or manually from trends.google.com, no API key required) for a public retailer's brand name, and quarterly reported revenue for the same company from the SEC EDGAR XBRL \texttt{companyfacts} API (as in Chapter 4's challenge exercise). (a) Following Section~\ref{sec:satellite-example}'s method, regress the company's quarter-over-quarter revenue growth on the average quarter-over-quarter growth in search interest, and report the fitted slope, intercept, and $R^2$. (b) Using Section~\ref{sec:point-in-time}'s distinction between a realistic, lagged signal and a look-ahead-biased one, identify what reporting lag your search-interest data is actually available at relative to the revenue figure it is meant to predict, and explain whether your regression in (a) would still be usable in real time. (c) Following Section~\ref{sec:vendor-ecosystem}'s cost-benefit framework, discuss one alternative-data quality issue from Section~\ref{sec:alt-data-quality} other than look-ahead bias that is specific to Google Trends data, such as index normalization or query ambiguity, and explain how it could produce a spuriously strong or weak regression fit.
+    \item Using Section~\ref{sec:anomaly-bayes}, recompute the daily confusion matrix and precision if the bank processes $750{,}000$ transactions per day at the same 1\% fraud rate, 95\% true-positive rate, and 3\% false-positive rate, and confirm that precision is unchanged even though the raw alert count grows.
+    \item A different fraud model achieves a 90\% true-positive rate and a 1\% false-positive rate at the same 1\% fraud prevalence Chapter 1 assumed. Using Bayes' theorem, compute the resulting precision, and explain why a lower false-positive rate improved precision more than the higher true-positive rate in Chapter 1's original model.
+    \item Using the insider trading surveillance example in Section~\ref{sec:anomaly-bayes}, recompute $\Pr(\text{Insider}\mid\text{Flag})$ if the false-positive rate is reduced from 8\% to 4\%, holding the 2\% base rate and 75\% true-positive rate fixed, and compare the size of this improvement to what a similarly sized improvement in the true-positive rate alone would produce.
+    \item Using Table~\ref{tab:fraud_scoring_data}, suppose an eleventh transaction has an amount $z$-score of 2.2, a distance of 4.0 (hundreds of km), and occurs during the day (late-night flag 0). Using the fitted coefficients in Section~\ref{sec:fraud-scoring}, compute the transaction's predicted fraud probability and classification at a 0.5 threshold.
+    \item Using Table~\ref{tab:threshold_tradeoff}'s method, recompute the confusion matrix, precision, recall, and $F_1$ at a threshold of $0.20$, noting that transaction 8 (predicted probability $0.225$) now also crosses the threshold, and discuss whether this new threshold looks more or less attractive than the three already reported.
+    \item Explain, referencing transaction 9 in Table~\ref{tab:fraud_scoring_data}, why a transaction-level model can have perfect precision and still leave a bank exposed to fraud, and describe how Section~\ref{sec:risk-tiering}'s behavioral risk tiering could catch the case the transaction-level model missed.
+    \item Using Section~\ref{sec:advanced-imbalance}'s class-weighting example, explain why raising transaction 9's predicted probability from $33\%$ to $41.7\%$ was not, by itself, enough to fix the false negative at the original $0.5$ threshold, and why the combination of class weighting and a lower threshold reached the same operating point as simply lowering the unweighted model's threshold to $0.30$.
+    \item Explain, in a short paragraph, why ROC-AUC can overstate a fraud model's practical usefulness under the kind of extreme class imbalance this chapter has emphasized, and why precision-recall AUC does not share this weakness.
+    \item Using Table~\ref{tab:km_table}'s method, compute the Kaplan-Meier survival estimate for a new sample of 8 flagged accounts with observed times (days, $+$ denotes censored) of 4, 6$^+$, 10, 14, 14$^+$, 22, 28$^+$, 33, showing your calculation at each confirmed-fraud event time.
+    \item A customer makes four cash deposits of \$9,200 each within five days. Compute the total deposited, and explain, using Section~\ref{sec:aml-structuring}'s structuring discussion, why no individual deposit triggers a Currency Transaction Report even though the total clearly would if deposited at once.
+    \item Using Table~\ref{tab:layering_network}'s method, compute a five-hop layering chain starting from \$300,000, with each entity retaining $3\%$ and forwarding the rest, and report the amount reaching the final destination and the total retained across all five hops.
+    \item A bank's monitoring system generates $12{,}000$ alerts per month, of which $180$ become filed SARs, and each alert takes an average of 25 minutes to review. Compute the alert-to-SAR conversion rate and the total analyst-hours required per month, and compare both figures to Section~\ref{sec:alert-economics}'s worked example.
+    \item Using Section~\ref{sec:alert-economics}'s cost figures, compute the monthly alert volume, analyst hours, and dollar cost if precision improved to $4.0\%$ instead of $6.0\%$ (holding the $240$ monthly SARs and the \$45-per-hour analyst rate fixed), and express the resulting cost as a percentage of the original \$120,000 figure.
+    \item Describe, in a short paragraph, why a rule of the form ``flag any single cash transaction over \$10,000'' is, by construction, unable to detect the structuring pattern in Section~\ref{sec:aml-structuring}'s worked example, and propose an alternative rule that would catch it.
+    \item Using Table~\ref{tab:precision_drift}, identify the month in which precision first falls below a $19\%$ floor instead of the $20\%$ floor discussed in the text, and explain why setting the floor in advance, rather than deciding case by case, matters for a model-monitoring program's effectiveness.
+    \item Using Section~\ref{sec:governance-3lod}'s three-lines-of-defense framework, identify which line (first, second, or third) each of the following failures most directly represents, and explain why: (a) a branch employee ignores an internal escalation policy for a suspicious customer; (b) an independent audit team reports directly to the same regional manager whose unit it is auditing; (c) the compliance function never independently tests whether the transaction-monitoring model's alert thresholds are still appropriate.
+    \item Pick two of the challenges listed in this chapter and describe a concrete scenario, not already used in the text, in which that challenge could cause a fraud or AML program to fail despite a well-designed underlying statistical model, and explain briefly why adding more computing power or a more flexible model would not, by itself, resolve either scenario you describe.
+    \item Explain, using the Danske Bank Estonia case vignette, why correspondent banking relationships make financial crime detection harder for any single institution acting alone, and describe one mechanism (discussed in this chapter or otherwise), such as cross-institution information sharing or a shared utility for sanctions and beneficial-ownership screening, that could mitigate this limitation.
+    \item Compare the class-imbalance problem in this chapter's fraud examples to the loan-default classification example in Chapter 6: using Chapter 6's confusion matrix (a 75\% true-positive rate and, among the six actual non-defaulters, one false positive), compute what the loan portfolio's default rate would need to be, holding the same true-positive and false-positive rates constant, for precision to fall to the same 24.2\% level as this chapter's fraud example.
+    \item Using this chapter's composite risk-tiering example, recompute the composite score if the KYC-consistency sub-score were only $60$ instead of $90$ (velocity and geographic-diversity sub-scores unchanged), and determine whether the account would still fall in the High tier of Table~\ref{tab:risk_tiers}.
+    \item Using this chapter's composite risk-tiering weights ($40\%$ velocity, $35\%$ geographic diversity, $25\%$ KYC consistency), find the minimum KYC-consistency sub-score, holding velocity at $70$ and geographic diversity at $50$, that would push the composite score into the Enhanced Due Diligence tier ($85$ or above), and comment on whether a single extreme sub-score could plausibly drive an account into that tier on its own under these weights.
+    \item Using Greenwood's formula, compute $\widehat{\text{Var}}[\hat S(12)]$ and the resulting 95\% confidence interval for $\hat S(12)\approx0.7407$, and compare its width to the width of the interval already computed at $t=20$ in the text, explaining why the earlier time point's interval is narrower even though both are computed from the same 12 accounts.
+    \item Explain, in your own words, why the Kaplan-Meier confidence interval computed at $t=35$ is so much wider than the point estimate alone might suggest, and describe what a compliance team should do differently, if anything, when reporting a survival estimate whose confidence interval spans nearly the entire $[0,1]$ range.
+    \item \textbf{Challenge (real data).} Download the Kaggle ``Credit Card Fraud Detection'' dataset (Universit\'e Libre de Bruxelles; roughly 285,000 European cardholder transactions over two days, with 492 confirmed frauds and features already anonymized via PCA). Its $0.172\%$ fraud rate is far more extreme than Table~\ref{tab:fraud_scoring_data}'s ten-transaction toy example. (a) Fit a logistic regression with and without class weighting, as in Section~\ref{sec:advanced-imbalance}, and report precision, recall, $F_1$, and precision-recall AUC for both, since accuracy alone is uninformative at this imbalance. (b) Using Section~\ref{sec:alert-economics}'s cost-based framework and assuming a \$50 review cost per flagged transaction and a \$200 average loss per missed fraud, find the threshold that minimizes total expected cost, and compare its alert volume to what a naive $0.5$ threshold would produce. (c) Since the features are already anonymized PCA components rather than raw transaction attributes, this dataset cannot support the same kind of domain-driven feature engineering (for example, distance from home) used in this chapter's own toy example; discuss what information a real bank's fraud team has access to that this public, privacy-scrubbed dataset deliberately withholds.
 \end{enumerate}
 
 \section{Further Reading}
 
 \begin{itemize}
-    \item Berkeley Haas School of Business, ``How Hedge Funds Use Satellite Images to Beat Wall Street, and Main Street.'' A research summary of the RS Metrics parking-lot car-count studies underlying Section~\ref{sec:satellite-example} and this chapter's case vignette.
-    \item Katona, Painter, Patatoukas, and Zeng, ``On the Capital Market Consequences of Big Data: Evidence from Outer Space,'' \emph{Journal of Financial and Quantitative Analysis}. The academic study of RS Metrics satellite imagery (2011-2017, 44 U.S. retailers) quantifying the earnings-window informational edge discussed in Section~\ref{sec:case-vignette-satellite}.
-    \item Feng and Fay, ``An Empirical Investigation of Forward-Looking Retailer Performance Using Parking Lot Traffic Data Derived from Satellite Imagery,'' \emph{Journal of Retailing}. A complementary study of satellite-derived parking-lot data's power to predict retailer sales, underlying Section~\ref{sec:satellite-example}'s worked example.
-    \item LeCun, Bengio, and Hinton, ``Deep Learning,'' \emph{Nature}. A survey covering convolutional and recurrent neural network architectures underlying Section~\ref{sec:nn-structured-unstructured}.
-    \item Goodfellow, Bengio, and Courville, \emph{Deep Learning}. A comprehensive textbook treatment of convolution, recurrence, and the attention mechanisms Chapter 14 and Section~\ref{sec:nn-structured-unstructured} both draw on.
-    \item Hochreiter and Schmidhuber, ``Long Short-Term Memory,'' \emph{Neural Computation}. The original paper introducing the LSTM architecture mentioned as an extension of Section~\ref{sec:nn-structured-unstructured}'s plain recurrent network.
-    \item Dosovitskiy et al., ``An Image Is Worth 16x16 Words: Transformers for Image Recognition at Scale,'' \emph{International Conference on Learning Representations}. The original vision transformer paper underlying Section~\ref{sec:nn-structured-unstructured}'s discussion of transformers as a unifying architecture.
-    \item Kolanovic and Krishnamachari, ``Big Data and AI Strategies,'' J.P. Morgan. An industry survey of alternative data sources and their use in systematic investing, covering the categories in Table~\ref{tab:alt_data_sources}.
-    \item Berg, Kölbel, and Rigobon, ``Aggregate Confusion: The Divergence of ESG Ratings,'' \emph{Review of Finance}. The empirical study of cross-provider ESG rating disagreement discussed in Chapter 10 and revisited in Section~\ref{sec:esg-text-signal} from the standpoint of building an in-house text-derived signal rather than buying a vendor's score.
-    \item Katona, Painter, Patatoukas, and Zeng, ``On the Capital Market Consequences of Big Data: Evidence from Outer Space'' (same source as above). Also documents the short-selling, liquidity, and information-asymmetry effects of satellite coverage discussed in this chapter's expanded case vignette.
-    \item Hinton and Salakhutdinov, ``Reducing the Dimensionality of Data with Neural Networks,'' \emph{Science}. A foundational paper on autoencoders, underlying Section~\ref{sec:nn-structured-unstructured}'s reconstruction-error anomaly-detection example.
-    \item Pan and Yang, ``A Survey on Transfer Learning,'' \emph{IEEE Transactions on Knowledge and Data Engineering}. A comprehensive survey of the pretrained-backbone fine-tuning approach worked through in Section~\ref{sec:advanced-altdata}.
-    \item Kipf and Welling, ``Semi-Supervised Classification with Graph Convolutional Networks,'' \emph{International Conference on Learning Representations}. A foundational paper on the graph neural network mean-aggregation update used in Section~\ref{sec:advanced-altdata}'s shell-company network example.
-    \item Chen, Kornblith, Norouzi, and Hinton, ``A Simple Framework for Contrastive Learning of Visual Representations,'' \emph{International Conference on Machine Learning}. The SimCLR paper underlying Section~\ref{sec:advanced-altdata}'s contrastive-pretraining worked example.
-    \item He, Zhang, Ren, and Sun, ``Deep Residual Learning for Image Recognition,'' \emph{IEEE Conference on Computer Vision and Pattern Recognition}. The original ResNet paper underlying Section~\ref{sec:nn-structured-unstructured}'s discussion of shortcut connections and the vanishing-gradient problem in deep CNNs.
+    \item Bolton and Hand, ``Statistical Fraud Detection: A Review,'' \emph{Statistical Science}. A foundational survey of statistical approaches to fraud detection, including the class-imbalance and base-rate issues central to Section~\ref{sec:anomaly-bayes}.
+    \item Chawla, Bowyer, Hall, and Kegelmeyer, ``SMOTE: Synthetic Minority Over-sampling Technique,'' \emph{Journal of Artificial Intelligence Research}. The original paper introducing the resampling technique discussed in Section~\ref{sec:advanced-imbalance}.
+    \item Klein, \emph{Survival Analysis: Techniques for Censored and Truncated Data}. A standard, thorough reference on the Kaplan-Meier estimator and censoring introduced in Section~\ref{sec:survival-fraud}.
+    \item Financial Action Task Force (FATF), \emph{International Standards on Combating Money Laundering and the Financing of Terrorism and Proliferation}. The primary international regulatory framework underlying the KYC, CDD, and reporting obligations discussed in Section~\ref{sec:aml-structuring}.
+    \item U.S. Financial Crimes Enforcement Network (FinCEN), \emph{Bank Secrecy Act Regulations and Guidance}. The primary U.S. regulatory source for the CTR and SAR reporting requirements discussed in this chapter.
+    \item Meiklejohn, Pomarole, Jordan, Levchenko, McCoy, Voelker, and Savage, ``A Fistful of Bitcoins: Characterizing Payments Among Men with No Names,'' \emph{Proceedings of the 2013 Internet Measurement Conference}. The paper formalizing the common-input-ownership clustering heuristic underlying Section~\ref{sec:blockchain-forensics}.
+    \item Bruun \& Hjejle, \emph{Report on the Non-Resident Portfolio at Danske Bank's Estonian Branch}. The external investigation commissioned by Danske Bank itself, the primary source for the factual account in this chapter's case vignette.
+    \item Institute of Internal Auditors, \emph{The Three Lines Model: An Update of the Three Lines of Defense}. The current authoritative statement of the governance framework developed in Section~\ref{sec:governance-3lod}.
 \end{itemize}
 
 \end{document}

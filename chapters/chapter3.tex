@@ -31,11 +31,11 @@ This chapter introduces the basic structure of financial markets and the major c
 
 Three worked examples anchor the more mechanical sections of the chapter: a bid-ask spread decomposed into its adverse-selection and inventory-cost components, a hand-computed walk through a small limit order book showing exactly how an incoming order gets filled at one price or several, and a no-arbitrage bond-pricing example that shows what happens, concretely, when two ways of pricing the same cash flow disagree. A case study of the 2010 Flash Crash closes the chapter, tying the abstract mechanics of order flow and liquidity to a single, well-documented afternoon when they broke down in public.
 
-The chapter's institutional material, who trades, what they trade, and where, builds the vocabulary that every later chapter assumes: Chapters 5 and 10 price and hold the debt, equity, and derivative instruments this chapter's ``Financial Instruments'' section catalogues, Chapters 11 and 12 return to the limit order book and price discovery mechanics worked through in Section~\ref{sec:order-book-example} at execution and then microsecond speed, and Section~\ref{sec:no-arbitrage}'s no-arbitrage logic recurs, in progressively more quantitative form, in every valuation and pricing chapter that follows.
+The chapter's institutional material, who trades, what they trade, and where, builds the vocabulary that every later chapter assumes: Chapters 5 and 12 price and hold the debt, equity, and derivative instruments this chapter's ``Financial Instruments'' section catalogues, Chapters 13 and 14 return to the limit order book and price discovery mechanics worked through in Section~\ref{sec:order-book-example} at execution and then microsecond speed, and Section~\ref{sec:no-arbitrage}'s no-arbitrage logic recurs, in progressively more quantitative form, in every valuation and pricing chapter that follows.
 
 Readers already comfortable with market structure may skim the descriptive sections, but the worked examples are used again later in the book and are worth working through by hand at least once.
 
-\section{Why Financial Markets Exist}\index{Why Financial Markets Exist}
+\section{Why Financial Markets Exist}
 
 A financial market exists because economic agents have different needs and different time horizons. A household may wish to save for retirement, a firm may need funding for expansion, and a government may require resources to finance public projects. These parties do not all have the same opportunities or preferences. Markets create a mechanism for matching supply and demand for capital.
 
@@ -45,7 +45,7 @@ Financial markets also provide information. Prices do not only reflect current s
 
 For this reason, a market becomes more useful when participants can trade quickly and with confidence. Liquidity, transparency, and regulation matter. If a market is illiquid, prices may be unstable and trading costs may be high. If it lacks transparency, participants may face information asymmetry and make poor decisions. If it lacks rules, trust can erode and market participants may withdraw from the system.
 
-\section{Who Participates in Financial Markets}\index{Who Participates in Financial Markets}
+\section{Who Participates in Financial Markets}
 
 Financial markets are populated by a diverse set of participants, each with different objectives and constraints. Households and retail investors often save for retirement, education, or other future needs. Firms issue securities to raise funding for investment. Governments borrow to finance public spending or manage budget imbalances. Financial institutions such as banks, mutual funds, pension funds, and insurers intermediate between those who provide capital and those who need it. Chapter 1's Table 1.5 previewed these participant roles at a glance; this section develops each one in more depth.
 
@@ -55,7 +55,7 @@ Arbitrageurs and hedge funds also influence market behavior. Arbitrageurs seek t
 
 Finally, regulators and central banks shape the environment in which markets operate. Regulators enforce rules on disclosure, conduct, and market integrity. Central banks influence short-term interest rates and can intervene in crises to support liquidity or stabilize the financial system. For this reason, market outcomes are not determined only by private incentives; they also depend on public policy.
 
-\section{Major Financial Institutions}\index{Major Financial Institutions}
+\section{Major Financial Institutions}
 
 Financial markets are organized around institutions that perform specialized functions. Banks provide lending services, facilitate payments, and transform maturity and liquidity profiles. Asset managers collect capital from investors and allocate it across portfolios of securities. Insurance companies pool risk by charging premiums in exchange for compensation when specified losses occur. Exchanges provide venues where orders can be matched, and central clearinghouses reduce counterparty risk by interposing themselves between buyers and sellers. Chapter 1's Table 1.3 summarized these institutions' roles at a glance; this section develops each one further.
 
@@ -65,7 +65,9 @@ The financial system is fragile when institutions become highly interconnected. 
 
 The interaction between these institutions and the broader economy is profound. When banks tighten credit, firms may reduce investment. When insurers become more cautious, certain risks may become harder to insure. When exchanges improve market structure, trading costs may fall and liquidity may improve. These changes are not merely technical. They affect real economic activity, corporate decisions, and household welfare.
 
-\section{Financial Instruments: The Core Contracts}\index{Financial Instruments: The Core Contracts}
+One institutional shift of the past fifteen years deserves its own mention, because it has moved a growing share of the economy's actual lending outside every venue described so far. Since the 2008 crisis, tighter bank capital regulation has pushed banks out of significant portions of corporate lending, and dedicated \emph{private credit}\index{private credit} funds, asset managers raising long-lockup capital specifically to make loans directly to mid-sized companies, have grown into a multi-trillion-dollar market filling that space, alongside the older private equity\index{private equity} industry that buys entire companies rather than lending to them. These private markets differ from everything else in this chapter in one way that matters enormously for this book: they generate almost none of the data its methods assume. A private loan trades rarely or never, so there is no price history; the borrower files no public statements, so there is nothing for ratio analysis beyond what the lender privately negotiates access to; and a fund holds tens of positions, not the thousands of observations a statistical credit model trains on. AI's footprint in private markets is accordingly real but narrow, mostly natural language processing applied to deal documents and covenants, and screening tools for sourcing borrowers, while underwriting and valuation remain judgment-heavy in exactly the way public-market lending no longer is. It is a useful standing question for the rest of this book: whenever a market's defining feature is the absence of data, how much of the toolkit still applies, and which parts fail first.
+
+\section{Financial Instruments: The Core Contracts}
 
 Financial instruments are the contracts that are traded in markets. They can be classified in several broad categories, including debt securities, equity securities, derivatives, and alternative instruments. Each category serves a different economic purpose, and each has its own pricing logic. Chapter 1's Table 1.4 previewed the markets these instruments trade in; the rest of this section develops each instrument type in depth.
 
@@ -119,7 +121,7 @@ V_{\text{fixed payer}} = PV_{\text{floating}} - PV_{\text{fixed}} = 10{,}000{,}0
 \end{equation*}
 a loss to the fixed-rate payer, and an equal and opposite gain to the floating-rate payer, since market rates have fallen since the swap was struck, leaving the fixed-rate payer locked into paying $5\%$ when the market now says $4$--$4.5\%$ is fair. This is precisely the mechanism by which an existing swap's mark-to-market value changes over its life without either counterparty doing anything at all: pure movement in market interest rates redistributes value between the two legs, exactly the same discounting logic Chapter 5 applies to bond pricing, applied here to the difference of two cash flow streams rather than a single one.
 
-\subsection{Other Instruments}\index{Other Instruments}
+\subsection{Other Instruments}
 
 Other instruments include money market securities, preferred shares, mortgage-backed securities, and exchange-traded funds. These products illustrate the breadth of modern finance. Some are designed for short-term liquidity management, while others combine exposure to many assets in a single tradable instrument. Exchange-traded funds, in particular, have become widely used because they offer diversification and low-cost access to broad market exposure.
 
@@ -127,7 +129,7 @@ The growth of index funds and exchange-traded funds has changed the structure of
 
 An exchange-traded fund's price is kept close to the value of its underlying holdings through a creation-and-redemption mechanism: authorized institutional participants can exchange a basket of the underlying securities for new ETF shares, or vice versa, whenever the ETF's market price drifts far enough from its net asset value to make doing so profitable. This arbitrage-like mechanism, similar in spirit to the no-arbitrage logic in Section~\ref{sec:no-arbitrage}, is what keeps an ETF tracking its underlying index closely under normal conditions, though it can break down during periods of severe stress if the underlying securities themselves become difficult to trade.
 
-\section{How Markets Are Organized}\index{How Markets Are Organized}
+\section{How Markets Are Organized}
 
 Markets are not all structured in the same way. Some are organized as exchanges with centralized order books, while others are over-the-counter markets where participants trade directly with one another. In exchange-traded markets, buyers and sellers submit orders that are matched according to price and time priority. In over-the-counter markets, contracts are negotiated bilaterally and may be tailored to specific needs.
 
@@ -143,7 +145,7 @@ A useful simple measure of trading cost is the bid-ask spread\index{bid-ask spre
 
 This spread captures the cost of immediacy. When the spread is narrow, trading is cheaper and liquidity is stronger. When the spread is wide, the market is less liquid and the cost of trading is higher. For quantitative researchers, such quantities are often as important as the asset's return itself because they determine the practical profitability of a strategy.
 
-\section{A Worked Example: Walking the Limit Order Book}\index{Walking the Limit Order Book}
+\section{A Worked Example: Walking the Limit Order Book}
 \label{sec:order-book-example}
 
 The bid-ask spread only describes the price of trading a single share. In practice, a limit order book\index{limit order book} lists multiple price levels on both sides, and a large order can ``walk'' through several levels, receiving a progressively worse average price. Table~\ref{tab:order_book} shows a simplified order book for a stock.
@@ -169,7 +171,7 @@ The best bid is \$50.05 and the best ask is \$50.10, so the quoted bid-ask sprea
 \begin{equation*}
 \text{Average execution price} = \frac{100(50.10) + 150(50.15)}{250} = \frac{5{,}010 + 7{,}522.50}{250} = \$50.13.
 \end{equation*}
-This average price is \$0.03 above the best ask of \$50.10, roughly 6 basis points of price impact, purely a consequence of order size relative to the liquidity available at each price level, with no new information entering the market at all. A trader who needs to buy or sell a large position faces exactly this tradeoff: submitting the entire order at once guarantees immediate execution but at a worse average price, while breaking the order into smaller pieces over time (the subject of the execution algorithms in Chapter 11) can reduce price impact at the cost of exposing the trader to price movements while the order is worked.
+This average price is \$0.03 above the best ask of \$50.10, roughly 6 basis points of price impact, purely a consequence of order size relative to the liquidity available at each price level, with no new information entering the market at all. A trader who needs to buy or sell a large position faces exactly this tradeoff: submitting the entire order at once guarantees immediate execution but at a worse average price, while breaking the order into smaller pieces over time (the subject of the execution algorithms in Chapter 13) can reduce price impact at the cost of exposing the trader to price movements while the order is worked.
 
 \begin{figure}[htbp]
 \centering
@@ -209,7 +211,7 @@ This average price is \$0.03 above the best ask of \$50.10, roughly 6 basis poin
 }
 \end{figure}
 
-\section{Decomposing the Bid-Ask Spread}\index{Decomposing the Bid-Ask Spread}
+\section{Decomposing the Bid-Ask Spread}
 
 The bid-ask spread is not pure profit for a market maker; it compensates for at least three distinct costs, and understanding the decomposition helps explain why spreads widen in some conditions and narrow in others.
 \begin{itemize}
@@ -223,7 +225,7 @@ A trade price bounces back and forth between the bid and the ask as buy and sell
 \end{equation*}
 using the fact that this bid-ask bounce induces exactly the kind of negative autocorrelation in consecutive price changes that the covariance term inside the square root captures. This is a useful reminder for the time series methods of Chapter 7: not every statistical pattern in price data reflects economically meaningful predictability, some of it is a direct, mechanical consequence of market microstructure.
 
-\section{The Economics of Price Discovery}\index{Economics of Price Discovery}
+\section{The Economics of Price Discovery}
 
 Financial prices are the output of a complex process in which participants with different information and objectives update their beliefs. A stock price may rise because investors revise their expectations of future cash flows, because risk premiums change, or because a large buyer enters the market. The same price change can have multiple interpretations, which is why finance is both quantitative and interpretive.
 
@@ -233,7 +235,7 @@ This is why economists and practitioners distinguish between fundamentals and sh
 
 Understanding price discovery is also important for AI applications in finance. A predictive model may identify patterns in observed prices, but without an understanding of the market mechanism behind those prices, the model may misinterpret noise as signal. The best applications of machine learning in finance combine statistical learning with economic and institutional insight. A model that predicts price movements may still fail if it ignores transaction costs, market impact\index{market impact}, and changing liquidity conditions.
 
-\section{Why Market Structure Matters for Quantitative Finance}\index{Why Market Structure Matters for Quantitative Finance}
+\section{Why Market Structure Matters for Quantitative Finance}
 
 The practical relevance of this chapter becomes clear when one considers how financial models are used in the real world. A portfolio manager does not merely choose assets based on expected return and risk. The manager must also consider how easily those assets can be bought or sold, how much price impact trading will create, and whether the strategy can survive transaction costs.
 
@@ -247,7 +249,7 @@ Before acting on this signal, a quantitatively sophisticated practitioner asks s
 
 None of these questions are visible in the historical price data the model was trained on, yet each one can determine whether a statistically significant signal is also an economically exploitable one. This is the precise sense in which market structure, not just statistical significance, determines whether a trading idea survives contact with a real market.
 
-\section{Money Markets, Capital Markets, and the Lifecycle of a Trade}\index{Money Markets, Capital Markets, and the Lifecycle of a Trade}
+\section{Money Markets, Capital Markets, and the Lifecycle of a Trade}
 
 Financial markets are often divided into money markets and capital markets. Money markets are used for short-term borrowing and lending, typically for maturities of less than one year. They include instruments such as Treasury bills, commercial paper, certificates of deposit, and repurchase agreements. These markets are crucial for liquidity management because banks, corporations, and governments frequently need to finance short-term obligations or invest excess cash for a brief period. Chapter 1's Table 1.4 previewed money markets alongside equity, bond, derivatives, and foreign exchange markets; this section and Chapter 5 develop each of these further.
 
@@ -270,7 +272,7 @@ so the dealer repurchases the collateral the next day for $\$10{,}001{,}388.89$.
 
 Settlement conventions are a second detail with outsized practical importance. Most equity markets settle trades on a T+1 or T+2 basis (one or two business days after the trade date), meaning that ownership and cash do not actually change hands at the moment a trade is agreed. This gap creates counterparty risk, the possibility that the other side of the trade fails to deliver cash or securities as promised, which is precisely the risk that the clearinghouses discussed in the next section exist to mitigate.
 
-\section{The Business of Exchanges and Market Data}\index{Business of Exchanges and Market Data}
+\section{The Business of Exchanges and Market Data}
 
 It is easy to think of an exchange purely as neutral infrastructure, a venue where buyers and sellers meet, without asking how the exchange itself makes money. In practice, modern exchanges are for-profit businesses with several distinct revenue streams, and understanding them explains a number of features of market structure that would otherwise seem arbitrary.
 
@@ -280,7 +282,7 @@ Market data fees are a third, increasingly significant revenue source: exchanges
 
 These revenue streams matter for a quantitative reader for two reasons. First, they explain why exchanges have strong commercial incentives to attract high-frequency trading activity specifically, since such activity generates outsized transaction and data-fee revenue relative to its economic footprint, which is part of the broader political and regulatory debate about whether current market structure appropriately balances the interests of high-frequency participants against those of long-term investors. Second, they are a reminder that the market data used throughout this book, and assumed to arrive at negligible cost in every worked example so far, is itself a commercial product whose cost, coverage, and latency vary enormously depending on how much a firm is willing to pay, a practical constraint that shapes what kind of strategy is even feasible for a given research budget.
 
-\section{Clearing, Settlement, and Systemic Risk}\index{Clearing, Settlement, and Systemic Risk}
+\section{Clearing, Settlement, and Systemic Risk}
 
 Once a trade is executed, the market must ensure that the agreement is honored. Clearing refers to the process of determining obligations between counterparties, while settlement refers to the final exchange of cash and securities. In exchange-traded markets, a clearinghouse often acts as the central counterparty, guaranteeing the trade if one side defaults. This reduces bilateral credit risk, but it also creates a new concentration of risk in the clearinghouse itself.
 
@@ -324,7 +326,7 @@ Typical use case & Individual equity short position & Standardized futures and s
 }
 \end{table}
 
-\section{Regulation, Disclosure, and Market Integrity}\index{Regulation, Disclosure, and Market Integrity}
+\section{Regulation, Disclosure, and Market Integrity}
 
 Markets require rules because they involve trust, information, and incentives. Without regulation, participants may exploit others through fraud, insider trading, or manipulation. Disclosure requirements help investors evaluate firms and make informed decisions. Capital and liquidity rules reduce the chance that institutions will become insolvent or unable to meet obligations during stress. Market surveillance systems detect suspicious behavior and support confidence in the fairness of the trading process.
 
@@ -342,9 +344,9 @@ A few specific regulatory frameworks are worth knowing by name because they recu
     \item \textbf{Basel III}\index{Basel Accords}\index{Basel III} is an international framework setting minimum capital and liquidity requirements for banks, intended to make the banking system more resilient to exactly the kind of interconnected shocks described in the systemic risk discussion above.
 \end{itemize}
 
-None of these frameworks is a topic this book covers in depth, but recognizing their names and general purpose is useful context for the compliance-related material in Chapter 13.
+None of these frameworks is a topic this book covers in depth, but recognizing their names and general purpose is useful context for the compliance-related material in Chapter 15.
 
-\section{The Link Between Market Structure and AI}\index{Link Between Market Structure and AI}
+\section{The Link Between Market Structure and AI}
 
 A modern AI system in finance cannot be designed as if markets were simple, frictionless, and fully observable. Real markets have heterogeneous participants, delayed information, hidden inventory, and strategic behavior. For example, an algorithm that trades based on price patterns may perform well in a calm market but fail in a stressed market where liquidity evaporates and spreads widen. A credit model that uses historical repayment data may become less reliable if underwriting standards change or if the economy enters a new regime.
 
@@ -354,11 +356,11 @@ The chapter therefore closes with a practical lesson: the most valuable AI appli
 
 This connection between market structure and AI runs in both directions, and it is worth being explicit about the second direction as well. So far this section has emphasized how market structure constrains and shapes AI systems; AI systems, in turn, have themselves become part of the market structure they operate within.
 
-The high-frequency market-making firms discussed later in this chapter increasingly rely on machine learning to set quotes and manage inventory risk in real time. Large asset managers use natural language processing, the subject of Chapter 14, to parse earnings calls and regulatory filings faster than human analysts could. Exchanges themselves use anomaly-detection systems, related to the fraud-detection methods of Chapter 13, to flag potentially manipulative trading patterns for regulatory review. This means that the ``other participants'' referred to throughout this chapter, whose behavior shapes liquidity, spreads, and price discovery, are themselves increasingly AI systems, and their collective behavior is part of what any new AI system entering the market must anticipate and adapt to.
+The high-frequency market-making firms discussed later in this chapter increasingly rely on machine learning to set quotes and manage inventory risk in real time. Large asset managers use natural language processing, the subject of Chapter 16, to parse earnings calls and regulatory filings faster than human analysts could. Exchanges themselves use anomaly-detection systems, related to the fraud-detection methods of Chapter 15, to flag potentially manipulative trading patterns for regulatory review. This means that the ``other participants'' referred to throughout this chapter, whose behavior shapes liquidity, spreads, and price discovery, are themselves increasingly AI systems, and their collective behavior is part of what any new AI system entering the market must anticipate and adapt to.
 
 This observation has a subtle but important consequence for model validation. A backtest evaluates a strategy against historical data generated by the market as it existed in the past, including the mix of human and automated participants active at that time. If a meaningful share of that historical liquidity and price-setting behavior came from other algorithms that have since been retired, upgraded, or replaced, then the market a new strategy will actually face going forward may behave differently from the market reflected in its backtest, not because of any change in economic fundamentals, but because the population of participants generating prices has itself changed. This is a more subtle version of the non-stationarity concern raised in Chapter 1 and developed further in Chapter 6, and it is specific to markets with a high degree of algorithmic participation.
 
-\section{Liquidity, Leverage, and the Economics of Market Making}\index{Liquidity, Leverage, and the Economics of Market Making}
+\section{Liquidity, Leverage, and the Economics of Market Making}
 \label{sec:market-making}
 
 Liquidity is one of the most important but least visible features of financial markets. A liquid market allows participants to trade quickly without moving the price too much. In practice, liquidity is a multidimensional concept:
@@ -393,7 +395,7 @@ A broker typically requires a maintenance margin of at least $25\%$ of the curre
 \end{equation*}
 At $P=\$60$, the trader's liability has grown to $100 \times \$60 = \$6{,}000$ while equity has fallen to $\$7{,}500 - \$6{,}000 = \$1{,}500$, exactly $25\%$ of the $\$6{,}000$ liability, confirming the calculation. A price increase of only $20\%$, from $\$50$ to $\$60$, is enough to trigger a margin call on a position that started with $150\%$ initial margin, illustrating precisely how leverage compounds a short seller's losses: the loss on the position itself is $\$1{,}000$, but it consumes $\$1{,}000$ out of only $\$2{,}500$ of the trader's own capital, a $40\%$ loss on equity from a $20\%$ adverse price move. If the trader cannot deposit additional funds once the call is issued, the broker will buy back some or all of the borrowed shares on the trader's behalf, often at whatever price is available, which is exactly the kind of forced selling into a moving market described in this chapter's Flash Crash case study and, at the scale of an entire highly leveraged fund rather than a single position, in the LTCM episode discussed later in this chapter.
 
-\section{A Simple No-Arbitrage Example}\index{Simple No-Arbitrage Example}
+\section{A Simple No-Arbitrage Example}
 \label{sec:no-arbitrage}
 
 A useful way to understand why prices in finance are constrained by structure is to consider a very simple arbitrage argument. Suppose an investor can buy a one-period risk-free bond that costs $100$ and pays $105$ one year later. The risk-free interest rate implied by this bond is
@@ -427,7 +429,7 @@ one euro should be worth $\pounds0.88$. If the EUR/GBP market instead directly q
 \text{Step 2 (EUR} \to \text{USD at } 1.10\text{):} &\quad 1{,}149{,}425.29 \times 1.10 \approx \$1{,}264{,}367.82, \\
 \text{Step 3 (USD} \to \text{GBP at } 1/1.25\text{):} &\quad 1{,}264{,}367.82 \times 0.80 \approx \pounds1{,}011{,}494.25,
 \end{align*}
-a riskless profit of about $\pounds11{,}494$, or roughly $1.15\%$, on the round trip, realized in seconds and requiring no view whatsoever on whether any of the three currencies will rise or fall. Exactly as in the bond and forward examples above, this mispricing cannot persist: high-frequency and algorithmic traders (the subject of Chapters 11 and 12) monitor exactly this kind of three-way consistency continuously, and the resulting arbitrage trading pushes the three rates back into alignment within moments of any deviation appearing, which is precisely why triangular arbitrage opportunities in liquid, major-currency pairs are typically too small and short-lived to exploit manually, existing today mainly as a textbook illustration of a real economic force rather than a realistically accessible trading strategy for anyone without a fully automated, low-latency system.
+a riskless profit of about $\pounds11{,}494$, or roughly $1.15\%$, on the round trip, realized in seconds and requiring no view whatsoever on whether any of the three currencies will rise or fall. Exactly as in the bond and forward examples above, this mispricing cannot persist: high-frequency and algorithmic traders (the subject of Chapters 13 and 14) monitor exactly this kind of three-way consistency continuously, and the resulting arbitrage trading pushes the three rates back into alignment within moments of any deviation appearing, which is precisely why triangular arbitrage opportunities in liquid, major-currency pairs are typically too small and short-lived to exploit manually, existing today mainly as a textbook illustration of a real economic force rather than a realistically accessible trading strategy for anyone without a fully automated, low-latency system.
 
 Although financial theory often uses idealized assumptions, real markets are full of frictions. These frictions include transaction costs, taxes, delays, information asymmetry, margin requirements, and limits on borrowing. A frictionless market would make it easy to buy and sell any asset at a known price, but real markets are not like that. The presence of frictions changes the economics of investment and the behavior of prices.
 
@@ -435,7 +437,7 @@ For example, if trading a security is expensive, an investor may need a larger e
 
 This is why practitioners often distinguish between theoretical prices and realized prices. Theoretical models may suggest that two assets with identical cash flows should trade at the same value. In practice, they may not if short-selling is difficult, if settlement is delayed, or if the market is temporarily illiquid. Such deviations create opportunities for some participants, but they also create risk for others. This tension between theory and practice is one of the defining features of finance.
 
-\section{Financial Crises, Contagion, and Resilience}\index{Financial Crises, Contagion, and Resilience}
+\section{Financial Crises, Contagion, and Resilience}
 
 A complete understanding of financial markets also requires an understanding of crises. Crises are not random accidents. They often emerge when leverage is high, liquidity is fragile, and institutions are highly interconnected. In such conditions, a seemingly small shock can trigger forced selling, margin calls, and sudden changes in funding conditions. The result can be a cascade of losses that spreads across firms, asset classes, and countries.
 This general pattern, high leverage, fragile liquidity, and deep interconnection combining to turn a seemingly small shock into a cascade, is exactly what played out in the 2008 financial crisis, already discussed earlier in this chapter's treatment of clearing and systemic risk: mortgage defaults, amplified through securitization, derivatives, and short-term funding markets, became a systemic event precisely because institutions that seemed healthy on the surface turned out not to be resilient once funding dried up.
@@ -445,7 +447,7 @@ For AI and quantitative finance, this lesson is important. A model can be accura
 An earlier episode, the near-collapse of the hedge fund Long-Term Capital Management (LTCM)\index{Long-Term Capital Management (LTCM)} in 1998, illustrates a related but distinct lesson: sophisticated quantitative models can fail specifically because of leverage and crowding, not because the underlying statistical reasoning was wrong. LTCM's strategies relied on historical relationships between related securities converging back to normal levels, a reasonable premise most of the time, applied with very high leverage to turn small, reliable-looking spreads into large returns.
 When the 1997 Asian financial crisis and 1998 Russian debt default triggered a broad flight to safety, the specific historical relationships LTCM depended on moved sharply against it, and because many other market participants held similar positions, there was no way to exit without pushing prices even further in the wrong direction. The fund's near-failure was severe enough that the Federal Reserve organized a private-sector bailout to prevent broader market disruption. The lesson for quantitative finance is not that statistical models are unreliable, but that a model's estimated relationships can break down precisely when many market participants are relying on the same relationship and using leverage to size their bets on it, a crowding risk that a model built purely from historical price data will rarely reveal on its own.
 
-\section{Technology, Speed, and Market Design}\index{Technology, Speed, and Market Design}
+\section{Technology, Speed, and Market Design}
 
 The design of financial markets has changed dramatically with technology. Electronic trading, co-location, and automation have reduced costs and increased the speed at which orders can be processed. This has improved access for many participants, but it has also increased complexity. The market now resembles a digital system in which algorithms interact with each other at high speed and where small delays can be extremely valuable.
 

@@ -28,3 +28,25 @@ ch12_data/
 # stay local only rather than being pushed to the public repo.
 solutions_chapter_end_questions/
 solutions_chapter_end_questions_zh/
+
+# The Chinese edition. It lives in its own PRIVATE repository, nested here as zh/ so
+# that both editions stay editable in one working tree while being pushed to remotes
+# of different visibility. This entry is the safety boundary: because zh/ is ignored,
+# `git add -A` in this (public) repository cannot stage Chinese content, ever. Do not
+# remove it. The Chinese build is run from inside zh/ (see CLAUDE.md).
+/zh/
+
+# Claude Code state and instructions. Never tracked or pushed, in either repository.
+# .claude/ is listed explicitly because it happens to be empty right now, and git
+# reports nothing for an empty directory: without this rule, the first file the tool
+# writes there (settings.local.json, for instance) would show up as untracked and be
+# swept in by `git add -A`.
+.claude/
+CLAUDE.md
+CLAUDE.local.md
+
+# Session transcripts, working notes, and editor workspace files: scratch, not manuscript.
+session_log_*.txt
+index_cleanup.md
+vol_risk_premium_*
+*.code-workspace

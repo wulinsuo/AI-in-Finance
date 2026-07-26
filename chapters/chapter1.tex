@@ -20,7 +20,7 @@
 
 \chapter{Introduction to Finance and AI}
 
-\section{Why Finance Needs AI}\index{Why Finance Needs AI}
+\section{Why Finance Needs AI}
 
 Finance is one of the most data-rich and decision-intensive domains in the modern economy. Financial institutions collect vast amounts of information every day, including prices, transactions, news, macroeconomic indicators, and firm-level reports. This information is often noisy, high-dimensional, and time-sensitive, which makes it difficult to analyze using simple rules or intuition alone.
 
@@ -33,7 +33,7 @@ A simple way to visualize this process is shown in Figure~\ref{fig:finance_ai_pi
 \begin{figure}[htbp]
 \centering
 \begin{lrbox}{\bookmeasuredbox}
-    \begin{tikzpicture}[>=latex,thick,node distance=2.0cm]
+    \begin{tikzpicture}[>=latex,thick,node distance=0.9cm]
         \node[draw,rounded corners,minimum width=2.2cm,minimum height=0.8cm] (data) {Data};
         \node[draw,rounded corners,minimum width=2.2cm,minimum height=0.8cm,right=of data] (model) {Model};
         \node[draw,rounded corners,minimum width=2.2cm,minimum height=0.8cm,right=of model] (eval) {Evaluation};
@@ -62,19 +62,19 @@ This book is about the intersection of finance and artificial intelligence. Its 
 
 In practice, finance is not simply about making predictions from historical data. It is also about understanding incentives, constraints, and the consequences of decisions. A model that predicts a price movement may be useful, but it becomes much more valuable when it is linked to a trading rule, a risk limit, and an understanding of the costs of execution. Likewise, a credit model that predicts default must be interpreted in light of borrower behavior, contract terms, and broader macroeconomic conditions.
 
-\section{A Short History of Quantitative Methods and AI in Finance}\index{Short History of Quantitative Methods and AI in Finance}
+\section{A Short History of Quantitative Methods and AI in Finance}
 
 The idea of using mathematical models to make financial decisions is not new; what has changed over the past seventy years is the sophistication of the models and the scale of the data available to them. Tracing this history briefly helps explain why today's AI methods are best understood as the latest step in a long-running progression, not a sudden break from everything that came before.
 
-The modern era of quantitative finance is often dated to 1952, when Harry Markowitz\index{Markowitz, Harry} formalized portfolio selection as an optimization problem over expected return and variance, work covered in depth in Chapter 10. This gave investors, for the first time, a rigorous mathematical language for the intuitive idea of diversification.
+The modern era of quantitative finance is often dated to 1952, when Harry Markowitz\index{Markowitz, Harry} formalized portfolio selection as an optimization problem over expected return and variance, work covered in depth in Chapter 12. This gave investors, for the first time, a rigorous mathematical language for the intuitive idea of diversification.
 
 The next major milestone came in 1973, when Fischer Black, Myron Scholes, and Robert Merton derived a closed-form formula for pricing options, the model introduced in Chapter 5, which turned derivatives trading from an informal, judgment-driven activity into something that could be systematically priced and hedged. Both developments shared a common feature: they used relatively simple, closed-form mathematics to capture an economically meaningful idea, and both remain in active use today despite decades of subsequent refinement.
 
-The 1980s and 1990s saw the rise of algorithmic and electronic trading, as exchanges automated order matching and quantitative hedge funds began systematically exploiting statistical patterns in market data, foreshadowing the market microstructure and algorithmic trading material in Chapters 11 and 12. Around the same period, banks began applying statistical scoring models to credit decisions at scale, replacing purely judgment-based underwriting with models similar in spirit to the credit models in Chapter 9.
+The 1980s and 1990s saw the rise of algorithmic and electronic trading, as exchanges automated order matching and quantitative hedge funds began systematically exploiting statistical patterns in market data, foreshadowing the market microstructure and algorithmic trading material in Chapters 13 and 14. Around the same period, banks began applying statistical scoring models to credit decisions at scale, replacing purely judgment-based underwriting with models similar in spirit to the credit models in Chapter 9.
 
 Machine learning methods, decision trees, support vector machine\index{support vector machine (SVM)}s, and eventually gradient boosting\index{gradient boosting} and random forest\index{random forest}s, entered mainstream financial use in the 2000s and 2010s as computing power grew and larger datasets became available, expanding what had been simple statistical scoring into much richer pattern recognition, the subject of Chapter 6.
 
-Since roughly 2015, several further developments have reshaped the field. Deep learning has made it practical to learn directly from large volumes of unstructured data, images, audio, and especially text, which is the foundation for the natural language processing methods in Chapter 14 and the alternative data methods in Chapter 15. More recently, large language model\index{large language model (LLM)}s have begun to be applied to tasks such as summarizing earnings calls, extracting structured information from filings, and supporting research workflows, an extension of the text-based methods in Chapter 14. In parallel, reinforcement learning\index{Reinforcement Learning} has begun to be applied to genuinely sequential financial decisions, optimal trade execution, market making, and ongoing portfolio rebalancing, where an agent's own actions today shape the state it will face tomorrow, the subject of Chapter 17. A complementary, more recent strand, agent-based modeling\index{Agent-Based Models (ABMs)}, takes the opposite vantage point: instead of optimizing a single decision-maker, it simulates many simple, interacting participants at once to understand how market-wide phenomena such as bubbles, crashes, and contagion can emerge without any single agent intending them, the subject of Chapter 18. Table~\ref{tab:history_timeline} summarizes this progression.
+Since roughly 2015, several further developments have reshaped the field. Deep learning has made it practical to learn directly from large volumes of unstructured data, images, audio, and especially text, which is the foundation for the natural language processing methods in Chapter 16 and the alternative data methods in Chapter 17. More recently, large language model\index{large language model (LLM)}s have begun to be applied to tasks such as summarizing earnings calls, extracting structured information from filings, and supporting research workflows, an extension of the text-based methods in Chapter 16. In parallel, reinforcement learning\index{Reinforcement Learning} has begun to be applied to genuinely sequential financial decisions, optimal trade execution, market making, and ongoing portfolio rebalancing, where an agent's own actions today shape the state it will face tomorrow, the subject of Chapter 19. A complementary, more recent strand, agent-based modeling\index{Agent-Based Models (ABMs)}, takes the opposite vantage point: instead of optimizing a single decision-maker, it simulates many simple, interacting participants at once to understand how market-wide phenomena such as bubbles, crashes, and contagion can emerge without any single agent intending them, the subject of Chapter 20. Table~\ref{tab:history_timeline} summarizes this progression.
 
 \begin{table}[htbp]
 \centering
@@ -110,9 +110,9 @@ Year & Development \\
 1969--1986 & Minsky and Papert's formal critique of the Perceptron's limitations helps trigger the first ``AI winter\index{AI Winter}'', a prolonged pullback in AI funding and research interest \\
 1986 & Rumelhart, Hinton, and Williams popularize backpropagation\index{backpropagation}, an efficient algorithm for training multi-layer neural networks (Chapter 6) that ends the first AI winter \\
 1997 & IBM's Deep Blue\index{Deep Blue} defeats reigning world chess champion Garry Kasparov, the first defeat of a sitting champion by a computer under tournament conditions \\
-2012 & AlexNet\index{AlexNet}'s decisive win in the ImageNet\index{ImageNet} image-recognition competition demonstrates deep convolutional networks' advantage at scale, igniting the modern deep learning era (Chapter 15) \\
-2016 & DeepMind's AlphaGo\index{AlphaGo} defeats Go champion Lee Sedol using deep reinforcement learning (Chapter 17), a game long assumed too complex for a computer to master \\
-2017 & Vaswani et al.'s ``Attention Is All You Need'' introduces the transformer architecture\index{transformer architecture}, the foundation of every large language model that follows (Chapter 14) \\
+2012 & AlexNet\index{AlexNet}'s decisive win in the ImageNet\index{ImageNet} image-recognition competition demonstrates deep convolutional networks' advantage at scale, igniting the modern deep learning era (Chapter 17) \\
+2016 & DeepMind's AlphaGo\index{AlphaGo} defeats Go champion Lee Sedol using deep reinforcement learning (Chapter 19), a game long assumed too complex for a computer to master \\
+2017 & Vaswani et al.'s ``Attention Is All You Need'' introduces the transformer architecture\index{transformer architecture}, the foundation of every large language model that follows (Chapter 16) \\
 2020 & OpenAI's GPT-3\index{GPT-3}, a 175-billion-parameter language model, demonstrates that scale alone unlocks broad, few-shot task performance \\
 2022 & OpenAI's ChatGPT\index{ChatGPT} reaches mainstream adoption faster than any consumer software product before it, bringing generative AI into everyday use \\
 \bottomrule
@@ -120,9 +120,9 @@ Year & Development \\
 \end{table}
 
 Two patterns stand out against Table~\ref{tab:history_timeline}. First, progress was not steady: the field's first AI winter shows that a technique's early promise (the Perceptron) can collapse under a well-founded technical critique and take over a decade to recover, a caution worth remembering whenever a new method arrives with confident claims attached.
-Second, essentially none of Table~\ref{tab:ai_ml_timeline}'s milestones were built for finance, Deep Blue plays chess, AlexNet classifies photographs, AlphaGo plays Go, yet each one supplied a general-purpose capability, pattern recognition at scale, sequential decision-making, language understanding, that finance adopted only after it had already been proven elsewhere. This is why Chapters 6, 14, 15, and 17 of this book introduce these same architectures and training algorithms largely as general-purpose machine learning, before turning to what makes each one specifically useful in a financial context.
+Second, essentially none of Table~\ref{tab:ai_ml_timeline}'s milestones were built for finance, Deep Blue plays chess, AlexNet classifies photographs, AlphaGo plays Go, yet each one supplied a general-purpose capability, pattern recognition at scale, sequential decision-making, language understanding, that finance adopted only after it had already been proven elsewhere. This is why Chapters 6, 16, 17, and 19 of this book introduce these same architectures and training algorithms largely as general-purpose machine learning, before turning to what makes each one specifically useful in a financial context.
 
-\section{Who This Book Is For}\index{Who This Book Is For}
+\section{Who This Book Is For}
 
 This book is written for readers who are quantitatively trained but may have little or no prior background in finance or economics. The intended audience includes students and practitioners with experience in mathematics, statistics, engineering, computer science, or data science who want to apply their skills in financial settings.
 
@@ -132,7 +132,7 @@ This approach is deliberate. Many quantitative readers are comfortable with opti
 
 A useful way to think about this is that finance combines three layers of reasoning: economics, statistics, and implementation. Economics provides the structure of incentives and incentives-based behavior. Statistics provides tools for estimating uncertain relationships from data. Implementation addresses how a model behaves when it is embedded in a real system with costs, delays, and operational constraints. A strong finance practitioner must be fluent in all three.
 
-\section{A Brief Introduction to Financial Markets}\index{Brief Introduction to Financial Markets}
+\section{A Brief Introduction to Financial Markets}
 
 Consider a mismatch that shows up in every economy: a young firm has a profitable idea but no cash to build it, while a household nearby has savings sitting idle and no way to fund the idea directly, would not know how to evaluate it if it could, and has no interest in bearing all the risk alone even if it did. Multiply this mismatch across millions of firms and households, each with different amounts of capital, different risk appetites, and different time horizons, and the coordination problem becomes too large for any individual buyer and seller to solve by finding each other directly.
 A financial market is the mechanism that solves this coordination problem at scale: a place where financial assets, stocks, bonds, currencies, commodities, and derivatives among them, are traded, allowing individuals, businesses, and governments to transfer capital, diversify risk, and price future uncertainty without every lender having to personally track down and vet every borrower.
@@ -212,22 +212,24 @@ Before turning to financial concepts, it is worth surveying the kinds of data th
 \toprule
 Data type & Description and examples \\
 \midrule
-Market data & Prices, quotes, trading volume, and order-book data, ranging from daily closing prices to microsecond-level tick data (Chapters 3, 11, 12) \\
+Market data & Prices, quotes, trading volume, and order-book data, ranging from daily closing prices to microsecond-level tick data (Chapters 3, 13, 14) \\
 Fundamental data & Accounting and financial statement data reported by firms, such as revenue, earnings, and balance sheet items (Chapter 4) \\
 Macroeconomic data & Interest rates, inflation, unemployment, and other economy-wide indicators that affect asset prices broadly (Chapter 7) \\
-Credit and transaction data & Loan repayment history, credit bureau data, and payment transaction records used in credit and fraud models (Chapters 9, 13) \\
-Text and news data & Earnings call transcripts, news articles, analyst reports, and social media, used for sentiment and information extraction (Chapter 14) \\
-Alternative data & Non-traditional sources such as satellite imagery, web traffic, or shipping data that proxy for economic activity (Chapter 15) \\
+Credit and transaction data & Loan repayment history, credit bureau data, and payment transaction records used in credit and fraud models (Chapters 9, 15) \\
+Operational loss and incident data & Internal and external operational-loss event records, incident and audit narratives, and system and access logs used to model and detect operational failures (Chapter 10) \\
+Insurance policy and claims data & Policy, exposure, claims, telematics, and catastrophe-model data used to price, reserve, and transfer insured risk (Chapter 11) \\
+Text and news data & Earnings call transcripts, news articles, analyst reports, and social media, used for sentiment and information extraction (Chapter 16) \\
+Alternative data & Non-traditional sources such as satellite imagery, web traffic, or shipping data that proxy for economic activity (Chapter 17) \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Each data type has its own quality issues and its own conventions, and a recurring theme of this book is that using a data type well requires understanding where it comes from, not just how to load it into a model. Market data is timestamped and voluminous but expensive at high frequency and subject to microstructure noise (Chapter 2 introduces the basic handling of price and return data; Chapters 11 and 12 return to its highest-frequency form). Fundamental data is comparatively low-frequency and subject to reporting lag and accounting discretion, as Chapter 4 discusses in detail.
-Macroeconomic data is often revised after initial release, so a historical dataset built from final revised figures can overstate what was actually knowable in real time, a subtle look-ahead bias. Text and alternative data are the newest additions to the financial data ecosystem and, as Chapters 14 and 15 discuss, often require substantially more preprocessing before they are usable than the structured, tabular data that dominates the earlier chapters of this book.
+Each data type has its own quality issues and its own conventions, and a recurring theme of this book is that using a data type well requires understanding where it comes from, not just how to load it into a model. Market data is timestamped and voluminous but expensive at high frequency and subject to microstructure noise (Chapter 2 introduces the basic handling of price and return data; Chapters 13 and 14 return to its highest-frequency form). Fundamental data is comparatively low-frequency and subject to reporting lag and accounting discretion, as Chapter 4 discusses in detail.
+Macroeconomic data is often revised after initial release, so a historical dataset built from final revised figures can overstate what was actually knowable in real time, a subtle look-ahead bias. Text and alternative data are the newest additions to the financial data ecosystem and, as Chapters 16 and 17 discuss, often require substantially more preprocessing before they are usable than the structured, tabular data that dominates the earlier chapters of this book.
 
 A practical consequence of this variety is that a single financial AI system frequently combines several of these data types at once. A credit model might combine fundamental data about a small business with transaction data from its bank accounts and even satellite imagery of its physical location; a trading strategy might combine market data with sentiment extracted from news text. Building such combined systems is usually harder than building a single-data-type model, both because the data must be aligned in time and identity (the same firm, the same reporting period) and because each data source can fail or degrade independently.
 
-\section{Core Financial Concepts}\index{Core Financial Concepts}
+\section{Core Financial Concepts}
 
 Before discussing AI applications, it is useful to understand a few central ideas in finance. These concepts provide the vocabulary and intuition needed to analyze financial problems, whether they are addressed with classical models or with modern machine learning techniques.
 
@@ -271,7 +273,7 @@ This tradeoff is one of the most important ideas in finance because it explains 
 
 Suppose someone offers to pay a debt either with \$1,000 today or \$1,000 in five years. Even setting aside inflation and the risk that the payer might not follow through, these two offers are not equivalent, and a purely quantitative reader's first instinct, that a dollar is a dollar, needs correcting before anything else in this book will make sense: \$1,000 today can be invested and grow into more than \$1,000 by the time five years have passed, so accepting the delayed payment means giving up that growth for nothing in return. Money available today is therefore worth more than the same nominal amount in the future, because it can be invested and earn a return in the meantime. This principle underlies discounting, present value, interest rates, and valuation. In practice, this means that future cash flows must be converted into present value terms before they can be compared fairly. This process is central to bond pricing, project valuation, and investment analysis.
 
-The future value of an amount $PV$ invested today at rate $r$ for $n$ years is 
+The future value of an amount $PV$ invested today at rate $r$ for $n$ years is
 $$FV = PV(1+r)^n,$$
  and Table~\ref{tab:tvm_table} applies this formula to \$1,000 invested at three different rates over three different horizons.
 
@@ -290,14 +292,14 @@ Annual rate & 10 years & 20 years & 30 years \\
 \end{tabular}
 \end{table}
 
-Two patterns in Table~\ref{tab:tvm_table} are worth internalizing because they recur throughout the book. First, compounding is highly nonlinear in the rate: doubling the rate from 3\% to 6\% more than doubles the 30-year future value, and tripling it to 9\% multiplies the 30-year value by more than five. Second, the horizon matters enormously: at 9\%, the difference between a 10-year and a 30-year horizon is a factor of roughly 5.6, even though the annual rate never changed. Present value, used constantly from Chapter 5 onward, is simply this same relationship read in reverse: 
+Two patterns in Table~\ref{tab:tvm_table} are worth internalizing because they recur throughout the book. First, compounding is highly nonlinear in the rate: doubling the rate from 3\% to 6\% more than doubles the 30-year future value, and tripling it to 9\% multiplies the 30-year value by more than five. Second, the horizon matters enormously: at 9\%, the difference between a 10-year and a 30-year horizon is a factor of roughly 5.6, even though the annual rate never changed. Present value, used constantly from Chapter 5 onward, is simply this same relationship read in reverse:
 $$PV = \frac{FV}{(1+r)^n},$$
 discounting a future amount back to today.
 
 \subsection{Diversification}\index{Diversification}
 
 Suppose an investor holds shares in a single airline. A jump in fuel prices, a pilots' strike, or a single crash investigation can each wipe out a large fraction of that airline's stock value, and all three risks are specific to that one company and its industry. Now suppose the same investor instead splits the same money across an airline, a software company, and a grocery chain, three businesses with essentially unrelated day-to-day fortunes. A fuel-price spike still hurts the airline, but does little to the grocery chain or the software company, so the same bad news that would have been devastating to an all-airline portfolio barely dents a portfolio spread across all three.
-This is diversification: spreading investments across different assets or risks so that no single loss can sink the whole portfolio. The intuition is simple, not all investments move in the same way at the same time, but the consequence is not: diversification is one of the few strategies in finance that reduces risk without necessarily reducing expected return, which is why Chapter 10 treats it as mathematically precise rather than merely a rule of thumb. In portfolio construction, diversification is a way to reduce idiosyncratic risk, the risk specific to one company or industry, while retaining exposure to the broad economic factors that no amount of spreading across individual stocks can eliminate.
+This is diversification: spreading investments across different assets or risks so that no single loss can sink the whole portfolio. The intuition is simple, not all investments move in the same way at the same time, but the consequence is not: diversification is one of the few strategies in finance that reduces risk without necessarily reducing expected return, which is why Chapter 12 treats it as mathematically precise rather than merely a rule of thumb. In portfolio construction, diversification is a way to reduce idiosyncratic risk, the risk specific to one company or industry, while retaining exposure to the broad economic factors that no amount of spreading across individual stocks can eliminate.
 
 \subsection{Market Efficiency}\index{Market Efficiency}
 
@@ -309,9 +311,9 @@ For quantitative readers, this idea is particularly important because it motivat
 
 In this sense, market efficiency is not a statement that no one can ever beat the market. Rather, it is a reminder that profitable strategies must overcome several obstacles, including competition from other informed participants, delays in data availability, and the costs of trading.
 
-\section{Financial Problems That AI Can Help Solve}\index{Financial Problems That AI Can Help Solve}
+\section{Financial Problems That AI Can Help Solve}
 
-AI is useful in finance because many important problems involve prediction, classification, optimization, and decision-making under uncertainty. In practice, these problems appear in forecasting asset prices or returns, predicting credit default or bankruptcy, detecting fraudulent transactions, optimizing portfolios, identifying trading opportunities, and extracting information from financial text and news. In each case, the financial problem is not merely a generic data problem. The underlying financial model, market structure, and regulatory context matter. For example, a credit model must reflect the economics of default, while a trading strategy must account for transaction costs, market liquidity, and execution risk.
+AI is useful in finance because many important problems involve prediction, classification, optimization, and decision-making under uncertainty. In practice, these problems appear in forecasting asset prices or returns, predicting credit default or bankruptcy, detecting fraudulent transactions, monitoring for operational failures and misconduct, optimizing portfolios, identifying trading opportunities, and extracting information from financial text and news. In each case, the financial problem is not merely a generic data problem. The underlying financial model, market structure, and regulatory context matter. For example, a credit model must reflect the economics of default, while a trading strategy must account for transaction costs, market liquidity, and execution risk.
 
 This is a key point for readers with a machine learning background. A model that performs well in a generic prediction task may fail in finance if it ignores institutional details. A fraud detector may need to understand customer behavior and regulatory requirements. A pricing model may need to respect no-arbitrage conditions. In other words, finance is not just a collection of datasets; it is a structured domain with economic logic and constraints.
 
@@ -330,26 +332,28 @@ Table~\ref{tab:problem_taxonomy} organizes the main problem types this book addr
 \toprule
 Task type & Example financial problem & Covered in \\
 \midrule
-Regression & Forecasting returns, volatility, or a credit spread & Ch.~6, 7 \\
-Classification & Predicting default, fraud, or a trading signal's direction & Ch.~6, 9, 13 \\
+Regression & Forecasting returns, volatility, an insurance claim cost, or a credit spread & Ch.~6, 7, 11 \\
+Classification & Predicting default, fraud, an operational event type, a claim's severity tier, or a trading signal's direction & Ch.~6, 9, 10, 11, 15 \\
 Time series forecasting & Forecasting interest rates, volatility, or macro indicators & Ch.~7 \\
-Optimization & Constructing a portfolio subject to risk and constraint limits & Ch.~10 \\
-Clustering / dimensionality reduction & Grouping similar firms or compressing a large factor set & Ch.~6, 10 \\
-Sequential decision-making & Executing a trade over time to minimize impact, formalized as a Markov decision process & Ch.~11, 12, 17 \\
-Natural language processing & Extracting sentiment or information from text & Ch.~14 \\
-Anomaly detection & Flagging unusual transactions or account behavior & Ch.~13 \\
-Multi-agent simulation & Modeling how many simple, interacting participants jointly produce market-wide bubbles, crashes, or contagion & Ch.~18 \\
+Distribution and tail estimation & Estimating a loss distribution and its far-tail quantiles: market VaR, operational-loss capital, insurance pricing and solvency & Ch.~8, 10, 11 \\
+Optimization & Constructing a portfolio subject to risk and constraint limits & Ch.~12 \\
+Clustering / dimensionality reduction & Grouping similar firms or compressing a large factor set into a few drivers & Ch.~6, 7, 12, 17 \\
+Sequential decision-making & Executing a trade over time to minimize impact, formalized as a Markov decision process & Ch.~13, 14, 19 \\
+Natural language processing & Extracting sentiment or information from text & Ch.~16 \\
+Anomaly detection & Flagging unusual transactions, account behavior, operational near-misses, or implausible insurance claims and coding patterns & Ch.~10, 11, 15, 17 \\
+Explainability and fairness auditing & Explaining an individual model decision and testing a model for disparate impact & Ch.~18, 21 \\
+Multi-agent simulation & Modeling how many simple, interacting participants jointly produce market-wide bubbles, crashes, or contagion & Ch.~20 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Two things stand out from this taxonomy. First, several finance problems map onto more than one machine learning task type, portfolio construction, for example, is fundamentally an optimization problem but often uses regression or dimensionality reduction as an input, which is why later chapters frequently combine methods from Chapter 6 with domain-specific structure. Second, some columns of Table~\ref{tab:problem_taxonomy} recur across many chapters (classification appears in credit, trading, and fraud contexts) precisely because the underlying statistical machinery, introduced once in Chapter 6, is reused throughout the rest of the book rather than re-derived for each application. Third, the table's last row is a genuine outlier among the others: every other row asks a model to predict, classify, or optimize on behalf of a single decision-maker, while multi-agent simulation instead asks what emerges when many simple decision-makers interact, a distinction Chapter 18 develops in full.
+Two things stand out from this taxonomy. First, several finance problems map onto more than one machine learning task type, portfolio construction, for example, is fundamentally an optimization problem but often uses regression or dimensionality reduction as an input, which is why later chapters frequently combine methods from Chapter 6 with domain-specific structure. Second, some columns of Table~\ref{tab:problem_taxonomy} recur across many chapters (classification appears in credit, trading, and fraud contexts) precisely because the underlying statistical machinery, introduced once in Chapter 6, is reused throughout the rest of the book rather than re-derived for each application. Third, the table's last row is a genuine outlier among the others: every other row asks a model to predict, classify, or optimize on behalf of a single decision-maker, while multi-agent simulation instead asks what emerges when many simple decision-makers interact, a distinction Chapter 20 develops in full.
 
-\section{How This Book Is Organized}\index{How This Book Is Organized}
+\section{How This Book Is Organized}
 
 This book is designed to introduce finance and AI in a layered way. The early chapters focus on financial foundations so that readers without a background in the subject can build intuition. Later chapters introduce machine learning and statistical methods, followed by applications in areas such as risk management, portfolio management, trading, and compliance.
 
-The progression is deliberate. The book begins with the basic language of finance, then moves to the mathematical tools used to analyze financial data. After that, it introduces classical financial models, such as portfolio theory and credit risk models, before extending them with modern AI techniques. This structure is intended to help readers build intuition first and then connect that intuition to more advanced methods.
+The progression is deliberate. The book begins with the basic language of finance, then moves to the mathematical tools used to analyze financial data. After that, it introduces classical financial models, such as portfolio theory, credit risk, operational-loss models, and actuarial pricing, before extending them with modern AI techniques. This structure is intended to help readers build intuition first and then connect that intuition to more advanced methods.
 
 The structure of the book is intentionally progressive. It begins by introducing financial concepts in plain language, then develops the mathematical and statistical tools needed to analyze them, before turning to classical financial models and finally to AI-based extensions. This sequence allows readers to understand the economic logic of a problem before applying more advanced methods to it. Practical case studies and exercises are woven throughout so that the reader can connect theory with application and see how these ideas behave in realistic settings.
 
@@ -359,7 +363,7 @@ A compact summary of the book's conceptual flow is shown in Figure~\ref{fig:book
 
 \section{Notation and Conventions Used in This Book}
 
-Before turning to this chapter's first substantive financial topic, it is worth pausing for a short, purely reference section: a few notational conventions are used consistently across chapters, and stating them once here avoids repetition later. Random variables and their realizations are both written in italics (for example, $X$ or $x$), with the distinction clear from context. A hat denotes an estimate, so $\hat\beta$ is an estimated coefficient and $\hat y$ is a predicted value, as opposed to $\beta$ and $y$, which denote the true, generally unobserved, parameter and outcome. Vectors and matrices are written in bold only where the distinction from scalars is not otherwise clear from context, and $\|\cdot\|$ denotes the Euclidean norm. Time subscripts are written as $X_t$, with $t-1$ denoting the immediately preceding period, and 
+Before turning to this chapter's first substantive financial topic, it is worth pausing for a short, purely reference section: a few notational conventions are used consistently across chapters, and stating them once here avoids repetition later. Random variables and their realizations are both written in italics (for example, $X$ or $x$), with the distinction clear from context. A hat denotes an estimate, so $\hat\beta$ is an estimated coefficient and $\hat y$ is a predicted value, as opposed to $\beta$ and $y$, which denote the true, generally unobserved, parameter and outcome. Vectors and matrices are written in bold only where the distinction from scalars is not otherwise clear from context, and $\|\cdot\|$ denotes the Euclidean norm. Time subscripts are written as $X_t$, with $t-1$ denoting the immediately preceding period, and
 $$\Delta X_t = X_t - X_{t-1}$$
 denoting a first difference.
 
@@ -369,7 +373,7 @@ Each chapter follows the same template: an opening motivation, several sections 
 
 With these conventions out of the way, the chapter turns to its first genuinely financial topic, one that reappears in some form in nearly every chapter that follows: how a firm's operations actually translate into value.
 
-\section{Financial Statements, Cash Flows, and Valuation}\index{Financial Statements, Cash Flows, and Valuation}
+\section{Financial Statements, Cash Flows, and Valuation}
 
 Although much of modern finance is expressed through prices, rates, and stochastic models, the underlying economic reality is often much simpler: firms create value by generating cash flows over time. A company can be profitable on paper and still face financial distress if it does not generate enough cash to meet obligations. For this reason, financial analysis begins with a careful reading of financial statements, especially the balance sheet, the income statement, and the cash flow statement.
 
@@ -388,7 +392,7 @@ In practice, valuation is rarely a purely mechanical exercise. Firms face changi
 
 This point is especially relevant for AI applications in finance. A machine learning model may forecast revenues or defaults with impressive accuracy, but it should not be deployed blindly. The output should be checked against the firm's accounting structure, its debt obligations, and the economic context in which it operates. The best systems therefore combine statistical learning with financial reasoning and careful validation.
 
-\section{Why Finance Is Not Just a Collection of Numbers}\index{Why Finance Is Not Just a Collection of Numbers}
+\section{Why Finance Is Not Just a Collection of Numbers}
 
 A common misconception is that finance is simply the manipulation of numerical data. In reality, finance is about incentives, contracts, and the allocation of resources under uncertainty. The numbers that appear in financial statements or market data are the outcomes of institutional processes. They emerge from decisions about borrowing, investing, pricing, regulation, and risk management.
 
@@ -396,7 +400,7 @@ For this reason, a quantitative analyst should not be satisfied with a high-perf
 
 This is also why financial modeling must be careful about causality. Correlation is not enough. A variable may be associated with future returns or defaults for reasons that do not persist once market conditions change. A sensible finance practitioner therefore tests assumptions, monitors model stability, and remains aware of regime shifts. AI can help discover patterns, but good financial judgment is needed to decide whether those patterns are economically plausible and practically useful.
 
-\section{A Practical Perspective on the Role of AI in Finance}\index{Practical Perspective on the Role of AI in Finance}
+\section{A Practical Perspective on the Role of AI in Finance}
 
 The purpose of AI in finance is not to replace financial expertise. It is to augment it. AI methods can process large and complex data sources, detect nonlinear patterns, and automate tasks that would be too time-consuming for humans. However, the usefulness of these methods depends on the quality of the problem formulation. A poorly defined objective can lead to a model that looks sophisticated but produces poor decisions.
 
@@ -404,10 +408,10 @@ Consider the example of credit scoring. A bank may want to estimate the probabil
 
 The same principle applies to portfolio construction, fraud detection, and market forecasting. The rational use of AI in finance requires an appreciation of uncertainty, costs, and incentives. It also requires humility. Even sophisticated models can fail when the environment changes, when data quality is poor, or when market participants adapt to the model itself.
 
-This augmentation-not-replacement view also has organizational consequences that are easy to overlook in a purely technical treatment. Deploying an AI system in a financial institution typically requires sign-off from risk management, compliance, and sometimes a model validation team whose job is specifically to challenge the model before it is used with real capital or real customers, a process often called model risk management\index{model risk management}. A model that cannot be explained to these stakeholders, regardless of its statistical performance, is often not deployable at all, which is part of why Chapter 16 treats explainability as a first-class technical requirement rather than an afterthought.
+This augmentation-not-replacement view also has organizational consequences that are easy to overlook in a purely technical treatment. Deploying an AI system in a financial institution typically requires sign-off from risk management, compliance, and sometimes a model validation team whose job is specifically to challenge the model before it is used with real capital or real customers, a process often called model risk management\index{model risk management}. A model that cannot be explained to these stakeholders, regardless of its statistical performance, is often not deployable at all, which is part of why Chapter 18 treats explainability as a first-class technical requirement rather than an afterthought.
 Readers coming from a pure machine learning background sometimes find this institutional layer frustrating, since it can slow down the deployment of a model that performs well in backtesting. It is best understood, however, as a reflection of the fact that a financial model's errors are rarely private: a mispriced loan, a bad trade, or a missed fraud case can affect customers, counterparties, and, in aggregate, the stability of the financial system as a whole, which is precisely why financial AI is regulated more heavily than AI applied to, say, recommending movies.
 
-\section{Connecting the Foundations to Later Chapters}\index{Connecting the Foundations to Later Chapters}
+\section{Connecting the Foundations to Later Chapters}
 
 The ideas introduced in this chapter provide the conceptual foundation for the more technical material that follows. Once the reader understands why markets exist, how assets are valued, and what kinds of institutions shape financial decisions, the later chapters on statistics, risk, trading, and machine learning will be easier to appreciate. The central theme is that financial problems are not just mathematical problems. They are problems of economic reasoning under conditions of uncertainty, constraints, and strategic behavior.
 This perspective is essential for anyone who wants to work at the intersection of finance and AI. A successful practitioner must be able to translate a financial question into a statistical problem, then translate the output of a model back into a financial decision. That translation requires both technical skill and financial intuition.
@@ -415,7 +419,7 @@ This perspective is essential for anyone who wants to work at the intersection o
 \begin{figure}[htbp]
 \centering
 \begin{lrbox}{\bookmeasuredbox}
-    \begin{tikzpicture}[>=latex,thick,node distance=2.0cm]
+    \begin{tikzpicture}[>=latex,thick,node distance=0.9cm]
         \node[draw,rounded corners,minimum width=3.0cm,minimum height=0.9cm,align=center] (finance) {Financial\ Foundations};
         \node[draw,rounded corners,minimum width=3.0cm,minimum height=0.9cm,right=of finance,align=center] (stats) {Statistical\ Methods};
         \node[draw,rounded corners,minimum width=3.0cm,minimum height=0.9cm,right=of stats,align=center] (ai) {AI and\ Applications};
@@ -436,7 +440,7 @@ This perspective is essential for anyone who wants to work at the intersection o
 }
 \end{figure}
 
-\section{Finance as a System of Incentives and Information}\index{Finance as a System of Incentives and Information}
+\section{Finance as a System of Incentives and Information}
 
 Section 1.11 made this point at the level of a single model: a statistical pattern is only meaningful once it has an economic explanation. This section develops the same idea one level up, at the level of an entire market rather than a single model, since the incentives shaping how data are generated are themselves worth naming directly. A manager may be rewarded for short-term earnings growth even when that growth is not sustainable. A lender may extend credit to a borrower who appears safe in normal conditions but becomes fragile when conditions deteriorate. A regulator may face pressure to support market confidence even when this increases moral hazard. These examples show that finance is deeply intertwined with human behavior and institutional design.
 
@@ -449,7 +453,7 @@ The models were not statistically wrong in a narrow sense; they were estimated c
 
 A second, smaller-scale illustration is the phenomenon of Goodhart's Law\index{Goodhart's Law}, often summarized as ``when a measure becomes a target, it ceases to be a good measure.'' A credit score, for example, is originally a statistical summary that correlates with creditworthiness. But once borrowers and lenders both know that a specific numerical threshold controls loan approval or pricing, some participants will alter their behavior specifically to cross that threshold, for reasons that may or may not reflect a genuine change in creditworthiness. This is a direct example of the reflexivity theme introduced in Chapter 6: unlike a model of a physical system, a financial model's targets can adapt to the existence of the model itself, which is one more reason financial AI systems require ongoing monitoring rather than a one-time validation.
 
-\section{Uncertainty, Probability, and Decision-Making}\index{Uncertainty, Probability, and Decision-Making}
+\section{Uncertainty, Probability, and Decision-Making}
 
 Finance is fundamentally about decisions under uncertainty. A lender does not know with certainty whether a borrower will repay. An investor does not know whether an asset price will rise or fall. A firm does not know whether a new project will be profitable. The relevant question is not whether uncertainty can be eliminated, because it usually cannot. The relevant question is how decision-makers should act when outcomes are uncertain and when the costs of being wrong are not symmetric.
 
@@ -479,7 +483,7 @@ The certainty equivalent wealth $CE$ solves $u(CE) = \mathbb{E}[u(W)]$, that is,
 \begin{equation*}
 \text{Risk premium} = \$55{,}000 - \$53{,}957.51 \approx \$1{,}042.49,
 \end{equation*}
-which has a direct interpretation: this investor would accept a guaranteed $\$53{,}957.51$ in place of the gamble, meaning they would pay up to $\$1{,}042.49$ to avoid the gamble's uncertainty entirely, even though the gamble's expected wealth is higher. This same logic, comparing an uncertain payoff to its certainty equivalent, underlies the pricing of insurance, the equity risk premium, and the risk-return tradeoff introduced earlier in this chapter, and it reappears in a more technical form as the reason a risk-averse portfolio manager accepts a lower expected return in exchange for lower volatility in the mean-variance framework of Chapter 10.
+which has a direct interpretation: this investor would accept a guaranteed $\$53{,}957.51$ in place of the gamble, meaning they would pay up to $\$1{,}042.49$ to avoid the gamble's uncertainty entirely, even though the gamble's expected wealth is higher. This same logic, comparing an uncertain payoff to its certainty equivalent, underlies the pricing of insurance, the equity risk premium, and the risk-return tradeoff introduced earlier in this chapter, and it reappears in a more technical form as the reason a risk-averse portfolio manager accepts a lower expected return in exchange for lower volatility in the mean-variance framework of Chapter 12.
 
 \subsection*{The Kelly Criterion: How Much to Bet, Not Just Whether}\index{Kelly criterion}
 
@@ -500,7 +504,7 @@ g(0.2) \approx 0.0201, \qquad g(0.5) \approx -0.0340, \qquad g(1.0) = -\infty,
 \end{equation*}
 shows that wagering half of wealth on every repetition, despite each individual bet still having positive expected value, produces a \emph{negative} long-run growth rate: an investor following this rule is mathematically certain to see their wealth decay toward zero over enough repetitions, not merely experience higher volatility around a still-positive trend.
 
-Wagering everything each time ($f=1$) is worse still, guaranteed eventual ruin, since a single loss (probability $q=0.4$ on any given bet, and probability 1 eventually across enough repetitions) wipes out the entire stake with nothing left to bet with afterward. This is a sharper, more quantitative version of the risk-aversion lesson above: a decision-maker who evaluates only a single bet's expected value, without asking how large a fraction of wealth to commit to it when it repeats, can be led toward a sizing decision that is not just uncomfortable but ruinous, exactly the kind of position-sizing discipline that resurfaces, in a portfolio context rather than a single repeated bet, in Chapter 10's discussion of leverage and Chapter 11's execution-sizing decisions.
+Wagering everything each time ($f=1$) is worse still, guaranteed eventual ruin, since a single loss (probability $q=0.4$ on any given bet, and probability 1 eventually across enough repetitions) wipes out the entire stake with nothing left to bet with afterward. This is a sharper, more quantitative version of the risk-aversion lesson above: a decision-maker who evaluates only a single bet's expected value, without asking how large a fraction of wealth to commit to it when it repeats, can be led toward a sizing decision that is not just uncomfortable but ruinous, exactly the kind of position-sizing discipline that resurfaces, in a portfolio context rather than a single repeated bet, in Chapter 12's discussion of leverage and Chapter 13's execution-sizing decisions.
 
 \subsection*{The Value of Information: What Is a Perfect Signal Worth?}\index{Value of information}
 
@@ -520,7 +524,7 @@ since the \$2 million loss is avoided entirely in the $60\%$ of cases where fail
 \end{equation*}
 the absolute maximum a rational firm should be willing to pay for a perfectly accurate signal before deciding, since paying any more would make consulting the forecaster worse than simply proceeding blind. In practice, no real forecast, credit model, or market signal is perfectly accurate, so EVPI is best understood as an upper bound: it answers ``how much could better information possibly be worth here,'' a question worth asking explicitly before investing in additional data, a more sophisticated model, or a costly due-diligence process, exactly the kind of cost-benefit judgment call that recurs, applied to specific data vendors and model types, throughout this book's later chapters.
 
-\section{Bayesian Updating: Learning from New Information}\index{Bayesian Updating: Learning from New Information}
+\section{Bayesian Updating: Learning from New Information}
 
 A closely related idea, and one that underlies how many machine learning systems in this book are best interpreted, is that beliefs about an uncertain quantity should be updated, not replaced, as new evidence arrives. Bayes' theorem\index{Bayes' theorem} formalizes this:
 \begin{equation*}
@@ -528,7 +532,7 @@ A closely related idea, and one that underlies how many machine learning systems
 \end{equation*}
 where $\Pr(A)$ is the prior probability of some hypothesis $A$ before seeing evidence $B$, $\Pr(B\mid A)$ is the likelihood of observing that evidence if $A$ is true, and $\Pr(A\mid B)$ is the posterior probability of $A$ after accounting for the evidence.
 
-A concrete example, directly relevant to the fraud detection material in Chapter 13, shows why this matters. Suppose 1\% of transactions at a bank are fraudulent, so $\Pr(\text{Fraud}) = 0.01$. A fraud detection model correctly flags 95\% of actual fraud, $\Pr(\text{Flag}\mid\text{Fraud}) = 0.95$, but also flags 3\% of legitimate transactions, $\Pr(\text{Flag}\mid\text{Not Fraud}) = 0.03$. Given that a transaction has been flagged, what is the probability it is actually fraudulent? Applying Bayes' theorem,
+A concrete example, directly relevant to the fraud detection material in Chapter 15, shows why this matters. Suppose 1\% of transactions at a bank are fraudulent, so $\Pr(\text{Fraud}) = 0.01$. A fraud detection model correctly flags 95\% of actual fraud, $\Pr(\text{Flag}\mid\text{Fraud}) = 0.95$, but also flags 3\% of legitimate transactions, $\Pr(\text{Flag}\mid\text{Not Fraud}) = 0.03$. Given that a transaction has been flagged, what is the probability it is actually fraudulent? Applying Bayes' theorem,
 \begin{eqnarray*}
 \Pr(\text{Flag}) &=& \Pr(\text{Flag}\mid\text{Fraud})\Pr(\text{Fraud}) + \Pr(\text{Flag}\mid\text{Not Fraud})\Pr(\text{Not Fraud})\\
 & =& 0.95(0.01) + 0.03(0.99) \\
@@ -544,7 +548,7 @@ The ``posterior becomes the next prior'' idea is easiest to see by continuing th
 \Pr(\text{Location}) &=& 0.6(0.242) + 0.1(1-0.242) = 0.221, \\
 \Pr(\text{Fraud}\mid\text{Flag},\text{Location}) &=& \frac{0.6(0.242)}{0.221} \approx 0.657.
 \end{eqnarray*}
-Two independent pieces of weak-to-moderate evidence, an automated flag and an unusual location, combine to raise the probability of fraud from a 1\% base rate to roughly 66\%, each update using exactly the same formula with the previous posterior in place of the original prior. Figure~\ref{fig:bayesian_chain} lays out this chain of updates directly. This is precisely how a production fraud system in Chapter 13 accumulates evidence from several independent model outputs before deciding whether a transaction warrants manual review, and it is why an ensemble of several weak signals, evaluated one Bayesian update at a time, can be more reliable than any single signal considered alone.
+Two independent pieces of weak-to-moderate evidence, an automated flag and an unusual location, combine to raise the probability of fraud from a 1\% base rate to roughly 66\%, each update using exactly the same formula with the previous posterior in place of the original prior. Figure~\ref{fig:bayesian_chain} lays out this chain of updates directly. This is precisely how a production fraud system in Chapter 15 accumulates evidence from several independent model outputs before deciding whether a transaction warrants manual review, and it is why an ensemble of several weak signals, evaluated one Bayesian update at a time, can be more reliable than any single signal considered alone.
 
 \begin{figure}[htbp]
 \centering
@@ -570,7 +574,7 @@ Two independent pieces of weak-to-moderate evidence, an automated flag and an un
 }
 \end{figure}
 
-\section{Why Models Must Be Interpreted, Not Worshipped}\index{Why Models Must Be Interpreted, Not Worshipped}
+\section{Why Models Must Be Interpreted, Not Worshipped}
 
 A common temptation in finance is to trust a model too much simply because it is sophisticated or produces attractive historical results. Such overconfidence is dangerous. A model can be mathematically elegant and still be economically misleading. A stock prediction model may perform well for a while and then fail when market conditions change. A credit model may appear accurate in a stable period and become unstable during a recession. A fraud model may detect obvious anomalies but miss subtle forms of misconduct that change over time.
 
@@ -590,7 +594,7 @@ Before moving into the technical chapters, it is worth naming, at a high level, 
 
 \textbf{Overfitting\index{overfitting} and backtest illusions.} Because financial data are limited relative to the number of strategies and features that can be tried, it is easy to find a pattern that worked well in history purely by chance. A strategy that looks excellent in a backtest can perform poorly, or lose money, once deployed with real capital.
 
-\textbf{Interpretability and accountability.} Many financial decisions, particularly credit and insurance decisions, are subject to legal requirements that they be explainable and non-discriminatory. This constrains how opaque a model can be, regardless of its statistical performance, and is examined in depth in Chapter 16.
+\textbf{Interpretability and accountability.} Many financial decisions, particularly credit and insurance decisions, are subject to legal requirements that they be explainable and non-discriminatory. This constrains how opaque a model can be, regardless of its statistical performance, and is examined in depth in Chapter 18.
 
 \textbf{Operational and execution frictions.} A model's statistical output is not the same as a financial outcome. Transaction costs, market impact\index{market impact}, latency, and operational failures can all erode or eliminate a theoretical edge, which is why economic evaluation, not just statistical evaluation, is emphasized throughout this book.
 
@@ -598,15 +602,15 @@ Before moving into the technical chapters, it is worth naming, at a high level, 
 
 These are not reasons to avoid AI in finance. They are reasons to apply it carefully, with an understanding of financial institutions, incentives, and market structure alongside statistical skill, which is precisely the combination this book aims to build.
 
-\section{Case Vignette: How Classical Finance and AI Combine in Practice}\index{How Classical Finance and AI Combine in Practice}
+\section{Case Vignette: How Classical Finance and AI Combine in Practice}
 
 To make the abstract themes of this chapter concrete, consider a stylized (fictional) example that previews how the pieces of this book fit together. Suppose a mid-sized asset manager wants to build a systematic equity strategy that selects stocks likely to outperform over the coming quarter.
 
 The manager does not start with machine learning. The process begins with the financial statement analysis of Chapter 4: screening a universe of firms on fundamentals such as profitability, leverage, and cash generation, discarding firms with clear signs of financial distress before any prediction model is involved. This step encodes economic reasoning, distress and financial weakness are meaningful even before considering whether a stock's price is likely to rise, that a purely data-driven model applied to raw price history would not automatically discover.
 
-Next, the manager builds a predictive model, using the regression and classification tools of Chapter 6, to rank the remaining firms by expected relative performance. The model's features draw on several of the data types catalogued in Table~\ref{tab:data_types}: fundamental ratios from the statement-screening step, momentum and volatility measures computed from the time series methods of Chapter 7, and, increasingly, sentiment scores extracted from earnings-call transcripts using the natural language processing methods of Chapter 14. Critically, the model is evaluated with the walk-forward methodology described later in this book, not a random train-test split, since a random split would let the model see information from the future relative to some of its training data.
+Next, the manager builds a predictive model, using the regression and classification tools of Chapter 6, to rank the remaining firms by expected relative performance. The model's features draw on several of the data types catalogued in Table~\ref{tab:data_types}: fundamental ratios from the statement-screening step, momentum and volatility measures computed from the time series methods of Chapter 7, and, increasingly, sentiment scores extracted from earnings-call transcripts using the natural language processing methods of Chapter 16. Critically, the model is evaluated with the walk-forward methodology described later in this book, not a random train-test split, since a random split would let the model see information from the future relative to some of its training data.
 
-The ranked predictions then become an input to portfolio construction, not the final answer. Chapter 10's mean-variance and factor-based methods convert a raw ranking into a set of position sizes that respect diversification, risk limits, and transaction cost constraints, since the highest-ranked stock in isolation might be too risky, too illiquid, or too correlated with the rest of the portfolio to hold at a large weight. Finally, before any trade is placed, the execution considerations of Chapter 11 determine how to actually buy and sell the resulting positions without moving prices adversely, and the risk models of Chapter 8 continuously monitor whether the realized portfolio is behaving as expected.
+The ranked predictions then become an input to portfolio construction, not the final answer. Chapter 12's mean-variance and factor-based methods convert a raw ranking into a set of position sizes that respect diversification, risk limits, and transaction cost constraints, since the highest-ranked stock in isolation might be too risky, too illiquid, or too correlated with the rest of the portfolio to hold at a large weight. Finally, before any trade is placed, the execution considerations of Chapter 13 determine how to actually buy and sell the resulting positions without moving prices adversely, and the risk models of Chapter 8 continuously monitor whether the realized portfolio is behaving as expected.
 
 At every step in this vignette, a classical financial concept, distress screening, portfolio diversification, transaction costs, sits alongside a modern statistical or machine learning method, and neither one is sufficient on its own: the machine learning ranking without financial screening risks recommending distressed firms with temporarily attractive statistical patterns, while financial screening without machine learning would leave the manager unable to process the scale of fundamental, price, and text data available. This interleaving of classical and modern methods, not the replacement of one by the other, is the organizing principle of every applied chapter that follows.
 
@@ -617,7 +621,7 @@ The key lesson of this chapter is that finance is a domain in which data, uncert
 Several more specific points from this chapter are worth carrying forward explicitly. The history in Section 1.2 showed that today's machine learning methods extend, rather than replace, decades of classical quantitative finance, which is why nearly every applied chapter in this book pairs a classical model with a modern one instead of presenting the modern method alone.
 The data ecosystem in Section 1.5 previewed the range of data types, market, fundamental, macroeconomic, credit, text, and alternative, that later chapters draw on, each with its own quality issues.
 The numerical examples in this chapter, compounding in Table~\ref{tab:tvm_table}, the gamble and certainty equivalent, and the fraud-detection application of Bayes' theorem, were chosen because each illustrates a principle (nonlinearity of compounding, risk aversion, and the danger of ignoring base rates) that reappears in a more technical form in a later chapter.
-Finally, the case vignette in Section 1.19 is worth revisiting after finishing the book: a reader who initially finds the asset-management example abstract should be able to return to it once Chapters 4, 6, 7, 8, 10, 11, and 14 have been covered and see exactly how each step would be implemented in practice.
+Finally, the case vignette in Section 1.19 is worth revisiting after finishing the book: a reader who initially finds the asset-management example abstract should be able to return to it once Chapters 4, 6, 7, 8, 12, 13, and 16 have been covered and see exactly how each step would be implemented in practice.
 
 \section{Suggested Exercises}
 
@@ -647,10 +651,10 @@ For readers who want to deepen their understanding of the financial ideas introd
 \begin{itemize}
     \item Brealey, Myers, and Allen, \emph{Principles of Corporate Finance}. A comprehensive introduction to corporate financial decision-making, including the time-value-of-money and valuation ideas this chapter introduces at a conceptual level and Chapter 5 develops formally.
     \item Hull, \emph{Options, Futures, and Other Derivatives}. The standard reference for derivatives pricing; useful background for the brief history of Black-Scholes-Merton option pricing sketched in this chapter's timeline and covered in full in Chapter 5.
-    \item Bodie, Kane, and Marcus, \emph{Investments}. Covers portfolio theory, market efficiency, and the risk-return tradeoff introduced qualitatively in this chapter, previewing the quantitative treatment in Chapter 10.
+    \item Bodie, Kane, and Marcus, \emph{Investments}. Covers portfolio theory, market efficiency, and the risk-return tradeoff introduced qualitatively in this chapter, previewing the quantitative treatment in Chapter 12.
     \item Campbell, Lo, and MacKinlay, \emph{The Econometrics of Financial Markets}. A rigorous treatment of the statistical methods used to test market efficiency and analyze financial time series, going well beyond this chapter's introductory discussion.
-    \item Goodfellow, Bengio, and Courville, \emph{Deep Learning}. The standard reference for the deep learning methods behind the large language model and unstructured-data applications previewed in this chapter's history section and covered in Chapters 14 and 15.
-    \item Chan, \emph{Machine Trading}. A practitioner-oriented introduction to building and testing systematic trading strategies, extending the case vignette in this chapter into the algorithmic trading material of Chapters 11 and 12.
+    \item Goodfellow, Bengio, and Courville, \emph{Deep Learning}. The standard reference for the deep learning methods behind the large language model and unstructured-data applications previewed in this chapter's history section and covered in Chapters 16 and 17.
+    \item Chan, \emph{Machine Trading}. A practitioner-oriented introduction to building and testing systematic trading strategies, extending the case vignette in this chapter into the algorithmic trading material of Chapters 13 and 14.
 \end{itemize}
 
 These references cover foundational finance, asset pricing, and the use of quantitative methods in financial applications.

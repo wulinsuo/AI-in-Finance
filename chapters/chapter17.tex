@@ -1,7 +1,7 @@
 \documentclass[../ai_in_finance]{subfiles}
 \usepackage[margin=1in]{geometry}
 \usepackage{tikz}
-\usetikzlibrary{positioning}
+\usetikzlibrary{positioning,matrix,fit}
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{booktabs}
@@ -18,447 +18,110 @@
 
 \begin{document}
 
-\chapter{Reinforcement Learning in Finance}
+\chapter{Alternative Data and Deep Learning in Finance}
 
 \section{Introduction}
 
-Every model built so far in this book, however sophisticated, has answered a single question once. Chapter 6's classifiers predict 
-a label from a feature vector; Chapter 9's credit models predict a default probability; Chapter 11's 
-Almgren-Chriss\index{Almgren-Chriss Model} trajectory prescribes an entire trading schedule, but it does so by solving one
- optimization problem in advance and then executing the resulting plan. None of these approaches change their answer in 
- response to how the world actually responds to the decisions already made.
+Chapter 1 introduced a table of the major categories of financial data this book draws on, and set aside one row, alternative data, non-traditional sources such as satellite imagery, web traffic, or shipping data that proxy for economic activity, for this chapter. Chapter 3 noted that large asset managers already parse filings and calls faster than human analysts; this chapter turns to data sources that did not exist, in usable form, a generation ago, and to the deep learning architectures built to extract signal from them. Chapter 4 observed that alternative data can supplement the delayed, discretionary numbers in financial statements; Chapter 6 introduced the feedforward neural network and its forward pass; Chapter 16 developed the transformer architecture\index{transformer architecture} for text. This chapter extends the neural network toolkit to two more data shapes, grid-structured images and ordered sequences, and works through the full pipeline from raw alternative data to a usable financial signal, while treating the biases specific to this kind of data as a first-class topic rather than an afterthought.
 
-A portfolio manager, a market maker, and a trading desk do not operate this way: they observe an outcome, update their beliefs, 
-and choose their next action accordingly, over and over, for as long as the position stays open. Reinforcement 
-learning\index{Reinforcement Learning} is the branch of machine learning built specifically for this setting, 
-sequential decision-making under uncertainty, where an agent's own actions influence the future states it will face, 
-and where the right action today depends on the consequences it sets up for tomorrow, not only on today's immediate reward.
+Thirteen worked examples run through the chapter, each computed in Python first and reproduced exactly in the companion notebook: a subscription cost-benefit calculation weighing a data vendor's licensing cost against the expected trading edge it buys; a simple regression of a retailer's revenue growth on a satellite-derived parking-lot car-count proxy; a multi-source regression that combines that satellite proxy with web-traffic and card-transaction growth into an earnings-surprise signal, evaluated the way Chapter 13 evaluates any trading strategy; a direct comparison of that signal built the naive way versus the way that respects real-world data-delivery lag; a peer-relative normalization of the same satellite proxy against a sector benchmark. A hand-computed two-dimensional convolution over a stylized satellite image patch; a hand-computed recurrent neural network\index{recurrent neural network (RNN)} forward pass over a short sequence of web-traffic readings; a hand-computed autoencoder\index{autoencoder} reconstruction used to flag a data-quality anomaly; a Loughran-McDonald tone score built directly from a company's own risk-factor disclosures, illustrating both the appeal and the limits of building an ESG-style signal in-house rather than buying one; and, going a level deeper still, a transfer-learning fine-tuning step, a graph neural network\index{graph neural network (GNN)} update over a shell-company network, a cross-attention fusion of three data modalities into one representation, and a contrastive-pretraining probability calculation showing how a labeled-data-free encoder learns to tell same-image crops apart from different-image crops.
 
-This chapter formalizes that setting, the Markov decision process\index{Markov Decision Process (MDP)}, and develops the two families of algorithms built to solve it: value-based methods, culminating in Q-learning\index{Q-Learning} and its neural-network extension, and policy-based methods, culminating in the policy-gradient\index{Policy Gradient} algorithms that power most modern applications. Rather than introducing these ideas in the abstract and only later connecting them to finance, this chapter builds directly on machinery this book has already developed: Chapter 5's binomial-tree early-exercise decision, Chapter 10's portfolio rebalancing problem, and Chapter 11's optimal-execution and market-making models are all, on inspection, special cases of the general sequential-decision problem this chapter formalizes, ones simple enough that a closed-form or backward-induction solution exists. Reinforcement learning is what a practitioner reaches for once the problem is still sequential but no longer simple enough for a closed form, a genuinely common situation once market impact, transaction costs, and a client's actual risk preferences no longer fit the clean functional forms those earlier chapters assumed.
+This chapter's structure mirrors the arc of a real alternative-data project, and is worth previewing before working through the details. It begins where any such project begins, deciding what alternative data even is and how a fund acquires and evaluates it (Sections~\ref{sec:alt-data-sources} and~\ref{sec:vendor-ecosystem}), before turning to the analytics itself: a single-source regression, a multi-source signal, the point-in-time discipline that keeps that signal honest, and the seasonal and peer-relative adjustments that make raw readings usable in the first place (Sections~\ref{sec:satellite-example} through~\ref{sec:altdata-feature-engineering}).
 
-The chapter's central worked example makes this connection concrete rather than asserting it: it reframes Chapter 5's American put early-exercise decision as a three-state Markov decision process, solves it with model-free Q-learning instead of backward induction, and shows the learned answer converges to the same value the tree already established, a small, fully verifiable proof that reinforcement learning recovers a known-correct answer before this chapter asks the reader to trust it on problems that have no closed form at all.
+It then turns to the deep learning architectures that extract features from raw images and sequences rather than from a vendor's already-processed number (Section~\ref{sec:nn-structured-unstructured}), the data-quality and governance problems specific to this kind of data (Section~\ref{sec:alt-data-quality}), a worked example on building an ESG-style text signal in-house as a partial, auditable response to those same governance problems (Section~\ref{sec:esg-text-signal}), and a set of more advanced architectures, transfer learning, graph neural networks, cross-attention fusion, and contrastive pretraining, that represent where the field is moving beyond the basics (Section~\ref{sec:advanced-altdata}). A real-world case vignette and a closing set of challenges tie the chapter's techniques back to the genuine economic and regulatory stakes of using data that, in most cases, did not exist in usable form before this decade.
 
-The chapter proceeds in three stages. Sections~\ref{sec:rl-framework} through~\ref{sec:rl-taxonomy} build the general Markov decision process framework, the Bellman equation, and the vocabulary, model-based versus model-free, on-policy versus off-policy, needed to place every algorithm that follows. Sections~\ref{sec:rl-qlearning} through~\ref{sec:policy-gradient} develop the algorithms themselves, starting with the fully verifiable tabular Q-learning worked example and building up to deep Q-networks and policy-gradient methods for problems too large for a table. The remaining sections turn to application and honest assessment: optimal execution, market making, and portfolio management (Sections~\ref{sec:rl-execution} through~\ref{sec:rl-multiagent}), a real industry case study (Section~\ref{sec:loxm}), and the evaluation methodology and risks (Sections~\ref{sec:rl-evaluation} and~\ref{sec:rl-challenges}) that separate a reinforcement-learning system that is merely impressive in a backtest from one that is actually safe to deploy with real capital.
+\section{What Counts as Alternative Data}
+\label{sec:alt-data-sources}
 
-\section{The Reinforcement Learning Framework: States, Actions, Rewards, and Policies}\index{Reinforcement Learning Framework}
-\label{sec:rl-framework}
+Suppose a hedge fund wants to know how a retailer's holiday-quarter sales are trending three months before the retailer itself reports earnings, information that would be extremely valuable if the fund could act on it early and worthless the moment everyone else has it too. Traditional market, fundamental, and macroeconomic data (Chapter 1's Table 1.6) cannot answer this: market data only reflects what the market already knows, and fundamental data about this quarter will not exist until the retailer files it.
 
-Consider a market maker deciding, moment by moment, how to skew its bid and ask quotes as its inventory evolves, or a trader deciding how many shares of a large order to release this minute versus holding back for a better price later: in both cases, today's decision changes tomorrow's starting position, so the two decisions cannot be solved separately, one at a time, the way most of the models in Chapters 10 and 11 do. A reinforcement learning problem is formalized as a Markov decision process, a tuple $(\mathcal{S}, \mathcal{A}, P, R, \gamma)$, precisely to capture this kind of interlocking, path-dependent decision problem.
-
-At each discrete time step $t$, an \textbf{agent} observes a \textbf{state} $s_t \in \mathcal{S}$, a summary of everything about the environment relevant to the decision at hand (a market maker's current inventory and the prevailing bid-ask spread; a trading agent's remaining order size and elapsed time; a portfolio manager's current holdings and estimated risk factors). The agent selects an \textbf{action} $a_t \in \mathcal{A}$ (post a quote at a given skew; sell a given number of shares this period; rebalance toward a given target weight) according to a \textbf{policy} $\pi(a \mid s)$, a mapping, possibly stochastic, from states to actions.
-
-The environment then transitions to a new state $s_{t+1}$ according to a transition function $P(s_{t+1} \mid s_t, a_t)$ and returns a scalar \textbf{reward} $r_{t+1}$ (realized profit and loss net of costs; a small quadratic risk penalty; an exercise payoff), governed by a reward function $R(s_t, a_t, s_{t+1})$. Figure~\ref{fig:rl_loop} depicts this loop; it repeats until the episode ends, either at a fixed horizon (the market closes, the order is fully executed) or when the agent reaches an absorbing state (a position is liquidated, an option is exercised).
-
-\begin{figure}[htbp]
-\centering
-\begin{lrbox}{\bookmeasuredbox}
-    \begin{tikzpicture}[thick,node distance=3.4cm]
-        \node[draw,rounded corners,minimum width=3.2cm,minimum height=1.4cm,align=center] (agent) {Agent\\(policy $\pi$)};
-        \node[draw,rounded corners,minimum width=3.2cm,minimum height=1.4cm,align=center,right=of agent] (env) {Environment\\(market)};
-        \draw[->] ([yshift=0.35cm]agent.east) -- node[above,font=\small,yshift=1pt]{action $a_t$} ([yshift=0.35cm]env.west);
-        \draw[->] ([yshift=-0.35cm]env.west) -- node[below,font=\small,yshift=-1pt]{state $s_{t+1}$, reward $r_{t+1}$} ([yshift=-0.35cm]agent.east);
-    \end{tikzpicture}
-\end{lrbox}
-\ifdim\wd\bookmeasuredbox<0.65\linewidth
-\setlength{\bookcapwidth}{0.65\linewidth}
-\else
-\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
-\fi
-\ffigbox[\bookcapwidth]{
-\usebox{\bookmeasuredbox}
-}{
-    \caption{The reinforcement learning loop.}
-    \label{fig:rl_loop}
-}
-\end{figure}
-
-The word ``Markov'' in Markov decision process is a precise mathematical assumption, not a figure of speech: it requires that $P(s_{t+1} \mid s_t, a_t)$ and $R(s_t, a_t, s_{t+1})$ depend only on the current state and action, not on the full history that led there. This is exactly the assumption behind every stochastic process this book has already used to model prices, from the binomial tree's independent up-and-down moves in Chapter 5 to the random-walk and GARCH innovations of Chapter 7, so it is not a new leap of faith for a reader of this book, only a new name for a familiar structural assumption, now applied to an agent's decisions rather than only to prices themselves. In practice, whether a proposed state representation is genuinely Markovian is itself a design choice: a market maker's state that includes only the current mid-price, and not recent order flow, discards information a real market maker would use, which is why Chapter 12's order-flow-imbalance regression and Chapter 11's Kyle's-lambda\index{Kyle Model: A Formal Model of Price Impact} framework are natural sources of state features for a genuinely useful trading agent, not merely of standalone predictive signals.
-
-The agent's goal is to choose a policy that maximizes the expected \textbf{return}, the discounted sum of future rewards,
-\begin{equation*}
-G_t = r_{t+1} + \gamma r_{t+2} + \gamma^2 r_{t+3} + \cdots = \sum_{k=0}^{\infty} \gamma^k r_{t+k+1},
-\end{equation*}
-where the \textbf{discount factor} $\gamma \in [0,1]$ plays a role directly analogous to the discount factor $1/(1+r)$ used everywhere in Chapter 5's valuation formulas: a reward received later is worth less today, both because of the time value of money and, in the reinforcement learning setting, because a reward far in the future is a noisier, harder-to-credit consequence of the current action. A myopic agent with $\gamma = 0$ maximizes only the immediate reward, exactly the one-shot optimization every earlier chapter's models perform; the closer $\gamma$ is to $1$, the more the agent's current choice is shaped by consequences many steps away, which is precisely the additional structure a sequential problem like optimal execution or ongoing portfolio management requires and a one-shot model cannot represent.
-
-\section{From One-Shot Optimization to Sequential Decisions}\index{From One-Shot Optimization to Sequential Decisions}
-\label{sec:rl-bridge}
-
-It is worth being explicit about why the models developed in Chapters 10 and 11 did not need this machinery, since the answer clarifies exactly what reinforcement learning adds. The Almgren-Chriss optimal-execution model (Chapter 11's Section 11.8) assumes a known, fixed functional form for market impact, quadratic in the trade rate, and a known, fixed risk-aversion parameter $\lambda$; given those assumptions, the entire optimal trajectory can be solved in closed form in one step, with no need to learn anything from experience, because the model already specifies exactly how the environment will respond to every possible action. Chapter 11's Avellaneda-Stoikov\index{Avellaneda-Stoikov model} inventory model (Section 11.9) is more genuinely dynamic, the market maker's quotes are recomputed at every instant as inventory and time-to-close evolve, but the update rule is itself a closed-form formula derived from an assumed order-arrival process, not a policy learned from trial and error. Chapter 10's Section 10.10 practical-allocation discussion goes furthest toward acknowledging the sequential nature of real portfolio management, noting that rebalancing decisions recur over time and that transaction costs make each rebalancing decision depend on the portfolio's current position, not only on today's estimated optimal weights, but it stops short of solving that sequential problem directly, instead treating each rebalancing decision as a separate, myopic optimization. Each of these models is exactly right within its assumptions, and each remains the correct tool to reach for whenever those assumptions hold: a known, well-estimated impact function and a well-specified risk-aversion parameter make a closed-form solution both more accurate and vastly cheaper to compute than a learned one.
-
-Reinforcement learning becomes the more appropriate tool precisely when that closed form is unavailable, because the true market-impact function is not well approximated by any simple parametric form, because transaction costs interact with the portfolio's history in ways too complex to solve analytically, or because the reward the agent actually cares about, a client's realized utility net of taxes, fees, and behavioral tolerance for drawdowns, does not reduce cleanly to a quadratic cost function at all. In every one of these harder cases, the underlying problem is still a sequential decision problem exactly as formalized in Section~\ref{sec:rl-framework}; what changes is only that no one can write down $P$ and $R$ in closed form, which rules out the direct optimization Chapters 10 and 11 rely on and motivates learning a good policy from simulated or historical experience instead.
-
-\section{Value Functions and the Bellman Equation}\index{Value Functions and the Bellman Equation}
-\label{sec:bellman}
-
-Suppose two agents follow the exact same policy but happen to start an episode from different states, one with a small, comfortable inventory and one already deep in an overextended position: the policy alone cannot say how much trouble each agent is actually in, only what each plans to do next from wherever it stands. Two functions summarize how good a given state, or state-action pair, is under a policy $\pi$, answering exactly this question: the \textbf{state-value function} $V^\pi(s) = \mathbb{E}_\pi[G_t \mid s_t = s]$, the expected return starting from state $s$ and following $\pi$ thereafter, and the \textbf{action-value function} $Q^\pi(s,a) = \mathbb{E}_\pi[G_t \mid s_t = s, a_t = a]$, the expected return from taking action $a$ in state $s$ and following $\pi$ afterward.
-
-Because the return decomposes into an immediate reward plus a discounted continuation, both functions satisfy a recursive relationship, the \textbf{Bellman equation}\index{Bellman Equation}, named for Richard Bellman's original work on dynamic programming:
-\begin{equation*}
-V^\pi(s) = \sum_a \pi(a \mid s) \sum_{s'} P(s' \mid s, a)\Big[R(s,a,s') + \gamma V^\pi(s')\Big].
-\end{equation*}
-The \textbf{Bellman optimality equation} specializes this to the best possible policy, replacing the expectation over actions with a maximization:
-\begin{equation*}
-Q^*(s,a) = \sum_{s'} P(s' \mid s, a)\Big[R(s,a,s') + \gamma \max_{a'} Q^*(s',a')\Big].
-\end{equation*}
-A reader who worked through Chapter 5's two-step binomial tree (Section 5.9) has already solved a Bellman optimality equation by hand without that name attached to it: at each node, the tree's backward-induction step compares the value of exercising immediately against the discounted expected value of continuing, and takes whichever is larger, exactly the $\max_{a'}$ in the equation above applied to the two actions ``exercise'' and ``hold.'' This is not a loose analogy; Section~\ref{sec:rl-qlearning} makes the correspondence exact by reformulating that identical tree as a Markov decision process and re-deriving the same option value from it. Dynamic programming methods, value iteration and policy iteration, solve the Bellman equation directly whenever $P$ and $R$ are fully known, exactly as Chapter 5's tree does; reinforcement learning's model-free methods, developed next, instead estimate $Q^*$ purely from sampled transitions and rewards, without ever needing $P$ and $R$ written down explicitly, which is the property that makes them applicable to problems, like most real trading and portfolio problems, where no one can specify $P$ and $R$ in closed form to begin with.
-
-\section{A Taxonomy of Reinforcement Learning Methods}\index{Taxonomy of Reinforcement Learning Methods}
-\label{sec:rl-taxonomy}
-
-Two further distinctions organize the wide range of reinforcement learning algorithms in use today, and fixing both precisely now makes it easier to place every method the rest of this chapter introduces. Figure~\ref{fig:rl_method_map} previews where each of them fits before the text below explains why.
-
-\begin{figure}[htbp]
-\centering
-\begin{lrbox}{\bookmeasuredbox}
-    \begin{tikzpicture}[thick,every node/.style={draw,rounded corners,align=center,font=\small},node distance=1.3cm and 0.9cm]
-        \node (root) {Reinforcement Learning};
-        \node[below left=of root,text width=3.1cm] (mb) {\textbf{Model-based}\\Chapter 5's tree: known $P$, $R$, solved by backward induction};
-        \node[below right=of root,text width=3.4cm] (mf) {\textbf{Model-free}\\learns from sampled experience alone};
-        \node[below=1.7cm of mf,xshift=-2.3cm,text width=3.1cm] (vb) {\textbf{Value-based}\\learn $Q(s,a)$, act greedily: tabular Q-learning (17.6), Deep Q-Network (17.7)};
-        \node[below=1.7cm of mf,xshift=2.3cm,text width=3.1cm] (pb) {\textbf{Policy-based}\\learn $\pi_\theta$ directly: REINFORCE, actor-critic, PPO (17.8)};
-        \draw (root) -- (mb);
-        \draw (root) -- (mf);
-        \draw (mf) -- (vb);
-        \draw (mf) -- (pb);
-    \end{tikzpicture}
-\end{lrbox}
-\ifdim\wd\bookmeasuredbox<0.65\linewidth
-\setlength{\bookcapwidth}{0.65\linewidth}
-\else
-\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
-\fi
-\ffigbox[\bookcapwidth]{
-\usebox{\bookmeasuredbox}
-}{
-    \caption{A map of the reinforcement learning methods this chapter develops.}
-    \label{fig:rl_method_map}
-}
-\end{figure}
-
-\textbf{Model-based methods} have access to, or explicitly learn, the transition function $P$ and reward function $R$ themselves, and use them to plan. Chapter 5's binomial tree is a model-based method: $q$, $u$, $d$, and every terminal payoff are known in advance, so backward induction can compute the exact optimal value with no simulated experience required at all. \textbf{Model-free methods} never estimate $P$ or $R$ directly; they learn a value function or a policy purely from sampled transitions and rewards, treating the environment as a black box that can be queried (by simulating an episode) but not inspected. Every method developed in the remainder of this chapter, tabular Q-learning, deep Q-networks, and the policy-gradient family, is model-free, which is precisely why each remains usable in the realistic settings Section~\ref{sec:rl-bridge} described, where no closed-form $P$ and $R$ exist for a real limit order book or a real client's multi-period utility.
-
-A third, hybrid category, sometimes called \textbf{learned-model-based methods}, trains an approximate model of $P$ and $R$ directly from data (rather than assuming it, as Chapter 5's tree does) and then plans against that learned model, gaining some of model-based planning's sample efficiency without requiring the transition and reward functions to be known in closed form in advance. This hybrid approach underlies some of reinforcement learning's most prominent successes outside finance, including the game-playing systems that combine a learned model with tree search, but it introduces its own risk, exactly the sim-to-real gap Section~\ref{sec:rl-evaluation} discusses, since a plan is only as good as the learned model it is built against.
-
-\textbf{Off-policy methods} learn about a policy different from the one actually generating their training data. Q-learning's update rule is a clear example: its bootstrapped target uses $\max_{a'} Q(s',a')$, the value of the best available action, regardless of which action the $\varepsilon$-greedy behavior policy actually selected next. This lets a single stream of exploratory, partly random experience be reused to learn about the greedy-optimal policy even while the agent is still busy exploring, exactly why Section~\ref{sec:rl-qlearning}'s worked example converges to the correct answer despite spending a meaningful fraction of its $100{,}000$ episodes taking deliberately random actions. Off-policy methods have a clear data-efficiency advantage, one batch of experience can be reused across many rounds of learning, exactly why DQN's replay buffer (Section~\ref{sec:dqn}) works at all.
-
-\textbf{On-policy methods} instead evaluate and improve exactly the policy currently being followed. The classic on-policy analogue of Q-learning, SARSA\index{SARSA} (State-Action-Reward-State-Action), differs only by replacing $\max_{a'} Q(s',a')$ with $Q(s',a')$ for the action $a'$ the policy actually selects next, so its learned values reflect the actual, still-exploring policy's behavior rather than the ultimate greedy target. Policy-gradient methods (Section~\ref{sec:policy-gradient}) are typically on-policy as well, since their gradient estimator is only valid for returns actually experienced under the current policy $\pi_\theta$, not under some other, older policy. On-policy methods are generally simpler to reason about and more stable to train than off-policy methods, since they never have to correct for a mismatch between the policy that generated the data and the policy currently being evaluated.
-
-\section{A Worked Example: Q-Learning Recovers Chapter 5's Early-Exercise Decision}\index{Q-Learning Recovers Chapter 5's Early-Exercise Decision}
-\label{sec:rl-qlearning}
-
-\subsection{Setting Up the Markov Decision Process}
-
-Chapter 5's American put example used a two-step binomial tree with $S_0 = K = \$50$, up and down factors $u=1.2$ and $d=0.9$, and a gross risk-free return $R=1.04$ per period, 
-giving a risk-neutral up-probability 
-$$q = \frac{R-d}{u-d} = \frac{0.14}{0.30} \approx 0.4667$$
- and a per-step discount factor $\gamma = 1/R \approx 0.9615$.
-
-That tree has exactly three decision points: today, at $S_0=\$50$; after one up move, at $S_u=\$60$; and after one down move, at $S_d=\$45$. At each of these 
-three states the holder chooses between two actions: \textbf{exercise}, receive the intrinsic value $\max(K-S,0)$ immediately and end the episode, or 
-\textbf{hold}, receive nothing now and let the tree evolve one more step.
-
-The two terminal nodes reachable only through the up state, $S_{uu}=\$72$ and $S_{ud}=\$54$, both pay $\max(50-S,0)=\$0$; the one terminal node reachable 
-through the down state, $S_{dd}=\$40.50$, pays $\max(50-40.50,0)=\$9.50$.
-
-Putting these pieces together, this is precisely a Markov decision process with states $\mathcal{S}=\{S_0, S_u, S_d\}$ and actions $\mathcal{A}=\{\text{exercise}, \text{hold}\}$, where transition probabilities are given by $q$ and $1-q$, rewards are given by the intrinsic-value and terminal-payoff structure above, and $\gamma=1/R$ discounts every step exactly as Chapter 5's tree already did.
-
-Figure~\ref{fig:mdp_tree} redraws Chapter 5's tree in this chapter's language, labeling each decision node with its two available actions rather than with a single option value.
-
-\begin{figure}[htbp]
-\centering
-\begin{lrbox}{\bookmeasuredbox}
-    \begin{tikzpicture}[scale=0.9,transform shape,every node/.style={font=\small}]
-        \node[draw,rounded corners,align=center] (s0) at (0,0) {$S_0=\$50$\\exercise: \$0.00\\hold: \$2.5641};
-        \node[draw,rounded corners,align=center] (su) at (4.0,2.2) {$S_u=\$60$\\exercise: \$0.00\\hold: \$0.00};
-        \node[draw,rounded corners,align=center] (sd) at (4.0,-2.2) {$S_d=\$45$\\exercise: \$5.00$^*$\\hold: \$4.8718};
-        \node[draw,rounded corners,align=center] (suu) at (8.2,3.6) {$S_{uu}=\$72$\\payoff: \$0.00};
-        \node[draw,rounded corners,align=center] (sud) at (8.2,0) {$S_{ud}=\$54$\\payoff: \$0.00};
-        \node[draw,rounded corners,align=center] (sdd) at (8.2,-3.6) {$S_{dd}=\$40.50$\\payoff: \$9.50};
-        \draw[->] (s0) -- node[above,sloped,font=\scriptsize] {hold, $q$} (su);
-        \draw[->] (s0) -- node[below,sloped,font=\scriptsize] {hold, $1-q$} (sd);
-        \draw[->] (su) -- node[above,sloped,font=\scriptsize] {hold, $q$} (suu);
-        \draw[->] (su) -- node[below,sloped,font=\scriptsize] {hold, $1-q$} (sud);
-        \draw[->] (sd) -- node[above,sloped,font=\scriptsize] {hold, $q$} (sud);
-        \draw[->] (sd) -- node[below,sloped,font=\scriptsize] {hold, $1-q$} (sdd);
-    \end{tikzpicture}
-\end{lrbox}
-\ifdim\wd\bookmeasuredbox<0.65\linewidth
-\setlength{\bookcapwidth}{0.65\linewidth}
-\else
-\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
-\fi
-\ffigbox[\bookcapwidth]{
-\usebox{\bookmeasuredbox}
-}{
-    \caption{The early-exercise decision of Chapter 5's American put, redrawn as a three-state Markov decision process, with the optimal action at each node marked by an asterisk.}
-    \label{fig:mdp_tree}
-}
-\end{figure}
-
-Chapter 5 solved this exact problem by backward induction, working from the known terminal payoffs back to today. Restated in this chapter's notation, that solution is
-\begin{align*}
-Q^*(S_u, \text{exercise}) &= \$0.00, & Q^*(S_u, \text{hold}) &= \gamma\big[q(0) + (1-q)(0)\big] = \$0.00,\\
-Q^*(S_d, \text{exercise}) &= \$5.00, & Q^*(S_d, \text{hold}) &= \gamma\big[q(0) + (1-q)(9.50)\big] \approx \$4.8718,\\
-Q^*(S_0, \text{exercise}) &= \$0.00, & Q^*(S_0, \text{hold}) &= \gamma\big[q\,V^*(S_u) + (1-q)\,V^*(S_d)\big] \approx \$2.5641,
-\end{align*}
-where $V^*(S_u)=\max(0.00,0.00)=\$0.00$ and $V^*(S_d)=\max(5.00,4.8718)=\$5.00$, since exercising is optimal at the down node. The optimal policy is therefore to hold at $S_0$ and $S_u$ and exercise at $S_d$, giving an American put value of $V^*(S_0) \approx \$2.5641$, exactly the value Chapter 5 reports.
-
-\subsection{Tabular Q-Learning}
-
-Backward induction requires knowing $q$, $\gamma$, and every terminal payoff in advance, exactly the closed-form knowledge Section~\ref{sec:rl-bridge} argued is unavailable in most real trading and portfolio problems. \textbf{Q-learning} instead estimates $Q^*$ from simulated experience alone, never using $q$ directly in its update rule.
-
-Starting from an arbitrary initial table $Q(s,a)$ (here, all zeros), the agent repeatedly simulates an episode: at each state it chooses an action using an $\varepsilon$-greedy policy (with probability $\varepsilon$, act randomly to keep exploring; otherwise, act greedily with respect to the current $Q$-table), observes the resulting reward $r$ and next state $s'$, and updates
-\begin{equation*}
-Q(s,a) \leftarrow Q(s,a) + \alpha\Big[r + \gamma \max_{a'} Q(s',a') - Q(s,a)\Big],
-\end{equation*}
-where $\alpha$ is a learning rate. This update rule, known as \textbf{temporal-difference learning}\index{Temporal-Difference Learning}, nudges the current estimate $Q(s,a)$ toward a bootstrapped target, the observed reward plus the discounted value of the best action available in the next state, without ever requiring a model of the transition probabilities.
-
-The agent learns $q$'s effect on the optimal decision purely by observing many simulated up and down moves and seeing which actions paid off, in exactly the same statistical spirit as every other machine learning method in this book learning a relationship from data rather than being told it directly.
-
-\subsection*{A Worked Example: The First Two Learning Steps}
-
-Starting from a $Q$-table initialized entirely to zero, with a learning rate of $\alpha=0.1$, suppose the very first simulated episode reaches $S_d$, chooses \textbf{hold} (all actions still look identically worthless at this point, so the choice is effectively random), and the simulated down-move occurs, landing on the terminal payoff of \$9.50 at $S_{dd}$. Since this transition ends the episode, the bootstrapped target's continuation term is zero, and the update is
-\begin{equation*}
-Q(S_d,\text{hold}) \leftarrow 0 + 0.1\big[9.50 + \gamma(0) - 0\big] = 0.1(9.50) = \$0.9500,
-\end{equation*}
-the first nonzero entry the table ever acquires. Now suppose a later episode reaches $S_0$, chooses \textbf{hold}, and the simulated move is down, transitioning to $S_d$ with an immediate reward of \$0 (holding earns nothing until a terminal payoff is reached). The bootstrapped target now uses the current, already partially learned table, $\max_{a'}Q(S_d,a') = \max(0, 0.9500) = 0.9500$, giving
-\begin{equation*}
-Q(S_0,\text{hold}) \leftarrow 0 + 0.1\big[0 + \gamma(0.9500) - 0\big] \approx 0.1(0.9615)(0.9500) \approx \$0.0913.
-\end{equation*}
-Two updates in, the table already shows the qualitative shape of the true solution, $Q(S_d,\text{hold})$ noticeably positive and $Q(S_0,\text{hold})$ smaller but nonzero, even though both values are still far from their closed-form targets of \$4.8718 and \$2.5641.
-
-This is exactly the mechanism the $100{,}000$-episode simulation below repeats: each terminal payoff nudges the value of the state that led to it, and that nudge is itself propagated one more step backward the next time an earlier state is visited, gradually diffusing the terminal reward's information all the way back to $S_0$ without ever consulting $q$ directly.
-
-The companion notebook simulates this process for $100{,}000$ episodes, using a learning rate that decays with each state-action pair's visit count and an exploration rate $\varepsilon$ that decays from $0.30$ to $0.02$ over training, standard choices that guarantee enough early exploration to discover the exercise decision at $S_d$ while still converging to a stable, greedy policy by the end of training. Table~\ref{tab:rl_qlearning} compares the learned $Q$-table to the closed-form values derived above.
+Alternative data exists to fill exactly this gap. In financial industry usage, it means any data source used to inform an investment or credit decision that falls outside the traditional trio of market data, fundamental data, and macroeconomic data. The term is a moving target: yesterday's alternative data becomes today's mainstream input once enough market participants adopt it, so the boundary is defined by current practice rather than any fixed technical property. Table~\ref{tab:alt_data_sources} catalogues the categories most widely used in practice.
 
 \begin{table}[htbp]
 \centering
-\begin{lrbox}{\bookmeasuredbox}
-\begin{tabular}{lccc}
+\caption{Major categories of alternative data}
+\label{tab:alt_data_sources}
+\begin{tabular}{p{2.6cm}p{6.2cm}p{5.4cm}}
 \toprule
-State-action & Closed-form $Q^*$ & Learned $Q$ (Q-learning) & Relative gap \\
+Category & Examples & Typical financial use \\
 \midrule
-$(S_0, \text{exercise})$ & \$0.0000 & \$0.0000 & --- \\
-$(S_0, \text{hold})$ & \$2.5641 & \$2.5328 & $1.22\%$ \\
-$(S_u, \text{exercise})$ & \$0.0000 & \$0.0000 & --- \\
-$(S_u, \text{hold})$ & \$0.0000 & \$0.0000 & --- \\
-$(S_d, \text{exercise})$ & \$5.0000 & \$5.0000 & $0.00\%$ \\
-$(S_d, \text{hold})$ & \$4.8718 & \$4.9234 & $1.06\%$ \\
-\bottomrule
-\end{tabular}
-\end{lrbox}
-\ifdim\wd\bookmeasuredbox<0.65\linewidth
-\setlength{\bookcapwidth}{0.65\linewidth}
-\else
-\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
-\fi
-\ttabbox[\bookcapwidth]{
-\usebox{\bookmeasuredbox}
-}{
-\caption{Closed-form Bellman-optimal $Q$-values (from backward induction) versus tabular Q-learning's learned estimates after 100,000 simulated episodes.}
-\label{tab:rl_qlearning}
-}
-\end{table}
-
-\subsection{Comparing the Learned and Closed-Form Solutions}
-
-The learned policy matches the closed-form optimal policy exactly: hold at $S_0$ ($\$2.5328 > \$0.0000$), exercise at
-$S_d$ ($\$5.0000 > \$4.9234$), and, at $S_u$, both actions are learned as worth $\$0.0000$, an exact tie that matches Chapter 5's own
-observation that ``both exercise and continuation are worth \$0'' at that node, so which action the tie-break happens to favor is
-economically inconsequential.
-
-Every ``exercise'' value converges exactly, with no residual error, since exercising ends the episode
-immediately and its reward is observed without any noise; every ``hold'' value converges to within roughly $1\%$ of the true value but
-not exactly, since a ``hold'' estimate is a bootstrapped average built from a finite number of noisy sampled continuations rather than
-an exact expectation computed from a known $q$.
-
-This gap is not a bug to be engineered away; it is the fundamental price of model-free
-learning, and it is the single most important lesson this worked example offers: when the transition probabilities and payoffs are
-genuinely known in closed form, as they are in Chapter 5's tree, backward induction is strictly better, exact, instantaneous,
-and requiring no simulated data at all, and reinforcement learning should not be used. Reinforcement learning earns its keep only
-in the more realistic setting, developed throughout the rest of this chapter, where no such closed form exists and simulated or
-historical experience is the only source of information available.
-
-\section{From Tables to Function Approximation: Deep Q-Networks}\index{Deep Q-Network (DQN)}
-\label{sec:dqn}
-
-Tabular Q-learning stores one number for every state-action pair, which works only because Section~\ref{sec:rl-qlearning}'s example has just three states and two actions. A realistic trading state, some combination of inventory, elapsed time, recent order-flow imbalance (Chapter 12), and a handful of price-based features, takes values from a continuous or extremely large discrete space, making an explicit table impossible to store or to visit often enough to fill in.
-
-The standard fix, introduced by Mnih et al.\ (2015) and known as the \textbf{Deep Q-Network} (DQN), replaces the table with a neural network $Q(s,a;\theta)$, exactly the feedforward architecture Chapter 6's Section 6.18 introduced, trained to approximate the same Bellman-optimal $Q^*$ function. The network takes a state (or a fixed-size feature vector describing one) as input and outputs one value per possible action; training minimizes the squared temporal-difference error,
-\begin{equation*}
-\mathcal{L}(\theta) = \mathbb{E}\Big[\big(r + \gamma \max_{a'} Q(s',a';\theta^-) - Q(s,a;\theta)\big)^2\Big],
-\end{equation*}
-using the same gradient-descent machinery Chapter 6's Section 6.5 already developed for supervised learning, with $\theta^-$ a periodically-updated copy of the network's own parameters (a ``target network'') used to keep the bootstrapped target from chasing a constantly-moving estimate, one of two stabilization tricks, alongside storing and randomly resampling past transitions from a large ``replay buffer'' rather than training only on the most recent experience, that made deep Q-learning reliable enough to train at all.
-
-The underlying update rule is otherwise identical to tabular Q-learning: the network simply generalizes across similar states instead of memorizing each one independently, letting the agent act sensibly in a state it has never visited before, provided that state resembles ones it has seen, exactly the same generalization argument that justifies every other neural network in this book.
-
-Deep Q-networks are also considerably more finicky to train than tabular Q-learning, in a way worth naming explicitly given this book's repeated warnings, in Chapter 10's badly-scaled optimizer example among others, that a plausible-looking numerical method can silently fail to converge without an obvious error message.
-
-A DQN's training loss can decrease steadily while the actual learned policy remains poor, since the loss measures how well the network fits its own, still-inaccurate bootstrapped targets rather than how good the resulting policy actually is; the only reliable check is to evaluate the policy's real performance directly, exactly the discipline Section~\ref{sec:rl-qlearning}'s worked example applied by comparing learned $Q$-values against an independently known closed-form answer, and exactly the discipline Section~\ref{sec:rl-evaluation} generalizes into a full evaluation methodology for problems where no closed-form answer exists to check against.
-
-\section{Policy Gradient Methods and Continuous Actions}\index{Policy Gradient}
-\label{sec:policy-gradient}
-
-Q-learning and its deep variant both learn a value function and derive a policy from it implicitly, by acting greedily. This works cleanly when the action set is small and discrete, exercise or hold, buy or sell, but breaks down when the natural action is continuous, exactly how many shares to trade this period, or exactly what target weight to assign an asset, since $\max_{a'} Q(s',a')$ has no simple closed form once $a'$ ranges over a continuum.
-
-\textbf{Policy gradient} methods sidestep this by parameterizing the policy directly, $\pi_\theta(a \mid s)$, typically as a neural network outputting the parameters of a continuous distribution (a mean and standard deviation, for instance), and adjusting $\theta$ to directly increase the expected return, using the policy gradient theorem,
-\begin{equation*}
-\nabla_\theta J(\theta) = \mathbb{E}_{\pi_\theta}\Big[\nabla_\theta \log \pi_\theta(a \mid s) \, G_t\Big],
-\end{equation*}
-which says, informally, that actions followed by a higher-than-expected return should be made more likely, and actions followed by a lower-than-expected return should be made less likely, with the size of the nudge proportional to how surprising the return was.
-
-\textbf{Actor-critic}\index{Actor-Critic} methods reduce the noise in this estimate by learning a value function (the ``critic'') alongside the policy (the ``actor'') and using it to judge whether a given return was better or worse than expected from that state, rather than judging it against the raw, highly variable return alone.
-
-\textbf{Proximal Policy Optimization}\index{Proximal Policy Optimization (PPO)} (PPO), introduced by Schulman et al.\ (2017), is the most widely used modern policy-gradient algorithm. It constrains each policy update to stay close to the previous policy, preventing the large, destabilizing updates that plagued earlier policy-gradient methods, and its combination of reasonable sample efficiency and training stability has made it the default starting point for continuous-action problems across robotics, game-playing, and, increasingly, the trading and portfolio applications developed next.
-
-Table~\ref{tab:rl_methods} summarizes the four families of methods this chapter has introduced, alongside the setting each is best suited to and the concrete finance application, developed in the sections that follow, each is most naturally applied to.
-
-\begin{table}[htbp]
-\centering
-\caption{A summary of the reinforcement learning methods introduced in this chapter.}
-\label{tab:rl_methods}
-\begin{tabular}{p{2.6cm}p{2.3cm}p{2.3cm}p{6.3cm}}
-\toprule
-Method & Learns & Best suited to & Natural finance application \\
-\midrule
-Tabular Q-learning & Action-value function $Q(s,a)$ & Small, discrete state and action spaces & Section~\ref{sec:rl-qlearning}'s early-exercise decision; small discretized inventory or execution problems \\
-Deep Q-Network (DQN) & Neural-network approximation of $Q(s,a;\theta)$ & Large or continuous state spaces, discrete actions & Execution and market-making agents (Section~\ref{sec:rl-execution}) with rich order-book state features \\
-Policy gradient (REINFORCE, actor-critic) & A parameterized policy $\pi_\theta(a\mid s)$ directly & Continuous action spaces & Trade-size or quote-skew decisions that vary continuously rather than over a small discrete menu \\
-Proximal Policy Optimization (PPO) & A parameterized policy, with a stabilized update rule & Continuous actions, need for reliable, stable training & Portfolio-rebalancing agents (Section~\ref{sec:rl-portfolio}) and production execution systems such as Section~\ref{sec:loxm}'s LOXM \\
+Satellite and aerial imagery & Parking-lot car counts, crop health indices, oil-storage tank levels, construction progress & Retail sales nowcasting, commodity supply estimation, real-estate tracking \\
+Web and app data & Website traffic, app downloads and reviews, job postings, e-commerce pricing & Revenue nowcasting, hiring-trend and competitive signals \\
+Transaction and card-panel data & Aggregated, anonymized consumer card-spending panels & Same-store sales nowcasting ahead of earnings \\
+Geolocation and foot traffic & Mobile-device location pings at store or venue locations & Foot-traffic proxies for retail, dining, and travel \\
+Shipping and logistics & Vessel-tracking (AIS) data, port congestion, rail and truck telemetry & Commodity flow and trade-volume forecasting \\
+Social and search data & Social-media posts, review platforms, search-trend indices & Consumer-sentiment and brand-momentum signals \\
+On-chain (blockchain) data & Public transaction ledgers, wallet flows, exchange inflows and outflows, stablecoin issuance & Crypto asset-flow signals, exchange-risk monitoring, AML and fraud forensics \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\section{Learning from Expert Demonstrations: Imitation and Inverse Reinforcement Learning}\index{Imitation Learning}
-\label{sec:imitation}
+Two properties distinguish alternative data from the data types earlier chapters used. First, it usually arrives already partially processed by a vendor, a satellite imagery provider sells car counts, not raw pixels, so the modeler inherits whatever assumptions and errors are baked into that proprietary processing step, typically without visibility into it. Second, it is available at a frequency and granularity, individual stores, individual weeks, that traditional fundamental data (quarterly, firm-level) simply does not offer, which is precisely why it is valuable: it lets an analyst estimate a firm's performance before the firm itself reports it.
 
-Every method developed so far learns purely from trial and error, an agent that starts knowing nothing about which actions are good must discover this for itself through the $\varepsilon$-greedy exploration of Section~\ref{sec:rl-qlearning} or its neural-network analogues.
+The table's last category deserves its own note, because it inverts both of those properties. \textbf{On-chain data}\index{On-Chain Data}, the complete public transaction ledger a blockchain such as Bitcoin's or Ethereum's maintains by construction, records every transfer, wallet balance, and smart-contract interaction, free of charge and with no vendor standing between the analyst and the raw record. Funds trading crypto assets themselves (Chapter 13's tokenization discussion introduces the instruments) read signals directly from it, net flows into and out of exchange-controlled wallets as a proxy for imminent selling or accumulation, stablecoin issuance as a proxy for capital entering the ecosystem, while risk and compliance teams watch the same ledger for a different reason, monitoring exchange solvency and tracing stolen or laundered funds. What the analyst inherits instead of a vendor's opaque preprocessing is pseudonymity: every party is an unlabeled address, so the commercial value-add in this category is entity labeling and address clustering, exactly the graph techniques Chapter 15's blockchain-forensics discussion develops in the course of tracing the 2016 Bitfinex hack, sold by the same analytics vendors compliance teams already rely on. That makes on-chain data the rare category where the raw data is free and complete while the interpretive layer is the scarce, priced asset, the exact reverse of a satellite feed, whose pixels are expensive and whose car counts are the deliverable.
 
-When a record of a skilled human decision-maker's past choices already exists, an experienced trader's execution decisions, say, a faster alternative is available: \textbf{behavioral cloning}\index{Behavioral Cloning} treats the expert's historical state-action pairs as an ordinary supervised training set and fits a policy $\pi_\theta(a\mid s)$ to predict the expert's action from the state, using exactly the same classification machinery Chapter 6 developed, sidestepping reinforcement learning's exploration problem entirely by never requiring the agent to try an action the expert did not.
+\section{The Alternative-Data Vendor Ecosystem}\index{Alternative-Data Vendor Ecosystem}
+\label{sec:vendor-ecosystem}
 
-Behavioral cloning has a well-known weakness: it is only ever as good as the expert it imitates, and it can fail badly in states the expert rarely visited, since a supervised classifier trained only on an expert's typical behavior has no guidance for how to recover once the agent's own small errors push it into an unfamiliar state the expert's demonstrations never covered, compounding over a long trajectory in a way a single supervised prediction never does.
+Unlike the market and fundamental data of Chapters 2 through 5, which arrive through well-established exchange feeds and regulatory filings, alternative data is procured through a comparatively young and heterogeneous vendor market, and how a fund evaluates and integrates a vendor matters almost as much as the underlying data source itself. A typical procurement process runs through several stages.
 
-\textbf{Inverse reinforcement learning}\index{Inverse Reinforcement Learning} takes a different approach to the same underlying idea: rather than directly imitating the expert's actions, it infers the reward function the expert appears to be optimizing, and then solves the resulting Markov decision process using this chapter's own methods, producing a policy that can, in principle, generalize sensibly to states the expert never actually visited, at the cost of a harder and less well-posed estimation problem, since many different reward functions can often rationalize the same observed expert behavior equally well.
+First, a fund identifies a candidate hypothesis, does satellite-derived parking-lot data actually predict Cascade's revenue, and requests a trial dataset covering a historical period the vendor already has on file. Second, the fund backtests that trial data against known, already-reported outcomes, exactly the exercise Section~\ref{sec:satellite-example} works through by hand, before paying for a live subscription; a vendor unwilling to provide a meaningful historical trial, or one whose trial-period performance does not hold up when checked, is a warning sign rather than a mere inconvenience. Third, if the trial is convincing, the fund negotiates a licensing agreement that specifies not just price but exclusivity (is this data available to other subscribers, and how many), delivery latency (Section~\ref{sec:alt-data-quality} returns to why this matters enormously), and historical backfill (how far back the vendor can provide data, which determines how much history is available for the fund's own model validation).
 
-Both techniques are directly relevant to the applications developed next: a system like Section~\ref{sec:loxm}'s LOXM, reported to be trained on ``a large history of past trades together with simulated trading scenarios,'' plausibly combines exactly this kind of demonstration-based learning, bootstrapping an initial policy from historical human and algorithmic execution decisions, with further trial-and-error refinement in simulation, rather than learning a trading policy from pure, unguided exploration alone.
+This procurement cycle is itself a source of adverse selection\index{Adverse Selection} worth naming directly: a vendor has every incentive to showcase the historical period and the subset of covered firms where its data performed best, since that is what sells subscriptions, so a trial dataset's strong backtested performance is not automatically evidence that the data will perform as well in the future or across firms the trial period did not happen to include. This is a version of the multiple-testing concern Chapter 6 raised about a researcher's own model search, now applied to a vendor's marketing rather than a researcher's specification search.
 
-This hybrid approach is common in practice precisely because it addresses reinforcement learning's sample-inefficiency problem directly: starting from a reasonable, expert-informed policy rather than from nothing gives the trial-and-error refinement stage a far smaller gap to close, exactly the practical advantage that makes imitation-based pretraining worth the additional complexity in a genuinely high-stakes application.
+A subscription decision ultimately comes down to a cost-benefit calculation, whether the expected trading edge, scaled to the capital actually deployed on it, exceeds the data's licensing cost. Suppose a fund would deploy a \$50 million position whenever Section~\ref{sec:alt-data-pipeline}'s signal fires long, which happened in five of the eight quarters in Table~\ref{tab:multisource_signal}, and that the signal's incremental edge over an unconditional baseline is the 0.54 percentage points computed there (the 0.88\% average return on signaled quarters minus the 0.34\% average return across all quarters). With four earnings releases per year and a $5/8$ signal frequency, the fund expects roughly $4 \times 5/8 = 2.5$ signaled events annually, for an expected incremental profit of $\$50\text{M} \times 0.54\% \times 2.5 \approx \$678{,}000$ per year. Against Section~\ref{sec:case-vignette-satellite}'s subscription-cost range, a satellite feed at \$250,000 per year plus a smaller web and card-panel bundle at \$150,000 per year, total data costs of \$400,000, the net expected benefit is roughly \$278,000 per year, a genuine but modest edge once data costs are netted out, and one that Section~\ref{sec:alt-data-quality} warns will shrink further as more funds license the same feeds and compete the edge away.
 
-\section{Reinforcement Learning for Optimal Execution and Market Making}\index{Reinforcement Learning for Optimal Execution and Market Making}
-\label{sec:rl-execution}
+This same arithmetic underlies a build-versus-buy decision many larger funds eventually face: once expected trading volume across many similar signals is large enough, building an in-house satellite-analytics or web-scraping team, rather than paying a vendor's margin on top of the same underlying imagery or logs, can be cheaper in the long run, at the cost of taking on the computer-vision and data-engineering work Section~\ref{sec:nn-structured-unstructured} describes directly rather than buying an already-processed feature. Smaller funds typically lack the scale to justify this fixed cost and remain vendor customers indefinitely, one more way, alongside Section~\ref{sec:case-vignette-satellite}'s subscription-cost figures, that alternative data's advantages concentrate among larger, better-resourced market participants.
 
-Optimal execution was among the earliest documented applications of reinforcement learning in finance: Nevmyvaka, Feng, and Kearns (2006) applied tabular Q-learning, structurally similar to Section~\ref{sec:rl-qlearning}'s worked example but with a far larger state space built from order-book features, to real historical limit order book data and found that a learned execution policy could meaningfully reduce trading costs relative to the simple TWAP and VWAP\index{TWAP and VWAP: Basic Execution Algorithms} benchmarks Chapter 11's Section 11.7 introduced, without ever being given a closed-form market-impact model to optimize against.
+\section{A Worked Example: Satellite Imagery and Retailer Revenue}\index{Satellite Imagery and Retailer Revenue}
+\label{sec:satellite-example}
 
-The state in a modern version of this problem typically includes remaining inventory, time remaining in the execution window, the current bid-ask spread, and recent order-flow imbalance; the action is how many shares to submit, and at what limit price, this period; and the reward is the negative implementation shortfall (Chapter 11's Section 11.14 transaction-cost-analysis measure) realized on that period's fill.
-
-Unlike Almgren-Chriss, which commits in advance to a fixed schedule regardless of how the market subsequently behaves, a reinforcement-learned execution policy can condition its trade size on the order book it actually observes, trading faster when liquidity is unusually deep and slowing down when the book thins out, a genuinely adaptive behavior no closed-form schedule can replicate.
-
-\subsection{A Worked Example: Q-Learning Recovers the Almgren-Chriss Optimal Trajectory}\index{Q-Learning Recovers the Almgren-Chriss Optimal Trajectory}
-\label{sec:rl-execution-worked}
-
-Section~\ref{sec:rl-qlearning}'s worked example verified Q-learning against a known answer on a small, three-state problem. It is worth doing the same on a problem closer to genuine trading practice: Chapter 11's own Almgren-Chriss worked example, the $250$-share order split across $N=5$ intervals with impact coefficient $\eta=0.01$, per-interval volatility $\sigma=2\%$, and risk aversion $\lambda=0.5$, whose closed-form optimal trajectory left unexecuted shares $(250,\ 194.2,\ 142.4,\ 93.4,\ 46.2,\ 0)$ at a total risk-adjusted cost of $139.4$.
-
-Reformulated as a Markov decision process, the state at interval $j$ is the inventory $x_{j-1}$ still unexecuted, discretized to the nearest $5$ shares (a grid of $51$ possible inventory levels), and the action is how many of those shares, again in multiples of $5$, to sell this interval.
-
-The reward for selling $a_j$ shares and leaving $x_j=x_{j-1}-a_j$ unexecuted is the negative of Chapter 11's own per-interval cost,
-\begin{equation*}
-r_j = -\left[\eta\,\frac{a_j^2}{\tau} + \lambda\sigma^2\tau\, x_j^2\right],
-\end{equation*}
-with $\tau=1$ matching Chapter 11's own normalization, and the last interval ($j=5$) forces full liquidation, $x_5=0$, exactly as the closed-form problem requires. Unlike Section~\ref{sec:rl-qlearning}'s tree, this environment is entirely \textbf{deterministic}: choosing an action leaves no residual uncertainty about the resulting state or reward, since Almgren-Chriss prices timing risk analytically through the variance term $\lambda\sigma^2\tau x_j^2$ rather than by exposing the agent to a randomly sampled price path.
-
-Reinforcement learning is still the right tool here for a different reason than in Section~\ref{sec:rl-qlearning}: not to cope with stochastic transitions, but to search a state-action space of roughly $5{,}300$ discretized possibilities, far too many to enumerate by hand, without ever being given the closed-form $\sinh(\cdot)$ trajectory formula Chapter 11 derived analytically.
-
-Exact backward-induction dynamic programming over this same discretized grid, computable directly since only $51$ inventory levels and $4$ real decision points are involved, gives an optimal discretized trajectory of $(250,\ 195,\ 145,\ 95,\ 45,\ 0)$ shares at a total cost of $139.52$, close to but not identical to the continuous closed-form values, an expected consequence of rounding a continuous optimum onto a $5$-share grid rather than any error in the discretization itself.
-
-Tabular Q-learning, trained model-free for $600{,}000$ episodes with an $\varepsilon$-greedy behavior policy decaying from $\varepsilon=0.5$ to $0.05$ and a visit-count-decayed learning rate, \textbf{converges to exactly this same trajectory and exactly this same cost}, $139.52$, not merely close to it.
-
-This is a meaningfully different outcome from Section~\ref{sec:rl-qlearning}'s worked example, where the learned ``hold'' values settled within roughly one percent of their closed-form targets rather than matching them exactly: because this environment is deterministic, every reward Q-learning observes is noise-free, so once training has explored a state-action pair enough times to identify its best continuation, the learned value converges to it exactly, with no residual estimation error left to average away.
-
-Figure~\ref{fig:dp_backward_induction} makes the backward-induction computation itself concrete. Dynamic programming does not work through the five intervals in the order a trader would experience them; it starts from the one stage with no real decision left, the forced liquidation at $x_4$, and solves backward, one stage at a time, using each already-solved stage's value function to solve the one before it, until $V_1(x_0)$ finally gives the answer for the full, five-interval problem.
-
-Only after this entire backward pass is complete can the optimal trajectory be traced forward, choosing at each state whichever action attains the value just computed for it, exactly the bottom row of the figure.
-
-\begin{figure}[htbp]
-\centering
-\begin{lrbox}{\bookmeasuredbox}
-    \begin{tikzpicture}[thick,every node/.style={font=\small}]
-        \draw[->,line width=1.1pt] (12.0,3.3) -- (0,3.3);
-        \node[align=center,font=\small] at (6.0,3.7) {backward induction: solve stage $5 \to 4 \to 3 \to 2 \to 1$};
-        \node[draw,rounded corners,align=center,minimum width=2.0cm] (v5) at (12.0,2.2) {Stage 5\\(forced)\\known cost};
-        \node[draw,rounded corners,align=center,minimum width=2.0cm] (v4) at (9.6,2.2) {$V_4(x_3)$};
-        \node[draw,rounded corners,align=center,minimum width=2.0cm] (v3) at (7.2,2.2) {$V_3(x_2)$};
-        \node[draw,rounded corners,align=center,minimum width=2.0cm] (v2) at (4.8,2.2) {$V_2(x_1)$};
-        \node[draw,rounded corners,align=center,minimum width=2.3cm] (v1) at (1.8,2.2) {$V_1(x_0)$\\$=139.52$};
-        \node[draw,rounded corners,align=center] (n0) at (0,0) {$x_0=250$};
-        \node[draw,rounded corners,align=center] (n1) at (2.4,0) {$x_1=195$};
-        \node[draw,rounded corners,align=center] (n2) at (4.8,0) {$x_2=145$};
-        \node[draw,rounded corners,align=center] (n3) at (7.2,0) {$x_3=95$};
-        \node[draw,rounded corners,align=center] (n4) at (9.6,0) {$x_4=45$};
-        \node[draw,rounded corners,align=center] (n5) at (12.0,0) {$x_5=0$};
-        \draw[->] (n0) -- node[above,font=\scriptsize] {sell 55} (n1);
-        \draw[->] (n1) -- node[above,font=\scriptsize] {sell 50} (n2);
-        \draw[->] (n2) -- node[above,font=\scriptsize] {sell 50} (n3);
-        \draw[->] (n3) -- node[above,font=\scriptsize] {sell 50} (n4);
-        \draw[->] (n4) -- node[above,font=\scriptsize] {sell 45} (n5);
-        \draw[dashed] (v1) -- (n0);
-        \draw[dashed] (v2) -- (n1);
-        \draw[dashed] (v3) -- (n2);
-        \draw[dashed] (v4) -- (n3);
-        \draw[dashed] (v5) -- (n4);
-    \end{tikzpicture}
-\end{lrbox}
-\ifdim\wd\bookmeasuredbox<0.65\linewidth
-\setlength{\bookcapwidth}{0.65\linewidth}
-\else
-\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
-\fi
-\ffigbox[\bookcapwidth]{
-\usebox{\bookmeasuredbox}
-}{
-    \caption{Backward-induction dynamic programming for the execution problem.}
-    \label{fig:dp_backward_induction}
-}
-\end{figure}
-
-Table~\ref{tab:rl_execution_compare} places the Q-learning-recovered trajectory alongside the uniform TWAP schedule and the fully aggressive single-shot execution Chapter 11 also scored, confirming the same efficient-frontier ordering Chapter 11 established analytically now emerges from an agent that was never given the underlying cost formula at all.
+Suppose a hypothetical home-improvement retailer, Cascade Home\index{Cascade Home \& Garden} \& Garden, is followed by a data vendor that counts cars in a representative sample of its store parking lots from satellite imagery, in the manner Section~\ref{sec:case-vignette-satellite} describes being done for real retailers since 2010. Table~\ref{tab:satellite_regression} lists eight quarters of year-over-year car-count growth alongside Cascade's subsequently reported year-over-year revenue growth.
 
 \begin{table}[htbp]
 \centering
-\caption{Total risk-adjusted execution cost under three strategies for the same $250$-share, $N=5$-interval order ($\eta=0.01$, $\sigma=2\%$, $\lambda=0.5$).}
-\label{tab:rl_execution_compare}
+\caption{Satellite car-count growth and Cascade's reported revenue growth, by quarter}
+\label{tab:satellite_regression}
 \begin{tabular}{lcc}
 \toprule
-Strategy & Unexecuted-share trajectory & Total cost \\
+Quarter & Car-count growth (\%) & Revenue growth (\%) \\
 \midrule
-Fully aggressive (single shot) & $(250, 0, 0, 0, 0, 0)$ & $625.00$ \\
-Uniform TWAP & $(250, 200, 150, 100, 50, 0)$ & $140.00$ \\
-Q-learning (learned, discretized) & $(250, 195, 145, 95, 45, 0)$ & $139.52$ \\
+Q1 & 2.1 & 1.5 \\
+Q2 & $-1.5$ & $-0.3$ \\
+Q3 & 4.8 & 4.5 \\
+Q4 & 0.6 & 1.0 \\
+Q5 & 6.2 & 4.0 \\
+Q6 & $-3.0$ & $-1.0$ \\
+Q7 & 3.5 & 3.8 \\
+Q8 & 1.0 & $-0.2$ \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Figure~\ref{fig:execution_trajectories} plots the same three trajectories, making the front-loading pattern immediately visible: the fully aggressive strategy liquidates instantly, the uniform TWAP schedule is a straight line, and the Q-learning trajectory sits just above TWAP early on, trading a little faster than uniform while inventory is largest and tapering to match TWAP by the final interval, exactly the mild front-loading Chapter 11's continuous closed-form solution also produced.
+Fitting the simple regression $\text{Revenue growth} = \alpha + \beta\,(\text{Car-count growth})$ by ordinary least squares, following Chapter 6's Section 6.4 method, gives $\bar x = 1.7125$, $\bar y = 1.6625$, $S_{xy} = \sum(x_i - \bar x)(y_i - \bar y) = 34.09625$, $S_{xx} = \sum(x_i-\bar x)^2 = 52.24875$, so $\hat\beta = S_{xy}/S_{xx} = 0.6528$ and $\hat\alpha = \bar y - \hat\beta \bar x = 0.5446$.
+
+The fitted line, $\widehat{\text{Revenue growth}} = 0.5446 + 0.6528\,(\text{Car-count growth})$, achieves $R^2 = 0.870$, car-count growth alone explains 87\% of the quarter-to-quarter variation in Cascade's revenue growth in this sample, genuinely strong for a single proxy variable, but, consistent with this book's practice of not overstating a model's fit, still leaves 13\% of the variation unexplained.
+
+Suppose satellite data for a ninth quarter arrives showing 5.0\% car-count growth, three weeks before Cascade's earnings release. The regression predicts $\widehat{\text{Revenue growth}} = 0.5446 + 0.6528(5.0) = 3.809\%$, a concrete, tradeable estimate of a number the market will not see officially for three more weeks.
+
+\section{Combining Alternative Data Sources: A Multi-Source Earnings Signal}
+\label{sec:alt-data-pipeline}
+
+A single alternative data source is rarely used alone in practice; a real alternative-data desk combines several sources into one model, both to average out any single source's idiosyncratic noise and to capture aspects of a firm's business a single proxy misses. Figure~\ref{fig:altdata_pipeline} sketches the resulting pipeline.
 
 \begin{figure}[htbp]
 \centering
 \begin{lrbox}{\bookmeasuredbox}
-    \begin{tikzpicture}[thick]
-        \draw[->] (0,0) -- (7.6,0) node[right,font=\small] {interval $j$};
-        \draw[->] (0,0) -- (0,5.8) node[above,font=\small] {shares remaining};
-        \foreach \i in {0,1,2,3,4,5} {
-            \draw (\i*1.4,0.08) -- (\i*1.4,-0.08);
-            \node[below,font=\scriptsize] at (\i*1.4,-0.25) {\i};
-        }
-        \foreach \y/\lab in {0/0,1/50,2/100,3/150,4/200,5/250} {
-            \draw (0.08,\y) -- (-0.08,\y);
-            \node[left,font=\scriptsize] at (-0.15,\y) {\lab};
-        }
-        \draw[dashed] plot coordinates {(0,5) (1.4,0) (2.8,0) (4.2,0) (5.6,0) (7.0,0)};
-        \draw[dotted] plot coordinates {(0,5) (1.4,4) (2.8,3) (4.2,2) (5.6,1) (7.0,0)};
-        \draw[solid] plot coordinates {(0,5) (1.4,3.9) (2.8,2.9) (4.2,1.9) (5.6,0.9) (7.0,0)};
-        \draw[dashed] (8.3,5.4) -- (8.9,5.4); \node[right,font=\scriptsize] at (8.9,5.4) {Fully aggressive};
-        \draw[dotted] (8.3,4.8) -- (8.9,4.8); \node[right,font=\scriptsize] at (8.9,4.8) {Uniform TWAP};
-        \draw[solid] (8.3,4.2) -- (8.9,4.2); \node[right,font=\scriptsize] at (8.9,4.2) {Q-learning (learned)};
+    \begin{tikzpicture}[>=latex,thick,node distance=0.7cm]
+        \node[draw,rounded corners,minimum width=1.8cm,minimum height=0.9cm,align=center,font=\scriptsize] (raw) {Raw Alt Data\\(Image, Web, Card)};
+        \node[draw,rounded corners,minimum width=1.9cm,minimum height=0.9cm,right=of raw,align=center,font=\scriptsize] (feat) {Feature\\Extraction\\(CNN/Aggregate)};
+        \node[draw,rounded corners,minimum width=1.7cm,minimum height=0.9cm,right=of feat,align=center,font=\scriptsize] (align) {Temporal\\Alignment};
+        \node[draw,rounded corners,minimum width=1.9cm,minimum height=0.9cm,right=of align,align=center,font=\scriptsize] (fuse) {Fusion with\\Fundamentals};
+        \node[draw,rounded corners,minimum width=1.7cm,minimum height=0.9cm,right=of fuse,align=center,font=\scriptsize] (sig) {Model /\\Signal};
+        \draw[->] (raw) -- (feat);
+        \draw[->] (feat) -- (align);
+        \draw[->] (align) -- (fuse);
+        \draw[->] (fuse) -- (sig);
     \end{tikzpicture}
 \end{lrbox}
 \ifdim\wd\bookmeasuredbox<0.65\linewidth
@@ -469,67 +132,136 @@ Figure~\ref{fig:execution_trajectories} plots the same three trajectories, makin
 \ffigbox[\bookcapwidth]{
 \usebox{\bookmeasuredbox}
 }{
-    \caption{Unexecuted-share trajectories under the three strategies of Table~\ref{tab:rl_execution_compare}.}
-    \label{fig:execution_trajectories}
+    \caption{The alternative-data pipeline this chapter develops.}
+    \label{fig:altdata_pipeline}
 }
 \end{figure}
 
-Market making extends naturally to the same framework. Chapter 11's Avellaneda-Stoikov model derives a closed-form optimal quote skew from an assumed order-arrival intensity function and a known risk-aversion parameter.
+Extending Section~\ref{sec:satellite-example}'s example, suppose Cascade is also tracked by a web-traffic vendor (year-over-year growth in visits to Cascade's e-commerce site) and a card-panel vendor (year-over-year growth in aggregated card spending at Cascade's stores). Table~\ref{tab:multisource_signal} lists all three alternative-data growth rates alongside the resulting earnings surprise, actual revenue growth minus the analyst consensus estimate available at the time, and Cascade's stock return on the earnings-announcement day.
 
-A reinforcement-learning market maker instead learns a quoting policy directly from simulated or historical order flow, with state features again drawn from current inventory, time-to-close, and order-book depth, action given by the bid and ask quotes (or, in a simplified discrete-action version, a small set of candidate skews), and reward given by realized spread capture net of inventory risk and adverse selection, the same adverse-selection concern Chapter 12's Glosten-Milgrom\index{Glosten-Milgrom model} model formalizes. The appeal is identical to the execution case: a learned policy can adapt to order-arrival patterns that deviate from Avellaneda-Stoikov's assumed functional form, at the cost of requiring a large amount of representative training data and offering none of the closed-form model's transparency about why a given quote was chosen, a tradeoff this chapter's closing sections return to directly.
+\begin{table}[htbp]
+\centering
+\small
+\caption{Multi-source alternative data, earnings surprise, and next-day return, by quarter}
+\label{tab:multisource_signal}
+\begin{tabular}{lccccccc}
+\toprule
+Quarter & Car (\%) & Web (\%) & Card (\%) & Surprise (\%) & Fitted (\%) & Signal & Return (\%) \\
+\midrule
+Q1 & 2.1 & 3.0 & 1.5 & 0.5 & 0.48 & Long & 1.1 \\
+Q2 & $-1.5$ & $-0.5$ & $-1.0$ & $-1.3$ & $-1.08$ & Flat & $-0.6$ \\
+Q3 & 4.8 & 5.5 & 3.0 & 2.5 & 1.95 & Long & 2.0 \\
+Q4 & 0.6 & 1.5 & 0.8 & 0.0 & $-0.44$ & Flat & 0.3 \\
+Q5 & 6.2 & 4.0 & 4.5 & 2.0 & 2.46 & Long & $-0.4$ \\
+Q6 & $-3.0$ & $-2.0$ & $-1.8$ & $-1.5$ & $-1.92$ & Flat & $-1.4$ \\
+Q7 & 3.5 & 2.5 & 2.0 & 2.3 & 1.66 & Long & 1.5 \\
+Q8 & 1.0 & 2.0 & 0.5 & $-0.3$ & 0.18 & Long & 0.2 \\
+\bottomrule
+\end{tabular}
+\end{table}
 
-\subsection{Designing States, Actions, and Rewards in Practice}
+Regressing surprise on the three alternative-data growth rates by ordinary least squares, using the normal equations
+\begin{equation*}
+\hat\beta = (X^\top X)^{-1}X^\top y,
+\end{equation*}
+with $X$'s columns an intercept, car-count growth, web-traffic growth, and card growth, gives
+\begin{equation*}
+\hat\beta = (-0.291,\ 1.092,\ -0.113,\ -0.792), \qquad R^2 = 0.837.
+\end{equation*}
+The negative coefficient on card growth is not a mistake: with car-count and web-traffic growth already in the regression, card growth's own explanatory power is largely redundant with theirs, and its small residual coefficient partly offsets collinear noise the other two variables share, a common occurrence when several correlated proxies for the same underlying quantity are entered into one regression together, and a reminder that individual coefficients in a multi-source model should not be read as clean, isolated effects the way Chapter 6's Section 6.4 single-variable coefficient can be.
 
-Neither problem above specifies its Markov decision process uniquely, and the specific design choices a practitioner makes matter enormously to whether the resulting agent actually learns something useful. A state representation that omits recent order-flow imbalance discards exactly the predictive signal Chapter 12's order-flow-imbalance regression showed carries real information about near-term price movement, weakening the agent below what a well-informed human trader, or a simpler rule-based system that explicitly conditions on that signal, could achieve. A state that includes too many redundant or noisy features, conversely, slows learning by forcing the agent to discover on its own which features actually matter, exactly the feature-engineering discipline Chapter 6's Section 6.14 already developed for supervised models, now facing the added difficulty that a reinforcement-learning agent must learn this from its own trial and error rather than from a fixed, already-labeled training set.
+Column ``Fitted'' reports each quarter's fitted surprise from this regression, and column ``Signal'' converts a positive fitted surprise into a long position taken ahead of the earnings release (flat otherwise), the same logic Chapter 16's Section 16.5 applied to a sentiment score. Five of the eight quarters signal long; of those, four (Q1, Q3, Q7, Q8) are followed by a positive next-day return and one (Q5) by a negative return despite a strongly positive fitted surprise, an 80\% hit rate.
 
-Reward design carries the same tension in sharper form, because Section~\ref{sec:rl-challenges} shows that an imperfect reward does not merely produce a slightly worse agent, it produces an agent that is often precisely, confidently wrong about what it is optimizing. A common practical compromise is to shape the reward with an intermediate, densely observed signal, a small penalty proportional to inventory held at each step, say, in addition to the sparse, terminal profit-and-loss outcome, which speeds up learning considerably (the agent gets useful feedback every step rather than only at the end of a long execution episode) but introduces its own risk: if the shaping term is not carefully scaled relative to the true objective, the agent can learn to over-optimize the intermediate proxy (holding needlessly little inventory, say) at the expense of the actual goal it was meant merely to support learning toward. There is no universal recipe for getting this balance right; in practice it is validated the same way any other model choice in this book is validated, by comparing the resulting policy's realized, out-of-sample performance against the closed-form or rule-based benchmark it is meant to improve on, exactly as Section~\ref{sec:rl-evaluation} recommends.
+The signaled quarters average a 0.88\% next-day return versus 0.34\% across all eight quarters, a real edge, but, exactly as Chapter 6 and Chapter 16's Section 16.5 both emphasize, a probabilistic one: Q5's miss shows that even a well-fitted, multi-source alternative-data model does not eliminate the risk that a single quarter's price reaction depends on something the data could not capture, guidance issued alongside the earnings release, for instance. A ninth quarter with car, web, and card growth of 5.0\%, 4.5\%, and 3.5\% respectively yields a fitted surprise of
+\begin{equation*}
+-0.291 + 1.092(5.0) - 0.113(4.5) - 0.792(3.5) = 1.888\%,
+\end{equation*}
+again a tradeable estimate available before the official release.
 
-\section{Reinforcement Learning for Portfolio Management}\index{Reinforcement Learning for Portfolio Management}
-\label{sec:rl-portfolio}
+\section{Point-in-Time Alignment and the Cost of Look-Ahead Bias}
+\label{sec:point-in-time}
 
-Chapter 10's mean-variance framework solves a single-period allocation problem: given today's estimated expected returns and covariance matrix, find the weights that optimize a risk-return tradeoff today. Section 10.10's practical-allocation discussion acknowledges that real portfolios are rebalanced repeatedly and that transaction costs make each rebalancing decision depend on the portfolio's current position, but it stops at flagging this complexity rather than solving the resulting multi-period problem directly.
+Section~\ref{sec:alt-data-pipeline}'s regression silently assumed that all three growth rates for a given quarter were genuinely available before that quarter's earnings release. In reality, a card-panel vendor's data is typically delayed: the panel for a given quarter is often not fully assembled and delivered to subscribers until well after that quarter's earnings have already been reported, because the underlying card issuers themselves need time to compile and anonymize transaction records. A backtest that uses the current quarter's card figure as if it had been available in time, when in fact only the prior quarter's card figure would genuinely have been in hand, is committing look-ahead bias, using information the backtest could not actually have had.
 
-Framed as a Markov decision process, the state is the portfolio's current holdings together with estimated risk-factor exposures (Chapter 10's Section 10.7 multi-factor model is a natural source of these features); the action is a new target weight vector, or equivalently the trades needed to reach it. The reward combines the period's realized return with an explicit penalty for transaction costs and, if desired, for realized volatility or drawdown, letting the agent learn a rebalancing policy that trades off today's allocation quality against the cost of getting there, rather than treating every rebalancing decision as a fresh, myopic optimization the way Chapter 10 does.
+To see how much this matters, refit Section~\ref{sec:alt-data-pipeline}'s regression on quarters Q2 through Q8 (seven quarters, dropping Q1 since it has no prior quarter to lag from) two ways. The naive version uses each quarter's own, contemporaneous card growth, exactly as before:
+\begin{align*}
+\hat\beta_{\text{naive}} &= (-0.290,\ 1.102,\ -0.119,\ -0.802), & R^2 &= 0.837,
+\end{align*}
+with four quarters signaling long (Q3, Q5, Q7, Q8) and a 75\% hit rate. The realistic version instead uses, for each quarter, the card growth reported one quarter earlier, the figure that would genuinely have been available before that quarter's earnings release:
+\begin{align*}
+\hat\beta_{\text{realistic}} &= (0.251,\ 0.424,\ -0.100,\ -0.286), & R^2 &= 0.873,
+\end{align*}
+but Q8 no longer signals long once the lag is respected, leaving only three quarters (Q3, Q5, Q7) with a 66.7\% hit rate, and a higher average return (1.03\% versus 0.83\%) on that smaller, more selective set of trades.
 
-This framing is genuinely more general than Chapter 10's static optimization, and that generality is exactly its cost. A reinforcement-learning portfolio agent requires either a large amount of representative historical data or a realistic market simulator to train in, since a poorly specified reward (one that fails to penalize drawdown, say, or that rewards raw return without any risk adjustment) will produce a policy that optimizes exactly the wrong objective with no warning that anything has gone wrong, a version of the ``reward hacking'' problem Section~\ref{sec:rl-challenges} discusses in more depth.
+The lesson is not that the lagged, realistic version is simply worse, its $R^2$ is actually higher and its average signaled return is larger, but that it is a \emph{different} model making \emph{different} trading decisions than the naive version, on the very same underlying quarters. A backtest run on the naive, contemporaneous-card version would report performance for trades the fund could never actually have placed, since the card data those trades depend on was not yet in hand, regardless of whether that misspecified backtest happens to look better or worse than the honest one. This is why Section~\ref{sec:alt-data-quality} treats delivery lag as a data-quality issue rather than a mere modeling nuance: the direction of the resulting bias is not predictable in general, but the fact that ignoring real-world delivery timing invalidates the backtest as a measure of tradeable performance is completely general, and point-in-time data discipline, using, for every historical date, only the data vintage that would genuinely have been available on that date, is the standard defense against it.
 
-In practice, most institutional applications of reinforcement learning to portfolio management remain closer to research than to production, used to explore whether a learned, adaptive rebalancing policy can outperform Chapter 10's static mean-variance benchmark net of realistic transaction costs, rather than to replace that benchmark outright. The honest current state of the field is that reinforcement learning has demonstrated clearer, more reproducible gains in the execution and market-making applications of Section~\ref{sec:rl-execution}, where the reward (realized trading cost) is comparatively unambiguous to specify, than in full portfolio management, where the ``right'' reward is itself a genuinely open question tied to a client's actual, often unstated, risk preferences.
+\section{Feature Engineering for Alternative Data}
+\label{sec:altdata-feature-engineering}
 
-Multi-period portfolio choice has a classical closed-form precedent worth naming, since it clarifies exactly what a learned policy would need to rediscover on its own. Chapter 1's Section 1.15 introduced the \textbf{Kelly criterion}\index{Kelly criterion} for a single repeated bet; the same result, maximizing the expected \emph{logarithm} of long-run wealth rather than expected wealth itself, extends naturally to repeated portfolio rebalancing under a power-utility objective, producing an allocation fraction that avoids both the ruin risk of over-betting and the excessive caution of under-betting. This is itself a sequential decision problem with a known closed-form answer under simplifying assumptions, constant, known return and variance parameters, exactly the ``Chapter 10 could already have gone further'' observation that opened Section~\ref{sec:rl-bridge}. It gives a useful sanity check for a learned rebalancing agent: on a simplified simulated market where the Kelly fraction is known exactly, a correctly implemented reinforcement-learning portfolio agent should converge toward that same fraction, an internal-consistency check with exactly the same purpose as Section~\ref{sec:rl-qlearning}'s comparison against Chapter 5's closed-form option value, before that agent is ever trusted on a real, non-simplified market where no such closed form is available to check against.
+Raw alternative-data readings, like the raw market and fundamental data of Chapters 2 through 4, are rarely used exactly as delivered; Section~\ref{sec:point-in-time} addressed when a reading becomes usable, and this section addresses what should be done to it before it is usable at all.
 
-\subsection{A Worked Example: Why Model-Free Search Struggles Here}
-\label{sec:rl-kelly-worked}
+\textbf{Seasonal adjustment.} Web traffic, foot traffic, and card-transaction volumes all carry strong calendar effects, day-of-week patterns, holiday spikes, and back-to-school or year-end shopping seasons, that have nothing to do with a firm's underlying performance. Comparing a raw reading against the same period one year earlier, exactly what year-over-year growth rates such as Section~\ref{sec:satellite-example}'s car-count growth already do, removes most of this seasonality automatically, provided the calendar aligns cleanly (a retailer's Thanksgiving week, for instance, falls on a different date each year, which can distort a naive year-over-year comparison unless the alignment is done by trading day or holiday-relative position rather than by calendar date).
 
-Running that sanity check honestly, rather than only asserting it would work, is instructive precisely because it does not go as cleanly as Sections~\ref{sec:rl-qlearning} and~\ref{sec:rl-execution-worked}. Chapter 1's repeated bet, an even-money wager ($b=1$) won with probability $p=0.6$, has closed-form optimal fraction $f^*=p-q/b=0.20$ and long-run growth rate $g(f^*)\approx0.0201$. Framed as a Markov decision process, this is a single, repeated state (the optimal fraction does not depend on current wealth, so no wealth variable needs to be tracked) with action $f$ discretized to a grid of $5\%$ increments, $f\in\{0.00,0.05,\ldots,0.95\}$, and an immediate, noisy reward $r=\ln(1+f)$ with probability $p$ or $r=\ln(1-f)$ with probability $q$, drawn independently every period, no bootstrapping required since there is no next state to look ahead to.
+\textbf{Peer-relative normalization.} A retailer's car-count or web-traffic growth reflects both firm-specific performance and sector-wide conditions, gasoline prices, general consumer spending, weather, that affect every retailer in the sector simultaneously. Subtracting a sector-average benchmark from a firm's own reading isolates the firm-specific component a stock-picking strategy actually cares about.
 
-What makes this problem genuinely hard for a model-free method is the relationship between the reward's noise and the size of what there is to learn: the gap between the optimal action's growth rate and its nearest neighbors on the grid, $g(0.20)-g(0.15)\approx0.0013$ and $g(0.20)-g(0.25)\approx0.0013$, is tiny, while a single bet's outcome swings between $\ln(1.20)\approx0.182$ and $\ln(0.80)\approx-0.223$, a standard deviation roughly $150$ times larger than the gap Q-learning needs to resolve.
+Suppose sector-average car-count growth for Cascade's peer group across the same eight quarters of Table~\ref{tab:satellite_regression} is $(1.0, -0.5, 2.0, 0.3, 2.5, -1.0, 1.5, 0.5)$; subtracting it from Cascade's own car-count growth gives a peer-adjusted series $(1.1, -1.0, 2.8, 0.3, 3.7, -2.0, 2.0, 0.5)$. Refitting Section~\ref{sec:satellite-example}'s regression with this peer-adjusted series as the predictor gives $\hat\beta = 1.064$, $\hat\alpha = 0.678$, and $R^2 = 0.867$, essentially unchanged from the raw series' $R^2 = 0.870$. In this particular sample sector-wide movements were fairly small relative to Cascade's own idiosyncratic variation, so peer-adjustment does not change the fit much here, but the adjustment matters far more in a period when the whole sector moves together, a broad consumer-spending downturn, a fuel-price spike depressing driving-based foot traffic sector-wide, where an un-adjusted signal would mistake a sector-wide move for firm-specific news.
 
-Trained for $200{,}000$ simulated bets with the same $\varepsilon$-greedy, visit-count-decayed setup used throughout this chapter, tabular Q-learning settles on $f=0.15$, not $f^*=0.20$, leaving $g(0.20)-g(0.15)\approx0.0013$ of achievable growth rate on the table, about $6.4\%$ of the optimal rate. This is a real, if modest, miss, not the exact or near-exact recovery Sections~\ref{sec:rl-qlearning} and~\ref{sec:rl-execution-worked} demonstrated. Figure~\ref{fig:kelly_growth_curve} shows why: the growth-rate curve is nearly flat across the entire $0.10$-to-$0.30$ range, so the two marked points, the true optimum and where Q-learning actually converges, sit almost on top of each other.
+\section{Neural Networks for Structured and Unstructured Data}
+\label{sec:nn-structured-unstructured}
+
+Section~\ref{sec:satellite-example} treated the vendor's car count as a finished number, but the vendor itself had to produce that count from raw satellite pixels, and Section~\ref{sec:alt-data-pipeline}'s web-traffic and card figures likewise start from raw logs or transaction records. Chapter 6 introduced the feedforward network, in which every input feeds every hidden unit with its own independent weight; that architecture ignores two kinds of structure alternative data routinely has, the two-dimensional grid structure of an image and the ordered, sequential structure of a time-stamped log, and specialized architectures were developed to exploit each, alongside a third architecture that needs no labeled target at all.
+
+\subsection*{Convolutional Neural Networks for Grid-Structured Data}
+
+Suppose a vendor wants to teach a model to count cars automatically in a million-pixel satellite tile rather than paying an analyst to do it by eye. A feedforward network, of the kind Chapter 6 covers, could in principle treat every one of those million pixels as an independent input feature, but it would need a separate learned weight connecting each pixel to each hidden unit, and it would have to relearn from scratch that a cluster of bright pixels in the top-left corner and the identical cluster in the bottom-right corner both mean the same thing, a car, since nothing in a feedforward network's structure tells it that a pattern's meaning does not depend on where in the image it sits.
+
+A convolutional neural network\index{convolutional neural network (CNN)} (CNN) exploits exactly this redundancy: a useful pattern in an image, a car's outline, an edge, a texture, can appear anywhere in the frame, so instead of learning a separate weight for every pixel-hidden-unit pair, a CNN learns a small filter (or kernel) and slides it across the entire image, reusing the same weights at every position. This weight sharing is what makes CNNs practical for images: a $1000\times1000$-pixel satellite tile has a million pixels, far too many for a feedforward network's per-pixel weights to be learned from any realistic training set, but a $2\times2$ filter has only four weights to learn regardless of image size.
+
+Consider a stylized $4\times4$ satellite image patch of a single parking lot, with pixel intensities between 0 (dark asphalt) and 1 (a car's bright roof), containing two clusters of parked cars in opposite corners:
+\begin{equation*}
+I = \begin{pmatrix} 0.1 & 0.1 & 0.8 & 0.9 \\ 0.1 & 0.1 & 0.9 & 0.8 \\ 0.7 & 0.8 & 0.1 & 0.1 \\ 0.8 & 0.9 & 0.1 & 0.1 \end{pmatrix}.
+\end{equation*}
+Convolving this image with a $2\times2$ averaging filter
+$$K = \begin{pmatrix}0.25 & 0.25\\ 0.25 & 0.25\end{pmatrix}$$
+at stride 1 (sliding the filter one pixel at a time, computing the elementwise product with each $2\times2$ patch and summing) produces a $3\times3$ feature map. The top-left entry, for instance, averages the patch
+$$\begin{pmatrix}0.1&0.1\\0.1&0.1\end{pmatrix}$$
+to $0.1$; the entry one column to the right averages
+$$\begin{pmatrix}0.1&0.8\\0.1&0.9\end{pmatrix}$$
+to $(0.1+0.8+0.1+0.9)/4 = 0.475$. Carrying this out for all nine positions gives
+\begin{equation*}
+\text{Feature map} = \begin{pmatrix} 0.100 & 0.475 & 0.850 \\ 0.425 & 0.475 & 0.475 \\ 0.800 & 0.475 & 0.100 \end{pmatrix}.
+\end{equation*}
+The two corner entries where a car cluster sits, $0.850$ (top right) and $0.800$ (bottom left), stand out clearly above the two empty corners, both $0.100$, and above the mixed-boundary middle entries, which is exactly what this filter is designed to do: highlight regions of concentrated brightness.
+
+A real, trained CNN learns many such filters simultaneously (edge detectors, corner detectors, texture detectors), stacks several convolutional layers so that later layers respond to increasingly complex combinations of earlier layers' features, and typically applies a ReLU activation and a pooling step (taking, say, the maximum of each $2\times2$ block of the feature map) after each convolution, reducing the map's size while keeping its strongest responses, before finally feeding the result into feedforward layers of the kind Chapter 6 described to produce a single number, an estimated car count.
 
 \begin{figure}[htbp]
 \centering
 \begin{lrbox}{\bookmeasuredbox}
-    \begin{tikzpicture}[thick]
-        \draw[->] (0,-4.0) -- (12.8,-4.0);
-        \draw[->] (0,-4.0) -- (0,3.5);
-        \node[rotate=90,font=\small] at (-1.3,-0.5) {growth rate $g(f)$};
-        \foreach \i/\lab in {0/0.0,2.4/0.1,4.8/0.2,7.2/0.3,9.6/0.4,12.0/0.5} {
-            \draw (\i,-3.9) -- (\i,-4.1);
-            \node[below,font=\scriptsize] at (\i,-4.3) {\lab};
-        }
-        \node[below,font=\small] at (6.0,-4.6) {betting fraction $f$};
-        \foreach \y/\lab in {2.0/0.02,0.0/0.00,-2.0/-0.02} {
-            \draw (0.1,\y) -- (-0.1,\y);
-            \node[left,font=\scriptsize] at (-0.2,\y) {\lab};
-        }
-        \draw[solid] plot coordinates {(0,0.00) (1.2,0.88) (2.4,1.50) (3.6,1.88) (4.8,2.01) (6.0,1.88) (7.2,1.47) (8.4,0.77) (9.6,-0.24) (10.8,-1.62) (12.0,-3.40)};
-        \filldraw (4.8,2.01) circle (2.2pt);
-        \node[above,font=\scriptsize,align=center] at (6.6,3.1) {true optimum\\$f^*=0.20$};
-        \draw[->] (6.2,2.75) -- (4.95,2.15);
-        \filldraw[fill=white] (3.6,1.88) circle (2.2pt);
-        \node[above,font=\scriptsize,align=center] at (1.8,3.1) {Q-learning\\converges to $f=0.15$};
-        \draw[->,dashed] (2.3,2.75) -- (3.5,1.98);
-    \end{tikzpicture}
+\begin{tikzpicture}[font=\scriptsize]
+    \matrix (img) [matrix of nodes, nodes={draw,minimum size=0.8cm,anchor=center}, column sep=-\pgflinewidth, row sep=-\pgflinewidth] {
+        0.1 & 0.1 & 0.8 & 0.9 \\
+        0.1 & 0.1 & 0.9 & 0.8 \\
+        0.7 & 0.8 & 0.1 & 0.1 \\
+        0.8 & 0.9 & 0.1 & 0.1 \\
+    };
+    \node[above=0.15cm of img.north] {\normalsize $4\times4$ image patch $I$};
+
+    \matrix (fmap) [matrix of nodes, nodes={draw,minimum size=0.8cm,anchor=center}, column sep=-\pgflinewidth, row sep=-\pgflinewidth, right=3.4cm of img] {
+        0.100 & 0.475 & 0.850 \\
+        0.425 & 0.475 & 0.475 \\
+        0.800 & 0.475 & 0.100 \\
+    };
+    \node[above=0.15cm of fmap.north] {\normalsize $3\times3$ feature map};
+
+    \node[draw=blue,thick,fit=(img-1-1)(img-2-2),inner sep=1pt] (patchA) {};
+    \node[draw=orange,thick,fit=(img-1-2)(img-2-3),inner sep=1pt] (patchB) {};
+    \node[draw=blue,thick,fit=(fmap-1-1),inner sep=1pt] (outA) {};
+    \node[draw=orange,thick,fit=(fmap-1-2),inner sep=1pt] (outB) {};
+
+    \draw[->,blue,thick] (patchA.east) to[bend left=15] (outA.west);
+    \draw[->,orange,thick] (patchB.east) to[bend left=25] (outB.west);
+\end{tikzpicture}
 \end{lrbox}
 \ifdim\wd\bookmeasuredbox<0.65\linewidth
 \setlength{\bookcapwidth}{0.65\linewidth}
@@ -539,130 +271,392 @@ Trained for $200{,}000$ simulated bets with the same $\varepsilon$-greedy, visit
 \ffigbox[\bookcapwidth]{
 \usebox{\bookmeasuredbox}
 }{
-    \caption{The Kelly growth-rate curve $g(f)=p\ln(1+f)+q\ln(1-f)$ for $p=0.6$, $b=1$.}
-    \label{fig:kelly_growth_curve}
+\caption{Sliding a $2\times2$ averaging filter across the $4\times4$ satellite patch $I$ at stride 1.}
+\label{fig:cnn_convolution}
 }
 \end{figure}
 
-The contrast worth drawing out is what a \textbf{model-based} approach, Section~\ref{sec:rl-taxonomy}'s other category, does with the identical $200{,}000$ observations. Rather than treating each bet's outcome as an opaque reward to average over a large discretized action grid, it exploits the fact that this particular problem has a compact underlying model: a single unknown parameter, the win probability $p$, plugged directly into Chapter 1's closed form.
+Stacking convolutional layers naively, however, runs into a practical training problem once a network gets deep: gradients computed by backpropagation\index{backpropagation} (Chapter 6) must flow back through every layer, and in a sufficiently deep plain CNN they can shrink toward zero long before reaching the earliest layers, leaving those layers essentially untrained, the vanishing-gradient problem\index{Vanishing-Gradient Problem}.
 
-Simply counting wins and losses across the same $200{,}000$ simulated bets gives an observed win frequency $\hat p=0.6003$, and substituting into $\hat f^*=\hat p-(1-\hat p)/b$ gives $\hat f^*\approx0.2006$, accurate to within $0.0006$ of the true optimum, an order of magnitude closer than Q-learning's answer from the exact same data. This is Section~\ref{sec:rl-taxonomy}'s model-based-versus-model-free distinction made numerically concrete rather than only asserted, and it sharpens Section~\ref{sec:rl-bridge}'s opening argument: reinforcement learning is the right tool once no compact model is available, but when one is, as it is here, a single Bernoulli parameter standing in for the entire problem, exploiting that structure directly can be dramatically more sample-efficient than a black-box search over a discretized action grid, exactly the gap this worked example just measured.
+The architecture that made very deep CNNs practical, the residual network\index{residual network (ResNet)} (ResNet), addresses this with a simple structural change: each block adds a shortcut connection carrying the block's input directly to its output, so the block only has to learn a residual adjustment on top of what already passed through unchanged, rather than having to learn the entire transformation from scratch, letting gradients flow through the shortcut even when a particular block's own learned transformation contributes little. This is the same practical instinct as Chapter 12's shrinkage-based portfolio methods, do not force a model to learn from nothing what could instead be inherited or only mildly adjusted, applied to network depth rather than portfolio weights.
 
-Not every sequential decision problem that can be written as a Markov decision process is equally well suited to being solved by treating it as one; recognizing when a problem's structure should be modeled directly rather than learned model-free is itself part of the practitioner's job, not something reinforcement learning relieves them of.
+\subsection*{Recurrent Neural Networks for Sequential Data}
 
-\section{Multi-Agent Dynamics and the Limits of a Single-Agent Framework}\index{Multi-Agent Dynamics}
-\label{sec:rl-multiagent}
+Suppose an analyst wants to judge whether Cascade's web traffic is accelerating going into its next earnings release using the last several weeks of readings rather than just the most recent one, since a single week's number cannot distinguish a steady climb from a spike that is about to reverse. A feedforward network could take all several weeks as separate input features, but it would treat them as an unordered bag, with nothing in its structure telling it that the reading from three weeks ago came before the reading from last week.
 
-Every Markov decision process formalized in Section~\ref{sec:rl-framework} assumes a single agent facing a fixed, if stochastic, environment, an assumption real financial markets violate in an important way: the ``environment'' a trading or market-making agent faces is itself made up, in large part, of other agents, some human, increasingly many themselves algorithmic, each adapting to the same price and order-flow signals the agent under study is adapting to. Chapter 12's hot-potato effect during the 2010 Flash Crash is a vivid, already-documented illustration of exactly this dynamic: individually reasonable inventory-management rules, followed by many participants simultaneously, produced a collectively destabilizing outcome that no single participant's rule, viewed on its own, would have predicted. A reinforcement-learning agent trained against a static, historical simulator implicitly assumes other participants' behavior stays fixed, an assumption that becomes less accurate the larger and more influential the trained agent's own trading becomes, since a strategy profitable at small scale can behave very differently once it is large enough to move the same order flow it was trained to react to.
+A recurrent neural network (RNN) addresses exactly this: an ordered sequence, such as several successive weeks of web-traffic readings, in which the order itself carries information a feedforward network, which treats its inputs as an unordered set of features, would discard. An RNN processes a sequence one step at a time, maintaining a hidden state $h_t$ that is passed forward and updated at every step,
+\begin{equation*}
+h_t = \tanh(w_x x_t + w_h h_{t-1} + b),
+\end{equation*}
+so that $h_t$ is, in principle, a function of every input the network has seen so far, $x_1, \ldots, x_t$, not just the current one, giving the network a form of memory that Chapter 7's autoregressive and GARCH recursions share in spirit, each also defines a current value as a function of a prior state plus new information, but that Chapter 6's feedforward network has no analogue for.
 
-\textbf{Multi-agent reinforcement learning}\index{Multi-Agent Reinforcement Learning} extends the single-agent framework of this chapter to model several learning agents simultaneously, each adapting to the others' evolving behavior, and is an active area of research specifically for exactly the market-making and execution problems Section~\ref{sec:rl-execution} developed, since real limit order books are genuinely populated by multiple competing, adapting participants. The honest state of this research, as of this book's writing, is that multi-agent methods are considerably harder to train reliably than their single-agent counterparts, convergence guarantees that hold for tabular Q-learning in Section~\ref{sec:rl-qlearning}'s simple setting generally do not extend to a setting where the environment itself is changing because other agents are learning too. Most production trading systems, including Section~\ref{sec:loxm}'s LOXM, are best understood as single-agent policies trained against a historical or simulated environment rather than as genuine multi-agent systems, with the gap between that simplifying assumption and the true, multi-participant market being exactly the sim-to-real and non-stationarity concerns Section~\ref{sec:rl-challenges} raises.
+Suppose Cascade's e-commerce site shows three successive weekly readings of normalized web-traffic growth in the final three weeks before its next earnings release, $x_1 = 0.5$, $x_2 = -0.2$, $x_3 = 0.9$, and a single-hidden-unit RNN with weights $w_x = 0.6$, $w_h = 0.4$, $b = 0.1$, and initial hidden state $h_0 = 0$. Step by step:
+\begin{align*}
+h_1 &= \tanh(0.6(0.5) + 0.4(0) + 0.1) = \tanh(0.400) = 0.3799, \\
+h_2 &= \tanh(0.6(-0.2) + 0.4(0.3799) + 0.1) = \tanh(0.13196) = 0.1312, \\
+h_3 &= \tanh(0.6(0.9) + 0.4(0.1312) + 0.1) = \tanh(0.69248) = 0.5996.
+\end{align*}
+Notice that $h_2$ is small, close to zero, not because $x_2$ was extreme (it was mildly negative) but because it also carries a damped memory of $h_1$; the hidden state genuinely blends past and present rather than reacting to the latest input alone.
 
-A useful, more tractable middle ground treats other participants' aggregate behavior as part of the state rather than as separate learning agents to be modeled explicitly, letting a single-agent method from Sections~\ref{sec:rl-qlearning} through~\ref{sec:policy-gradient} respond to features like recent order-flow imbalance or realized volatility that summarize what other participants are collectively doing, without attempting the considerably harder problem of modeling each of them individually, a pragmatic compromise most of this chapter's real applications, execution and market making among them, actually rely on in practice.
+Passing the final hidden state through an output layer, $\hat y = \sigma(w_y h_3 + b_y)$ with $w_y = 1.2$ and $b_y = -0.3$, gives $\hat y = \sigma(1.2(0.5996) - 0.3) = \sigma(0.4195) = 0.6034$, which might, for instance, be interpreted as a 60.3\% estimated probability that Cascade's upcoming quarter shows accelerating (rather than decelerating) revenue growth. Figure~\ref{fig:rnn_unrolled} unrolls this same computation across its three time steps, making explicit how each hidden state depends on both the current input and the previous hidden state.
 
-\section{Case Vignette: JPMorgan's LOXM}\index{LOXM}
-\label{sec:loxm}
+\begin{figure}[htbp]
+\centering
+\begin{lrbox}{\bookmeasuredbox}
+\begin{tikzpicture}[>=latex,thick,
+    state/.style={draw,circle,minimum size=1.5cm,align=center,font=\small},
+    inputnode/.style={draw,circle,minimum size=1.2cm,align=center,font=\small}]
+    \node[state] (h0) at (0,0) {$h_0$\\$=0$};
+    \node[state] (h1) at (3.3,0) {$h_1$\\$=0.3799$};
+    \node[state] (h2) at (6.6,0) {$h_2$\\$=0.1312$};
+    \node[state] (h3) at (9.9,0) {$h_3$\\$=0.5996$};
+    \node[state] (y) at (13.2,0) {$\hat y$\\$=0.6034$};
 
-In 2017, JPMorgan disclosed LOXM, an equity trade execution system trained using reinforcement learning on a large history of past trades together with simulated trading scenarios, initially deployed on the bank's European cash equities desk.
+    \node[inputnode] (x1) at (3.3,2.6) {$x_1$\\$=0.5$};
+    \node[inputnode] (x2) at (6.6,2.6) {$x_2$\\$=-0.2$};
+    \node[inputnode] (x3) at (9.9,2.6) {$x_3$\\$=0.9$};
 
-Structurally, LOXM addresses exactly the problem formalized in Section~\ref{sec:rl-execution}: at each point during an order's execution, the system decides how much of the remaining order to place, at what price, and for how long to wait before reassessing, balancing the risk of trading too aggressively (incurring unnecessary market impact) against the risk of trading too passively (missing the current opportunity and having to execute later at a worse price), the same impact-versus-timing-risk tradeoff Almgren-Chriss solves in closed form in Chapter 11, but learned here directly from data rather than derived from an assumed cost function. The system was reported to have been trained on millions of historical and simulated trading scenarios specifically so that it could adapt its behavior to prevailing market conditions rather than following one fixed schedule regardless of context, the central advantage Section~\ref{sec:rl-execution} attributes to a learned execution policy over Almgren-Chriss's closed-form alternative.
+    \draw[->] (h0) -- node[above,font=\scriptsize]{$w_h=0.4$} (h1);
+    \draw[->] (h1) -- node[above,font=\scriptsize]{$w_h=0.4$} (h2);
+    \draw[->] (h2) -- node[above,font=\scriptsize]{$w_h=0.4$} (h3);
+    \draw[->] (h3) -- node[above,font=\scriptsize]{$w_y=1.2$} (y);
 
-LOXM is a useful case precisely because it illustrates both sides of this chapter's central tension in a single, real deployment. On one hand, it demonstrates that reinforcement learning for execution is not merely an academic exercise, a major bank judged a learned policy reliable enough to deploy on live client order flow, exactly the kind of practical validation the closed-form models developed earlier in this book have had for decades and that any newer machine-learning-based alternative must eventually earn. On the other hand, a deep reinforcement-learning execution policy is far harder to explain to a regulator or an internal model validator than an Almgren-Chriss schedule, whose entire logic reduces to a handful of interpretable parameters, a governance burden Section~\ref{sec:rl-challenges} and Chapter 16's explainability toolkit both address directly, and one that any institution deploying a system like LOXM must take on explicitly rather than treat as an afterthought.
+    \draw[->] (x1) -- node[right,font=\scriptsize]{$w_x=0.6$} (h1);
+    \draw[->] (x2) -- node[right,font=\scriptsize]{$w_x=0.6$} (h2);
+    \draw[->] (x3) -- node[right,font=\scriptsize]{$w_x=0.6$} (h3);
 
-LOXM was also an early, rather than an isolated, example. In the years since 2017, industry reporting has described similar reinforcement-learning-based execution research and deployments at several other major banks and trading firms. This is consistent with this chapter's broader claim that optimal execution, among all the applications surveyed in this chapter, has the clearest track record of reinforcement learning actually reaching production, precisely because its reward, realized execution cost relative to a well-defined benchmark, is comparatively unambiguous to specify correctly, exactly the property Section~\ref{sec:rl-portfolio} identified as still generally missing from full portfolio management.
+    \node[font=\scriptsize,below=0.3cm of h1]{bias $b=0.1$};
+    \node[font=\scriptsize,below=0.3cm of h2]{bias $b=0.1$};
+    \node[font=\scriptsize,below=0.3cm of h3]{bias $b=0.1$};
+    \node[font=\scriptsize,below=0.3cm of y]{bias $b_y=-0.3$};
+\end{tikzpicture}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ffigbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
+\caption{The single-hidden-unit RNN unrolled across its three time steps.}
+\label{fig:rnn_unrolled}
+}
+\end{figure}
 
-\section{Simulation, Backtesting, and Off-Policy Evaluation}\index{Off-Policy Evaluation}
-\label{sec:rl-evaluation}
+In practice, a plain RNN's memory decays quickly over long sequences, since each step multiplies the running influence of an early input by another factor less than one, a limitation addressed by the long short-term memory\index{long short-term memory (LSTM)} (LSTM) architecture. An LSTM maintains a separate cell state $c_t$, alongside the hidden state, updated as
+$$c_t = f_t \odot c_{t-1} + i_t \odot \tilde c_t,$$
+where
+$$f_t = \sigma(W_f[h_{t-1},x_t] + b_f)$$
+is a forget gate controlling how much of the previous cell state to retain,
+$$i_t = \sigma(W_i[h_{t-1},x_t]+b_i)$$
+is an input gate controlling how much of a new candidate value $\tilde c_t$ to admit, and $\odot$ denotes elementwise multiplication; a third, output gate
+$$o_t = \sigma(W_o[h_{t-1},x_t]+b_o)$$ then controls how much of $c_t$ is exposed as the hidden state
+$$h_t = o_t \odot \tanh(c_t).$$
+ Because the cell state's update is additive rather than the plain RNN's fully multiplicative recursion, a forget gate near 1 lets information pass across many more time steps largely undamped, directly addressing the memory-decay limitation the single-unit example above illustrates, at the cost of three times as many weights to learn as the plain recurrent unit.
 
-Every reinforcement learning agent in this chapter is trained by trial and error, which raises an operational question none of this book's earlier, purely supervised models faced: where does the trial and error actually happen? Training directly on live markets is rarely acceptable, since an untrained or partially trained policy will, by construction, take some genuinely bad actions while exploring, and a bad trading action costs real money in a way a bad prediction from a still-training classifier does not. The standard alternative is to train in a \textbf{simulator}, a model of the market environment built from historical data, that can be reset and replayed as many times as needed without financial consequence; Chapter 11's own backtesting framework (Section 11.13) is a close cousin of this idea. It inherits the same core limitation, a simulator built from historical data reflects how the market behaved historically, including in response to other participants' historical order flow, not necessarily how it would respond to a new agent's own actions once deployed at scale, a gap sometimes called the \textbf{sim-to-real gap}\index{Sim-to-Real Gap} that is at least as serious a concern for a reinforcement-learning trading agent as ordinary backtest overfitting is for the supervised models Chapter 11 already warned about.
+A worked numerical example makes this concrete rather than leaving it as a qualitative claim. Applying a single-unit LSTM to the identical three-week input sequence used for the plain RNN above ($x_1=0.5$, $x_2=-0.2$, $x_3=0.9$, $h_0=0$, $c_0=0$), with illustrative gate weights $w_{f,h}=0.5$, $w_{f,x}=0.3$, $b_f=2.0$ (a deliberately large bias, chosen so the forget gate stays close to $1$ and the memory-retention effect is visible) and $w_{i,h}=w_{i,x}=w_{c,h}=w_{c,x}=w_{o,h}=w_{o,x}=0.5$ with all other biases at $0$, the first step gives
+\begin{align*}
+f_1 &= \sigma(2.15) = 0.8957, & i_1 &= \sigma(0.25) = 0.5622, & \tilde c_1 &= \tanh(0.25) = 0.2449, \\
+c_1 &= f_1(0) + i_1\tilde c_1 = 0.1377, & o_1 &= \sigma(0.25) = 0.5622, & h_1 &= o_1\tanh(c_1) = 0.0769.
+\end{align*}
+Continuing this recursion through the second and third steps gives
+\begin{align*}
+f_2 &= 0.8785, & c_2 &= 0.0912, & h_2 &= 0.0441, \\
+f_3 &= 0.9082, & c_3 &= 0.3537, & h_3 &= 0.2092;
+\end{align*}
+passing $h_3$ through the same output layer as the plain RNN example ($w_y=1.2$, $b_y=-0.3$) gives $\hat y=\sigma(1.2(0.2092)-0.3)=0.4878$.
 
-A related and more subtle problem is \textbf{off-policy evaluation}: given historical data generated by one policy (a human trader's decisions, say, or an older execution algorithm), how good would a different, newly trained policy have performed, without ever actually running it? This matters because historical market data reflects only the actions the deployed policy actually took, not the counterfactual outcomes of actions it did not take, exactly the same missing-counterfactual problem Chapter 16's algorithmic-recourse discussion raised for credit decisions, now recurring in a sequential setting where a single wrong counterfactual estimate can compound over many steps. Techniques such as importance sampling reweight historical outcomes to estimate what a new policy would have achieved, but their reliability degrades quickly the more the new policy's behavior diverges from the one that generated the historical data, which is exactly why a genuinely novel learned policy is typically rolled out cautiously, first in simulation, then on a small fraction of live order flow, with continuous monitoring for exactly the kind of performance drift Chapter 13's precision-drift and Chapter 16's population-stability-index discussions already developed for other models, rather than deployed at full scale on the strength of a backtest or an off-policy estimate alone.
+The forget gates $f_2=0.8785$ and $f_3=0.9082$ are the mechanism worth isolating: their product, $0.8785\times0.9082\approx0.7979$, is the fraction of the original cell state $c_1$ that survives, purely through the forget gate's own multiplicative decay, two additional time steps later, versus only $w_h^2=0.4^2=0.16$ for the plain RNN's equivalent two-step decay of its hidden state's direct dependence on $h_1$.
 
-This staged approach, simulator, then a small live allocation, then a gradually increasing one, is sometimes called \textbf{curriculum deployment}, and it mirrors a discipline this book has already recommended elsewhere for a different reason: Chapter 8's three-lines-of-defense model and Chapter 16's staged-deployment recommendation for high-stakes machine learning models both argue for exactly this kind of graduated rollout, independent of whether the model in question is a reinforcement-learning policy or a static classifier. What is genuinely new to the reinforcement-learning setting is that the policy itself may continue to update during this staged rollout, a live, still-learning system rather than a fixed, already-frozen model, which means the monitoring in place must be able to detect not only a fixed policy's performance drifting away from its backtested expectation, but a still-adapting policy drifting toward behavior nobody has explicitly validated at all, a strictly harder monitoring problem than the ones Chapters 13 and 16 originally posed.
+Roughly $80\%$ of $c_1$'s information survives to $c_3$ in the LSTM, against roughly $16\%$ of the plain RNN's analogous quantity, a concrete, order-of-magnitude illustration of exactly the memory-decay fix the forget gate is designed to provide: not that information never decays in an LSTM, the forget gate is still strictly less than $1$, but that a well-trained forget gate can be pushed close enough to $1$ that memory persists over many more steps than a plain RNN's fixed recurrent weight allows. Figure~\ref{fig:lstm_cell} draws the first step of this same computation as a cell diagram, showing all four gates computed from the identical inputs before they combine into the new cell and hidden states.
 
-\section{Evaluating Trained Policies: Metrics and Variance Across Training Runs}\index{Evaluating Trained Policies: Metrics and Variance Across Training Runs}
-\label{sec:rl-eval-metrics}
+\begin{figure}[htbp]
+\centering
+\begin{lrbox}{\bookmeasuredbox}
+\begin{tikzpicture}[>=latex,thick,node distance=1.0cm and 0.5cm,every node/.style={font=\small}]
+    \node[draw,rounded corners,align=center,minimum width=5.4cm] (inputs) at (4.5,4.6) {Inputs at $t=1$: $h_0=0$, $x_1=0.5$};
+    \node[draw,rounded corners,align=center,minimum width=2.0cm] (forget) at (0,2.3) {Forget gate\\$f_1=\sigma(2.15)$\\$=0.8957$};
+    \node[draw,rounded corners,align=center,minimum width=2.0cm] (input) at (3.0,2.3) {Input gate\\$i_1=\sigma(0.25)$\\$=0.5622$};
+    \node[draw,rounded corners,align=center,minimum width=2.0cm] (cand) at (6.0,2.3) {Candidate\\$\tilde c_1=\tanh(0.25)$\\$=0.2449$};
+    \node[draw,rounded corners,align=center,minimum width=2.0cm] (output) at (9.0,2.3) {Output gate\\$o_1=\sigma(0.25)$\\$=0.5622$};
+    \node[draw,rounded corners,align=center,minimum width=3.4cm] (cell) at (3.0,0) {New cell state\\$c_1=f_1c_0+i_1\tilde c_1=0.1377$};
+    \node[draw,rounded corners,align=center,minimum width=3.4cm] (hidden) at (9.0,0) {New hidden state\\$h_1=o_1\tanh(c_1)=0.0769$};
+    \draw[->] (inputs) -- (forget);
+    \draw[->] (inputs) -- (input);
+    \draw[->] (inputs) -- (cand);
+    \draw[->] (inputs) -- (output);
+    \draw[->] (forget) -- (cell);
+    \draw[->] (input) -- (cell);
+    \draw[->] (cand) -- (cell);
+    \draw[->] (output) -- (hidden);
+    \draw[->] (cell) -- (hidden);
+\end{tikzpicture}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ffigbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
+\caption{The LSTM cell's first time step, computed from the worked example in the text.}
+\label{fig:lstm_cell}
+}
+\end{figure}
 
-Chapter 11's Section 11.13 developed a standard toolkit, Sharpe ratio, maximum drawdown, hit rate, for evaluating a trading strategy's backtested performance, and every one of those metrics applies unchanged to a reinforcement-learning policy's simulated or live performance. What reinforcement learning adds is a genuinely new source of variability that a closed-form model like Almgren-Chriss simply does not have: since every method in this chapter is trained via a stochastic process, random initialization, $\varepsilon$-greedy exploration, and, for the neural-network methods of Sections~\ref{sec:dqn} and~\ref{sec:policy-gradient}, stochastic gradient descent itself, two training runs of the identical algorithm on identical data, differing only in their random seed, can converge to meaningfully different policies with meaningfully different realized performance.
+\subsection*{Autoencoders for Unsupervised Anomaly Detection}
 
-Section~\ref{sec:rl-qlearning}'s worked example makes this concrete in miniature: it was trained with a fixed seed (seed $=7$) specifically so that its reported numbers, \$2.5328 and \$4.9234 among them, would be exactly reproducible for a reader rerunning the companion notebook, but a different seed would converge to slightly different learned values, still close to the closed-form $\$2.5641$ and $\$4.8718$, since the underlying algorithm and its guarantees do not depend on the seed, but not numerically identical to the values reported in Table~\ref{tab:rl_qlearning}. In a small, three-state problem with a known correct answer to check against, this seed sensitivity is a minor curiosity; in a large, real trading application with no closed-form answer available, it is a serious practical concern, since a single training run's backtested performance could simply be a favorable draw rather than a property of the algorithm the institution intends to rely on.
+Suppose a data-quality analyst wants to flag whenever a quarter's alternative-data readings look unusual, without knowing in advance what ``unusual'' means and without a single labeled historical example of a bad reading to train against, an unsupervised problem the CNN and RNN examples above cannot address, since both are supervised, trained toward a known target, an estimated car count, a probability of accelerating growth.
 
-The standard remedy, standard in machine learning generally but not previously needed anywhere else in this book, whose supervised and closed-form models are deterministic given their input data, is to train multiple independent runs from different seeds and report performance as a distribution rather than a single number, exactly the same statistical caution Chapter 6's confidence intervals and Chapter 7's out-of-sample RMSE comparisons already applied to estimation uncertainty, now applied to the additional uncertainty introduced by the training process itself, not just by the data.
+An autoencoder is trained without any label at all: it learns an encoder that compresses an input down to a small bottleneck representation and a decoder that reconstructs the original input from that bottleneck, with the reconstruction error itself as the only training signal. Once trained on typical, well-behaved data, an autoencoder reconstructs anomalous inputs poorly, since its bottleneck was never shaped to represent whatever made them unusual, which makes reconstruction error a natural anomaly score, extending Chapter 15's classification-based anomaly detection to a setting with no labeled examples of what an anomaly looks like.
 
-\section{Practical Considerations: What Deployment Actually Requires}\index{Practical Considerations: What Deployment Actually Requires}
-\label{sec:rl-practical}
+Consider a simple linear autoencoder, encoder weights $w = (0.5, 0.3, 0.2)$ applied to Table~\ref{tab:multisource_signal}'s three alternative-data growth rates $x = (\text{car}, \text{web}, \text{card})$ for each quarter, producing a single bottleneck code $z = w \cdot x$, and a tied-weight decoder that reconstructs $\hat x = z\, w$. For Q4, $x = (0.6, 1.5, 0.8)$, so $z = 0.5(0.6) + 0.3(1.5) + 0.2(0.8) = 0.91$, and $\hat x = 0.91(0.5, 0.3, 0.2) = (0.455, 0.273, 0.182)$, giving a reconstruction error $\sum(x_i - \hat x_i)^2 = (0.6-0.455)^2 + (1.5-0.273)^2 + (0.8-0.182)^2 = 1.909$.
 
-The methods and applications developed above can leave an unrealistic impression that adopting reinforcement learning is primarily an algorithmic choice, DQN or PPO, Q-learning or actor-critic, when in practice the harder and more expensive decisions are organizational and infrastructural, and worth naming explicitly before this chapter closes.
+Carrying this out for all eight quarters and expressing each quarter's error relative to its own total energy $\sum x_i^2$ (so that quarters with naturally larger growth rates are not automatically flagged just for being larger) gives relative errors ranging from 39.5\% (Q7) to 58.7\% (Q4). Q4 stands out as the quarter whose alternative-data pattern the autoencoder reconstructs worst, not because its numbers are the largest in absolute terms, Q5's raw error of 30.9 is far larger, but because Q4's web-traffic growth (1.5\%) is unusually large relative to its car-count and card growth (0.6\% and 0.8\%), a pattern this particular bottleneck direction does not represent well.
 
-\textbf{A trustworthy simulator is usually the binding constraint, not the algorithm.} Every method in this chapter needs a large volume of training experience, and Section~\ref{sec:rl-evaluation} already established why that experience typically cannot come from live markets. Building a market simulator accurate enough to train a genuinely useful policy, one that reproduces realistic order-book dynamics, price impact, and other participants' plausible reactions, is a substantial engineering undertaking in its own right, often larger than the effort spent on the learning algorithm itself, and it is a project few institutions can justify unless the underlying decision problem is important and recurring enough to be worth that fixed investment, which is exactly why optimal execution at a large bank, a genuinely high-volume, high-value recurring decision, has been an early adopter while more bespoke, lower-frequency problems largely have not.
+In practice, this would be exactly the kind of quarter a data-quality analyst should investigate first, is the web-traffic reading itself an error, a one-time promotional spike, or a genuine early signal the other two sources have not yet picked up, before that quarter's data is trusted in a downstream model.
 
-\textbf{The required skill set differs from, and must complement rather than replace, this book's earlier chapters.} A team building a reinforcement-learning trading system needs the market-microstructure fluency Chapters 11 and 12 developed, the statistical and machine-learning foundations of Chapter 6, and, on top of both, genuine expertise in the distinct engineering discipline of reinforcement learning itself, stable training, careful hyperparameter selection, and the evaluation methodology of Section~\ref{sec:rl-evaluation}, a combination that is still comparatively rare and that most institutions build gradually rather than hire for all at once. This is one more reason closed-form models like Almgren-Chriss and Avellaneda-Stoikov remain the right default choice for most applications: they require the market-microstructure expertise this book has developed throughout, but not the additional, specialized reinforcement-learning engineering capability on top of it.
+\begin{figure}[htbp]
+\centering
+\begin{lrbox}{\bookmeasuredbox}
+\begin{tikzpicture}[>=latex,thick,
+    io/.style={draw,circle,minimum size=1.5cm,align=center,font=\small},
+    bottleneck/.style={draw,circle,minimum size=1.3cm,align=center,font=\small,fill=gray!15}]
+    \node[io] (xcar) at (0,2.4) {car\\$=0.6$};
+    \node[io] (xweb) at (0,0) {web\\$=1.5$};
+    \node[io] (xcard) at (0,-2.4) {card\\$=0.8$};
 
-\textbf{The honest cost-benefit comparison is against the closed-form alternative, not against doing nothing.} A closed-form model, once specified, costs almost nothing to run and is immediately auditable by the model-risk-management process Chapter 8 established; a reinforcement-learning policy costs substantially more to build, validate, and monitor on an ongoing basis, and that additional cost is only justified when the closed-form model's simplifying assumptions are demonstrably costing real money, exactly the market-impact and reward-specification gaps Section~\ref{sec:rl-bridge} identified. A useful discipline, consistent with this book's compute-first approach throughout, is to build and validate the closed-form baseline first, know precisely what it costs in realized performance, and only then invest in a learned alternative with a clear, pre-specified bar for how much improvement would justify the added complexity and ongoing governance burden.
+    \node[bottleneck] (z) at (4.8,0) {$z$\\$=0.91$};
 
-\textbf{Compute cost is a real, ongoing line item, not a one-time expense.} Training a deep Q-network or a PPO policy over the hundreds of thousands or millions of simulated episodes a realistic problem requires consumes meaningfully more computing resources than fitting any single supervised model elsewhere in this book, and that cost recurs every time the policy is retrained, whether on a fixed schedule to keep pace with the non-stationarity Section~\ref{sec:rl-challenges} describes, or in response to a detected drift in live performance. This ongoing retraining cost, together with the ongoing monitoring cost Section~\ref{sec:rl-evaluation} requires, belongs in the same total-cost-of-ownership comparison as the upfront simulator investment discussed above, not treated as a one-time project expense that ends once a policy is first deployed.
+    \node[io] (rcar) at (9.6,2.4) {$\hat{\text{car}}$\\$=0.455$};
+    \node[io] (rweb) at (9.6,0) {$\hat{\text{web}}$\\$=0.273$};
+    \node[io] (rcard) at (9.6,-2.4) {$\hat{\text{card}}$\\$=0.182$};
 
-\section{Challenges in Reinforcement Learning for Finance}
-\label{sec:rl-challenges}
+    \draw[->] (xcar) -- node[above,sloped,font=\scriptsize]{$0.5$} (z);
+    \draw[->] (xweb) -- node[above,font=\scriptsize]{$0.3$} (z);
+    \draw[->] (xcard) -- node[below,sloped,font=\scriptsize]{$0.2$} (z);
 
-Reinforcement learning inherits every model-risk concern raised elsewhere in this book and adds several that are specific to its sequential, trial-and-error structure.
+    \draw[->] (z) -- node[above,sloped,font=\scriptsize]{$0.5$} (rcar);
+    \draw[->] (z) -- node[above,font=\scriptsize]{$0.3$} (rweb);
+    \draw[->] (z) -- node[below,sloped,font=\scriptsize]{$0.2$} (rcard);
 
-\textbf{Reward specification is the entire problem in disguise.} An agent optimizes exactly the reward function it is given, not the objective its designer actually had in mind, and the gap between the two is usually invisible until the agent finds and exploits it, a failure mode generally called \textbf{reward hacking}. An execution agent rewarded purely for beating a benchmark price, with no penalty for market impact left behind for the next order, can learn to trade in ways that look good on that one metric while quietly making the market worse for the desk's future orders; a portfolio agent rewarded for raw return with no risk adjustment can learn to take on exactly the tail risk a real client would never accept. Specifying a reward that genuinely captures an institution's objective, including the parts that are hard to quantify, is consistently harder in practice than designing the learning algorithm itself.
+    \node[font=\small,below=1.9cm of xcard]{Encoder input $x$};
+    \node[font=\small,below=1.9cm of z]{Bottleneck $z=w\cdot x$};
+    \node[font=\small,below=1.9cm of rcard]{Decoder output $\hat x = z\,w$};
+\end{tikzpicture}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ffigbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
+\caption{The linear autoencoder applied to Q4's three alternative-data growth rates.}
+\label{fig:autoencoder}
+}
+\end{figure}
 
-\textbf{Non-stationarity compounds ordinary concept drift.} Chapter 13 and Chapter 16 both warned that a supervised model's accuracy can degrade as the world changes; a reinforcement-learning trading agent faces the same risk with an added twist, since other market participants adapt to \emph{its} behavior too, particularly once a learned strategy is large enough to influence prices, turning the environment itself into something that changes partly \emph{because of} the agent's own past actions, a genuinely adversarial dynamic no supervised classifier in this book has had to contend with.
+\subsection*{Transformers as a Unifying Architecture}
 
-\textbf{Reinforcement learning is dramatically more sample-hungry than the supervised methods elsewhere in this book.} Section~\ref{sec:rl-qlearning}'s worked example needed $100{,}000$ simulated episodes to estimate just six numbers to within roughly one percent, and that problem has only three states and two actions. Chapter 6's supervised classifiers, by contrast, routinely reach useful accuracy from a training set several orders of magnitude smaller relative to their problem's apparent complexity, because a supervised label provides direct, unambiguous feedback on every single example, while a reinforcement-learning reward, especially a delayed, terminal one, provides comparatively little information per episode about which of many earlier actions actually deserves credit for it, the credit-assignment difficulty Section~\ref{sec:rl-challenges} returns to below. This sample inefficiency is precisely why Section~\ref{sec:rl-practical}'s simulator investment is not optional infrastructure but the central prerequisite for any of this chapter's methods to work at all outside of small, hand-verifiable settings like this chapter's own worked example.
+Chapter 16 developed the transformer architecture and its self-attention\index{self-attention} mechanism (Section 16.8) for text, where each token attends to every other token in a sequence. The same mechanism generalizes beyond text: a vision transformer (ViT)\index{Vision Transformer (ViT)} divides an image into fixed-size patches, treats each patch the way a transformer treats a word token, and applies self-attention across patches instead of convolution across pixels, letting a satellite image classifier weigh a distant part of the image against the current patch directly, something a CNN's local filters only do indirectly, through many stacked layers.
 
-\textbf{Exploration is expensive and risky in a way it is not in a game.} The $\varepsilon$-greedy exploration in Section~\ref{sec:rl-qlearning}'s worked example costs nothing beyond simulated time; the same exploration on a live trading desk means deliberately taking some actions believed to be suboptimal, in real markets, with real capital, specifically to learn whether they might be better than currently believed. This is a fundamentally different risk profile from a self-driving research agent exploring a video game, and it is the central reason simulation-based and off-policy training, Section~\ref{sec:rl-evaluation}'s subject, are not merely convenient but close to mandatory for any serious financial application.
+The companion notebook makes this concrete by splitting the same $4\times4$ satellite image the CNN example convolved into four non-overlapping $2\times2$ patches, treating each as a token exactly as Chapter 16 treated a word, and computing scaled dot-product self-attention across them. Querying from patch 2 (the top-right car cluster, mean brightness $0.85$) against keys built from each patch's own brightness, patch 2 attends to itself with weight $0.6174$ and to patch 3 (the bottom-left car cluster, mean brightness $0.80$, diagonally the farthest patch in the image) with weight $0.3817$, while the two empty patches 1 and 4 (mean brightness $0.10$ each) receive a combined weight of only $0.001$.
 
-\textbf{Explainability and governance do not disappear just because a policy performs well.} A deep reinforcement-learning policy inherits all the opacity concerns Chapter 16 raised for deep neural networks generally, compounded by the fact that its behavior is defined over an entire trajectory of decisions rather than a single prediction, making a SHAP-style, single-decision explanation only a partial account of what the policy is actually doing. A model validator or regulator evaluating a system like Section~\ref{sec:loxm}'s LOXM needs some account of why the policy behaves as it does across a representative range of market conditions, not just a performance summary, exactly the model-risk-management discipline Chapter 8 established for market-risk models and Chapter 16 extended to explainability generally, now applied to a policy that acts rather than merely predicts.
+This is the claim above made numerical: patch 2's most relevant neighbor is patch 3, a content-similar patch on the opposite corner of the image, not either of the two empty patches nearer to it, and self-attention identifies that relevance in a single step rather than requiring several stacked convolutional layers to propagate information across that same distance. In current practice, CNNs remain common for smaller or highly structured image tasks (including much car-counting and object-detection work), while transformer-based architectures increasingly dominate both large-scale image classification and the web-traffic and card-transaction sequence modeling that once used RNNs, so that a single architectural family, self-attention, now spans text (Chapter 16), images, and sequences alike.
 
-\textbf{Credit assignment gets harder the longer the horizon.} A supervised classifier receives immediate, unambiguous feedback on every prediction it makes, Chapter 6's confusion matrix scores a decision the moment it is made. A reinforcement-learning agent, by contrast, often does not learn whether an early action was good or bad until many steps later, when the resulting reward finally arrives, the \textbf{credit assignment problem}\index{Credit Assignment Problem}. Section~\ref{sec:rl-qlearning}'s worked example sidesteps this almost entirely, since its longest episode is only two decisions deep, but a full trading day's worth of execution decisions, or a multi-quarter portfolio-rebalancing episode, can make it genuinely difficult to tell which of many earlier actions actually caused a later gain or loss, slowing learning and demanding far more training data than a supervised problem of comparable apparent complexity.
+\section{Data Quality, Bias, and Integration Challenges}
+\label{sec:alt-data-quality}
 
-\textbf{Simulators are themselves models, with their own model risk.} Section~\ref{sec:rl-evaluation}'s sim-to-real gap is not merely a data-availability inconvenience; a market simulator built from historical data encodes its own assumptions about how prices and order flow behave, and an agent trained exclusively against a flawed simulator will learn a policy that is optimal for that simulator's biases rather than for the real market, no differently in kind from Chapter 8's warning that a risk model is only as trustworthy as the assumptions behind it. Validating a trading simulator against out-of-sample market behavior, not just validating the agent trained inside it, is therefore a necessary part of the same model-risk-management discipline this chapter has invoked throughout.
+Alternative data's advantages, frequency, granularity, and a genuine informational edge before official reporting, come with distinctive quality problems that do not have close analogues in the market and fundamental data earlier chapters used.
 
-\textbf{The regulatory and legal framework for autonomous trading policies is still catching up.} Chapter 8's model-risk-management guidance and Chapter 16's explainability requirements were largely written with static, single-prediction models in mind; a policy that adapts its own behavior over time, potentially continuing to learn after deployment, raises validation questions, how often must a live, still-adapting policy be re-approved, and what constitutes an adequate explanation of a policy rather than a prediction, that existing supervisory guidance does not yet answer with the same specificity it applies to a fixed logistic regression or gradient-boosted tree. Institutions deploying reinforcement learning in a regulated trading or advisory context should expect to extend, and in places invent, their own governance answers rather than assume existing frameworks already cover this case completely.
+\textbf{Coverage bias.} A satellite vendor can only cover stores it has usable imagery for, typically larger, freestanding locations with visible parking lots, so its car-count sample systematically underrepresents smaller-format or mall-based stores, and a model trained only on the covered subset may not generalize to a retailer's business as a whole.
+
+\textbf{Vendor black-box processing.} As Section~\ref{sec:alt-data-sources} noted, a vendor typically sells an already-processed feature, a car count, a traffic index, not raw pixels or logs, so an analyst inherits whatever computer-vision or aggregation errors are baked into that pipeline without being able to inspect or correct them directly; a vendor's undisclosed methodology change between periods can look, in the data, indistinguishable from a genuine change in the underlying business.
+
+\textbf{Delivery lag and look-ahead bias.} A backtest that assumes alternative data was available on the date it describes, rather than the (often later) date it was actually delivered to subscribers, silently uses information that would not have been tradeable in real time; Section~\ref{sec:alt-data-pipeline}'s multi-source signal, for instance, is only genuinely useful if all three data sources reach a trading desk before the earnings release they are meant to anticipate, not merely before the quarter ends.
+
+\textbf{Licensing cost and alpha decay.} High-quality alternative data is expensive, often licensed exclusively or semi-exclusively, and Section~\ref{sec:case-vignette-satellite}'s case documents a genuine 4-5\% informational edge around earnings from satellite car counts; as more funds license the same feed and trade on the same signal, that edge is competed away over time in exactly the way Chapter 6 described a known profitable pattern eroding once it becomes widely traded, so an alternative-data edge, like any other, has a shelf life.
+
+\textbf{Privacy and legal exposure.} Card-panel and geolocation data are aggregated and anonymized before sale, but reconstructing individual behavior from supposedly anonymized data has repeatedly proven possible in other domains, so a vendor's privacy practices, and a buyer's own legal exposure, are due-diligence questions that market and fundamental data never raised.
+
+\textbf{The line between alternative data and material non-public information is not always bright.} Card-panel and web-traffic vendors aggregate across many individual cardholders or visitors specifically so that no single company's non-public information is being sold, but the boundary is a matter of legal judgment rather than a fixed technical threshold, and a narrowly enough scoped feed, transaction data from only a handful of a firm's largest customers, say, can approach material non-public information even though it never touches the firm's own systems and no insider ever leaks anything, a genuinely new compliance risk that Chapter 15's insider-trading discussion, framed entirely around information leaking from inside a firm, did not anticipate.
+
+\section{Building an ESG Signal Directly from Disclosure Text}
+\label{sec:esg-text-signal}
+
+Chapter 12 showed that six major ESG rating providers agree with one another only weakly, an average pairwise correlation\index{ESG rating divergence} of just 38\% to 71\%, and traced most of that disagreement to providers measuring different underlying facts about a company and weighting them differently, not to noisy measurement of an otherwise agreed-upon concept. Section~\ref{sec:vendor-ecosystem}'s build-versus-buy logic applies to this problem exactly as it applies to satellite imagery: rather than purchasing a vendor's already-computed ESG score and inheriting whatever undisclosed methodology produced it, a fund can build its own narrow, transparent environmental-tone signal directly from a company's public disclosures, using the same text-analysis tools Chapter 16 developed for a different purpose.
+
+Suppose Meridian Fabrication\index{Meridian Fabrication}, the manufacturer whose ratio analysis Chapter 4 worked through in detail, files a 10-K whose risk-factors section runs to several pages. Extending Chapter 16's Naive Bayes\index{Naive Bayes} classifier (Section 16.6) with a third training class, Environmental Risk, built from a small set of sentences using vocabulary (emissions, environmental, climate, remediation) that neither the original Credit Risk nor Market Risk class's training sentences ever mention, the retrained classifier flags four sentences in Meridian's filing as Environmental Risk with high confidence, each keying on at least one environment-specific term the other two classes' training vocabulary lacks entirely:
+
+\begin{quote}
+\small
+S1: ``Management remains confident that planned facility upgrades will reduce our emissions, but continued regulatory headwinds could still increase compliance costs.''\\
+S2: ``We remain cautious about the pace of emissions reduction given persistent supply chain headwinds affecting our environmental capital projects.''\\
+S3: ``Emissions declined for the third consecutive year, reflecting strong progress on our environmental targets despite a challenging regulatory backdrop.''\\
+S4: ``Physical risks from climate change, including potential flooding at our coastal facility, remain a weak point in our disaster preparedness planning and a continuing concern for the board.''
+\end{quote}
+
+Applying Chapter 16's Loughran-McDonald dictionary\index{Loughran-McDonald dictionary} tone score (Section 16.4) to each of these four flagged sentences, using the same small positive word set \{strong, growth, exceeded, confident, improved\} and negative word set \{cautious, headwinds, decline, declined, weak, concern, concerns\} Chapter 16 used to score its two earnings-call transcripts, gives
+\begin{align*}
+\text{S1: } & (1-1)/20 = 0.0, \\
+\text{S2: } & (0-2)/19 \approx -0.1053, \\
+\text{S3: } & (1-1)/19 = 0.0, \\
+\text{S4: } & (0-2)/28 \approx -0.0714,
+\end{align*}
+an average environmental tone score of $-0.0442$ across the four sentences, a mildly cautious reading of Meridian's own environmental disclosure.
+
+This exercise surfaces a genuinely new data-quality problem, distinct from anything Section~\ref{sec:alt-data-quality} catalogued, that is specific to building ESG signals from generic financial-sentiment tools: the Loughran-McDonald lexicon was built to score revenue and earnings language, where a word like ``declined'' is reliably bad news, but the same word describes unambiguously good environmental news in sentence S3, emissions falling for a third consecutive year, and the lexicon cannot tell the difference. S3's tone score of $0.0$ is, if anything, understating how positive that sentence actually is; a lexicon purpose-built for environmental disclosure, distinguishing a decline in emissions from a decline in revenue, would be needed to fix this, and no such standardized, publicly available dictionary exists yet the way Loughran-McDonald's does for general financial tone.
+
+Comparing this section's result to Chapter 12's worked example makes the deeper point. Chapter 12's three fictional assets were scored on a common, if arbitrary, $0$-to-$100$ composite scale, and its worked example varied only the \emph{weight} providers place on the same three E, S, and G sub-scores, one of three sources of divergence Berg, Kölbel, and Rigobon identify. This section's $-0.0442$ tone score is not on that scale at all, and is not directly comparable to it: it measures something narrower (the tone of language in one filing's risk-factors section) using an entirely different method (word counting rather than a proprietary composite index), which is exactly the \emph{scope} and \emph{measurement} divergence the same paper identifies as the larger share of why ESG ratings disagree. Building an in-house, transparent signal like this one does not resolve the disagreement documented in Chapter 12; it adds a fourth, differently-scoped measurement to a field that, per that same evidence, already has too many mutually inconsistent ones.
+
+What it buys instead is auditability: unlike a vendor's black-box score, every step from raw sentence to final number in this section can be inspected, recomputed, and defended to a model validator in exactly the way Chapter 8's model-risk-management framework requires.
+
+\section{Advanced Topics: Transfer Learning, Graphs, and Fusion}
+\label{sec:advanced-altdata}
+
+Three further techniques extend the neural network toolkit of Section~\ref{sec:nn-structured-unstructured} in directions that matter increasingly in real alternative-data practice: reusing an already-trained model instead of training from scratch, exploiting network structure between entities rather than treating each firm in isolation, and combining several data modalities into one representation.
+
+\subsection*{Transfer Learning: Fine-Tuning a Pretrained Vision Backbone}
+
+Section~\ref{sec:alt-data-quality} noted that a newly available alternative-data feed typically has only a short history, too little, on its own, to train a large CNN's millions of weights from scratch. Transfer learning sidesteps this: a CNN already trained on a large, general image dataset (which has already learned generic filters for edges, textures, and shapes) is reused as a frozen feature extractor, and only a small final layer, mapping its output features to the task at hand, car count, cloud cover, construction status, is trained on the limited task-specific data available. Because the frozen backbone contributes no gradient updates, this final-layer training is a direct application of Chapter 6's gradient descent\index{gradient descent} to far fewer parameters than training a full network would require.
+
+Suppose a pretrained backbone, frozen, produces a two-dimensional feature vector $f = (0.7, 0.3)$ for a new satellite image patch, and the task is to fine-tune a final logistic layer, currently $w = (0.4, 0.4)$, $b = -0.1$, to predict whether the patch contains a car cluster (label $y=1$ for this patch). The current prediction is
+$$\hat y = \sigma(w \cdot f + b) = \sigma(0.4(0.7) + 0.4(0.3) - 0.1) = \sigma(0.30) = 0.5744.$$
+Following Chapter 6's gradient descent update with learning rate $\eta = 0.5$, the gradient of the log-loss with respect to $w$ is
+$$(\hat y - y)f = (0.5744-1)(0.7, 0.3) = (-0.298, -0.128),$$
+and with respect to $b$ is $\hat y - y = -0.426$, giving updated weights
+$$w \leftarrow (0.4, 0.4) - 0.5(-0.298,-0.128) = (0.549, 0.464)$$
+and
+$$b \leftarrow -0.1 - 0.5(-0.426) = 0.113.$$
+Recomputing the prediction with these updated weights gives
+$$\hat y = \sigma(0.549(0.7) + 0.464(0.3) + 0.113) = \sigma(0.636) = 0.6539,$$
+closer to the true label of 1 after a single gradient step on a handful of parameters, illustrating why transfer learning lets a fund with only a few hundred labeled satellite patches still fine-tune a usable classifier, rather than needing the millions of labeled images a full CNN would require if trained from scratch.
+
+\subsection*{Graph Neural Networks for Ownership and Counterparty Networks}
+
+Chapter 15 modeled a shell-company layering network as a static sequence of hops, one entity moving funds to the next. A graph neural network (GNN) treats such a network as a live computational structure: each node's representation is updated by aggregating its neighbors' representations, so that risk (or any other property) genuinely propagates through the network rather than being assessed for each entity in isolation, exactly the structure alternative data increasingly captures, common addresses, shared directors, correlated transaction timing, that a purely tabular model discards. A single GNN layer updates node $v$'s representation as
+$$h_v = \sigma(w_1 x_v + w_2 \cdot \text{mean}_{u \in N(v)}(x_u) + b),$$
+where $N(v)$ is the set of $v$'s neighbors in the graph.
+
+Consider a four-node layering chain, $A \to B \to C \to D$, extending Chapter 15's shell-company example, with initial suspicion scores $x_A = 0.9$ (a flagged placement account), $x_B = 0.2$, $x_C = 0.1$, and $x_D = 0.05$ (an apparently unremarkable integration account), and neighbor sets
+$$N(A)=\{B\},\ N(B)=\{A,C\},\ N(C)=\{B,D\},\  N(D)=\{C\}.$$
+ With weights $w_1=0.6$, $w_2=0.8$, $b=-0.05$, one round of mean-aggregation gives
+$$h_B = \sigma\big(0.6(0.2) + 0.8\cdot\tfrac{0.9+0.1}{2} - 0.05\big) = \sigma(0.47) = 0.6154$$ and
+$$h_C = \sigma\big(0.6(0.1) + 0.8\cdot\tfrac{0.2+0.05}{2} - 0.05\big) = \sigma(0.11) = 0.5275,$$
+compared to $h_A = \sigma(0.65) = 0.6570$ and $h_D = \sigma(0.06) = 0.5150$. Node B's updated score, 0.615, is far higher than its own raw feature of 0.2 would suggest, purely because it is one hop from the flagged account A, and even node C, two hops away, shows a modest elevation to 0.528 from a raw 0.1; a model that scored each account independently, the way Chapter 15's original logistic regression\index{logistic regression} did, would miss exactly this kind of network-propagated risk.
+
+\subsection*{Multi-Modal Fusion via Cross-Attention}\index{Multi-Modal Fusion via Cross-Attention}
+
+A single financial decision often draws on several alternative-data modalities at once, an image feature from Section~\ref{sec:nn-structured-unstructured}'s CNN, a sentiment embedding from Chapter 16's text pipeline, and a tabular alternative-data summary like Section~\ref{sec:alt-data-pipeline}'s regression inputs, and combining them well matters as much as extracting each one individually. Cross-attention, a direct extension of Chapter 16's self-attention mechanism (Section 16.8), treats one modality's representation as the query and the other modalities as key-value pairs to attend over:
+$$\text{Attention}(Q,K,V) = \text{softmax}(QK^\top/\sqrt{d_k})V,$$
+exactly as before, but now fusing modalities instead of fusing word tokens.
+
+Suppose a tabular query vector $Q = (0.6, 0.8)$ (summarizing Cascade's alternative-data growth direction) attends over an image modality with key $K_{\text{img}} = (0.9, 0.1)$ and value $V_{\text{img}} = (0.7, 0.2)$, and a text-sentiment modality with key $K_{\text{txt}} = (0.2, 0.9)$ and value $V_{\text{txt}} = (-0.3, 0.6)$ (a mildly cautious sentiment reading). With $d_k = 2$, the scaled dot-product scores are
+$$Q \cdot K_{\text{img}}/\sqrt{2} = 0.62/1.4142 = 0.4385$$
+and
+$$Q \cdot K_{\text{txt}}/\sqrt{2} = 0.84/1.4142 = 0.5941;$$
+applying softmax gives attention weights $0.4612$ on the image modality and $0.5388$ on the text modality. The fused representation is
+$$0.4612(0.7,0.2) + 0.5388(-0.3,0.6) = (0.161, 0.416),$$
+a single vector that leans slightly more on the cautious text signal than on the image signal, and that a downstream model, a trading rule in the spirit of Section~\ref{sec:alt-data-pipeline}, a credit decision, a fraud flag, can consume in place of either modality alone, without the analyst having to hand-specify how much weight each modality deserves.
+
+\subsection*{Self-Supervised Contrastive Pretraining}\index{Self-Supervised Contrastive Pretraining}
+
+Section~\ref{sec:advanced-altdata}'s transfer-learning example assumed a pretrained backbone was already available; contrastive pretraining is one common way such a backbone gets trained in the first place, without any human-provided labels at all, which matters enormously for satellite imagery, where labeled examples (this patch definitely contains three cars) are far scarcer than the raw imagery itself. The idea is to take two randomly augmented views of the same image, a small crop and rotation, say, and train the encoder so that these two views' embeddings are pulled close together (a positive pair), while embeddings of a different image are pushed apart (a negative pair), using only this relative structure, same image versus different image, as the training signal.
+
+Suppose an encoder produces embedding $a = (0.6, 0.8)$ for one crop of a satellite patch, $p = (0.55, 0.83)$ for a second, differently augmented crop of the \emph{same} patch, and $n = (0.1, 0.9)$ for a crop of a genuinely different patch. Using Chapter 16's cosine similarity (Section 16.7), $\cos(a,p) = 0.9983$ and $\cos(a,n) = 0.8614$, the same view of the same underlying scene is, as intended, geometrically closer than a different scene.
+
+A contrastive loss converts these similarities into a probability that the positive pair is correctly identified among the candidates, $\Pr(\text{positive}) = \exp(\cos(a,p)/\tau) / \big[\exp(\cos(a,p)/\tau) + \exp(\cos(a,n)/\tau)\big]$, a softmax over similarities exactly analogous to Section~\ref{sec:advanced-altdata}'s cross-attention softmax, with a temperature parameter $\tau$ controlling how sharply the model is pushed to separate positive from negative. With $\tau = 0.1$, $\Pr(\text{positive}) = e^{9.983}/(e^{9.983} + e^{8.614}) = 0.797$, already favoring the true positive pair well above chance (50\%) even before any training, and training drives this probability further toward 1 by adjusting the encoder's weights so that same-image crops end up even closer together, and different-image crops even farther apart, than they start.
+
+Once trained this way on a large, unlabeled archive of satellite imagery, the resulting encoder is exactly the frozen backbone Section~\ref{sec:advanced-altdata}'s transfer-learning example fine-tuned with only a handful of labeled examples, closing the loop between this chapter's two ways of coping with scarce alternative-data labels.
+
+\section{Case Vignette: Satellite Imagery and the Rise of Alternative Data}
+\label{sec:case-vignette-satellite}
+
+The parking-lot car-count example this chapter has used throughout is not hypothetical in its origins. In 2009, brothers Tom and Alex Diamond conceived the idea of counting cars in retailer parking lots from satellite imagery to anticipate revenue, and founded RS Metrics\index{RS Metrics} to sell the resulting data, beginning with car counts at McDonald's locations and later covering Lowe's, Home Depot, and dozens of other retailers. The approach reached wider attention in 2010, when UBS analyst Neil Currie purchased parking-lot counts for 100 Walmart store locations and published them ahead of Walmart's earnings release, an early, public demonstration that satellite-derived alternative data could anticipate a reported number before the company itself disclosed it. A later academic study using RS Metrics imagery from 2011 to 2017, covering 44 major U.S. retailers including Walmart, Target, Costco, and Whole Foods, confirmed that year-over-year change in parking-lot car counts reliably predicts quarterly sales, and quantified the resulting informational edge at 4\% to 5\% in the three trading days surrounding a quarterly earnings announcement, a substantial return for such a short window, corroborating this chapter's own worked example (Section~\ref{sec:satellite-example}) at genuinely large scale.
+
+A separate study of the same satellite coverage's introduction across retailers found that its capital-market effects went beyond simply rewarding the funds that subscribed to it: retailers who gained satellite coverage subsequently saw more informed short-selling activity, less-informed individual investor buying, and lower stock liquidity around their earnings reports, evidence that unequal access to alternative data can widen the information gap between sophisticated and ordinary investors without necessarily making prices more accurate any faster, precisely the access-asymmetry concern Section~\ref{sec:alt-data-quality} raises about licensing cost and exclusivity.
+
+Satellite-derived alternative data extends well beyond retail. Orbital Insight\index{Orbital Insight} built a comparable business around commodity markets: by measuring the shadows cast by the floating roofs used on many crude-oil storage tanks, a floating roof sits directly atop the stored oil and its height reveals how full the tank is, the firm estimates inventory levels across more than 27,000 tanks worldwide, work that, during the demand shock of the early 2020s pandemic period, revealed global storage utilization running at roughly 55\% of an estimated six-billion-barrel total capacity, a supply-side data point no single government agency could have produced as quickly. Today, satellite-based financial data services are estimated to generate over \$500 million in annual revenue, within a broader alternative-data market Wall Street is estimated to spend roughly \$3 billion on annually, and a single institutional satellite subscription can run from \$50,000 to \$500,000 per year, underscoring Section~\ref{sec:alt-data-quality}'s point that this edge is available primarily to well-capitalized participants able to pay for exclusive or near-exclusive access.
+
+\section{Challenges in Alternative Data and Deep Learning in Finance}
+
+Several challenges recur across this chapter's techniques and connect directly to themes from earlier chapters.
+
+\textbf{A short history limits statistical confidence.} Section~\ref{sec:satellite-example} and Section~\ref{sec:alt-data-pipeline} fit regressions on only eight quarters, two years of data, because that is genuinely all the history a newly available alternative-data feed typically has; Chapter 6's warnings about overfitting\index{overfitting} with few observations relative to model complexity apply with particular force here, since a vendor's dataset is often too new to have lived through a full economic cycle.
+
+\textbf{Non-stationarity compounds with vendor changes.} Chapter 6 noted that financial relationships can shift as markets evolve; alternative data adds a second source of instability on top of that, a vendor can silently change its imagery source, its computer-vision model, or its store coverage, so a model's apparent degradation may reflect a data-generating-process change at the vendor rather than a change in the underlying financial relationship.
+
+\textbf{Deep architectures trade interpretability for representational power.} A CNN's learned filters and an RNN's hidden state are far less directly interpretable than the single regression coefficient of Section~\ref{sec:satellite-example}, a tension Chapter 18 develops in depth, and one that matters more, not less, once a model's input is something as opaque to manual review as a stack of satellite pixels.
+
+\textbf{Integration is usually the hard part, not modeling.} As Section~\ref{sec:alt-data-quality} emphasized, aligning several data sources in time and by firm identity, and confirming each was genuinely available before, not after, the date being modeled, typically consumes more effort in a real alternative-data project than fitting the model itself, the reverse of the balance in the market-data-only settings of Chapters 12 and 13.
+
+\textbf{Cost and exclusivity concentrate the advantage.} Section~\ref{sec:case-vignette-satellite}'s subscription costs mean alternative data's edge accrues disproportionately to well-resourced funds able to license multiple exclusive feeds, an access asymmetry with no real counterpart in the publicly available market and fundamental data most of this book has used.
+
+\textbf{Model risk governance now has to reach the vendor, not just the model.} Chapter 15's three-lines-of-defense framework was built to validate a single model's inputs, outputs, and ongoing performance; an alternative-data pipeline like Section~\ref{sec:alt-data-pipeline}'s adds an entire additional layer that framework must now cover, the vendor relationship itself, since a governed model's validation is only as good as the vendor's coverage, delivery timing, and processing methodology sitting upstream of it, none of which the fund directly controls or, in most cases, can fully observe.
 
 \section{Key Takeaways}
 
-Reinforcement learning formalizes sequential decision-making as a Markov decision process, with states, actions, rewards, and a discount factor, and its objective, maximizing expected discounted return, generalizes the one-shot optimizations this book has relied on since Chapter 5.
+Alternative data, satellite imagery, web traffic, card-transaction panels, and the like, fills the row Chapter 1's data-ecosystem table reserved for it: non-traditional sources that proxy for economic activity ahead of its official reporting. Section~\ref{sec:satellite-example} showed that even a single such proxy, satellite-derived parking-lot car counts, can explain a large share (87\% in the chapter's worked example) of a retailer's quarterly revenue variation, and Section~\ref{sec:alt-data-pipeline} showed that combining several sources into one regression produces a genuinely useful, if imperfect (an 80\% hit rate, not 100\%), earnings-surprise signal in the same trading-signal-evaluation framework Chapter 13 established. Before any of this modeling happens, Section~\ref{sec:altdata-feature-engineering} showed that raw alternative-data readings typically need seasonal adjustment and peer-relative normalization to isolate firm-specific signal from calendar effects and sector-wide movements.
 
-The Bellman equation expresses a state's or action's value recursively in terms of immediate reward plus discounted continuation value, and Chapter 5's binomial-tree backward induction already solves a Bellman optimality equation by hand, a fact this chapter's central worked example made exact by reformulating that same tree as a three-state MDP and recovering its known value, \$2.5641, using model-free tabular Q-learning instead, with the learned and closed-form solutions agreeing to within roughly one percent after 100,000 simulated episodes.
+Extracting such signals from raw alternative data, rather than from a vendor's already-processed number, requires neural network architectures beyond Chapter 6's plain feedforward network: convolutional neural networks (Section~\ref{sec:nn-structured-unstructured}) exploit an image's grid structure through weight-shared filters, recurrent neural networks exploit a sequence's ordering through a hidden state carried from step to step, and transformer-based self-attention, introduced for text in Chapter 16, increasingly unifies both roles. None of this changes the fact, developed in Section~\ref{sec:alt-data-quality} and the chapter's closing challenges, that alternative data carries its own distinctive quality problems, coverage bias, vendor black-box processing, look-ahead bias from delivery lag, and cost-driven alpha decay, that a modeler must treat as seriously as the modeling itself, a lesson this chapter's case vignette on satellite-derived retail and commodity data illustrated at real-world scale.
 
-Deep Q-networks and policy-gradient methods, including actor-critic algorithms and PPO, extend the same value-based and policy-based logic respectively to large or continuous state and action spaces where a table is impossible to maintain.
+Section~\ref{sec:point-in-time} showed concretely that respecting real-world data-delivery lag changes which trades a model actually recommends, not merely how good its backtest looks, and Section~\ref{sec:nn-structured-unstructured}'s autoencoder showed that the same deep learning toolkit that extracts a signal can also be turned, unsupervised, on the data itself to flag a quarter worth double-checking before it is trusted. Section~\ref{sec:esg-text-signal} applied this same lesson to a specific and increasingly important alternative-data category: rather than buying a vendor's already-computed ESG score, whose disagreement with competing providers Chapter 12 documented at $38\%$ to $71\%$ pairwise correlation, a fund can build a narrow, auditable environmental-tone signal directly from a company's own disclosures using Chapter 16's Naive Bayes classifier and Loughran-McDonald tone score, at the cost of adding one more, differently-scoped measurement to a field that already has too many mutually inconsistent ones rather than resolving the disagreement outright.
 
-Optimal execution and market making, Chapters 11's and 12's closed-form models, generalize naturally into reinforcement-learning problems once market impact and order-arrival behavior are too complex for a clean parametric form, a generalization already validated in research (Nevmyvaka, Feng, and Kearns, 2006) and in industry practice (JPMorgan's LOXM); portfolio management admits the same framing but remains a harder, more open problem, chiefly because its reward is harder to specify unambiguously than an execution cost.
-
-Every one of these applications inherits reinforcement learning's distinctive risks: reward misspecification, non-stationarity driven by other agents' adaptation, the expense and danger of live exploration, severe sample inefficiency relative to this book's earlier supervised methods, and an explainability burden that compounds Chapter 16's concerns rather than resolving them, all of which argue for simulation-based training, cautious staged deployment, and continuous monitoring rather than treating a well-trained policy as a finished, self-sufficient product.
-
-Markets are also not single-agent environments, other participants adapt to a learned policy's own behavior just as it adapts to theirs, which is why most production systems remain single-agent approximations of a genuinely multi-agent problem, and why the practical bottleneck to adopting any of this chapter's methods is usually a trustworthy simulator and the specialized engineering skill to train against it reliably, not the choice of algorithm itself.
+Section~\ref{sec:advanced-altdata} went one level deeper still: transfer learning lets a CNN's frozen, already-learned features be fine-tuned on a small alternative-data sample rather than requiring millions of labeled images, contrastive pretraining shows how that frozen backbone can itself be trained with no labels at all, graph neural networks let risk propagate across a network of related entities the way Chapter 15's static layering chain could only describe, not compute, and cross-attention, the same mechanism Chapter 16 used to fuse word tokens, fuses image, text, and tabular alternative-data modalities into one representation without an analyst having to hand-specify how much each deserves.
 
 \section{Suggested Exercises}
 
 \begin{enumerate}
-    \item Using Section~\ref{sec:rl-qlearning}'s three-state Markov decision process, verify by hand that $Q^*(S_d, \text{hold}) = \gamma[q(0) + (1-q)(9.50)] \approx \$4.8718$, and explain in your own words why immediate exercise is optimal at that state despite continuation having a positive expected value.
-    \item Suppose the down-move factor in Section~\ref{sec:rl-qlearning}'s tree were $d=0.8$ instead of $0.9$, with $u=1.2$ and $R=1.04$ unchanged. Recompute $q$, the terminal payoff at the down-down node, and the closed-form value $V^*(S_0)$, and state whether the optimal policy at $S_0$ changes.
-    \item Explain why a discount factor of $\gamma=1$ would be inappropriate for an infinite-horizon trading agent that earns a small positive expected reward every period, and describe what specifically goes wrong with the return $G_t$ in that case.
-    \item Using this chapter's Q-learning update rule, compute by hand the new value of $Q(S_0,\text{hold})$ after a single simulated transition from $S_0$ to $S_d$ with reward $0$, given a current table of $Q(S_0,\text{hold})=2.00$, $Q(S_d,\text{exercise})=5.00$, $Q(S_d,\text{hold})=4.50$, a learning rate $\alpha=0.1$, and $\gamma\approx0.9615$.
-    \item Compare Almgren-Chriss (Chapter 11, Section 11.8) and a reinforcement-learning execution agent (Section~\ref{sec:rl-execution}) along three dimensions: the data required to use each, the interpretability of the resulting trading schedule, and each approach's ability to adapt mid-execution to an order book that behaves differently than assumed.
-    \item Describe a reward function for a portfolio-rebalancing agent (Section~\ref{sec:rl-portfolio}) that would encourage the exact kind of reward hacking Section~\ref{sec:rl-challenges} warns about, and propose a specific, concrete change to that reward function that would discourage it.
-    \item Explain why off-policy evaluation (Section~\ref{sec:rl-evaluation}) becomes less reliable the more a newly trained policy's behavior diverges from the policy that generated the available historical data, and describe one practical consequence this has for how a bank should stage the rollout of a new trading agent.
-    \item A market-making desk considers replacing its Avellaneda-Stoikov quoting model (Chapter 11, Section 11.9) with a learned reinforcement-learning policy. List three pieces of evidence a model validator should require before approving this replacement, drawing on both this chapter's discussion and Chapter 8's model-risk-management framework.
-    \item Explain, in your own words, why maximizing expected log-wealth (the Kelly criterion, Section~\ref{sec:rl-portfolio}) produces a different, generally more conservative allocation than maximizing expected wealth directly, and describe why this makes the Kelly fraction a useful sanity check for a reinforcement-learning portfolio agent trained on a simplified simulated market.
-    \item Using Section~\ref{sec:rl-multiagent}'s discussion, explain why a reinforcement-learning execution agent trained against a fixed historical simulator might perform worse than expected once deployed at large enough scale to influence the very order flow it was trained on, and describe one practical step a firm could take to detect this problem before it causes significant losses.
-    \item Explain why behavioral cloning (Section~\ref{sec:imitation}) can fail badly in a state the expert trader rarely visited, even though it performs well on states similar to the expert's typical behavior, and describe how inverse reinforcement learning's approach, inferring a reward function rather than directly imitating actions, is intended to address this specific weakness.
-    \item \textbf{Challenge (real data).} Download at least three years of daily prices for a real, liquid stock (via \texttt{yfinance}). (a) Discretize the state space into a small number of buckets based on the sign and magnitude of the trailing five-day return, in the spirit of Section~\ref{sec:rl-qlearning}'s three-state example, and train a tabular Q-learning agent with actions \{buy, hold, sell\} and a reward equal to the next day's realized return (long) or its negative (short), using this chapter's Q-learning update rule. (b) Compare the trained agent's cumulative return over the full sample to a simple buy-and-hold benchmark, then re-run training on only the first half of the sample and evaluate the resulting policy on the second half, and report whether the agent's apparent advantage survives this split. (c) Using Section~\ref{sec:rl-evaluation}'s discussion of off-policy evaluation, explain why backtesting a single historical price path is an especially weak form of policy evaluation for a trading agent, and describe one practical safeguard, drawing on Section~\ref{sec:rl-multiagent} or Chapter 8's model-risk-management framework, a firm should require before deploying such an agent with real capital.
+    \item Using Section~\ref{sec:satellite-example}'s method, refit the regression after adding a ninth quarter with car-count growth of $-2.0\%$ and revenue growth of $-1.5\%$, and report the new slope, intercept, and $R^2$.
+    \item Explain, using Table~\ref{tab:satellite_regression}, why an $R^2$ of 0.870 from a single alternative-data proxy is considered strong in this context, contrasting it with Chapter 6's discussion of low signal-to-noise ratios in financial prediction generally.
+    \item Using Section~\ref{sec:alt-data-pipeline}'s fitted coefficients, compute the predicted surprise for a tenth quarter with car, web, and card growth of $-2.0\%$, $-1.0\%$, and $-1.5\%$ respectively, and state whether the resulting signal is long or flat.
+    \item Explain, using Q5 in Table~\ref{tab:multisource_signal}, why a strongly positive fitted surprise (2.46\%) can still be followed by a negative next-day return ($-0.4\%$), and describe one piece of earnings-day information the alternative-data model in this chapter cannot capture.
+    \item Using Section~\ref{sec:nn-structured-unstructured}'s convolution example, recompute the $3\times3$ feature map using a $2\times2$ filter of all $0.5$s instead of all $0.25$s, and explain how the result relates to the original feature map.
+    \item Using the same convolution example, apply $2\times2$ max pooling (taking the maximum of each non-overlapping $2\times2$ block) to the original $3\times3$ feature map's top-left $2\times2$ block, and state the resulting pooled value.
+    \item Using Section~\ref{sec:nn-structured-unstructured}'s RNN example, recompute $h_1$, $h_2$, and $h_3$ if $w_h$ is increased from 0.4 to 0.8 (holding $w_x$, $b$, and the inputs fixed), and explain in words how a larger $w_h$ changes how much the hidden state is influenced by earlier time steps versus the current input.
+    \item Explain, in a short paragraph, why a convolutional neural network's weight sharing makes it far more practical than a plain feedforward network for a $1000\times1000$-pixel satellite image, referencing the parameter-count argument in Section~\ref{sec:nn-structured-unstructured}.
+    \item Using this chapter's case vignette, explain why the 2010 UBS Walmart parking-lot report is a natural precedent for Section~\ref{sec:satellite-example}'s worked example, and describe, in your own words, why the same informational edge tends to shrink as more funds license the same data source.
+    \item Pick two of the data-quality issues in Section~\ref{sec:alt-data-quality} and describe a concrete scenario, not already used in the text, in which that issue could cause an alternative-data-based trading or credit model to fail despite technically correct code.
+    \item Compare this chapter's satellite car-count regression (Section~\ref{sec:satellite-example}) to Chapter 5's binomial and Black-Scholes-Merton\index{Black-Scholes-Merton Model} option-pricing models in terms of what each treats as the source of uncertainty, and explain why alternative-data models are typically evaluated by out-of-sample predictive accuracy rather than by no-arbitrage argument.
+    \item Using Section~\ref{sec:point-in-time}'s method, explain in your own words why the realistic, lagged-card model's higher $R^2$ (0.873 versus 0.837) does not mean it is simply the better trading model, referencing the difference in which quarters each version actually signals.
+    \item Using Section~\ref{sec:altdata-feature-engineering}'s method, recompute the peer-adjusted regression's slope and $R^2$ if the sector-average car-count growth for Q5 is revised from 2.5\% to 5.0\% (a sector-wide surge that quarter), holding all other quarters fixed, and explain why the peer-adjusted model's $R^2$ falls even though Cascade's own reported revenue growth has not changed.
+    \item A vendor offers a trial dataset covering only the three quarters (of Table~\ref{tab:multisource_signal}) in which its data predicted the following quarter's earnings surprise correctly. Using Section~\ref{sec:vendor-ecosystem}'s discussion, explain what is wrong with evaluating the vendor's data quality using only this trial.
+    \item Using Section~\ref{sec:vendor-ecosystem}'s cost-benefit method, recompute the expected net annual benefit if the fund can only deploy a \$20 million position per signaled event (instead of \$50 million), holding the signal frequency, edge, and data costs fixed, and state whether the subscription is still worth its \$400,000 annual cost.
+    \item Using Section~\ref{sec:nn-structured-unstructured}'s autoencoder example, compute the reconstruction error and relative error for Q2 ($\text{car}=-1.5$, $\text{web}=-0.5$, $\text{card}=-1.0$) using the same encoder/decoder weights $w=(0.5,0.3,0.2)$, and state whether Q2 would be flagged ahead of Q7 (relative error 39.5\%) for data-quality review.
+    \item Using Section~\ref{sec:advanced-altdata}'s transfer-learning example, perform a second gradient-descent step starting from the updated weights $w=(0.549,0.464)$, $b=0.113$, and report the new prediction, confirming that it continues to move toward the true label of 1.
+    \item Using Section~\ref{sec:advanced-altdata}'s graph neural network example, compute $h_A$ and $h_D$'s updated scores using the same weights, and explain, using the network's chain structure $A \to B \to C \to D$, why $h_D$'s score barely moves from its raw feature while $h_B$'s moves substantially.
+    \item Using Section~\ref{sec:advanced-altdata}'s cross-attention example, recompute the fused output if the text modality's key becomes $K_{\text{txt}} = (0.8, 0.2)$ (a much less distinctive key vector, more similar to $K_{\text{img}}$), and explain in words why the two attention weights move closer to 50/50.
+    \item Explain, in a short paragraph, why a graph neural network's mean-aggregation step (Section~\ref{sec:advanced-altdata}) is a more direct computational analogue of ``guilt by association'' than Chapter 15's original, per-account fraud-scoring logistic regression.
+    \item Using Section~\ref{sec:advanced-altdata}'s contrastive-pretraining example, recompute $\Pr(\text{positive})$ if the temperature $\tau$ is raised from 0.1 to 1.0 (holding the two cosine similarities fixed), and explain in words why a higher temperature makes the model's implied preference for the true positive pair less extreme.
+    \item Using Section~\ref{sec:nn-structured-unstructured}'s LSTM worked example, recompute the forget gate $f_1$ and the resulting fraction of $c_1$ surviving to $c_3$ (that is, $f_2\times f_3$) if the forget-gate bias $b_f$ were $0.5$ instead of $2.0$, holding every other weight fixed, and explain why a smaller bias makes the LSTM behave more like the plain RNN example earlier in this section.
+    \item Explain, in your own words, why the plain RNN's memory-decay problem is a consequence of its hidden state being fully overwritten by a multiplicative recursion at every step, while the LSTM's cell state update is additive, and describe what would happen to the LSTM's own memory retention if its forget gate were trained to a value close to $0$ instead of close to $1$.
+    \item Using Section~\ref{sec:esg-text-signal}'s method, recompute the tone score for a fifth sentence, ``The board remains confident that emissions will decline further even as regulatory headwinds intensify,'' using the same positive and negative word lists, and explain why this sentence's mixed vocabulary makes its tone score a poor summary of whether the sentence is good or bad news.
+    \item Explain, in your own words, why Section~\ref{sec:esg-text-signal}'s in-house tone score and Chapter 12's vendor-style ESG scores are not directly comparable even though both are commonly described as ``an ESG measurement,'' and describe which one of Berg, Kölbel, and Rigobon's three sources of rating divergence, scope, measurement, or weight, this incomparability illustrates.
+    \item \textbf{Challenge (real data).} Download at least two years of weekly Google Trends search-interest data (via \texttt{pytrends} or manually from trends.google.com, no API key required) for a public retailer's brand name, and quarterly reported revenue for the same company from the SEC EDGAR XBRL \texttt{companyfacts} API (as in Chapter 4's challenge exercise). (a) Following Section~\ref{sec:satellite-example}'s method, regress the company's quarter-over-quarter revenue growth on the average quarter-over-quarter growth in search interest, and report the fitted slope, intercept, and $R^2$. (b) Using Section~\ref{sec:point-in-time}'s distinction between a realistic, lagged signal and a look-ahead-biased one, identify what reporting lag your search-interest data is actually available at relative to the revenue figure it is meant to predict, and explain whether your regression in (a) would still be usable in real time. (c) Following Section~\ref{sec:vendor-ecosystem}'s cost-benefit framework, discuss one alternative-data quality issue from Section~\ref{sec:alt-data-quality} other than look-ahead bias that is specific to Google Trends data, such as index normalization or query ambiguity, and explain how it could produce a spuriously strong or weak regression fit.
 \end{enumerate}
 
 \section{Further Reading}
 
 \begin{itemize}
-    \item Sutton, R.\ S., and A.\ G.\ Barto, \emph{Reinforcement Learning: An Introduction}, 2nd ed., MIT Press, Cambridge, MA, 2018. The standard textbook treatment of the Markov decision process framework, the Bellman equation, and value-based and policy-based methods developed throughout this chapter.
-    \item Mnih, V., et al., ``Human-Level Control through Deep Reinforcement Learning,'' \emph{Nature}, vol.\ 518, 2015, pp.\ 529--533. The original Deep Q-Network paper underlying Section~\ref{sec:dqn}'s function-approximation extension of tabular Q-learning.
-    \item Schulman, J., F.\ Wolski, P.\ Dhariwal, A.\ Radford, and O.\ Klimov, ``Proximal Policy Optimization Algorithms,'' \emph{arXiv}, 2017 (arXiv:1707.06347). The algorithm underlying the modern policy-gradient methods discussed in Section~\ref{sec:policy-gradient}.
-    \item Nevmyvaka, Y., Y.\ Feng, and M.\ Kearns, ``Reinforcement Learning for Optimized Trade Execution,'' \emph{Proceedings of the 23rd International Conference on Machine Learning}, 2006, pp.\ 673--680. An early and influential application of tabular Q-learning to real limit-order-book execution data, underlying Section~\ref{sec:rl-execution}'s discussion.
-    \item Almgren, R., and N.\ Chriss, ``Optimal Execution of Portfolio Transactions,'' \emph{Journal of Risk}, vol.\ 3, no.\ 2, 2001, pp.\ 5--39. The closed-form optimal-execution model this chapter's Section~\ref{sec:rl-bridge} contrasts with a learned, model-free alternative.
-    \item Avellaneda, M., and S.\ Stoikov, ``High-Frequency Trading in a Limit Order Book,'' \emph{Quantitative Finance}, vol.\ 8, no.\ 3, 2008, pp.\ 217--224. The closed-form inventory-based market-making model Section~\ref{sec:rl-execution} generalizes into a learned quoting policy.
-    \item Abbeel, P., and A.\ Y.\ Ng, ``Apprenticeship Learning via Inverse Reinforcement Learning,'' \emph{Proceedings of the Twenty-First International Conference on Machine Learning}, 2004, pp.\ 1--8. The foundational paper on inverse reinforcement learning discussed in Section~\ref{sec:imitation}.
+    \item Berkeley Haas School of Business, ``How Hedge Funds Use Satellite Images to Beat Wall Street, and Main Street.'' A research summary of the RS Metrics parking-lot car-count studies underlying Section~\ref{sec:satellite-example} and this chapter's case vignette.
+    \item Katona, Painter, Patatoukas, and Zeng, ``On the Capital Market Consequences of Big Data: Evidence from Outer Space,'' \emph{Journal of Financial and Quantitative Analysis}. The academic study of RS Metrics satellite imagery (2011-2017, 44 U.S. retailers) quantifying the earnings-window informational edge discussed in Section~\ref{sec:case-vignette-satellite}.
+    \item Feng and Fay, ``An Empirical Investigation of Forward-Looking Retailer Performance Using Parking Lot Traffic Data Derived from Satellite Imagery,'' \emph{Journal of Retailing}. A complementary study of satellite-derived parking-lot data's power to predict retailer sales, underlying Section~\ref{sec:satellite-example}'s worked example.
+    \item LeCun, Bengio, and Hinton, ``Deep Learning,'' \emph{Nature}. A survey covering convolutional and recurrent neural network architectures underlying Section~\ref{sec:nn-structured-unstructured}.
+    \item Goodfellow, Bengio, and Courville, \emph{Deep Learning}. A comprehensive textbook treatment of convolution, recurrence, and the attention mechanisms Chapter 16 and Section~\ref{sec:nn-structured-unstructured} both draw on.
+    \item Hochreiter and Schmidhuber, ``Long Short-Term Memory,'' \emph{Neural Computation}. The original paper introducing the LSTM architecture mentioned as an extension of Section~\ref{sec:nn-structured-unstructured}'s plain recurrent network.
+    \item Dosovitskiy et al., ``An Image Is Worth 16x16 Words: Transformers for Image Recognition at Scale,'' \emph{International Conference on Learning Representations}. The original vision transformer paper underlying Section~\ref{sec:nn-structured-unstructured}'s discussion of transformers as a unifying architecture.
+    \item Kolanovic and Krishnamachari, ``Big Data and AI Strategies,'' J.P. Morgan. An industry survey of alternative data sources and their use in systematic investing, covering the categories in Table~\ref{tab:alt_data_sources}.
+    \item Berg, Kölbel, and Rigobon, ``Aggregate Confusion: The Divergence of ESG Ratings,'' \emph{Review of Finance}. The empirical study of cross-provider ESG rating disagreement discussed in Chapter 12 and revisited in Section~\ref{sec:esg-text-signal} from the standpoint of building an in-house text-derived signal rather than buying a vendor's score.
+    \item Katona, Painter, Patatoukas, and Zeng, ``On the Capital Market Consequences of Big Data: Evidence from Outer Space'' (same source as above). Also documents the short-selling, liquidity, and information-asymmetry effects of satellite coverage discussed in this chapter's expanded case vignette.
+    \item Hinton and Salakhutdinov, ``Reducing the Dimensionality of Data with Neural Networks,'' \emph{Science}. A foundational paper on autoencoders, underlying Section~\ref{sec:nn-structured-unstructured}'s reconstruction-error anomaly-detection example.
+    \item Pan and Yang, ``A Survey on Transfer Learning,'' \emph{IEEE Transactions on Knowledge and Data Engineering}. A comprehensive survey of the pretrained-backbone fine-tuning approach worked through in Section~\ref{sec:advanced-altdata}.
+    \item Kipf and Welling, ``Semi-Supervised Classification with Graph Convolutional Networks,'' \emph{International Conference on Learning Representations}. A foundational paper on the graph neural network mean-aggregation update used in Section~\ref{sec:advanced-altdata}'s shell-company network example.
+    \item Chen, Kornblith, Norouzi, and Hinton, ``A Simple Framework for Contrastive Learning of Visual Representations,'' \emph{International Conference on Machine Learning}. The SimCLR paper underlying Section~\ref{sec:advanced-altdata}'s contrastive-pretraining worked example.
+    \item He, Zhang, Ren, and Sun, ``Deep Residual Learning for Image Recognition,'' \emph{IEEE Conference on Computer Vision and Pattern Recognition}. The original ResNet paper underlying Section~\ref{sec:nn-structured-unstructured}'s discussion of shortcut connections and the vanishing-gradient problem in deep CNNs.
 \end{itemize}
 
 \end{document}

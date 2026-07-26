@@ -26,9 +26,9 @@ Machine learning has become a central part of the quantitative toolkit in financ
 
 This chapter introduces the main ideas behind machine learning in a way that is accessible to readers who are mathematically trained but may be new to the subject. The focus is on understanding the core concepts, together with the underlying formulas, rather than on memorizing library calls. Two small worked examples run through the chapter: a regression problem relating a firm's leverage to its credit spread, and a classification problem predicting loan default. The discussion covers supervised and unsupervised learning, prediction and classification, overfitting\index{overfitting}, regularization, evaluation strategies, and the bias-variance tradeoff.
 
-By the end of the chapter, the reader will have seen how a model's parameters are actually found (via a closed-form solution or gradient descent\index{gradient descent}), how several qualitatively different algorithms, distance-based, margin-based, probabilistic, and tree-based, all address the same underlying prediction problem from different angles, and how to select among them and their hyperparameters without silently overfitting the selection process itself. These foundations are used directly and repeatedly in every applied chapter that follows: the credit models of Chapter 9, the portfolio methods of Chapter 10, the trading strategies of Chapters 11 and 12, the fraud detection systems of Chapter 13, the text-based methods of Chapter 14, the deep-learning extensions of Chapter 15, the explainability tools of Chapter 16, and the end-to-end case study of Chapter 19 all build on the vocabulary and techniques introduced here, rather than re-deriving them from scratch.
+By the end of the chapter, the reader will have seen how a model's parameters are actually found (via a closed-form solution or gradient descent\index{gradient descent}), how several qualitatively different algorithms, distance-based, margin-based, probabilistic, and tree-based, all address the same underlying prediction problem from different angles, and how to select among them and their hyperparameters without silently overfitting the selection process itself. These foundations are used directly and repeatedly in every applied chapter that follows: the credit models of Chapter 9, the portfolio methods of Chapter 12, the trading strategies of Chapters 13 and 14, the fraud detection systems of Chapter 15, the text-based methods of Chapter 16, the deep-learning extensions of Chapter 17, the explainability tools of Chapter 18, and the end-to-end case study of Chapter 21 all build on the vocabulary and techniques introduced here, rather than re-deriving them from scratch.
 
-\section{What Machine Learning Is}\index{What Machine Learning Is}
+\section{What Machine Learning Is}
 
 Suppose an analyst has a decade of loan-application data and wants a system that predicts default risk more accurately than a fixed set of hand-written underwriting rules, one that gets better as more data arrives rather than needing to be manually rewritten every time economic conditions shift. Machine learning is the branch of statistics and computer science built to do exactly this: building models that improve with experience, rather than encoding a fixed decision procedure by hand. The basic setup is straightforward: a model is given data, it learns parameters from those data by minimizing some measure of error, and it is then used to make predictions or decisions on new data. The model may be used for regression, classification, clustering, dimensionality reduction, or anomaly detection.
 
@@ -44,11 +44,11 @@ Machine learning problems are often divided into supervised and unsupervised lea
 
 In unsupervised learning, no explicit target is available. The goal is to discover structure in the data. Clustering methods group similar observations together, while dimensionality reduction methods compress the data into lower-dimensional representations. In finance, unsupervised learning can help identify groups of similar assets, detect unusual trading patterns, or reduce the dimensionality of large datasets.
 
-A third category, semi-supervised learning, sits between the two: it uses a small amount of labeled data together with a much larger amount of unlabeled data, which is a common situation in finance where obtaining a reliable label (for example, confirming that a transaction was genuinely fraudulent, which may require a lengthy investigation) is expensive relative to collecting the raw data itself. A related distinction is between discriminative models, which learn the boundary or function that separates or predicts labels directly (linear regression, logistic regression, and most models in this chapter), and generative models, which instead learn the full probability distribution of the data and can be used to generate new, synthetic examples resembling the training data. Naive Bayes\index{Naive Bayes classifier}, introduced later in this chapter, is a simple generative model; large language model\index{large language model (LLM)}s, discussed in Chapter 14, are far more elaborate examples of the same generative principle applied to text.
+A third category, semi-supervised learning, sits between the two: it uses a small amount of labeled data together with a much larger amount of unlabeled data, which is a common situation in finance where obtaining a reliable label (for example, confirming that a transaction was genuinely fraudulent, which may require a lengthy investigation) is expensive relative to collecting the raw data itself. A related distinction is between discriminative models, which learn the boundary or function that separates or predicts labels directly (linear regression, logistic regression, and most models in this chapter), and generative models, which instead learn the full probability distribution of the data and can be used to generate new, synthetic examples resembling the training data. Naive Bayes\index{Naive Bayes classifier}, introduced later in this chapter, is a simple generative model; large language model\index{large language model (LLM)}s, discussed in Chapter 16, are far more elaborate examples of the same generative principle applied to text.
 
 The distinction is important because the choice of method depends on the question being asked. If one wants to predict default, supervised learning is appropriate. If one wants to understand hidden structure in a large set of securities, unsupervised learning may be more appropriate. The remainder of this chapter proceeds roughly in that order: supervised regression and classification first, since they are the most immediately useful for the applied chapters that follow, then unsupervised clustering and dimensionality reduction, and finally neural networks, which can be applied to either supervised or unsupervised problems depending on how they are trained.
 
-\section{Regression: A Worked Example}\index{Regression: A Worked Example}
+\section{Regression: A Worked Example}
 \label{sec:regression-example}
 
 Suppose a credit analyst wants to relate a firm's leverage, measured as debt-to-EBITDA, to the credit spread the market demands on its bonds, measured in basis points. Table~\ref{tab:credit_spread_data} shows five observations.
@@ -135,10 +135,10 @@ print(model.score(X, y))               # 0.9915...
 
 Real credit spread data would show far more scatter than this toy example; the point is to make the mechanics of fitting and evaluating a linear model completely transparent before adding real-world noise and complexity.
 
-\subsection{Standard Errors, Confidence Intervals, and P-Values for Coefficients}\index{Standard Errors, Confidence Intervals, and P-Values for Coefficients}
+\subsection{Standard Errors, Confidence Intervals, and P-Values for Coefficients}
 \label{sec:regression-inference}
 
-The point estimate $\hat\beta_1 = 47$ says nothing on its own about how confidently the analyst should treat that number, and a machine learning workflow that reports only a point estimate and an $R^2$ is leaving useful information on the table. With $n=5$ observations and two estimated parameters ($\hat\beta_0,\hat\beta_1$), there are $n-2=3$ residual degrees of freedom, and the estimated noise variance is 
+The point estimate $\hat\beta_1 = 47$ says nothing on its own about how confidently the analyst should treat that number, and a machine learning workflow that reports only a point estimate and an $R^2$ is leaving useful information on the table. With $n=5$ observations and two estimated parameters ($\hat\beta_0,\hat\beta_1$), there are $n-2=3$ residual degrees of freedom, and the estimated noise variance is
 $$\hat\sigma^2 = \text{SSE}/(n-2) = 190/3 \approx 63.33.$$
 The standard error of the slope, which measures how much $\hat\beta_1$ would be expected to vary across hypothetical repeated samples of five issuers drawn from the same underlying relationship, is
 \begin{equation*}
@@ -152,7 +152,7 @@ using the $t$-distribution critical value $t^*_{0.975,3}\approx 3.182$. The corr
 
 This distinction between the slope's overwhelming significance and the intercept's weak significance illustrates a point that generalizes well beyond this example: statistical significance is coefficient-specific, and a model can pin down some relationships in the data far more precisely than others. It is also worth flagging the same overfitting connection raised throughout this chapter: fitting a regression with many candidate features and reporting only the ones whose $p$-values happen to fall below $0.05$ overstates the evidence, since testing enough coefficients against noise will eventually produce a spuriously ``significant'' one by chance alone, exactly the multiple-testing concern revisited in Chapter 7's discussion of pairs selection for cointegration\index{cointegration} trading. A single small $p$-value is far more persuasive when it was the only hypothesis tested than when it is the best of dozens.
 
-\section{How Models Learn: Gradient Descent}\index{How Models Learn: Gradient Descent}
+\section{How Models Learn: Gradient Descent}
 \label{sec:gradient-descent}
 
 The closed-form OLS solution above exists because linear regression's loss function has a special structure: it is quadratic in the parameters, so its minimum can be found in one step by solving a system of linear equations. Most machine learning models, including logistic regression, neural networks, and many others introduced later in this chapter, do not have this convenient property, and their parameters must instead be found iteratively using an optimization algorithm called gradient descent.
@@ -196,8 +196,8 @@ The closed-form OLS solution above exists because linear regression's loss funct
 }
 \end{figure}
 
-The idea is simple: starting from some initial guess for the parameters, repeatedly take a small step in the direction that most reduces the loss, the negative of the gradient (the vector of partial derivatives) of the loss with respect to each parameter, and stop once further steps no longer improve the loss. For the mean squared error loss 
-$$\mathcal{L}(\beta_0, \beta_1) = \frac{1}{n}\sum_i (\beta_0 + \beta_1 x_i - y_i)^2,$$ 
+The idea is simple: starting from some initial guess for the parameters, repeatedly take a small step in the direction that most reduces the loss, the negative of the gradient (the vector of partial derivatives) of the loss with respect to each parameter, and stop once further steps no longer improve the loss. For the mean squared error loss
+$$\mathcal{L}(\beta_0, \beta_1) = \frac{1}{n}\sum_i (\beta_0 + \beta_1 x_i - y_i)^2,$$
 the gradients are
 \begin{equation*}
 \frac{\partial \mathcal{L}}{\partial \beta_0} = \frac{2}{n}\sum_i (\hat y_i - y_i), \qquad \frac{\partial \mathcal{L}}{\partial \beta_1} = \frac{2}{n}\sum_i (\hat y_i - y_i)\, x_i,
@@ -232,7 +232,7 @@ The learning rate itself involves a tradeoff that recurs throughout machine lear
 In practice, $\eta$ is one of the most important hyperparameters to tune when training a model with gradient descent, including the neural networks discussed later in this chapter, and it is rarely fixed at a single value throughout training; adaptive variants that shrink the learning rate over time, or that use different effective rates for different parameters, are standard in modern deep learning software.
 The value of understanding gradient descent, even for a problem like linear regression where a closed-form solution already exists, is that the same algorithm scales to problems with no closed-form solution at all: logistic regression's log-loss, a neural network's loss function with millions of parameters, and many other models throughout this book are all fit using gradient descent or a close variant of it, making it arguably the single most important algorithm in modern machine learning.
 
-\section{Classification: A Worked Example}\index{Classification: A Worked Example}
+\section{Classification: A Worked Example}
 \label{sec:classification-example}
 
 Regression predicts a continuous target; classification predicts a discrete one, such as whether a borrower defaults. Logistic regression models the probability of the positive class as
@@ -243,6 +243,8 @@ so that $p(x)$ is always between 0 and 1, unlike a linear model's unbounded outp
 \begin{equation*}
 \mathcal{L}(\beta) = -\frac{1}{n}\sum_{i=1}^n \Big[y_i \log p(x_i) + (1-y_i)\log\big(1-p(x_i)\big)\Big].
 \end{equation*}
+A remark on terminology worth one sentence, because the reader will meet it in industry: linear and logistic regression are both members of the generalized linear model\index{generalized linear model (GLM)} (GLM) family, which pairs a linear combination of features with a link function and an outcome distribution suited to the target, identity link with a normal outcome for ordinary regression, log-odds link with a binary outcome here, and, in the family's other widely-used members, a log link with Poisson-distributed counts or Gamma-distributed positive amounts; GLMs remain the regulatory workhorse of insurance pricing precisely because their fitted coefficients read as multiplicative rating factors.
+
 Suppose a lender scores 10 loan applicants and, after choosing a probability threshold, classifies each as predicted default (1) or predicted no default (0). Table~\ref{tab:confusion_data} shows the actual and predicted outcomes.
 
 \begin{table}[htbp]
@@ -298,7 +300,7 @@ From these four counts, the standard classification metrics follow directly:
 \end{align*}
 Each metric answers a different question. Accuracy answers ``what fraction of predictions were correct overall,'' which can be misleading when defaults are rare, since always predicting ``no default'' would score highly on accuracy while being useless. Precision answers ``of the loans flagged as risky, how many actually defaulted,'' which matters when false positives (turning away good customers) are costly. Recall answers ``of the loans that actually defaulted, how many did the model catch,'' which matters when false negatives (missed defaults) are costly. A receiver operating characteristic (ROC) curve\index{Receiver Operating Characteristic (ROC) Curve} plots the true positive rate against the false positive rate as the classification threshold varies, and the area under this curve (AUC)\index{AUC (Area Under the Curve)} summarizes performance across all thresholds at once, rather than at the single threshold used in Table~\ref{tab:confusion_data}.
 
-\section{$K$-Nearest Neighbors: A Non-Parametric Classifier}\index{K-Nearest Neighbors: A Non-Parametric Classifier}
+\section{$K$-Nearest Neighbors: A Non-Parametric Classifier}
 
 Logistic regression, like linear regression, is a parametric model: it assumes a specific functional form (a linear combination of features passed through a sigmoid) and estimates a fixed, finite set of parameters. $K$-nearest neighbors\index{K-nearest neighbors (KNN)} (KNN) takes a completely different, non-parametric approach: it makes no assumption about the functional form of the relationship between features and target, and instead classifies a new observation by looking directly at the $k$ most similar observations in the training data and taking a majority vote of their labels.
 
@@ -539,11 +541,11 @@ The sparsity property is easiest to see with two features, one genuinely predict
 \end{equation*}
 a striking contrast: ridge barely moves either coefficient at this $\lambda$, while lasso drives the spurious feature's coefficient to \emph{exactly} zero (not merely small) while more aggressively shrinking the genuine feature's coefficient from $1.949$ toward $0.654$. This illustrates lasso's defining behavior directly: rather than shrinking every coefficient smoothly and proportionally the way ridge does, lasso's penalty has a kink at zero that makes it optimal, past a certain threshold, to set a weak coefficient to precisely zero rather than merely small, effectively performing feature selection as a side effect of fitting the model rather than as a separate step. The fact that ridge and lasso require quite different $\lambda$ values to achieve a comparable degree of overall shrinkage, evident from how little this particular $\lambda=1.0$ moved the ridge coefficients, is itself a practical lesson: the two penalties' $\lambda$ values are not interchangeable or directly comparable in magnitude, and each must be tuned separately (for example via the cross-validation procedure introduced earlier in this section) rather than assumed to behave similarly at the same nominal strength.
 
-\section{Bias, Variance, and the Tradeoff}\index{Bias, Variance, and the Tradeoff}
+\section{Bias, Variance, and the Tradeoff}
 \label{sec:bias-variance}
 
-Suppose two analysts fit different models to the exact same noisy training sample: one fits a single straight line, the other fits a high-degree polynomial that passes through every training point exactly, the degree-9 fit in Table~\ref{tab:overfitting_stylized} among them. Which one should be trusted on new data the model has not yet seen, and why? The bias-variance tradeoff is the foundational concept in machine learning that answers this precisely. For a model $\hat f$ trained on random training data and evaluated at a point $x$ with true relationship 
-$$y = f(x) + \varepsilon,$$ 
+Suppose two analysts fit different models to the exact same noisy training sample: one fits a single straight line, the other fits a high-degree polynomial that passes through every training point exactly, the degree-9 fit in Table~\ref{tab:overfitting_stylized} among them. Which one should be trusted on new data the model has not yet seen, and why? The bias-variance tradeoff is the foundational concept in machine learning that answers this precisely. For a model $\hat f$ trained on random training data and evaluated at a point $x$ with true relationship
+$$y = f(x) + \varepsilon,$$
 where $\varepsilon$ has mean zero and variance $\sigma^2$, the expected squared prediction error decomposes as
 \begin{equation*}
 \mathbb{E}\left[(y - \hat f(x))^2\right] = \underbrace{\left(f(x) - \mathbb{E}[\hat f(x)]\right)^2}_{\text{Bias}^2} + \underbrace{\text{Var}\big(\hat f(x)\big)}_{\text{Variance}} + \underbrace{\sigma^2}_{\text{Irreducible error}}.
@@ -552,7 +554,7 @@ A model with high bias is too simple and systematically misses the true relation
 
 This tradeoff is especially relevant in finance. A very simple model may be stable but fail to capture subtle structure. A very complex model may fit the sample well but fail in real deployment because it does not generalize. With limited data and unstable relationships, simpler, higher-bias models can be surprisingly effective, because their lower variance makes them more robust across changing regimes. With large, high-quality datasets and a stable signal, more complex models may perform better. The key is to evaluate models honestly, using out-of-sample or walk-forward testing, and not assume that complexity automatically improves results.
 
-\section{Hyperparameter Tuning and Model Selection}\index{Hyperparameter Tuning and Model Selection}
+\section{Hyperparameter Tuning and Model Selection}
 
 Every model introduced in this chapter has at least one hyperparameter, a setting chosen before training rather than learned from the data, that controls its position on the bias-variance spectrum: the ridge penalty $\lambda$, the number of neighbors $k$ in KNN, the maximum depth of a decision tree, or the number of trees and learning rate in a gradient-boosted ensemble. Choosing these hyperparameters well is often as consequential for a model's real-world performance as choosing the model family itself, and it must be done without ever looking at the final test set, or the resulting performance estimate is no longer a trustworthy measure of generalization.
 
@@ -568,7 +570,7 @@ A model that predicts default with high accuracy may still be impractical if it 
 
 Calibration deserves a brief numerical illustration since it is easy to confuse with accuracy. Suppose a credit model assigns a predicted default probability of $20\%$ to a group of 50 borrowers. The model is well calibrated for this group if, among those 50 borrowers, close to 10 (that is, $20\% \times 50$) actually default; if instead only 2 default, the model's probabilities are too high (poorly calibrated) even if the model still ranks borrowers correctly from most to least risky, which is exactly the kind of distinction accuracy and even AUC can miss, since both depend only on the ranking of predictions, not on whether the predicted probabilities themselves are numerically meaningful. Calibration matters enormously in finance because predicted probabilities are frequently used directly in downstream calculations, such as the expected-loss and reserve calculations in Chapter 9, where a systematically overstated or understated default probability translates directly into an overstated or understated dollar reserve, not just a misranked list of borrowers.
 
-\section{Practical Considerations in Financial ML}\index{Practical Considerations in Financial ML}
+\section{Practical Considerations in Financial ML}
 
 The practical deployment of machine learning in finance requires attention to data leakage, sample selection, and concept drift. Data leakage\index{Data Leakage} occurs when information that would not be available at prediction time is used in the model, for example including a variable that is only recorded after the outcome is known. This can produce optimistic in-sample or backtest results that vanish once the model is used in real time. Sample selection issues arise when the training data are not representative of the future environment, for instance training a credit model only on approved loans, which excludes information about applicants who were rejected. Concept drift\index{Concept Drift} occurs when the relationship between features and outcomes changes over time, for example when a recession changes which borrower characteristics matter most for default.
 
@@ -577,7 +579,7 @@ A compact view of the modeling lifecycle is shown in Figure~\ref{fig:ml_lifecycl
 \begin{figure}[htbp]
 \centering
 \begin{lrbox}{\bookmeasuredbox}
-    \begin{tikzpicture}[>=latex,thick,node distance=2.0cm]
+    \begin{tikzpicture}[>=latex,thick,node distance=0.9cm]
         \node[draw,rounded corners,minimum width=2.2cm,minimum height=0.8cm] (train) {Training};
         \node[draw,rounded corners,minimum width=2.2cm,minimum height=0.8cm,right=of train] (validate) {Validation};
         \node[draw,rounded corners,minimum width=2.2cm,minimum height=0.8cm,right=of validate] (deploy) {Deployment};
@@ -603,7 +605,7 @@ A compact view of the modeling lifecycle is shown in Figure~\ref{fig:ml_lifecycl
 
 These issues are not minor technicalities. They often determine whether a model survives in production. Strong financial modeling involves not only fitting a statistical relationship, but also ensuring that the relationship is stable enough to remain useful, and building the monitoring infrastructure to detect when it stops being useful.
 
-\section{Feature Engineering for Financial Data}\index{Feature Engineering for Financial Data}
+\section{Feature Engineering for Financial Data}
 
 Every model in this chapter takes a fixed set of numerical features as input, but raw financial data, prices, financial statement line items, transaction records, are rarely usable directly, and the process of transforming raw data into informative model inputs, called feature engineering, is often as important to a model's performance as the choice of algorithm itself.
 Several patterns recur constantly when engineering features from financial data. Ratios, such as the debt-to-equity and margin ratios computed throughout Chapter 4, normalize raw dollar figures so that firms of very different sizes become comparable, exactly as the common-size statements in that chapter did.
@@ -729,19 +731,19 @@ Typical use case & Robust baseline with minimal tuning & Squeezing out maximum p
 
 Neither approach dominates the other in every setting, but the difference in overfitting risk is a genuinely important practical consideration in finance: a gradient-boosted model with many trees and a small learning rate can achieve very low training error, and following the walk-forward validation discipline of Chapter 7 rather than a random split is especially important for catching overfitting before it reaches production.
 
-\section{Naive Bayes: A Probabilistic Classifier}\index{Naive Bayes: A Probabilistic Classifier}
+\section{Naive Bayes: A Probabilistic Classifier}
 
 Chapter 1 introduced Bayes' theorem\index{Bayes' theorem} using a fraud-detection example; naive Bayes turns that same idea into a full classification algorithm. Given features $x_1, \ldots, x_p$, it estimates the probability of each class $k$ using Bayes' theorem,
 \begin{equation*}
 \Pr(y=k \mid x_1, \ldots, x_p) \propto \Pr(y=k) \prod_{j=1}^p \Pr(x_j \mid y=k),
 \end{equation*}
-and predicts whichever class has the highest resulting probability. The ``naive'' assumption is that the features are conditionally independent given the class, which is rarely exactly true (a firm's leverage and interest coverage, for example, are clearly related) but often works well enough in practice to be a fast, effective baseline, particularly for text classification tasks such as the sentiment analysis introduced in Chapter 14, where the features are word counts or word presence indicators and the independence assumption, while still technically false, distorts the result less than it might for tightly coupled financial ratios. Naive Bayes trains almost instantly even on large datasets, since fitting it only requires estimating simple frequency-based probabilities rather than solving an optimization problem like gradient descent, which makes it a useful quick baseline to compare against before investing in a more sophisticated model.
+and predicts whichever class has the highest resulting probability. The ``naive'' assumption is that the features are conditionally independent given the class, which is rarely exactly true (a firm's leverage and interest coverage, for example, are clearly related) but often works well enough in practice to be a fast, effective baseline, particularly for text classification tasks such as the sentiment analysis introduced in Chapter 16, where the features are word counts or word presence indicators and the independence assumption, while still technically false, distorts the result less than it might for tightly coupled financial ratios. Naive Bayes trains almost instantly even on large datasets, since fitting it only requires estimating simple frequency-based probabilities rather than solving an optimization problem like gradient descent, which makes it a useful quick baseline to compare against before investing in a more sophisticated model.
 
 For text classification specifically, where each feature $x_j$ is a count of how often a particular word appears, the individual probabilities $\Pr(x_j \mid y=k)$ are most naturally estimated directly from training-data word frequencies, the fraction of class $k$'s total word count occupied by word $x_j$. This raw frequency estimate has a serious practical flaw: any word that simply never happens to appear in class $k$'s training documents receives an estimated probability of exactly zero, and because the naive Bayes score is a \emph{product} across all features, a single zero-probability word forces the entire product to zero regardless of how strongly every other word favors that class, an artifact of a small training sample rather than genuine evidence the class is impossible. Laplace smoothing\index{Laplace smoothing} (also called add-one smoothing) fixes this by adding a small constant to every count before normalizing,
 \begin{equation*}
 \Pr(x_j \mid y=k) = \frac{\text{count}(x_j, k) + 1}{\text{count}(k) + V},
 \end{equation*}
-where $\text{count}(x_j,k)$ is how many times word $x_j$ appeared across class $k$'s training documents, $\text{count}(k)$ is the total word count across those same documents, and $V$ is the vocabulary size, the number of distinct words being counted. Adding one to the numerator guarantees every word receives a strictly positive probability even if it was never observed in that class's training data, while adding $V$ to the denominator keeps the resulting probabilities properly normalized, summing to one across the vocabulary. Chapter 14's 10-K risk-factor classifier applies exactly this correction.
+where $\text{count}(x_j,k)$ is how many times word $x_j$ appeared across class $k$'s training documents, $\text{count}(k)$ is the total word count across those same documents, and $V$ is the vocabulary size, the number of distinct words being counted. Adding one to the numerator guarantees every word receives a strictly positive probability even if it was never observed in that class's training data, while adding $V$ to the denominator keeps the resulting probabilities properly normalized, summing to one across the vocabulary. Chapter 16's 10-K risk-factor classifier applies exactly this correction.
 
 \section{Clustering and Dimensionality Reduction}\index{Clustering and Dimensionality Reduction}
 
@@ -751,7 +753,7 @@ Not all machine learning tasks involve predicting a known outcome. Sometimes the
 \end{equation*}
 where $S_k$ denotes the set of observations assigned to cluster $k$ and $\mu_k$ is that cluster's center, the mean of its assigned points. This groups similar observations together, for example firms with similar financial profiles or trading accounts with similar behavior. Principal component analysis (PCA)\index{Principal Component Analysis (PCA)} is the standard dimensionality-reduction method: it finds the direction $w$ (with $\|w\|=1$) that maximizes the variance of the projected data, $\arg\max_w \text{Var}(Xw)$, then finds the next such direction orthogonal to the first, and so on. In finance, PCA applied to a panel of asset returns often reveals that a small number of components, frequently interpretable as a broad market factor followed by sector or style factors, explain the large majority of the total variance.
 
-These approaches are especially useful when the analyst faces high-dimensional data and wants to uncover latent structure. For instance, a portfolio manager may want to understand whether returns are driven by a few common factors or by many idiosyncratic sources, a question addressed more fully in Chapter 10. A fraud analyst may want to identify clusters of unusual behavior that deserve closer investigation. In both cases, unsupervised learning can provide a valuable first step before more targeted modeling.
+These approaches are especially useful when the analyst faces high-dimensional data and wants to uncover latent structure. For instance, a portfolio manager may want to understand whether returns are driven by a few common factors or by many idiosyncratic sources, a question addressed more fully in Chapter 12. A fraud analyst may want to identify clusters of unusual behavior that deserve closer investigation. In both cases, unsupervised learning can provide a valuable first step before more targeted modeling.
 
 To make $K$-means concrete, consider four firms described by two features, leverage and profit margin (both scaled to lie between 0 and 1):
 \begin{align*}
@@ -799,7 +801,7 @@ Initializing two cluster centers at $F_1$ and $F_4$, the algorithm alternates be
 }
 \end{figure}
 
-\section{Neural Networks and Deep Learning in Finance}\index{Neural Networks and Deep Learning in Finance}
+\section{Neural Networks and Deep Learning in Finance}
 
 Suppose an analyst suspects that default risk depends on leverage and profitability not through any simple additive combination, but through some more intricate interaction between the two that is too complex to write down as a specific nonlinear formula in advance, and wants a model flexible enough to learn whatever that relationship turns out to be directly from data, rather than committing in advance to a particular functional form the way linear or logistic regression do. Neural networks represent another major class of machine learning methods, built for exactly this kind of unspecified nonlinearity. A simple feedforward network with one hidden layer computes
 \begin{equation*}
@@ -873,7 +875,7 @@ A single gradient descent step with learning rate $\eta=0.1$, exactly the update
 \ffigbox[\bookcapwidth]{
 \usebox{\bookmeasuredbox}
 }{
-    \caption{The toy feedforward network worked through above. Chapter 16 revisits it to verify LIME and integrated-gradients explanations against its exact analytical gradient.}
+    \caption{The toy feedforward network worked through above. Chapter 18 revisits it to verify LIME and integrated-gradients explanations against its exact analytical gradient.}
     \label{fig:toy_feedforward_network}
 }
 \end{figure}
@@ -892,7 +894,7 @@ Several challenges make financial applications of machine learning harder than m
 
 \textbf{Imbalanced outcomes.} Events such as default, fraud, or market crashes are rare relative to normal outcomes. A classifier that simply predicts ``no event'' can achieve high accuracy while being useless, which is why precision, recall, and related metrics from Section~\ref{sec:classification-example} matter more than accuracy in these settings. Practical remedies include resampling the training data (oversampling the rare class or undersampling the common one), assigning a higher misclassification cost to the rare class during training, and choosing a classification threshold explicitly based on the relative costs of false positives and false negatives for the specific decision at hand, rather than defaulting to the conventional 0.5 cutoff, which implicitly assumes the two types of error are equally costly.
 
-\textbf{Interpretability and regulatory scrutiny.} Many financial applications, particularly credit decisions, are subject to regulation requiring that decisions be explainable to the affected individual and auditable by a regulator. This constrains the use of some highly flexible models, such as a large ensemble or a deep neural network, or requires supplementing them with explanation methods, a topic developed further in Chapter 16.
+\textbf{Interpretability and regulatory scrutiny.} Many financial applications, particularly credit decisions, are subject to regulation requiring that decisions be explainable to the affected individual and auditable by a regulator. This constrains the use of some highly flexible models, such as a large ensemble or a deep neural network, or requires supplementing them with explanation methods, a topic developed further in Chapter 18.
 
 \textbf{Feedback and reflexivity.} Unlike physical systems, financial markets can react to the presence of a successful model: if a profitable pattern becomes known and widely traded, the trading activity itself can erode or eliminate the pattern. This means past predictive power is not simply a static property of the data, but can be altered by the deployment of the model itself.
 
@@ -906,7 +908,7 @@ These challenges do not make machine learning inapplicable to finance; they make
 
 Machine learning offers valuable tools for prediction, classification, and pattern discovery in finance, but its power must be balanced with caution. The regression and classification examples in this chapter showed exactly how the standard formulas, ordinary least squares, logistic regression, the confusion matrix, and $R^2$, are computed, so that later chapters can build on precise foundations rather than vague intuition. Overfitting, unstable relationships, and shifting regimes all threaten performance in real-world settings, and the bias-variance decomposition gives a precise vocabulary for understanding why. The most successful applications combine statistical learning with domain knowledge, careful validation, and a clear understanding of the financial decision being made.
 
-This chapter also introduced a genuine diversity of algorithmic approaches, parametric models fit by a closed-form solution (linear regression) or by gradient descent (logistic regression and, later, neural networks), non-parametric models that reason directly from stored examples (KNN), margin-based geometric classifiers (SVM), probabilistic classifiers built directly on Bayes' theorem (naive Bayes), and ensembles of simple trees combined either in parallel to reduce variance (random forests) or sequentially to reduce bias (gradient boosting), and it is worth remembering that no single one of these is universally best. The right choice depends on the size and structure of the data, the importance of interpretability (Chapter 16 returns to this directly), and the computational constraints of the deployment setting, which is exactly why Section 6.11's disciplined, cross-validated approach to model and hyperparameter selection matters as much as knowing the algorithms themselves.
+This chapter also introduced a genuine diversity of algorithmic approaches, parametric models fit by a closed-form solution (linear regression) or by gradient descent (logistic regression and, later, neural networks), non-parametric models that reason directly from stored examples (KNN), margin-based geometric classifiers (SVM), probabilistic classifiers built directly on Bayes' theorem (naive Bayes), and ensembles of simple trees combined either in parallel to reduce variance (random forests) or sequentially to reduce bias (gradient boosting), and it is worth remembering that no single one of these is universally best. The right choice depends on the size and structure of the data, the importance of interpretability (Chapter 18 returns to this directly), and the computational constraints of the deployment setting, which is exactly why Section 6.11's disciplined, cross-validated approach to model and hyperparameter selection matters as much as knowing the algorithms themselves.
 
 \section{Suggested Exercises}
 
