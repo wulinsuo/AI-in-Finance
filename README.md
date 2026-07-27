@@ -8,3 +8,5 @@ forward from there, so a reader with no finance background at all should be able
 never feel lost.
 
 I am still actively revising the book.
+
+Note: Added chapters on Insurance and ABM. The book has been revised substantially.
