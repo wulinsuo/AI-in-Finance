@@ -57,6 +57,29 @@
 \fancyhead[RO]{\slshape\thepage}
 \renewcommand{\headrulewidth}{0pt}
 
+% Loaded last, as hyperref requires, so it can patch the other packages'
+% internals rather than being patched over. This is what gives the compiled PDF
+% a navigable outline, a clickable Contents page, clickable cross-references and
+% index page numbers, and live URLs in Appendix A's catalogue of data sources.
+% Since the PDF is committed precisely so the book can be read without a LaTeX
+% toolchain, that navigation is the reading experience, not a nicety.
+%
+% hidelinks: no coloured text and no boxes, so the printed page is byte-for-byte
+% the same design as before; only the annotations underneath are new.
+\usepackage{hyperref}
+\hypersetup{
+  hidelinks,
+  bookmarks=true,
+  bookmarksnumbered=true,
+  bookmarksopen=true,
+  bookmarksopenlevel=1,
+  pdftitle={AI in Finance: Finance for Engineers, Scientists, and Data Scientists},
+  pdfauthor={Wulin Suo},
+  pdfsubject={Applications of artificial intelligence and machine learning in finance},
+  pdfkeywords={finance, machine learning, artificial intelligence, risk management,
+    portfolio theory, algorithmic trading, credit risk, textbook},
+}
+
 \begin{document}
 
 \frontmatter
@@ -425,6 +448,7 @@ Every chapter's own ``Further Reading'' section lists sources with a short note 
     \item Ustun, B., A. Spangher, and Y. Liu, ``Actionable Recourse in Linear Classification,'' \emph{Proceedings of the Conference on Fairness, Accountability, and Transparency}, 2019, pp. 10--19.
     \item VanderPlas, J., \emph{Python Data Science Handbook: Essential Tools for Working with Data}, 2nd ed., O'Reilly Media, Sebastopol, CA, 2022.
     \item Vaswani, A., N. Shazeer, N. Parmar, J. Uszkoreit, L. Jones, A. N. Gomez, {\L}. Kaiser, and I. Polosukhin, ``Attention Is All You Need,'' \emph{Advances in Neural Information Processing Systems 30}, 2017, pp. 5998--6008.
+    \item Vasicek, O. A., ``The Distribution of Loan Portfolio Value,'' \emph{Risk}, vol. 15, no. 12, 2002, pp. 160--162.
     \item Wei, J., X. Wang, D. Schuurmans, M. Bosma, B. Ichter, F. Xia, E. Chi, Q. Le, and D. Zhou, ``Chain-of-Thought Prompting Elicits Reasoning in Large Language Models,'' \emph{Advances in Neural Information Processing Systems 35}, 2022, pp. 24824--24837.
     \item Wilder, J. W., Jr., \emph{New Concepts in Technical Trading Systems}, Trend Research, Greensboro, NC, 1978.
     \item Wu, S., O. Irsoy, S. Lu, V. Dabravolski, M. Dredze, S. Gehrmann, P. Kambadur, D. Rosenberg, and G. Mann, ``BloombergGPT: A Large Language Model for Finance,'' arXiv:2303.17564, 2023.
