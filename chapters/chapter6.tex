@@ -135,7 +135,7 @@ print(model.score(X, y))               # 0.9915...
 
 Real credit spread data would show far more scatter than this toy example; the point is to make the mechanics of fitting and evaluating a linear model completely transparent before adding real-world noise and complexity.
 
-\subsection{Standard Errors, Confidence Intervals, and $p$-alues for Coefficients}
+\subsection{Standard Errors, Confidence Intervals, and $p$-Values for Coefficients}
 \label{sec:regression-inference}
 
 The point estimate $\hat\beta_1 = 47$ says nothing on its own about how confidently the analyst should treat that number, and a machine learning workflow that reports only a point estimate and an $R^2$ is leaving useful information on the table. With $n=5$ observations and two estimated parameters ($\hat\beta_0,\hat\beta_1$), there are $n-2=3$ residual degrees of freedom, and the estimated noise variance is
