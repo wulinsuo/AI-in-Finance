@@ -50,3 +50,9 @@ session_log_*.txt
 index_cleanup.md
 vol_risk_premium_*
 *.code-workspace
+
+# Drafted material the author decided against including. Kept on disk so the
+# work is not lost, deliberately unpublished. A draft that IS headed for the
+# book (the draft_insurance.tex pattern) should be tracked instead of matched
+# here, so add such files by exact name rather than widening this glob.
+chapters/draft_appendix_production.*
