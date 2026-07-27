@@ -194,7 +194,7 @@ where $x_j$ is the number of shares still unexecuted after interval $j$ (so $x_0
 \begin{equation*}
 x_j = X\,\frac{\sinh(\kappa(T-t_j))}{\sinh(\kappa T)}, \qquad \kappa=\sqrt{\frac{\lambda\sigma^2}{\eta}},
 \end{equation*}
-with $T=N\tau$ the total execution horizon; $\kappa$ is the single parameter that governs how front-loaded the optimal trajectory is, growing with risk aversion $\lambda$ and volatility $\sigma$ and shrinking with the impact cost $\eta$.
+with $T=N\tau$ the total execution horizon; $\kappa$ is the single parameter that governs how front-loaded the optimal trajectory is, growing with risk aversion $\lambda$ and volatility $\sigma$ and shrinking with the impact cost $\eta$. The trajectory is stated here without proof; this book's companion technical note on the Almgren-Chriss model derives it from the discrete first-order condition, which turns out to be a linear second-order difference equation, and verifies the two limiting cases that make the result trustworthy: uniform, TWAP-style trading as risk aversion vanishes, and immediate liquidation as it grows without bound.
 
 Applying this to Section~\ref{sec:market-impact}'s $250$-share order split across the same $N=5$ intervals, with illustrative parameters $\sigma=2\%$ per interval, $\eta=0.01$, and a modest risk aversion of $\lambda=0.5$ (so $\kappa\approx0.1414$), the optimal trajectory leaves
 \begin{align*}
@@ -267,7 +267,7 @@ where $\kappa$ governs how sensitively order arrival rates respond to how compet
 \begin{equation*}
 r = 100 - 5(0.1)(2^2)(1) = \$98.00,
 \end{equation*}
-two dollars below the mid price, reflecting the market maker's desire to reduce its long position. The optimal spread works out to $\delta \approx \$1.69$, giving
+two dollars below the mid price, reflecting the market maker's desire to reduce its long position. Both halves of the spread formula above are quoted rather than derived; this book's companion technical note on the Avellaneda-Stoikov model obtains each exactly and separately, the reservation price from exponential (CARA) utility applied to a normally distributed terminal mark-to-market value, and the per-side markup from the Poisson arrival intensity, which is what makes the total spread decompose into an inventory-risk term that vanishes as the horizon closes and an order-arrival term that does not. The optimal spread works out to $\delta \approx \$1.69$, giving
 \begin{align*}
 \text{Inventory-aware quotes:} &\quad \text{bid} = r-\delta/2\approx\$97.15, \ \text{ask} = r+\delta/2\approx\$98.85, \\
 \text{Naive quotes (ignoring inventory):} &\quad \text{bid} = \$99.15, \ \text{ask} = \$100.85,

@@ -223,7 +223,7 @@ A trade price bounces back and forth between the bid and the ask as buy and sell
 \begin{equation*}
 \text{Spread} \approx 2\sqrt{-\text{Cov}(\Delta P_t, \Delta P_{t-1})},
 \end{equation*}
-using the fact that this bid-ask bounce induces exactly the kind of negative autocorrelation in consecutive price changes that the covariance term inside the square root captures. This is a useful reminder for the time series methods of Chapter 7: not every statistical pattern in price data reflects economically meaningful predictability, some of it is a direct, mechanical consequence of market microstructure.
+using the fact that this bid-ask bounce induces exactly the kind of negative autocorrelation in consecutive price changes that the covariance term inside the square root captures. This is a useful reminder for the time series methods of Chapter 7: not every statistical pattern in price data reflects economically meaningful predictability, some of it is a direct, mechanical consequence of market microstructure. This book's companion technical note on Roll's estimator derives the formula rather than quoting it, showing that a constant half-spread applied according to the direction of each arriving trade makes observed price changes behave exactly like a first-order moving-average process, with an autocovariance of precisely $-s^2/4$ at lag one and exactly zero at every longer lag, and that bounce alone can never drive the first-lag autocorrelation below $-1/2$ however wide the spread.
 
 \section{The Economics of Price Discovery}
 

@@ -496,7 +496,7 @@ The Kelly criterion answers this precisely for a repeatable bet with probability
 \begin{equation*}
 f^* = p - \frac{q}{b}.
 \end{equation*}
-For an even-money bet ($b=1$) with a $60\%$ win probability, $f^* = 0.6 - 0.4 = 0.2$: wager exactly $20\%$ of current wealth on each repetition, no more and no less.
+For an even-money bet ($b=1$) with a $60\%$ win probability, $f^* = 0.6 - 0.4 = 0.2$: wager exactly $20\%$ of current wealth on each repetition, no more and no less. The formula is quoted here rather than derived; this book's companion technical note on the Kelly criterion works the argument through in full, showing why repeated betting is governed by a geometric rather than an arithmetic average, why $f^*$ is a strict global maximum rather than merely a stationary point, why maximizing growth is equivalent to maximizing expected logarithmic wealth, and why the optimal fraction can rationally exceed one, recommending leverage, once a loss costs less than the entire amount staked.
 
 The reason ``no more'' matters as much as ``no less'' is the genuinely surprising part. The long-run growth rate of wealth from repeatedly wagering a fraction $f$ is $g(f) = p\ln(1+f) + q\ln(1-f)$; evaluating it at three candidate fractions for this same $60\%$-favorable bet,
 \begin{equation*}

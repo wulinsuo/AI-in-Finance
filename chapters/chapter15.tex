@@ -280,7 +280,7 @@ Simply dropping censored observations, or treating them as if fraud were confirm
 \begin{equation*}
 \hat S(t) = \prod_{t_i \le t} \left(1 - \frac{d_i}{n_i}\right),
 \end{equation*}
-where $\hat S(t)$ is the estimated probability that an account survives, meaning it remains unconfirmed as fraud, beyond time $t$, $n_i$ is the number of accounts still under observation (not yet closed or censored) just before time $t_i$, and $d_i$ is the number of confirmed-fraud closures exactly at time $t_i$.
+where $\hat S(t)$ is the estimated probability that an account survives, meaning it remains unconfirmed as fraud, beyond time $t$, $n_i$ is the number of accounts still under observation (not yet closed or censored) just before time $t_i$, and $d_i$ is the number of confirmed-fraud closures exactly at time $t_i$. This book's companion technical note on the Kaplan-Meier estimator shows that this product-limit formula is not an ad hoc device for coping with censored data but the exact nonparametric maximum-likelihood estimator of the survival function once right censoring is written into the likelihood correctly, which is also why the curve steps down only at observed event times and never at censoring times.
 
 \subsection*{A Worked Example: Kaplan-Meier Survival of Flagged Accounts}\index{Kaplan-Meier Survival of Flagged Accounts}
 
