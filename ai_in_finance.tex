@@ -172,7 +172,108 @@ Chapter 20 then turns to a third modeling paradigm, agent-based models of market
 same statistical and portfolio machinery together with Chapter 19's own sequential-decision framing, immediately before 
 Chapter 21's capstone puts every method in the book to work on one real dataset. This ordering was arrived at, in part, 
 by actually running the companion notebooks end to end and discovering where an earlier draft asked a chapter to use a 
-tool it had not yet been taught.
+tool it had not yet been taught. The diagram below draws that structure.
+
+% Front matter is unnumbered, so an ordinary \caption here would print
+% "Figure 0.1" (the figure counter is set within \thechapter, which is 0 for a
+% \chapter* preface). \caption*[...] gives an unnumbered caption while keeping
+% floatrow's measured-box machinery, which is what every other figure in the
+% book uses.
+\begin{figure}[htbp]
+\centering
+\begin{lrbox}{\bookmeasuredbox}
+\begin{tikzpicture}[
+  >=stealth,
+  grp/.style={draw,rounded corners=3pt,align=center,font=\footnotesize,
+              inner sep=4pt},
+  main/.style={->,thick},
+  back/.style={->,dashed,gray!65,thin},
+]
+
+\node[grp,text width=10.9cm] (found) at (0,0)
+  {\textbf{Foundations}\\[1pt]
+   1~Introduction \quad\textbullet\quad 2~Python \quad\textbullet\quad
+   3~Markets and institutions};
+
+\node[grp,text width=7.0cm] (firm) at (0,-1.75)
+  {\textbf{The firm and its price}\\[1pt]
+   4~Financial statements \ $\rightarrow$ \ 5~Valuation and asset pricing};
+
+\node[grp,text width=7.0cm] (meth) at (0,-3.4)
+  {\textbf{Methods}\\[1pt]
+   6~Machine learning \quad\textbullet\quad 7~Time series};
+
+\node[grp,text width=5.3cm] (risk) at (-3.05,-5.5)
+  {\textbf{Risk}\\[1pt]
+   8~Market \ \textbullet\ \ 9~Credit\\
+   10~Operational \ \textbullet\ \ 11~Insurance};
+
+\node[grp,text width=5.6cm] (trade) at (3.2,-5.5)
+  {\textbf{Portfolio and trading}\\[1pt]
+   12~Portfolio theory\\
+   13~Algorithmic trading \ \textbullet\ \ 14~HFT};
+
+\node[grp,text width=10.9cm] (apps) at (0,-7.8)
+  {\textbf{AI applications}\\[1pt]
+   15~Fraud and financial crime \ \textbullet\ \ 16~NLP\\
+   17~Alternative data and deep learning\\
+   18~Explainability, fairness, regulation};
+
+\node[grp,text width=7.0cm] (para) at (0,-9.8)
+  {\textbf{Two further modelling paradigms}\\[1pt]
+   19~Reinforcement learning \ $\rightarrow$ \ 20~Agent-based models};
+
+\node[grp,text width=4.8cm] (cap) at (0,-11.4)
+  {\textbf{Capstone}\\[1pt] 21~End-to-end project on real data};
+
+\draw[main] (found) -- (firm);
+\draw[main] (firm)  -- (meth);
+\draw[main] (meth.south) -- (risk.north);
+\draw[main] (meth.south) -- (trade.north);
+\draw[main] (risk.south)  -- (apps.north);
+\draw[main] (trade.south) -- (apps.north);
+\draw[main] (apps) -- (para);
+\draw[main] (para) -- (cap);
+
+% The load-bearing reuse that crosses tiers, drawn outside the spine. Left
+% unlabelled in the picture and named in the caption instead: labelling them
+% here made the figure wider than the text block and forced hyphenation inside
+% the boxes.
+\draw[back] (firm.west) to[out=180,in=180,looseness=0.85] (para.west);
+\draw[back] (meth.east) to[out=0,in=0,looseness=0.7]  (cap.east);
+\draw[back] (trade.east) to[out=0,in=0,looseness=1.5] (para.east);
+
+\end{tikzpicture}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\usebox{\bookmeasuredbox}
+\par\vspace{8pt}
+% An explicit caption block rather than \caption or \ffigbox. Two reasons.
+% First, the front matter is unnumbered: the figure counter is set within
+% \thechapter, which is 0 for a \chapter* preface, so a plain \caption prints
+% "Figure 0.1". Second, \caption* inside \ffigbox does not suppress the label
+% here -- floatrow emits its own "Figure N:" line underneath and the star leaks
+% into the output. Setting the text in a minipage of \bookcapwidth keeps the
+% one property the measured-box idiom exists for, a caption no wider than the
+% figure it describes, without a number and without fighting the package.
+% Consequently there is no \label either; the prose above points at the figure
+% positionally.
+\begin{minipage}{\bookcapwidth}
+\small \textbf{How the chapters depend on one another.} Solid arrows are
+prerequisites. The three dashed arrows mark the places where a later group
+reuses an earlier one's machinery rather than rebuilding it: Chapter 5's option
+pricing returns in Chapters 8, 9, 12, and 19; Chapter 6's models are reused by
+Chapter 9 and Chapters 15 through 18 rather than retaught; and Chapter 13's
+execution model returns in Chapter 19. Chapter 2 underpins every companion
+notebook in the book and Chapter 21 draws on all of it, so neither is drawn with
+an arrow to each dependent chapter. An instructor short of sessions can cut most
+safely within a group rather than across the spine.
+\end{minipage}
+\end{figure}
 
 Beneath this chapter-by-chapter dependency, the book falls into three broader parts. Chapters 1 through 7 are preparation: the finance vocabulary, institutions, financial statements, and valuation machinery a reader needs before any model can be usefully applied, together with the Python and machine learning fundamentals every later chapter draws on. Chapters 8 through 17 cover the applications a working quantitative finance professional encounters most often: market, credit, operational, and insurance risk, portfolio construction, algorithmic and high-frequency trading, fraud detection, and the natural language processing and alternative-data methods reshaping how firms extract signal from unstructured sources. Chapters 18 through 21 turn to more advanced and specialized territory: explainability, fairness, and regulation; reinforcement learning; agent-based models of markets and financial networks; and a closing capstone that applies the entire toolkit to one real, publicly available dataset end to end. A reader pressed for time could stop after Part II and still have a working, practitioner-level command of AI in finance; Part III is where the book pushes into territory still actively being worked out in research and in practice.
 
