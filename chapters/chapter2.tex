@@ -374,13 +374,15 @@ import matplotlib.pyplot as plt
 fig, axes = plt.subplots(1, 2, figsize=(10, 4))
 
 ax_a = axes[0]
-line_a, = ax_a.plot(prices_viz.index, prices_viz["AssetA"], color="tab:blue", label="AssetA")
+line_a, = ax_a.plot(prices_viz.index, prices_viz["AssetA"],
+                    color="tab:blue", label="AssetA")
 ax_a.set_ylabel("AssetA price", color="tab:blue")
 ax_a.tick_params(axis="y", labelcolor="tab:blue")
 ax_a.set_title("Prices")
 
 ax_b = ax_a.twinx()
-line_b, = ax_b.plot(prices_viz.index, prices_viz["AssetB"], color="tab:orange", label="AssetB")
+line_b, = ax_b.plot(prices_viz.index, prices_viz["AssetB"],
+                    color="tab:orange", label="AssetB")
 ax_b.set_ylabel("AssetB price", color="tab:orange")
 ax_b.tick_params(axis="y", labelcolor="tab:orange")
 ax_a.legend(handles=[line_a, line_b], loc="upper left")
@@ -699,7 +701,7 @@ Returning \texttt{nan} (not-a-number) rather than letting the program crash allo
 
 \begin{itemize}
     \item \textbf{Silent \texttt{NaN} propagation.} Almost any arithmetic operation involving \texttt{NaN} produces another \texttt{NaN} rather than an error, so a single bad data point can silently spread through an entire calculation (a covariance matrix, for example) without any visible warning.
-    \item \textbf{Comparing floating-point numbers for exact equality.} Because of how computers represent decimal numbers, a calculation that should mathematically equal \texttt{0.3} may instead equal \texttt{0.30000000000000004}; use a tolerance-based comparison (\texttt{np.isclose}) rather than \texttt{==} when checking floating-point results.
+    \item \textbf{Comparing floating-point numbers for exact equality.} Because of how computers represent decimal numbers, a calculation that should mathematically equal \texttt{0.3} may instead equal \texttt{0.30000\allowbreak 00000\allowbreak 00000\allowbreak 04}; use a tolerance-based comparison (\texttt{np.isclose}) rather than \texttt{==} when checking floating-point results.
     \item \textbf{Mutating a DataFrame while iterating over it.} Modifying rows of a DataFrame inside a loop over that same DataFrame can produce confusing, order-dependent results; it is almost always better to build a new column or DataFrame with a vectorized expression instead.
     \item \textbf{Off-by-one errors in lagged calculations.} Return, rolling-window, and lag calculations are especially prone to off-by-one mistakes, using today's price where yesterday's was intended, which can silently introduce look-ahead bias into a backtest, the same problem discussed in Section 2.20.
 \end{itemize}
@@ -750,7 +752,8 @@ def test_portfolio_variance_matches_formula():
     cov = returns.cov().values
     var_A, var_B, cov_AB = cov[0, 0], cov[1, 1], cov[0, 1]
     formula_variance = (
-        weights[0]**2 * var_A + weights[1]**2 * var_B + 2 * weights[0] * weights[1] * cov_AB
+        weights[0]**2 * var_A + weights[1]**2 * var_B
+        + 2 * weights[0] * weights[1] * cov_AB
     )
     direct_variance = returns.dot(weights).var(ddof=1)
     assert abs(formula_variance - direct_variance) < 1e-10, \

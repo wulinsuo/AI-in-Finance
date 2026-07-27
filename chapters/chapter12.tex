@@ -354,7 +354,7 @@ Once inequality constraints such as a long-only mandate or a position cap are ad
 \end{equation*}
 where the budget constraint (${\bf w}^\top\mathbf{1}=1$) is always present, the target-return constraint is included only when tracing a specific point on the efficient frontier rather than the global minimum-variance portfolio itself, and the box constraint $w_i^{\text{low}}=0$, $w_i^{\text{high}}=1$ recovers a long-only mandate, a tighter $w_i^{\text{high}}$ recovers a position or sector cap, and $w_i^{\text{low}} < 0$ permits limited short selling.
 
-This is a quadratic objective with linear constraints, solved in practice with a numerical constrained optimizer, most commonly sequential quadratic programming (SLSQP), available directly as \texttt{scipy.optimize.minimize(..., method="SLSQP")} in Python, which iterates toward a solution rather than computing one in a single matrix step the way Sections~\ref{sec:diversification} and~\ref{sec:matrix-optimization}'s formulas do.
+This is a quadratic objective with linear constraints, solved in practice with a numerical constrained optimizer, most commonly sequential quadratic programming (SLSQP), available directly as \texttt{scipy.\allowbreak optimize.\allowbreak minimize(..., method="SLSQP")} in Python, which iterates toward a solution rather than computing one in a single matrix step the way Sections~\ref{sec:diversification} and~\ref{sec:matrix-optimization}'s formulas do.
 
 Applying this numerical approach to the AssetX/AssetY example above, minimizing variance subject to the budget constraint and long-only bounds $0 \le w_i \le 1$, converges in a handful of iterations to $w_X = 100\%$, $w_Y = 0\%$, exactly the corner solution derived by hand above, a useful confidence check that the numerical method and the closed-form reasoning agree exactly where both are available.
 
@@ -362,7 +362,7 @@ One practical wrinkle is worth flagging explicitly, since it is easy to miss: a 
 
 This machinery also makes it possible to revisit Section~\ref{sec:matrix-optimization}'s three-asset minimum-variance portfolio (weights of $44.8\%$, $14.2\%$, and $41.0\%$ in AssetA, AssetB, and AssetC, with a volatility of about $0.050\%$) under a position cap no single asset may exceed, a common institutional constraint that the closed-form formula cannot express at all. Capping every weight at $40\%$ forces AssetA's allocation down from its unconstrained $44.8\%$ to exactly the $40\%$ cap, with the freed-up weight redistributed to the other two assets:
 \begin{align*}
-w_A^{\text{capped}} &= 40.0\%, & w_B^{\text{capped}} &= 28.4\%, & w_C^{\text{capped}} &= 31.6\%, & \sigma_p^{\text{capped}} &\approx 0.113\%,
+w_A^{\text{cap}} &= 40.0\%, & w_B^{\text{cap}} &= 28.4\%, & w_C^{\text{cap}} &= 31.6\%, & \sigma_p^{\text{cap}} &\approx 0.113\%,
 \end{align*}
 more than double the uncapped minimum-variance portfolio's $0.050\%$, a concrete price paid for the diversification-forcing discipline the cap imposes.
 

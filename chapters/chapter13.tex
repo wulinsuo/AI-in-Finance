@@ -337,7 +337,12 @@ The LP's compensation for accepting this is the trading fee revenue collected on
 \node[left,font=\scriptsize,align=left] at (8.7,1.0) {after 10 ETH sold in:\\$(110,\,181.8)$};
 \end{tikzpicture}
 \end{lrbox}
-\ffigbox[0.45\linewidth]{
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ffigbox[\bookcapwidth]{
 \usebox{\bookmeasuredbox}
 }{
 \caption{The constant-product curve $x\cdot y=k$. Selling ETH into the pool moves the pool's reserves down and to the right along the curve; the curvature is what generates price impact directly from the trade size, with no order book involved.}

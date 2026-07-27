@@ -160,8 +160,9 @@ Because ES is a coherent risk measure\index{Coherent Risk Measure} in a precise 
 \centering
 \begin{lrbox}{\bookmeasuredbox}
     \begin{tikzpicture}[thick]
-        \draw[->] (-6.2,0) -- (6.2,0) node[right,font=\small] {portfolio return};
+        \draw[->] (-6.2,0) -- (6.2,0);
         \draw[->] (0,0) -- (0,4.6) node[above,font=\small] {probability density};
+        \node[below,font=\small] at (0,-0.2) {portfolio return};
         \fill[gray!30] (-5.60,0.001) -- (-5.10,0.005) -- (-4.61,0.018) -- (-4.11,0.054) -- (-3.61,0.143) -- (-3.11,0.337) -- (-2.62,0.696) -- (-2.30,1.034) -- (-2.30,0) -- (-5.60,0) -- cycle;
         \draw[solid] (-5.60,0.001) -- (-5.10,0.005) -- (-4.61,0.018) -- (-4.11,0.054) -- (-3.61,0.143) -- (-3.11,0.337) -- (-2.62,0.696) -- (-2.30,1.034) -- (-1.40,2.426) -- (-0.70,3.530) -- (0.00,4.000) -- (0.70,3.530) -- (1.40,2.426) -- (2.10,1.299) -- (2.80,0.541) -- (3.50,0.176) -- (4.20,0.044) -- (4.90,0.009) -- (5.60,0.001);
         \draw[dashed] (-2.30,0) -- (-2.30,1.034);

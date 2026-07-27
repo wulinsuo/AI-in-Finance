@@ -17,6 +17,15 @@
 \newsavebox{\bookmeasuredbox}
 \newlength{\bookcapwidth}
 
+% Last-resort stretch, so a line with no acceptable break point loosens its
+% spacing instead of running into the margin. TeX consults this only on the
+% final pass, for paragraphs it could not otherwise set, so paragraphs that
+% already break cleanly are untouched. Without it, an atomic token (a dotted
+% code path, a long float literal, a wide inline formula) forces an overfull
+% \hbox even when \allowbreak has offered a break point, because breaking
+% there would exceed \tolerance with no glue available to absorb it.
+\emergencystretch=3em
+
 \definecolor{coverbg}{HTML}{0B1F3A}
 \definecolor{coveraccent}{HTML}{C9A227}
 
