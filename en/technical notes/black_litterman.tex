@@ -1,0 +1,339 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs}
+\usepackage{hyperref}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{proposition}{Proposition}
+\newtheorem{corollary}{Corollary}
+\newtheorem{lemma}{Lemma}
+\theoremstyle{remark}
+\newtheorem*{remark}{Remark}
+\theoremstyle{definition}
+\newtheorem*{example}{Example}
+\newtheorem{assumption}{Assumption}
+
+\title{The Black-Litterman Model:\\ A Complete Derivation}
+\author{Wulin Suo}
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent This note derives the Black-Litterman model from first principles. It begins with reverse optimization, showing that the unconstrained mean-variance problem inverts to express equilibrium excess returns as $\boldsymbol\Pi = \delta\Sigma w_{\mathrm{mkt}}$, and that the risk-aversion coefficient $\delta$ is pinned down by the market portfolio's own risk and excess return. It then treats the investor's views as noisy linear observations of an unknown mean vector and derives the posterior by conjugate normal updating, obtaining the precision-weighted form that the main text states without proof. The equivalent form used in practice is recovered through the Woodbury identity. The central result is Theorem~\ref{thm:tilt}, a tilt representation showing that the Black-Litterman portfolio is always the market portfolio plus a correction that is exactly linear in the \emph{surprise} $Q - P\boldsymbol\Pi$, the amount by which the investor's views disagree with what the market already implies. Every qualitative property practitioners rely on, that no views returns the market portfolio, that confidence scales the tilt monotonically, and that a view merely agreeing with equilibrium moves nothing, follows as a corollary rather than as a separate assertion. The note closes by reproducing the main text's worked example in full.
+\end{abstract}
+
+\section{The Problem: A Mismatch Between What the Optimizer Wants and What an Investor Has}
+\label{sec:problem}
+
+Mean-variance optimization requires a complete vector of expected returns. An investor holding $n$ assets must supply $n$ numbers before the machinery will run at all. Real investors do not have $n$ opinions. They have one or two, usually relative rather than absolute (``equities look cheap against bonds'' rather than ``equities will return $9.2\%$''), and they hold them with varying conviction.
+
+The naive response is to estimate every expected return from a historical sample and be done with it. This fails for a reason that is quantitative rather than philosophical: among the inputs to the optimizer, expected returns are both the least precisely estimable and the ones whose errors do the most damage, so the naive procedure loads the largest error into the most sensitive slot. Worse, it gives an investor no way to say how sure they are. A conviction and a guess enter the calculation identically.
+
+Black and Litterman's construction resolves both difficulties at once. It supplies a canonical answer to ``what do I think about the assets I have no opinion about,'' namely whatever the market's own holdings already imply, and it makes each view carry an explicit uncertainty. Sections~\ref{sec:reverse}--\ref{sec:tilt} derive the model and show that its useful behavior is a theorem rather than a design choice.
+
+\section{Reverse Optimization}
+\label{sec:reverse}
+
+\begin{assumption}[Unconstrained mean-variance investor]
+\label{ass:mv}
+A representative investor with risk-aversion coefficient $\delta > 0$ chooses portfolio weights $w \in \mathbb{R}^n$ to maximize
+\begin{equation}
+\label{eq:objective}
+U(w) = w^\top \boldsymbol\mu^{\mathrm{e}} - \frac{\delta}{2} w^\top \Sigma w,
+\end{equation}
+where $\boldsymbol\mu^{\mathrm{e}} = \boldsymbol\mu - r_f\mathbf{1}$ is the vector of excess expected returns and $\Sigma \succ 0$ is the return covariance matrix. No budget, sign, or position constraint is imposed.
+\end{assumption}
+
+\begin{proposition}[Forward and reverse solutions]
+\label{prop:reverse}
+Under Assumption~\ref{ass:mv} the unique maximizer of \eqref{eq:objective} is
+\begin{equation}
+\label{eq:forward}
+w^\star = \frac{1}{\delta}\,\Sigma^{-1}\boldsymbol\mu^{\mathrm{e}}.
+\end{equation}
+Consequently, if a given portfolio $w_{\mathrm{mkt}}$ is to be optimal for this investor, the excess returns making it so are uniquely determined:
+\begin{equation}
+\label{eq:reverse}
+\boldsymbol\Pi := \delta\,\Sigma\,w_{\mathrm{mkt}}.
+\end{equation}
+\end{proposition}
+
+\begin{proof}
+$U$ is strictly concave because $\Sigma \succ 0$ and $\delta > 0$, so its stationary point is the unique global maximum. Differentiating, $\nabla U(w) = \boldsymbol\mu^{\mathrm{e}} - \delta\Sigma w$, and setting this to zero gives \eqref{eq:forward}. For \eqref{eq:reverse}, substitute $w^\star = w_{\mathrm{mkt}}$ into \eqref{eq:forward} and solve for $\boldsymbol\mu^{\mathrm{e}}$, which is possible because $\Sigma$ is invertible.
+\end{proof}
+
+Equation \eqref{eq:reverse} is the whole of reverse optimization. It is worth being precise about what it does and does not claim. It is not an assertion that markets are efficient, nor an empirical estimate of anything. It is a change of coordinates: any portfolio whatsoever can be written as the mean-variance solution for exactly one excess-return vector, and $\boldsymbol\Pi$ is that vector for the observed market portfolio. Its content is that observed \emph{holdings} are data, often better data than a short return history, and \eqref{eq:reverse} is the dictionary translating holdings into the language the optimizer speaks.
+
+\begin{proposition}[Calibration of $\delta$]
+\label{prop:delta}
+Let $\mu^{\mathrm{e}}_{\mathrm{mkt}} = w_{\mathrm{mkt}}^\top\boldsymbol\Pi$ be the market portfolio's excess return and $\sigma^2_{\mathrm{mkt}} = w_{\mathrm{mkt}}^\top\Sigma w_{\mathrm{mkt}}$ its variance. Then
+\begin{equation}
+\label{eq:delta}
+\delta = \frac{\mu^{\mathrm{e}}_{\mathrm{mkt}}}{\sigma^2_{\mathrm{mkt}}}.
+\end{equation}
+\end{proposition}
+
+\begin{proof}
+Premultiply \eqref{eq:reverse} by $w_{\mathrm{mkt}}^\top$ to get $\mu^{\mathrm{e}}_{\mathrm{mkt}} = \delta\, w_{\mathrm{mkt}}^\top\Sigma w_{\mathrm{mkt}} = \delta\sigma^2_{\mathrm{mkt}}$, and divide.
+\end{proof}
+
+\begin{remark}
+\label{rem:delta-sharpe}
+Writing $S_{\mathrm{mkt}} = \mu^{\mathrm{e}}_{\mathrm{mkt}}/\sigma_{\mathrm{mkt}}$ for the market Sharpe ratio, \eqref{eq:delta} reads $\delta = S_{\mathrm{mkt}}/\sigma_{\mathrm{mkt}}$. So $\delta$ is not a free parameter to be tuned: it is fixed by two quantities an analyst already has views on, and a $\delta$ implying an implausible market Sharpe ratio is a signal that the inputs are inconsistent.
+\end{remark}
+
+\section{Views as Noisy Observations}
+\label{sec:bayes}
+
+\begin{assumption}[The Black-Litterman probability model]
+\label{ass:bl}
+The vector of true excess returns $\boldsymbol\mu^{\mathrm{e}}$ is unknown and random, with prior
+\begin{equation}
+\label{eq:prior}
+\boldsymbol\mu^{\mathrm{e}} \sim N(\boldsymbol\Pi,\ \tau\Sigma), \qquad \tau > 0.
+\end{equation}
+The investor holds $k$ views, expressed as $k$ linear combinations of the assets. These are observed with error:
+\begin{equation}
+\label{eq:views}
+Q = P\boldsymbol\mu^{\mathrm{e}} + \boldsymbol\varepsilon, \qquad \boldsymbol\varepsilon \sim N(0,\Omega),
+\end{equation}
+where $P \in \mathbb{R}^{k\times n}$ is the pick matrix, $Q \in \mathbb{R}^k$ the stated magnitudes, $\Omega \succ 0$ the view-uncertainty matrix, and $\boldsymbol\varepsilon$ is independent of $\boldsymbol\mu^{\mathrm{e}}$.
+\end{assumption}
+
+Two modeling choices deserve comment. First, the prior covariance is $\tau\Sigma$ rather than an unrelated matrix: the uncertainty about the \emph{mean} is taken proportional to the uncertainty about the \emph{returns}, so assets whose returns move together also have means that are uncertain together. The scalar $\tau$ is small, reflecting that a mean is estimated far more precisely than a single return is predicted. Second, $P$ acts on returns, not on assets individually, which is what allows a purely relative view: the row $(1,-1,0,\dots,0)$ says something about the spread between the first two assets while committing to nothing about either alone.
+
+\begin{theorem}[Posterior expected returns, precision form]
+\label{thm:posterior}
+Under Assumption~\ref{ass:bl}, the posterior distribution of $\boldsymbol\mu^{\mathrm{e}}$ given the views is Gaussian with mean
+\begin{equation}
+\label{eq:posterior}
+E[\boldsymbol\mu^{\mathrm{e}} \mid Q] = \left[(\tau\Sigma)^{-1} + P^\top\Omega^{-1}P\right]^{-1}\left[(\tau\Sigma)^{-1}\boldsymbol\Pi + P^\top\Omega^{-1}Q\right]
+\end{equation}
+and covariance $M = \left[(\tau\Sigma)^{-1} + P^\top\Omega^{-1}P\right]^{-1}$.
+\end{theorem}
+
+\begin{proof}
+Write $H = \tau\Sigma$ and let $m$ denote a candidate value of $\boldsymbol\mu^{\mathrm{e}}$. By Bayes' rule the posterior density is proportional to the product of the prior density and the likelihood of the views, so up to terms not involving $m$,
+\begin{equation*}
+-2\log p(m \mid Q) = (m-\boldsymbol\Pi)^\top H^{-1}(m-\boldsymbol\Pi) + (Q-Pm)^\top\Omega^{-1}(Q-Pm) + \text{const}.
+\end{equation*}
+Both terms are quadratic in $m$, so the sum is quadratic and the posterior is Gaussian. Expanding and collecting,
+\begin{equation*}
+-2\log p(m\mid Q) = m^\top\!\left(H^{-1} + P^\top\Omega^{-1}P\right)\! m - 2m^\top\!\left(H^{-1}\boldsymbol\Pi + P^\top\Omega^{-1}Q\right) + \text{const}.
+\end{equation*}
+A quadratic form $m^\top A m - 2m^\top b$ with $A \succ 0$ is minimized at $m = A^{-1}b$ and, completing the square, equals $(m - A^{-1}b)^\top A (m - A^{-1}b) + \text{const}$. Matching this to the Gaussian kernel identifies the posterior mean as $A^{-1}b$ and the posterior covariance as $A^{-1}$, which is the statement of the theorem with $A = H^{-1} + P^\top\Omega^{-1}P$ and $b = H^{-1}\boldsymbol\Pi + P^\top\Omega^{-1}Q$. The matrix $A$ is positive definite because $H^{-1} \succ 0$ and $P^\top\Omega^{-1}P \succeq 0$.
+\end{proof}
+
+Equation \eqref{eq:posterior} is a precision-weighted average, and reading it that way makes the model transparent. The prior contributes precision $(\tau\Sigma)^{-1}$ and pulls toward $\boldsymbol\Pi$; the views contribute precision $P^\top\Omega^{-1}P$ and pull toward $Q$. Confidence is literally inverse variance.
+
+\section{The Equivalent Form Used in Practice}
+\label{sec:woodbury}
+
+Equation \eqref{eq:posterior} requires inverting an $n\times n$ matrix. Since $k$, the number of views, is usually far smaller than $n$, the following rearrangement is the one implemented in practice.
+
+\begin{theorem}[Tilt-from-prior form]
+\label{thm:woodbury}
+Under Assumption~\ref{ass:bl}, with $H = \tau\Sigma$,
+\begin{equation}
+\label{eq:woodbury}
+E[\boldsymbol\mu^{\mathrm{e}} \mid Q] = \boldsymbol\Pi + H P^\top\left(P H P^\top + \Omega\right)^{-1}\left(Q - P\boldsymbol\Pi\right).
+\end{equation}
+\end{theorem}
+
+\begin{proof}
+By the Woodbury matrix identity,
+\begin{equation*}
+\left(H^{-1} + P^\top\Omega^{-1}P\right)^{-1} = H - HP^\top\left(PHP^\top + \Omega\right)^{-1}PH.
+\end{equation*}
+Write $K = HP^\top(PHP^\top+\Omega)^{-1}$, so the right-hand side is $H - KPH$. Applying this to $b = H^{-1}\boldsymbol\Pi + P^\top\Omega^{-1}Q$ from Theorem~\ref{thm:posterior},
+\begin{equation*}
+E[\boldsymbol\mu^{\mathrm{e}}\mid Q] = (H - KPH)\left(H^{-1}\boldsymbol\Pi + P^\top\Omega^{-1}Q\right) = \boldsymbol\Pi - KP\boldsymbol\Pi + (H - KPH)P^\top\Omega^{-1}Q.
+\end{equation*}
+It remains to show that $(H - KPH)P^\top\Omega^{-1} = K$. Factoring gives
+\begin{equation*}
+(H-KPH)P^\top\Omega^{-1} = \left(HP^\top - KPHP^\top\right)\Omega^{-1},
+\end{equation*}
+and substituting the definition of $K$,
+\begin{equation*}
+HP^\top - KPHP^\top = K\left(PHP^\top+\Omega\right) - KPHP^\top = K\Omega,
+\end{equation*}
+so the expression equals $K\Omega\Omega^{-1} = K$. Therefore
+\begin{equation*}
+E[\boldsymbol\mu^{\mathrm{e}}\mid Q] = \boldsymbol\Pi - KP\boldsymbol\Pi + KQ
+ = \boldsymbol\Pi + K(Q - P\boldsymbol\Pi),
+\end{equation*}
+which is \eqref{eq:woodbury}.
+\end{proof}
+
+Form \eqref{eq:woodbury} is more revealing than \eqref{eq:posterior}. The posterior is the prior plus a correction driven entirely by $Q - P\boldsymbol\Pi$, the extent to which the views disagree with what equilibrium already says. Nothing else about the views enters.
+
+\section{The Tilt Representation}
+\label{sec:tilt}
+
+The optimal portfolio under the posterior is obtained by feeding \eqref{eq:woodbury} back into \eqref{eq:forward}. Doing so yields the model's most useful single result.
+
+\begin{theorem}[Black-Litterman weights as a tilt on the market]
+\label{thm:tilt}
+Let $w_{\mathrm{BL}} = (\delta\Sigma)^{-1}E[\boldsymbol\mu^{\mathrm{e}}\mid Q]$. Then
+\begin{equation}
+\label{eq:tilt}
+w_{\mathrm{BL}} = w_{\mathrm{mkt}} + \frac{\tau}{\delta}\,P^\top\left(\tau P\Sigma P^\top + \Omega\right)^{-1}\left(Q - P\boldsymbol\Pi\right).
+\end{equation}
+\end{theorem}
+
+\begin{proof}
+Apply $(\delta\Sigma)^{-1}$ to \eqref{eq:woodbury} term by term. For the first term, $(\delta\Sigma)^{-1}\boldsymbol\Pi = (\delta\Sigma)^{-1}\delta\Sigma w_{\mathrm{mkt}} = w_{\mathrm{mkt}}$ by \eqref{eq:reverse}. For the second, substitute $H = \tau\Sigma$:
+\begin{equation*}
+(\delta\Sigma)^{-1}HP^\top\left(PHP^\top+\Omega\right)^{-1} = \frac{1}{\delta}\Sigma^{-1}\tau\Sigma P^\top\left(\tau P\Sigma P^\top+\Omega\right)^{-1} = \frac{\tau}{\delta}P^\top\left(\tau P\Sigma P^\top+\Omega\right)^{-1},
+\end{equation*}
+where $\Sigma^{-1}\Sigma = I$ cancels and $PHP^\top = \tau P\Sigma P^\top$. Combining gives \eqref{eq:tilt}.
+\end{proof}
+
+Every property the model is valued for now follows without further argument.
+
+\begin{corollary}[No views returns the market portfolio]
+\label{cor:noviews}
+If the investor states no views, or states views that agree exactly with equilibrium so that $Q = P\boldsymbol\Pi$, then $w_{\mathrm{BL}} = w_{\mathrm{mkt}}$.
+\end{corollary}
+
+\begin{proof}
+The second term of \eqref{eq:tilt} is a linear map applied to $Q - P\boldsymbol\Pi = 0$, hence zero. With no views at all, $P$ is empty and the term is absent.
+\end{proof}
+
+\begin{corollary}[The tilt is linear in the surprise]
+\label{cor:linear}
+Holding $P$, $\Omega$, $\tau$, and $\delta$ fixed, $w_{\mathrm{BL}} - w_{\mathrm{mkt}}$ is a linear function of $Q - P\boldsymbol\Pi$. In particular, with a single view ($k=1$), doubling the amount by which the view exceeds the equilibrium spread exactly doubles the tilt.
+\end{corollary}
+
+\begin{corollary}[Direction of the tilt]
+\label{cor:direction}
+$w_{\mathrm{BL}} - w_{\mathrm{mkt}}$ lies in the row space of $P$. An asset named in no view is traded only to the extent that it appears in some view's linear combination.
+\end{corollary}
+
+\begin{proof}
+Immediate from the factor $P^\top$ in \eqref{eq:tilt}.
+\end{proof}
+
+\begin{corollary}[Confidence scales the tilt monotonically]
+\label{cor:confidence}
+For a single view, write $\Omega = \omega > 0$ and $v = \tau P\Sigma P^\top > 0$. The tilt magnitude is proportional to $1/(v + \omega)$, which is strictly decreasing in $\omega$. As $\omega \to \infty$ the tilt vanishes and $w_{\mathrm{BL}} \to w_{\mathrm{mkt}}$; as $\omega \to 0$ it approaches its maximum $\tfrac{\tau}{\delta v}P^\top(Q - P\boldsymbol\Pi)$, at which point $P\,E[\boldsymbol\mu^{\mathrm{e}}\mid Q] = Q$ and the view is imposed exactly.
+\end{corollary}
+
+\begin{remark}[Why this is the right behavior]
+\label{rem:why}
+Corollary~\ref{cor:noviews} is the property that distinguishes the model from naive optimization. An investor with nothing to say is returned a diversified, economically sensible portfolio instead of whatever extreme allocation historical sample means happen to imply. Corollary~\ref{cor:linear} is what makes the output auditable: a risk manager can ask how much of a position is attributable to a given view and receive an exact answer, because contributions add.
+\end{remark}
+
+\section{Choosing $\tau$ and $\Omega$}
+\label{sec:params}
+
+The two free parameters are the model's weakest point and are worth stating honestly.
+
+The scalar $\tau$ measures confidence in the equilibrium prior. Values between $0.01$ and $0.05$ are common, on the reasoning that the standard error of an estimated mean from $T$ observations scales as $1/T$ relative to the return variance itself. Only the ratio matters: inspecting \eqref{eq:tilt}, scaling $\tau$ and $\Omega$ by the same constant leaves $w_{\mathrm{BL}}$ unchanged, so $\tau$ is identified only relative to $\Omega$ and it is meaningless to tune both independently.
+
+For $\Omega$, the standard device, due to He and Litterman, sets
+\begin{equation}
+\label{eq:omega}
+\Omega = \operatorname{diag}\!\left(P(\tau\Sigma)P^\top\right),
+\end{equation}
+which calibrates each view's uncertainty to the prior's own uncertainty about that same linear combination. Substituting \eqref{eq:omega} into Corollary~\ref{cor:confidence} for a single view gives $\omega = v$, so the tilt is exactly half its maximum: the investor is treated as precisely as confident as the market. Scaling $\Omega$ up or down from this baseline is then an interpretable statement of relative conviction. The diagonal structure asserts that view errors are independent, which is a convenience rather than a fact, and correlated views require a full $\Omega$.
+
+\section{Worked Example}
+\label{sec:example}
+
+The following reproduces the main text's example in full. Two assets, equities and bonds, with $\sigma_e = 16\%$, $\sigma_b = 5\%$, $\rho_{eb} = -0.20$, and a risk-free rate of $2\%$; the market portfolio is the classic $60/40$ split; expected returns of $8\%$ and $3\%$ pin down $\delta$.
+
+The market portfolio's volatility is $\sigma_{\mathrm{mkt}} = 9.4064\%$ and its excess return $4.00\%$, so \eqref{eq:delta} gives
+\begin{equation*}
+\delta = \frac{0.0400}{0.094064^2} = 4.5208.
+\end{equation*}
+Reverse optimization \eqref{eq:reverse} then yields
+\begin{equation*}
+\boldsymbol\Pi = \delta\Sigma w_{\mathrm{mkt}} = (6.6546\%,\ 0.0181\%)^\top,
+\end{equation*}
+an implied equity-minus-bond spread of $P\boldsymbol\Pi = 6.6365\%$. Bonds carry almost no equilibrium premium because their low volatility and negative correlation contribute almost nothing to the $60/40$ portfolio's risk, which is what a risk-based equilibrium should conclude.
+
+Take the single view that equities will outperform bonds by $9\%$, so $P = (1,-1)$ and $Q = 9\%$, with $\tau = 0.05$ and $\Omega$ from \eqref{eq:omega}. Here $P\Sigma P^\top = 0.0313$, so $\Omega = \tau P\Sigma P^\top = 0.001565$. The surprise is $Q - P\boldsymbol\Pi = 9\% - 6.6365\% = 2.3635\%$, and Theorem~\ref{thm:tilt} gives the tilt directly:
+\begin{equation*}
+\frac{\tau}{\delta}\cdot\frac{Q - P\boldsymbol\Pi}{\tau P\Sigma P^\top + \Omega} = \frac{0.05}{4.5208}\cdot\frac{0.0236347}{0.0031300} = 0.011060 \times 7.5510 = 0.08351,
+\end{equation*}
+so $w_{\mathrm{BL}} = (60\% + 8.35\%,\ 40\% - 8.35\%) = (68.35\%,\ 31.65\%)$. Computing the posterior first and then optimizing gives posterior excess returns of $7.6816\%$ and $-0.1367\%$ and the identical weights, as Theorem~\ref{thm:tilt} requires.
+
+\begin{example}[Linearity in the surprise]
+\label{ex:linear}
+A view of $7\%$ instead of $9\%$ has surprise $0.3635\%$, smaller by a factor of $2.3635/0.3635 = 6.5025$. Corollary~\ref{cor:linear} predicts the tilt shrinks by exactly that factor, from $8.3514$ to $8.3514/6.5025 = 1.2843$ percentage points, giving $w_{\mathrm{BL}} = (61.28\%,\ 38.72\%)$. Direct computation confirms it. A view that merely agrees with the market conveys no information and moves nothing.
+\end{example}
+
+The following reproduces every number above.
+
+\begin{verbatim}
+import numpy as np
+
+sig_e, sig_b, rho = 0.16, 0.05, -0.20
+Sigma = np.array([[sig_e**2, rho*sig_e*sig_b],
+                  [rho*sig_e*sig_b, sig_b**2]])
+w_mkt = np.array([0.60, 0.40])
+mu, rf, tau = np.array([0.08, 0.03]), 0.02, 0.05
+
+sig_mkt = np.sqrt(w_mkt @ Sigma @ w_mkt)
+delta = (w_mkt @ mu - rf) / sig_mkt**2
+Pi = delta * Sigma @ w_mkt
+P, Q = np.array([[1.0, -1.0]]), np.array([0.09])
+Omega = np.diag(np.diag(P @ (tau * Sigma) @ P.T))
+
+# Theorem 2: posterior expected excess returns
+H = tau * Sigma
+K = H @ P.T @ np.linalg.inv(P @ H @ P.T + Omega)
+mu_bl = Pi + K @ (Q - P @ Pi)
+w_direct = np.linalg.solve(delta * Sigma, mu_bl)
+
+# Theorem 3: the same weights as an explicit tilt on the market portfolio
+inner = np.linalg.inv(tau * (P @ Sigma @ P.T) + Omega)
+w_tilt = w_mkt + (tau / delta) * (P.T @ inner @ (Q - P @ Pi)).ravel()
+
+print(f"delta = {delta:.4f}, Pi = {np.round(Pi * 100, 4)}")
+print(f"posterior = {np.round(mu_bl * 100, 4)}")
+print(f"weights   = {np.round(w_direct * 100, 4)}")
+print(f"agreement = {np.abs(w_direct - w_tilt).max():.2e}")
+\end{verbatim}
+
+\begin{remark}[A useful check]
+\label{rem:check}
+The two routes to $w_{\mathrm{BL}}$ in the code above agree to machine precision, on the order of $10^{-16}$. Any implementation should include this check: it simultaneously validates the Woodbury rearrangement of Theorem~\ref{thm:woodbury} and the cancellation of $\Sigma$ in Theorem~\ref{thm:tilt}, and it fails loudly if $\delta$ and $\boldsymbol\Pi$ have been calibrated inconsistently.
+\end{remark}
+
+\section{Discussion: Assumptions and Extensions}
+\label{sec:discussion}
+
+\paragraph{The market portfolio must be observable.} Everything rests on $w_{\mathrm{mkt}}$ in \eqref{eq:reverse}. For global equities, capitalization weights are a defensible proxy. For asset classes where no capitalization weight exists, or where the investable universe differs sharply from the theoretical market, the prior becomes a policy portfolio chosen by the investor, and the model's claim to neutrality weakens correspondingly.
+
+\paragraph{$\Sigma$ is treated as known.} The covariance matrix is an input, not something the model estimates or updates, and its own estimation error propagates untouched into $\boldsymbol\Pi$ through \eqref{eq:reverse} and into the tilt through \eqref{eq:tilt}. In practice $\Sigma$ should be a shrunk or factor-based estimate rather than a raw sample covariance; the main text's discussion of covariance shrinkage applies here unchanged, and the two techniques are complements rather than alternatives.
+
+\paragraph{Normality and linearity.} Assumption~\ref{ass:bl} makes both the prior and the view errors Gaussian, which is what delivers a closed-form posterior. Views must also be linear in expected returns, so a statement such as ``equity volatility will rise'' cannot be expressed at all: the model updates first moments only.
+
+\paragraph{The unconstrained solution.} Theorem~\ref{thm:tilt} inherits Assumption~\ref{ass:mv}'s absence of constraints, and \eqref{eq:tilt} can therefore produce negative weights when a view is strong. Imposing long-only or position limits requires solving the constrained quadratic program with $E[\boldsymbol\mu^{\mathrm{e}}\mid Q]$ as its input, after which the clean tilt decomposition no longer holds exactly, though it remains an accurate guide to the direction and rough magnitude of the adjustment.
+
+\paragraph{Where forecasts should enter.} A quantitative forecasting model that reports both a prediction and its own out-of-sample error is producing precisely the pair $(Q,\Omega)$ that Assumption~\ref{ass:bl} requires. Routing a statistical forecast through the views rather than substituting it for $\boldsymbol\mu^{\mathrm{e}}$ makes the resulting position automatically proportional to the model's demonstrated accuracy, by Corollary~\ref{cor:confidence}, which is a considerably safer interface than trusting a point forecast outright.
+
+\section{Summary}
+\label{sec:summary}
+
+Reverse optimization (Proposition~\ref{prop:reverse}) turns observed holdings into the excess returns that rationalize them, supplying a prior where naive optimization demands an invention. Treating views as noisy linear observations (Assumption~\ref{ass:bl}) makes the update a conjugate normal calculation, giving the precision-weighted posterior of Theorem~\ref{thm:posterior} and, after a Woodbury rearrangement, the tilt-from-prior form of Theorem~\ref{thm:woodbury}. Feeding that back through the mean-variance solution produces Theorem~\ref{thm:tilt}: the Black-Litterman portfolio is the market portfolio plus a correction lying in the row space of $P$, linear in the surprise $Q - P\boldsymbol\Pi$, and scaled by confidence through $\Omega$. The properties practitioners rely on are corollaries of that one identity, and the parameters $\tau$ and $\Omega$ are identified only as a ratio, which is worth remembering before tuning either.
+
+\section*{References}
+
+\begin{itemize}
+    \item Black, F., and R. Litterman, ``Asset Allocation: Combining Investor Views with Market Equilibrium,'' Goldman Sachs Fixed Income Research, 1990.
+    \item Black, F., and R. Litterman, ``Global Portfolio Optimization,'' \emph{Financial Analysts Journal}, vol. 48, no. 5, 1992, pp. 28--43.
+    \item He, G., and R. Litterman, ``The Intuition Behind Black-Litterman Model Portfolios,'' Goldman Sachs Investment Management Research, 1999.
+    \item Idzorek, T., ``A Step-by-Step Guide to the Black-Litterman Model,'' in \emph{Forecasting Expected Returns in the Financial Markets}, Academic Press, 2007.
+    \item Satchell, S., and A. Scowcroft, ``A Demystification of the Black-Litterman Model,'' \emph{Journal of Asset Management}, vol. 1, no. 2, 2000, pp. 138--150.
+    \item Meucci, A., ``The Black-Litterman Approach: Original Model and Extensions,'' in \emph{The Encyclopedia of Quantitative Finance}, Wiley, 2010.
+    \item Chopra, V. K., and W. T. Ziemba, ``The Effect of Errors in Means, Variances, and Covariances on Optimal Portfolio Choice,'' \emph{Journal of Portfolio Management}, vol. 19, no. 2, 1993, pp. 6--11.
+    \item Ledoit, O., and M. Wolf, ``Honey, I Shrunk the Sample Covariance Matrix,'' \emph{Journal of Portfolio Management}, vol. 30, no. 4, 2004, pp. 110--119.
+\end{itemize}
+
+\end{document}

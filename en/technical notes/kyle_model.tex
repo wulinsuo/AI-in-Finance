@@ -1,0 +1,316 @@
+% Technical note. Policy, as in the other notes in this folder: refer to the main
+% text by section or chapter NAME, never by number. These notes are never
+% \subfile'd by either master, so \ref cannot reach into the book and a hard-coded
+% number goes stale silently at the next chapter insertion.
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs}
+\usepackage{hyperref}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{proposition}{Proposition}
+\newtheorem{corollary}{Corollary}
+\newtheorem{lemma}{Lemma}
+\theoremstyle{remark}
+\newtheorem*{remark}{Remark}
+\theoremstyle{definition}
+\newtheorem*{example}{Example}
+\newtheorem{assumption}{Assumption}
+
+\title{The Kyle Model of Price Impact:\\ A Complete Derivation}
+\author{Wulin Suo}
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent This note derives Kyle's (1985) single-period model of price impact, which the main text's section on the Kyle model states and estimates but does not prove. The main text treats $\lambda$ as a regression slope, recovered by regressing observed price changes on observed net order flow; this note shows where that linear relationship comes from and what $\lambda$ equals in terms of the model's primitives. The central result is that a linear equilibrium exists and is unique, with $\lambda = \sqrt{\Sigma_0}/(2\sigma_u)$ and insider aggressiveness $\beta = \sigma_u/\sqrt{\Sigma_0}$, so that $\lambda\beta = 1/2$ exactly. Three consequences follow and are each proved: market depth $1/\lambda$ is proportional to the amount of noise trading and inversely proportional to the standard deviation of the asset's value, exactly one half of the insider's private information is impounded into the price, and the insider's expected profit is $\sigma_u\sqrt{\Sigma_0}/2$. The note closes with the comparative statics that give the main text's empirical $\lambda$ its economic reading, and with code reproducing every number.
+\end{abstract}
+
+\section{The Problem: Why Should Price Be Linear in Order Flow?}
+\label{sec:problem}
+
+The main text estimates price impact by regressing price changes on net order flow and reports a slope of about $1.95$ cents per thousand shares. That regression presumes what it measures. It assumes the true relationship is linear, that a single coefficient summarizes it, and that the coefficient means something economic rather than being an artifact of the sample. None of the three is obvious.
+
+A market maker quoting prices faces a mixture of counterparties. Some trade because they know something about the asset that the maker does not; others trade for reasons unconnected to value, needing cash or rebalancing a portfolio. The maker cannot tell them apart, and every trade the maker fills against the first kind loses money on average. Quoting a price that ignores order flow would therefore be ruinous, and quoting one that responds too sharply would drive away the uninformed flow that pays the bills. Kyle's contribution is to show that this problem has a unique solution, that the solution is exactly linear, and that its slope has a closed form in terms of how much private information exists and how much noise trading hides it.
+
+\section{The Model}
+\label{sec:model}
+
+\begin{assumption}[One-period Kyle economy]
+\label{ass:model}
+A single risky asset has terminal value $v \sim N(p_0, \Sigma_0)$. Three parties act:
+\begin{enumerate}
+\item An \emph{informed trader} observes $v$ exactly and submits a market order of size $x$, chosen to maximize expected profit. The trader is risk neutral.
+\item \emph{Noise traders} submit a net order $u \sim N(0,\sigma_u^2)$, independent of $v$, for reasons unrelated to value.
+\item A \emph{market maker} observes only the combined order flow $y = x + u$, not its components, and sets a price $p$. Competition among makers drives expected profit to zero, so the maker prices at $p = E[v \mid y]$.
+\end{enumerate}
+\end{assumption}
+
+The maker's zero-profit condition is what makes the model a model rather than an accounting identity: the maker is not choosing a spread to maximize anything, but is forced by competition to quote the conditional expectation of value given everything observable.
+
+\begin{remark}[There is no market-clearing condition]
+\label{rem:clearing}
+Nothing above requires excess demand to vanish, and it is worth being explicit that the price here is not a Walrasian one. The maker is the residual counterparty and absorbs $-y$ whatever arrives, so generically $y \ne 0$; the quantity side imposes no restriction and determines nothing. What pins the price down is the zero-profit condition instead, and it binds conditional on $y$ rather than merely on average, which is strictly stronger: the maker breaks even at every realization of order flow, so there is no cross-subsidy in which large imbalances are priced at a loss and small ones recoup it. Price does not clear quantity here; it clears information. The contrast with the companion note on the Brock-Hommes adaptive belief system is exact: there the risky asset is in zero net supply, aggregate demand across belief types must sum to zero by assumption, and the price is whatever level forces it to. Both models deliver a price, but only one of them delivers it by balancing quantities.
+\end{remark}
+
+\begin{remark}
+\label{rem:batch}
+Order flow arrives as a single batch, so the maker never sees $x$ and $u$ separately, and there is no sequence of trades to learn from. This is the modeling choice that distinguishes Kyle from the sequential-trade alternative the main text's high-frequency trading chapter develops, in which a maker updates a posterior trade by trade. The two give the same qualitative conclusion by different routes.
+\end{remark}
+
+\section{The Linear Equilibrium}
+\label{sec:equilibrium}
+
+We look for an equilibrium in which both parties' strategies are linear, then verify that the conjecture is self-consistent.
+
+\begin{assumption}[Linear conjecture]
+\label{ass:linear}
+The insider trades $x = \beta\,(v - p_0)$ and the maker prices $p = p_0 + \lambda y$, for constants $\beta > 0$ and $\lambda > 0$ to be determined.
+\end{assumption}
+
+\begin{lemma}[The maker's best response]
+\label{lem:maker}
+Given insider aggressiveness $\beta$, the zero-profit pricing rule is linear with
+\begin{equation}
+\label{eq:makerbr}
+\lambda = \frac{\beta\Sigma_0}{\beta^2\Sigma_0 + \sigma_u^2}.
+\end{equation}
+\end{lemma}
+
+\begin{proof}
+Under Assumption~\ref{ass:linear}, $y = \beta(v-p_0) + u$ is a linear combination of independent normals, so $(v,y)$ is jointly Gaussian with
+\begin{equation*}
+\operatorname{Var}(y) = \beta^2\Sigma_0 + \sigma_u^2, \qquad
+\operatorname{Cov}(v,y) = \beta\Sigma_0 .
+\end{equation*}
+For jointly Gaussian variables the conditional expectation is linear,
+\begin{equation*}
+E[v\mid y] = p_0 + \frac{\operatorname{Cov}(v,y)}{\operatorname{Var}(y)}\,y,
+\end{equation*}
+which is the stated $\lambda$. Note that the \emph{linearity of the pricing rule is not assumed here}: it is forced by joint normality, given a linear insider strategy.
+\end{proof}
+
+\begin{lemma}[The insider's best response]
+\label{lem:insider}
+Given a pricing rule $p = p_0 + \lambda y$ with $\lambda>0$, the insider's optimal order is
+\begin{equation}
+\label{eq:insiderbr}
+x = \frac{v-p_0}{2\lambda}, \qquad\text{that is,}\qquad \beta = \frac{1}{2\lambda}.
+\end{equation}
+\end{lemma}
+
+\begin{proof}
+The insider knows $v$ and knows the pricing rule, but not the realization of $u$. Expected profit from an order $x$ is
+\begin{equation*}
+E\big[(v - p)\,x \,\big|\, v\big] = E\big[(v - p_0 - \lambda(x+u))\,x \,\big|\, v\big] = (v-p_0)x - \lambda x^2,
+\end{equation*}
+using $E[u]=0$. This is a strictly concave quadratic in $x$ because $\lambda>0$, so the first-order condition $(v-p_0) - 2\lambda x = 0$ locates the unique maximum, giving \eqref{eq:insiderbr}.
+\end{proof}
+
+\begin{theorem}[Existence and uniqueness of the linear equilibrium]
+\label{thm:equilibrium}
+There is exactly one linear equilibrium. It has
+\begin{equation}
+\label{eq:solution}
+\lambda = \frac{\sqrt{\Sigma_0}}{2\sigma_u}, \qquad
+\beta = \frac{\sigma_u}{\sqrt{\Sigma_0}}, \qquad\text{and hence}\qquad
+\lambda\beta = \tfrac12 .
+\end{equation}
+\end{theorem}
+
+\begin{proof}
+An equilibrium is a pair $(\lambda,\beta)$ satisfying \eqref{eq:makerbr} and \eqref{eq:insiderbr} simultaneously. Substituting $\beta = 1/(2\lambda)$ into \eqref{eq:makerbr},
+\begin{equation*}
+\lambda = \frac{(1/2\lambda)\Sigma_0}{(1/4\lambda^2)\Sigma_0 + \sigma_u^2}.
+\end{equation*}
+Multiplying numerator and denominator by $4\lambda^2$ gives $\lambda = 2\lambda\Sigma_0/(\Sigma_0 + 4\lambda^2\sigma_u^2)$. Since $\lambda \ne 0$, divide by $\lambda$ and cross-multiply:
+\begin{equation*}
+\Sigma_0 + 4\lambda^2\sigma_u^2 = 2\Sigma_0
+\quad\Longrightarrow\quad
+4\lambda^2\sigma_u^2 = \Sigma_0
+\quad\Longrightarrow\quad
+\lambda = \frac{\sqrt{\Sigma_0}}{2\sigma_u},
+\end{equation*}
+taking the positive root, which is required for the insider's problem to be concave. Then $\beta = 1/(2\lambda) = \sigma_u/\sqrt{\Sigma_0}$, and $\lambda\beta = 1/2$ by construction. Uniqueness is immediate: the two best-response conditions determine $\lambda^2$ exactly, and the sign restriction selects one root.
+\end{proof}
+
+\section{What the Equilibrium Says}
+\label{sec:consequences}
+
+\begin{corollary}[Market depth]
+\label{cor:depth}
+The depth of the market, the order flow required to move the price by one unit, is
+\begin{equation*}
+\frac{1}{\lambda} = \frac{2\sigma_u}{\sqrt{\Sigma_0}} .
+\end{equation*}
+Depth rises linearly in the amount of noise trading and falls with the standard deviation of the asset's value.
+\end{corollary}
+
+This is the model's central economic statement, and it is worth reading slowly. Liquidity is not a property of the asset, nor of the market maker's balance sheet. It is determined by the ratio of uninformed to informed trading. A market is deep precisely when there is enough noise trading to camouflage the informed, and it is thin when private information is large relative to that camouflage.
+
+\begin{corollary}[Exactly half the private information is revealed]
+\label{cor:half}
+In equilibrium,
+\begin{equation*}
+\operatorname{Var}(v \mid y) = \tfrac12\Sigma_0 ,
+\end{equation*}
+independent of both $\Sigma_0$ and $\sigma_u$.
+\end{corollary}
+
+\begin{proof}
+For jointly Gaussian variables, $\operatorname{Var}(v\mid y) = \Sigma_0 - \operatorname{Cov}(v,y)^2/\operatorname{Var}(y)$. At the equilibrium values, $\beta^2\Sigma_0 = (\sigma_u^2/\Sigma_0)\Sigma_0 = \sigma_u^2$, so $\operatorname{Var}(y) = 2\sigma_u^2$ and $\operatorname{Cov}(v,y)^2 = \beta^2\Sigma_0^2 = \sigma_u^2\Sigma_0$. Therefore
+\begin{equation*}
+\operatorname{Var}(v\mid y) = \Sigma_0 - \frac{\sigma_u^2\Sigma_0}{2\sigma_u^2} = \Sigma_0 - \frac{\Sigma_0}{2} = \frac{\Sigma_0}{2}. \qedhere
+\end{equation*}
+\end{proof}
+
+\begin{remark}[Why one half, and why it does not depend on anything]
+\label{rem:half}
+The constant is a consequence of the insider's optimization, not a coincidence. A more aggressive $\beta$ would move more of $v$ into the price, but it would also raise $\lambda$ and so raise the insider's own trading cost; the optimum trades these off at exactly the point where half the prior variance survives. The insider does not conceal information because concealment is a goal, but because trading harder is expensive. Prices in this model are therefore \emph{never} fully revealing, however much noise trading there is.
+\end{remark}
+
+\begin{corollary}[Insider profit]
+\label{cor:profit}
+The insider's unconditional expected profit is
+\begin{equation*}
+E[\pi] = \frac{\sigma_u\sqrt{\Sigma_0}}{2},
+\end{equation*}
+and the market maker's expected profit is zero, as competition requires.
+\end{corollary}
+
+\begin{proof}
+From the proof of Lemma~\ref{lem:insider}, profit conditional on $v$ is $(v-p_0)x - \lambda x^2$ evaluated at $x = (v-p_0)/(2\lambda)$, which equals $(v-p_0)^2/(4\lambda)$. Taking expectations over $v$ and using $E[(v-p_0)^2] = \Sigma_0$,
+\begin{equation*}
+E[\pi] = \frac{\Sigma_0}{4\lambda} = \frac{\Sigma_0}{4}\cdot\frac{2\sigma_u}{\sqrt{\Sigma_0}} = \frac{\sigma_u\sqrt{\Sigma_0}}{2}.
+\end{equation*}
+The maker's expected profit is $E[(p-v)y] = E\big[(E[v\mid y]-v)\,y\big] = 0$ by the tower property, since $y$ is $y$-measurable.
+\end{proof}
+
+The insider's profit is exactly what the noise traders lose, since the maker breaks even. This makes the model's distributional content explicit: price impact is not a cost the market maker extracts, it is a transfer from uninformed to informed traders, intermediated by a maker who keeps none of it.
+
+\section{Comparative Statics, and How to Read an Estimated \texorpdfstring{$\lambda$}{lambda}}
+\label{sec:comparative}
+
+It is worth saying plainly what everything above was for. The main text does not derive the price-impact regression it estimates: it writes the linear relation down, fits it to six intervals of order flow, and reads the slope. This note exists to justify that one line. The correspondence between the estimated equation and the equilibrium is one to one, symbol for symbol, with a single instructive exception.
+
+\begin{table}[htbp]
+\centering
+\begin{tabular}{@{}llp{7.3cm}@{}}
+\toprule
+Main text & Here & What it is \\
+\midrule
+Net order flow & $y = x + u$ & Signed buys minus sells, informed and uninformed combined into the one quantity the maker can see \\
+$\Delta P$ & $p - p_0$ & The maker's revision of $E[v]$ on observing $y$ \\
+$\lambda$ & $\sqrt{\Sigma_0}/(2\sigma_u)$ & Theorem~\ref{thm:equilibrium} \\
+Depth & $2\sigma_u/\sqrt{\Sigma_0}$ & Corollary~\ref{cor:depth} \\
+$\varepsilon$ & \textemdash & \emph{No counterpart.} In equilibrium the pricing relation holds exactly \\
+\bottomrule
+\end{tabular}
+\caption{Every symbol in the main text's estimated price-impact regression, and the object in the equilibrium it corresponds to. The error term is the one entry with nothing on the right.}
+\label{tab:correspondence}
+\end{table}
+
+The link at the slope itself is tighter than a correspondence of symbols, and is the reason the linear specification is legitimate rather than merely convenient. The proof of Lemma~\ref{lem:maker} prices the asset at $E[v\mid y] = p_0 + \operatorname{Cov}(v,y)\,y/\operatorname{Var}(y)$, whose coefficient is a covariance divided by a variance, which is precisely the population version of the ordinary least squares slope the main text computes from its six data points. The maker's pricing rule is therefore \emph{defined} as the linear projection of value on order flow. The regression is not an approximation to some deeper nonlinear truth waiting to be discovered; it is the sample analogue of the equilibrium object itself.
+
+Theorem~\ref{thm:equilibrium} then gives the two comparative statics that let an empirical $\lambda$ be interpreted rather than merely reported.
+
+\begin{table}[htbp]
+\centering
+\begin{tabular}{lrr}
+\toprule
+Primitive & $\lambda$ & Depth $1/\lambda$ \\
+\midrule
+$\Sigma_0 = 1$, $\sigma_u = 3$ & $0.167$ & $6.00$ \\
+$\Sigma_0 = 4$, $\sigma_u = 3$ & $0.333$ & $3.00$ \\
+$\Sigma_0 = 9$, $\sigma_u = 3$ & $0.500$ & $2.00$ \\
+\midrule
+$\Sigma_0 = 4$, $\sigma_u = 1$ & $1.000$ & $1.00$ \\
+$\Sigma_0 = 4$, $\sigma_u = 6$ & $0.167$ & $6.00$ \\
+\bottomrule
+\end{tabular}
+\caption{$\lambda$ rises with the square root of the value uncertainty an insider might know about, and falls in proportion to the noise trading that hides them.}
+\label{tab:comparative}
+\end{table}
+
+So when the main text estimates $\hat\lambda \approx 1.95$ cents per thousand shares and observes that a larger $\lambda$ indicates either more informed trading or thinner liquidity, Theorem~\ref{thm:equilibrium} is what licenses that reading: the two explanations are the numerator and denominator of the same expression, and the regression slope is an estimate of $\sqrt{\Sigma_0}/(2\sigma_u)$. A cross-sectional comparison of $\hat\lambda$ across stocks is therefore a comparison of information asymmetry per unit of noise trading, which is why $\lambda$ is used as an adverse-selection proxy throughout the empirical microstructure literature.
+
+\begin{remark}[The regression is correctly specified, but only here]
+\label{rem:regression}
+The main text regresses $\Delta P$ on net order flow with an error term. In this model that regression is exactly right: $p - p_0 = \lambda y$ holds without error, so the residual variance in real data reflects everything the model omits, multiple informed traders, time-varying $\Sigma_0$, inventory effects, and discreteness. A high $R^2$ is therefore not evidence that the model is true; it is evidence that a linear price-impact approximation fits over the sampled interval.
+\end{remark}
+
+\section{Verification}
+\label{sec:verification}
+
+The following reproduces every closed-form claim above and checks the equilibrium by simulation.
+
+\begin{verbatim}
+import numpy as np
+
+Sigma0, sigma_u, p0 = 4.0, 3.0, 100.0
+
+lam  = np.sqrt(Sigma0) / (2 * sigma_u)     # Theorem 1
+beta = sigma_u / np.sqrt(Sigma0)
+print(f"lambda={lam:.6f}  beta={beta:.6f}  lambda*beta={lam*beta:.6f}")
+
+# the two best responses must agree at the equilibrium
+maker_br = beta * Sigma0 / (beta**2 * Sigma0 + sigma_u**2)
+print(f"maker best response {maker_br:.6f} vs lambda {lam:.6f}")
+
+# Corollaries 2 and 3
+post = Sigma0 - (beta*Sigma0)**2 / (beta**2*Sigma0 + sigma_u**2)
+print(f"Var(v|y)={post:.6f}  Sigma0/2={Sigma0/2:.6f}")
+print(f"E[insider profit]={sigma_u*np.sqrt(Sigma0)/2:.6f}")
+
+# Monte Carlo: simulate the economy and confirm the equilibrium holds
+rng = np.random.default_rng(0)
+N = 4_000_000
+v = p0 + rng.normal(0, np.sqrt(Sigma0), N)
+u = rng.normal(0, sigma_u, N)
+x = beta * (v - p0)
+y = x + u
+p = p0 + lam * y
+print(f"simulated slope of E[v|y] = "
+      f"{np.cov(v, y, bias=True)[0,1] / y.var():.6f}")
+print(f"simulated insider profit  = {np.mean((v - p) * x):.6f}")
+print(f"simulated maker profit    = {np.mean((p - v) * y):.6f}")
+\end{verbatim}
+
+\begin{remark}[A useful check]
+\label{rem:check}
+The maker's simulated profit should sit at zero to within Monte Carlo error, and the simulated regression slope of $v$ on $y$ should reproduce $\lambda$. If either fails, the two best responses have been solved inconsistently, which is by far the most common implementation error: it is easy to impose $\beta = 1/(2\lambda)$ while pricing with a $\lambda$ computed from a different $\beta$.
+\end{remark}
+
+\section{Discussion: Assumptions and Extensions}
+\label{sec:discussion}
+
+\paragraph{One informed trader.} The insider is a monopolist in information and internalizes their own price impact, which is what makes $\beta$ finite. With $n$ competing insiders each observing $v$, they compete away that restraint, aggregate trading becomes more aggressive, $\lambda$ falls, and prices become more revealing; in the limit of many insiders the price reveals $v$ almost fully and informed profits vanish.
+
+\paragraph{Normality.} Joint normality is what makes $E[v\mid y]$ linear, and it is doing heavy lifting: it converts a hard functional fixed-point problem into two scalar equations. With non-Gaussian value or noise the equilibrium pricing rule is generally nonlinear, and the tidy $\lambda\beta = 1/2$ does not survive.
+
+\paragraph{A single batch.} All trading happens at once, so there is no learning dynamic. Kyle's own multi-period extension has the insider spread trading across rounds to disguise it, with information revealed at a constant rate and $\lambda$ constant over time; that structure is the theoretical ancestor of the execution-scheduling problem the main text's optimal-execution material and the companion note on the Almgren-Chriss framework both address.
+
+\paragraph{No inventory.} The maker is risk neutral with unlimited capital, so quotes depend only on information, never on the position accumulated. Relaxing this is what the companion note on the Avellaneda-Stoikov market-making model does, where the reservation price shifts with inventory even when no new information has arrived.
+
+\paragraph{Exogenous noise trading.} The noise traders lose $\sigma_u\sqrt{\Sigma_0}/2$ in expectation and never stop. A model in which they could withdraw would have no equilibrium of this form, which is a real limitation given that the empirical liquidity droughts practitioners care about most look exactly like uninformed traders leaving.
+
+\section{Summary}
+\label{sec:summary}
+
+Conjecturing linear strategies and imposing competitive pricing (Lemma~\ref{lem:maker}) and insider optimality (Lemma~\ref{lem:insider}) yields two equations whose unique solution is Theorem~\ref{thm:equilibrium}: $\lambda = \sqrt{\Sigma_0}/(2\sigma_u)$ and $\beta = \sigma_u/\sqrt{\Sigma_0}$, with $\lambda\beta = 1/2$. Market depth is then proportional to noise trading and inversely proportional to value uncertainty (Corollary~\ref{cor:depth}), exactly half the insider's information reaches the price regardless of parameters (Corollary~\ref{cor:half}), and the insider's expected profit, equal to the noise traders' expected loss, is $\sigma_u\sqrt{\Sigma_0}/2$ (Corollary~\ref{cor:profit}). The empirical $\lambda$ the main text estimates is an estimate of that closed form, which is what turns a regression slope into a measure of adverse selection.
+
+\section*{References}
+
+\begin{itemize}
+    \item Kyle, A. S., ``Continuous Auctions and Insider Trading,'' \emph{Econometrica}, vol. 53, no. 6, 1985, pp. 1315--1335.
+    \item Glosten, L. R., and P. R. Milgrom, ``Bid, Ask and Transaction Prices in a Specialist Market with Heterogeneously Informed Traders,'' \emph{Journal of Financial Economics}, vol. 14, no. 1, 1985, pp. 71--100.
+    \item Admati, A. R., and P. Pfleiderer, ``A Theory of Intraday Patterns: Volume and Price Variability,'' \emph{The Review of Financial Studies}, vol. 1, no. 1, 1988, pp. 3--40.
+    \item Back, K., ``Insider Trading in Continuous Time,'' \emph{The Review of Financial Studies}, vol. 5, no. 3, 1992, pp. 387--409.
+    \item Hasbrouck, J., \emph{Empirical Market Microstructure}, Oxford University Press, New York, 2007.
+    \item O'Hara, M., \emph{Market Microstructure Theory}, Blackwell Publishers, Cambridge, MA, 1995.
+\end{itemize}
+
+\end{document}

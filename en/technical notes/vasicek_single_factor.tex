@@ -1,0 +1,243 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs}
+\usepackage{hyperref}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{proposition}{Proposition}
+\newtheorem{corollary}{Corollary}
+\newtheorem{lemma}{Lemma}
+\theoremstyle{remark}
+\newtheorem*{remark}{Remark}
+\theoremstyle{definition}
+\newtheorem*{example}{Example}
+\newtheorem{assumption}{Assumption}
+
+\title{The Single-Factor (Vasicek) Model of Portfolio Credit Risk:\\ A Complete Derivation}
+\author{Wulin Suo}
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent This note derives the single-factor Gaussian model of portfolio credit risk, due to Vasicek (1987, 2002), from a Merton-style latent variable representation of default. It shows that once each borrower's asset value is written as a common factor plus an idiosyncratic shock, defaults become conditionally independent given the factor, so that the law of large numbers drives the loss rate of an infinitely granular portfolio to a deterministic function of the factor alone. Because that function is strictly monotone, its distribution inverts in closed form, giving both the Vasicek loss distribution and the worst-case default rate $\text{WCDR}(\alpha)=N\!\big([N^{-1}(\text{PD})+\sqrt{\rho}\,N^{-1}(\alpha)]/\sqrt{1-\rho}\big)$ that the main text states without proof and that the Basel internal-ratings-based capital formulas are built on. The note verifies that the resulting distribution has mean exactly $\text{PD}$ while being strongly right-skewed, works the main text's numerical example in full, and closes with the three assumptions, infinite granularity, a single factor, and Gaussian dependence, whose failure modes are precisely those the main text's Gaussian-copula case vignette describes.
+\end{abstract}
+
+\section{The Problem: Why Independent Defaults Understate Tail Risk}
+\label{sec:setup}
+
+A lender holding $n$ loans, each with default probability $\text{PD}$, might reason that the portfolio's default count is binomial and that its tail is therefore narrow: with $n$ large, the realized default rate should sit very close to $\text{PD}$, and the capital needed to survive a bad year should be correspondingly modest. This reasoning is correct given its premise and catastrophically wrong in practice, because the premise, that defaults are independent, fails exactly when it matters. Borrowers share an economy. A recession, a housing downturn, or a rate shock pushes every borrower's fortunes in the same direction at once, and a portfolio that would be extremely safe under independence can lose a large fraction of its value in a single year.
+
+The single-factor model formalizes this in the smallest possible way: one shared factor, one parameter controlling how much each borrower depends on it, and nothing else. Sections~\ref{sec:model}--\ref{sec:wcdr} show that this minimal structure is enough to produce a closed-form loss distribution and a closed-form tail quantile, which is why it, rather than any richer alternative, sits underneath the international bank capital rules.
+
+\section{The Model}
+\label{sec:model}
+
+\begin{assumption}[Single-factor Gaussian latent variables]
+\label{ass:model}
+There are $n$ borrowers. Borrower $i$'s standardized asset value at the horizon is
+\begin{equation}
+\label{eq:latent}
+A_i = \sqrt{\rho}\,Z + \sqrt{1-\rho}\,\varepsilon_i, \qquad i = 1,\dots,n,
+\end{equation}
+where $Z \sim N(0,1)$ is a systematic factor common to all borrowers, $\varepsilon_i \sim N(0,1)$ are idiosyncratic shocks, $Z, \varepsilon_1,\dots,\varepsilon_n$ are mutually independent, and $\rho \in [0,1)$. Borrower $i$ defaults if and only if $A_i \le c$ for a common threshold $c$.
+\end{assumption}
+
+The representation \eqref{eq:latent} is Merton's: $A_i$ stands for the firm's asset value, and default occurs when assets fall below a liability threshold. What the single-factor structure adds is the decomposition of that asset value into a part every borrower shares and a part unique to each.
+
+\begin{lemma}[Calibration of the threshold]
+\label{lem:threshold}
+Under Assumption~\ref{ass:model}, $A_i \sim N(0,1)$ for every $i$, and $\operatorname{Corr}(A_i, A_j) = \rho$ for $i \ne j$. Consequently the unconditional default probability is $\Pr(A_i \le c) = N(c)$, and matching it to a target $\text{PD}$ requires
+\begin{equation}
+\label{eq:threshold}
+c = N^{-1}(\text{PD}).
+\end{equation}
+\end{lemma}
+
+\begin{proof}
+$A_i$ is a sum of independent normals, hence normal, with mean $0$ and variance $\rho + (1-\rho) = 1$. For $i \ne j$, $\operatorname{Cov}(A_i,A_j) = \rho\operatorname{Var}(Z) = \rho$, and since both have unit variance the covariance is the correlation. The rest is the definition of the normal CDF.
+\end{proof}
+
+The parameter $\rho$ is therefore the \emph{asset correlation}, not the default correlation; the two are different numbers, and the second is always the smaller. This distinction is a frequent source of confusion in practice and is worth keeping explicit.
+
+\section{Conditional Default Probability}
+\label{sec:conditional}
+
+The model's central device is that conditioning on $Z$ removes every source of dependence between borrowers at once.
+
+\begin{lemma}[Conditional default probability and conditional independence]
+\label{lem:conditional}
+Under Assumption~\ref{ass:model} with threshold \eqref{eq:threshold}, conditional on $Z=z$ the default events are mutually independent, each occurring with probability
+\begin{equation}
+\label{eq:pz}
+p(z) \;=\; \Pr(A_i \le c \mid Z=z) \;=\; N\!\left(\frac{N^{-1}(\text{PD}) - \sqrt{\rho}\,z}{\sqrt{1-\rho}}\right).
+\end{equation}
+Moreover $p$ is continuous and strictly decreasing on $\mathbb{R}$, with $p(-\infty)=1$ and $p(+\infty)=0$.
+\end{lemma}
+
+\begin{proof}
+Given $Z=z$, the event $\{A_i \le c\}$ is $\{\sqrt{\rho}z + \sqrt{1-\rho}\,\varepsilon_i \le c\}$, that is $\{\varepsilon_i \le (c-\sqrt{\rho}z)/\sqrt{1-\rho}\}$. These events depend on the $\varepsilon_i$ only, which are independent of one another, so conditional independence follows; and each has probability $N\big((c-\sqrt{\rho}z)/\sqrt{1-\rho}\big)$, which is \eqref{eq:pz} after substituting \eqref{eq:threshold}. Strict monotonicity holds because $\sqrt{\rho}/\sqrt{1-\rho} > 0$ for $\rho \in (0,1)$ and $N$ is strictly increasing.
+\end{proof}
+
+The economics is worth stating plainly. A low realization of $Z$ is a bad economy; it shifts every borrower's asset value down by the same amount $\sqrt{\rho}z$, and so raises every borrower's default probability simultaneously. Defaults are correlated \emph{only} through this channel, which is what makes the model tractable: all of the dependence is carried by a single scalar.
+
+\section{The Limiting Loss Distribution}
+\label{sec:limit}
+
+Write $L_n = \frac{1}{n}\sum_{i=1}^n \mathbf{1}\{A_i \le c\}$ for the realized default rate on an equally weighted portfolio.
+
+\begin{theorem}[Vasicek loss distribution]
+\label{thm:vasicek}
+Under Assumption~\ref{ass:model}, $L_n \to p(Z)$ almost surely as $n \to \infty$, and the limiting default rate $L = p(Z)$ has cumulative distribution function
+\begin{equation}
+\label{eq:cdf}
+F_L(x) \;=\; \Pr(L \le x) \;=\; N\!\left(\frac{\sqrt{1-\rho}\,N^{-1}(x) - N^{-1}(\text{PD})}{\sqrt{\rho}}\right), \qquad 0 < x < 1,
+\end{equation}
+and density
+\begin{equation}
+\label{eq:pdf}
+f_L(x) \;=\; \sqrt{\frac{1-\rho}{\rho}}\;
+\exp\!\left\{\frac{1}{2}\Big[\big(N^{-1}(x)\big)^2 - \Big(\tfrac{\sqrt{1-\rho}\,N^{-1}(x)-N^{-1}(\text{PD})}{\sqrt{\rho}}\Big)^{2}\Big]\right\}.
+\end{equation}
+\end{theorem}
+
+\begin{proof}
+Conditional on $Z$, the summands are independent and identically distributed Bernoulli variables with mean $p(Z)$, so the strong law of large numbers gives $L_n \to p(Z)$ almost surely conditionally on $Z$, and therefore unconditionally by integrating over $Z$.
+
+For the distribution function, fix $x \in (0,1)$. Because $p$ is strictly decreasing (Lemma~\ref{lem:conditional}), $\{p(Z) \le x\} = \{Z \ge p^{-1}(x)\}$. Solving $p(z)=x$ for $z$,
+\begin{equation*}
+\frac{N^{-1}(\text{PD}) - \sqrt{\rho}\,z}{\sqrt{1-\rho}} = N^{-1}(x)
+\quad\Longleftrightarrow\quad
+z = \frac{N^{-1}(\text{PD}) - \sqrt{1-\rho}\,N^{-1}(x)}{\sqrt{\rho}} \;=:\; z_x .
+\end{equation*}
+Hence $F_L(x) = \Pr(Z \ge z_x) = 1 - N(z_x) = N(-z_x)$, which is \eqref{eq:cdf}. Differentiating \eqref{eq:cdf} with respect to $x$, using $\frac{d}{dx}N^{-1}(x) = 1/\varphi(N^{-1}(x))$ and $\varphi(u)=(2\pi)^{-1/2}e^{-u^2/2}$, and collecting the exponentials gives \eqref{eq:pdf}.
+\end{proof}
+
+\begin{proposition}[Mean and shape]
+\label{prop:mean}
+$\mathbb{E}[L] = \text{PD}$ for every $\rho \in [0,1)$, while the median of $L$ is $N\big(N^{-1}(\text{PD})/\sqrt{1-\rho}\big)$, which is strictly below $\text{PD}$ whenever $\rho > 0$ and $\text{PD} < 1/2$.
+\end{proposition}
+
+\begin{proof}
+By the tower property,
+\begin{equation*}
+\mathbb{E}[L] = \mathbb{E}\big[\mathbb{E}[\mathbf{1}\{A_i\le c\}\mid Z]\big]
+ = \Pr(A_i \le c) = \text{PD}.
+\end{equation*}
+The median solves $F_L(x)=1/2$, that is $\sqrt{1-\rho}\,N^{-1}(x) = N^{-1}(\text{PD})$, giving the stated expression; for $\text{PD}<1/2$ the numerator $N^{-1}(\text{PD})$ is negative, so dividing by $\sqrt{1-\rho}<1$ makes it more negative.
+\end{proof}
+
+Proposition~\ref{prop:mean} is the model's essential message in two lines. Correlation does not change the \emph{average} loss at all; it redistributes probability, pushing the typical outcome below the mean and compensating with a long right tail. A lender looking only at expected loss sees nothing when $\rho$ rises. A lender looking at a tail quantile sees a great deal.
+
+\section{The Worst-Case Default Rate}
+\label{sec:wcdr}
+
+\begin{corollary}[Closed-form tail quantile]
+\label{cor:wcdr}
+The $\alpha$-quantile of the limiting default rate is
+\begin{equation}
+\label{eq:wcdr}
+\boxed{\;\text{WCDR}(\alpha) \;=\; N\!\left(\frac{N^{-1}(\text{PD}) + \sqrt{\rho}\,N^{-1}(\alpha)}{\sqrt{1-\rho}}\right).\;}
+\end{equation}
+\end{corollary}
+
+\begin{proof}
+Set $F_L(x)=\alpha$ in \eqref{eq:cdf} and solve. This gives $\sqrt{1-\rho}\,N^{-1}(x) - N^{-1}(\text{PD}) = \sqrt{\rho}\,N^{-1}(\alpha)$, and rearranging for $x$ yields \eqref{eq:wcdr}.
+\end{proof}
+
+Equivalently and more intuitively: because $p$ is decreasing, the $\alpha$-quantile of the loss rate is $p$ evaluated at the $(1-\alpha)$-quantile of $Z$, that is $\text{WCDR}(\alpha) = p\big(N^{-1}(1-\alpha)\big) = p\big(-N^{-1}(\alpha)\big)$, which reproduces \eqref{eq:wcdr} immediately. The whole content of the formula is that a one-in-a-hundred loss year \emph{is} a one-in-a-hundred realization of the single factor, and nothing else.
+
+Two limiting cases confirm the formula behaves. As $\rho \to 0$, \eqref{eq:wcdr} tends to $N(N^{-1}(\text{PD})) = \text{PD}$: with no common factor the portfolio is perfectly diversified and the loss rate is deterministic. As $\rho \to 1$, the argument diverges to $\pm\infty$ according to the sign of $N^{-1}(\alpha)$, and $L$ degenerates to a Bernoulli variable equal to $1$ with probability $\text{PD}$: every borrower defaults together or none does.
+
+\section{From a Loss Quantile to Regulatory Capital}
+\label{sec:basel}
+
+\begin{proposition}[Unexpected-loss capital charge]
+\label{prop:capital}
+For a portfolio with exposure $\text{EAD}$ and loss given default $\text{LGD}$, the loss not covered by provisions at confidence level $\alpha$ is
+\begin{equation}
+\label{eq:capital}
+K \;=\; \text{LGD} \times \big(\text{WCDR}(\alpha) - \text{PD}\big) \times \text{EAD}.
+\end{equation}
+\end{proposition}
+
+\begin{proof}
+The $\alpha$-quantile of portfolio loss is $\text{LGD}\times\text{WCDR}(\alpha)\times\text{EAD}$ and the expected loss is $\text{LGD}\times\text{PD}\times\text{EAD}$, by Proposition~\ref{prop:mean}. Capital is required only against the excess of the former over the latter, expected loss being covered by provisions and pricing.
+\end{proof}
+
+Equation~\eqref{eq:capital} with $\alpha = 0.999$ is, up to a maturity adjustment, precisely the Basel internal-ratings-based formula. Two features of the regulatory implementation are worth noting. First, the supervisor fixes $\rho$ rather than letting banks estimate it; for corporate exposures it is prescribed as a decreasing function of $\text{PD}$,
+\begin{equation}
+\label{eq:baselrho}
+\rho(\text{PD}) \;=\; 0.12\,\frac{1-e^{-50\,\text{PD}}}{1-e^{-50}} \;+\; 0.24\left(1-\frac{1-e^{-50\,\text{PD}}}{1-e^{-50}}\right),
+\end{equation}
+running from $0.24$ for the highest-quality borrowers down towards $0.12$ for the weakest, on the reasoning that a strong firm defaults mainly for systematic reasons while a weak one is already close to idiosyncratic failure. Second, \eqref{eq:capital} is \emph{portfolio-invariant}: the capital charge for a loan depends only on that loan's own $\text{PD}$, $\text{LGD}$ and $\text{EAD}$, never on what else the bank holds. That property is not an accident but a design requirement, and Theorem~\ref{thm:vasicek} is what delivers it, since in the infinitely granular limit each exposure contributes to the tail only through the common factor.
+
+\section{Worked Numerical Example}
+\label{sec:example}
+
+Take the main text's portfolio: $\text{PD}=3\%$, $\text{LGD}=60\%$, an asset correlation of $\rho=0.20$, and $\alpha=0.99$. From standard normal tables, $N^{-1}(0.03) = -1.8808$ and $N^{-1}(0.99) = 2.3263$, with $\sqrt{0.20}=0.4472$ and $\sqrt{0.80}=0.8944$. Then
+\begin{equation*}
+\text{WCDR}(0.99) = N\!\left(\frac{-1.8808 + 0.4472 \times 2.3263}{0.8944}\right) = N\!\left(\frac{-0.8404}{0.8944}\right) = N(-0.9396) = 17.37\%,
+\end{equation*}
+against an expected default rate of $3\%$: correlation multiplies the one-in-a-hundred outcome by nearly six. Substituting into \eqref{eq:capital} with $100$ loans of \$1,000 each gives capital of $0.60\times(0.1737-0.03)\times\$100{,}000 \approx \$8{,}622$.
+
+Table~\ref{tab:rho} shows how sharply the tail responds to $\rho$ while, by Proposition~\ref{prop:mean}, the mean does not move at all.
+
+\begin{table}[htbp]
+\centering
+\caption{Worst-case default rate at $\alpha=0.99$ for $\text{PD}=3\%$, by asset correlation}
+\label{tab:rho}
+\begin{tabular}{lrrrrrr}
+\toprule
+Asset correlation $\rho$ & 0.00 & 0.05 & 0.10 & 0.20 & 0.30 & 0.50 \\
+\midrule
+$\text{WCDR}(0.99)$ & $3.00\%$ & $8.14\%$ & $11.37\%$ & $17.37\%$ & $23.42\%$ & $36.94\%$ \\
+Expected loss rate & $3.00\%$ & $3.00\%$ & $3.00\%$ & $3.00\%$ & $3.00\%$ & $3.00\%$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Applying the main text's stressed $\text{PD}=8\%$ at the same $\rho=0.20$ gives $N^{-1}(0.08)=-1.4051$ and
+\begin{equation*}
+\text{WCDR}(0.99) = N\!\left(\frac{-1.4051 + 1.0404}{0.8944}\right) = N(-0.4078) = 34.17\%,
+\end{equation*}
+which is the compounding the main text emphasizes: stressing $\text{PD}$ alone, or introducing correlation alone, each captures only part of the joint effect.
+
+\begin{remark}[A useful check]
+\label{rem:check}
+Substituting $x = 17.37\%$ back into \eqref{eq:cdf} with $\text{PD}=3\%$, $\rho=0.20$ returns $F_L(x) = 0.9900$ to four decimals, confirming that \eqref{eq:wcdr} really is the inverse of \eqref{eq:cdf} and not merely a plausible-looking rearrangement. Numerically integrating $p(z)\varphi(z)$ over $z$ returns $0.030000$, confirming Proposition~\ref{prop:mean}.
+\end{remark}
+
+\section{Discussion: Assumptions and Extensions}
+\label{sec:discussion}
+
+Three assumptions carry the derivation, and each fails in a recognizable way.
+
+\paragraph{Infinite granularity.} Theorem~\ref{thm:vasicek} is a limit theorem; it replaces the realized default rate by its conditional mean, which is exact only as $n\to\infty$ with exposures of vanishing relative size. A real book has finitely many loans, some of them large, and the residual idiosyncratic variation the limit discards is genuine risk. The standard repair is a \emph{granularity adjustment}, an additive correction to the quantile of order $1/n$ computed from the exposure concentration, which is why supervisors monitor concentration separately rather than trusting \eqref{eq:capital} alone on a lumpy portfolio.
+
+\paragraph{A single factor.} All dependence is routed through one scalar $Z$. A portfolio spanning several industries or countries is exposed to several imperfectly correlated systematic factors, and forcing them into one either overstates diversification, if $\rho$ is calibrated to an average, or understates it. Multi-factor extensions replace $\sqrt{\rho}Z$ with $\sum_k \beta_{ik} Z_k$; they lose the closed form of Theorem~\ref{thm:vasicek} and are evaluated by simulation, which is the trade the regulatory formula declines to make.
+
+\paragraph{Gaussian dependence.} The joint distribution of $(A_1,\dots,A_n)$ is Gaussian, which fixes not only the correlation but the entire dependence structure, and the Gaussian copula has \emph{zero tail dependence}: for any $\rho<1$, the probability that one borrower defaults given that another has defaulted tends to zero as the threshold moves into the extreme tail. Joint extreme outcomes are therefore assigned far less probability than history suggests. This is not a subtle deficiency but the specific failure the main text's case vignette on the mispricing of collateralized debt obligations describes: a model can be calibrated correctly to observed pairwise correlations and still assign negligible probability to the simultaneous, system-wide default event that eventually occurs. Replacing the Gaussian copula with a $t$-copula, which has positive tail dependence, is the standard first response.
+
+Two further practical caveats deserve mention. The model treats $\text{LGD}$ as a constant, whereas recovery rates fall precisely when default rates rise, so realized losses in a bad year exceed what a fixed $\text{LGD}$ implies; downturn-$\text{LGD}$ requirements exist to patch this. And $\rho$ is notoriously hard to estimate, since it is identified only from the co-movement of default rates across time, of which there are few independent observations; this is why the supervisory formula prescribes \eqref{eq:baselrho} rather than allowing banks to estimate $\rho$ themselves.
+
+\section{Summary}
+\label{sec:summary}
+
+Writing each borrower's asset value as a common factor plus an idiosyncratic shock (Assumption~\ref{ass:model}) makes defaults conditionally independent given the factor, with conditional default probability $p(Z)$ (Lemma~\ref{lem:conditional}). The law of large numbers then drives the default rate of an infinitely granular portfolio to $p(Z)$ exactly, and because $p$ is strictly monotone its distribution inverts in closed form, giving the Vasicek loss distribution (Theorem~\ref{thm:vasicek}) and the worst-case default rate \eqref{eq:wcdr} (Corollary~\ref{cor:wcdr}). The resulting distribution has mean exactly $\text{PD}$ regardless of $\rho$ while being increasingly right-skewed in $\rho$ (Proposition~\ref{prop:mean}), which is why correlation is invisible in expected loss and decisive in the tail. Capital against the difference between the tail quantile and the mean (Proposition~\ref{prop:capital}) is the Basel internal-ratings-based charge, and its portfolio-invariance is a direct consequence of the granularity limit. The model's three load-bearing assumptions, infinite granularity, a single factor, and Gaussian dependence, fail respectively through name concentration, multi-region portfolios, and the absence of tail dependence, the last of which is the mechanism behind the credit crisis episode the main text's case vignette recounts.
+
+\section*{References}
+
+\begin{itemize}
+    \item Vasicek, O., ``Probability of Loss on Loan Portfolio,'' KMV Corporation, 1987.
+    \item Vasicek, O., ``Loan Portfolio Value,'' \emph{Risk}, vol. 15, no. 12, 2002, pp. 160--162.
+    \item Merton, R. C., ``On the Pricing of Corporate Debt: The Risk Structure of Interest Rates,'' \emph{Journal of Finance}, vol. 29, no. 2, 1974, pp. 449--470.
+    \item Gordy, M. B., ``A Risk-Factor Model Foundation for Ratings-Based Bank Capital Rules,'' \emph{Journal of Financial Intermediation}, vol. 12, no. 3, 2003, pp. 199--232.
+    \item Gordy, M. B., ``Granularity Adjustment in Portfolio Credit Risk Measurement,'' in \emph{Risk Measures for the 21st Century}, G. Szeg\"o, ed., Wiley, 2004.
+    \item Basel Committee on Banking Supervision, \emph{An Explanatory Note on the Basel II IRB Risk Weight Functions}, Bank for International Settlements, 2005.
+    \item Embrechts, P., A. McNeil, and D. Straumann, ``Correlation and Dependence in Risk Management: Properties and Pitfalls,'' in \emph{Risk Management: Value at Risk and Beyond}, M. Dempster, ed., Cambridge University Press, 2002, pp. 176--223.
+\end{itemize}
+
+\end{document}

@@ -23,9 +23,22 @@ ch12_data/
 # SyncTeX editor-sync byproducts (regenerated per-machine/editor; not build output anyone else needs).
 *.synctex.gz
 
-# Instructor's solutions to the chapter-end Suggested Exercises, and their companion
-# notebooks (English and Chinese). These are answer keys, not manuscript content, and
-# stay local only rather than being pushed to the public repo.
+# Everything instructor-facing: the lecture slide decks and their build system, and
+# the solutions to the chapter-end Suggested Exercises with their companion notebooks.
+# None of this is manuscript content, and it stays local rather than going to the
+# public repo. The whole directory is ignored, so material added under it later is
+# covered without another rule.
+# UNANCHORED on purpose. '/Instructors/' matched only the repo root, so after the
+# 2026-08-05 move of the English content into en/ it stopped covering
+# en/Instructors/ (444 files: slide decks, the build system, and the answer keys).
+# A leading slash anchors a pattern to the .gitignore's own directory; a slash-free
+# one matches at any depth and therefore survives a reorganisation.
+Instructors/
+
+# The two solutions rules below are now subsumed by /Instructors/ above, since the
+# answer keys live at Instructors/Solutions_chapter_end_questions/. They are kept
+# deliberately: they are unanchored, so they still catch these folders if they are
+# ever moved back out of Instructors/ or created elsewhere in the tree.
 solutions_chapter_end_questions/
 solutions_chapter_end_questions_zh/
 
@@ -55,4 +68,8 @@ vol_risk_premium_*
 # work is not lost, deliberately unpublished. A draft that IS headed for the
 # book (the draft_insurance.tex pattern) should be tracked instead of matched
 # here, so add such files by exact name rather than widening this glob.
-chapters/draft_appendix_production.*
+# UNANCHORED, for the same reason as Instructors/ above: 'chapters/...' contains a
+# slash and so was anchored to the repo root, and stopped matching once the English
+# content moved into en/. This is the abandoned production/MLOps appendix; it stays
+# local and must never reach the public repository.
+draft_appendix_production.*

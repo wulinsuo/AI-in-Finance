@@ -1,0 +1,318 @@
+% NOTE: this note refers to the main text by section and chapter NAME, never by
+% number -- see the header of roll_spread_estimator.tex for why. Do not add
+% numbers.
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs}
+\usepackage{hyperref}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{proposition}{Proposition}
+\newtheorem{corollary}{Corollary}
+\newtheorem{lemma}{Lemma}
+\theoremstyle{remark}
+\newtheorem*{remark}{Remark}
+\theoremstyle{definition}
+\newtheorem*{example}{Example}
+% Numbered, NOT \newtheorem*: this note \ref's its assumptions, and a starred
+% environment steps no counter, so every \ref silently resolves to the enclosing
+% section number instead ("Assumptions 2--2"). No warning is emitted.
+\newtheorem{assumption}{Assumption}
+
+\newcommand{\SR}{\text{SR}}
+\newcommand{\SRhat}{\widehat{\text{SR}}}
+
+\title{The Sampling Distribution of the Sharpe Ratio,\\ and What a Search Does to It:\\ A Complete Derivation}
+\author{Wulin Suo}
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent This note derives the result the main text's discussion of backtest overfitting states without proof: that for a strategy with no genuine edge, observed over $T$ periods, the estimated Sharpe ratio is approximately normal with mean zero and standard error $1/\sqrt{T}$ per period, so that on annualizing, $\text{SE}(\SRhat_{\text{annual}}) \approx 1/\sqrt{\text{years of data}}$. The derivation rests on a single identity, that the estimated Sharpe ratio is the ordinary one-sample $t$-statistic divided by $\sqrt{T}$, from which the exact finite-sample distribution follows under a Gaussian null and the asymptotic distribution follows in general by the delta method, giving Lo's (2002) variance $(1+\SR^2/2)/T$ of which the stated result is the null case. The note then proves the property that makes the result practically decisive, namely that the sampling frequency cancels out of the annualized standard error, so that sampling a strategy more finely buys no additional power and only calendar span does; extends the null distribution to the maximum of $N$ searched configurations, reproducing every entry of the main text's best-of-$N$ table in closed form; and closes with the three ways the $1/\sqrt{T}$ figure understates the true standard error in practice, of which serial correlation in returns is by far the most damaging. Every numerical claim is verified against Monte Carlo simulation.
+\end{abstract}
+
+\section{The Problem: A Backtest Number Without an Error Bar}
+\label{sec:setup}
+
+A backtest returns a single number. The main text's moving-average crossover produced a Sharpe ratio of $-0.23$ over eleven return periods; a different parameter pair would have produced something else, and a researcher looking at the two has no way to judge, from the point estimates alone, whether the difference between them reflects anything at all about the strategies. The question that has to be answered first is not which strategy is better but how much a Sharpe ratio estimated from a finite sample moves around on pure noise, because until that is known, no comparison of two backtests means anything and no single backtest can be tested against zero.
+
+That question has an unusually clean answer, cleaner than most sampling-distribution problems, and the reason is worth stating at the outset: the estimated Sharpe ratio is not a new statistic requiring new theory. It is the one-sample $t$-statistic of introductory inference, divided by $\sqrt{T}$. Everything in this note follows from that identity. Section~\ref{sec:identity} establishes it, Section~\ref{sec:exact} draws out the exact finite-sample distribution it implies under a Gaussian null, and Section~\ref{sec:asymptotic} gives the general asymptotic result that holds without the Gaussian assumption. Section~\ref{sec:annualize} then proves the practical consequence that matters most, the cancellation of the sampling frequency, and Section~\ref{sec:maxN} extends the null distribution from one strategy to the best of $N$, which is what a grid search actually reports.
+
+\section{The Estimator and the \texorpdfstring{$t$}{t}-Statistic Identity}
+\label{sec:identity}
+
+\begin{assumption}[Sampling model]
+\label{ass:iid}
+The per-period excess returns $r_1,\dots,r_T$ are independent and identically distributed with mean $\mu$, variance $\sigma^2 \in (0,\infty)$, and finite fourth moment. The population Sharpe ratio is $\SR = \mu/\sigma$.
+\end{assumption}
+
+Two things are worth flagging immediately. Returns are \emph{excess} returns, net of the risk-free rate, which is what makes the null $\mu=0$ the economically meaningful statement that the strategy earns nothing beyond cash. And the independence in Assumption~\ref{ass:iid} is the assumption that fails most often in practice; Section~\ref{sec:discussion} quantifies the damage.
+
+\begin{assumption}[Estimator]
+\label{ass:est}
+With $\bar r = T^{-1}\sum_{t=1}^T r_t$ and $s^2 = (T-1)^{-1}\sum_{t=1}^T (r_t - \bar r)^2$, the estimated Sharpe ratio is $\SRhat = \bar r / s$.
+\end{assumption}
+
+\begin{lemma}[The estimator is a rescaled $t$-statistic]
+\label{lem:identity}
+Let $t$ denote the usual one-sample $t$-statistic for testing $H_0\!:\mu = 0$. Then
+\begin{equation}
+\label{eq:identity}
+t \;=\; \frac{\bar r}{s/\sqrt{T}} \;=\; \sqrt{T}\,\SRhat,
+\end{equation}
+identically, for every realization of the sample.
+\end{lemma}
+
+\begin{proof}
+Immediate from Assumption~\ref{ass:est}: $\bar r/(s/\sqrt{T}) = \sqrt{T}\,(\bar r/s) = \sqrt{T}\,\SRhat$. No distributional assumption is used; this is an algebraic identity between two functions of the same sample.
+\end{proof}
+
+Lemma~\ref{lem:identity} is the whole result in embryo, and it explains the shape of the answer before any distribution theory is done. A $t$-statistic is, by construction, a quantity whose sampling distribution has unit scale, that being the entire point of dividing by a standard error. So a statistic equal to $t/\sqrt{T}$ must have sampling standard deviation of order $1/\sqrt{T}$, and the only remaining questions are how good the normal approximation is (Section~\ref{sec:exact}), what happens when the null is false (Section~\ref{sec:asymptotic}), and what happens when Assumption~\ref{ass:iid} fails (Section~\ref{sec:discussion}).
+
+Equation~\eqref{eq:identity} also settles a point of interpretation that causes real confusion in practice. Testing a Sharpe ratio against zero and testing a mean return against zero are not two tests. They are the same test, written twice.
+
+\section{The Exact Distribution Under a Gaussian Null}
+\label{sec:exact}
+
+\begin{theorem}[Exact finite-sample null distribution]
+\label{thm:exact}
+Suppose in addition to Assumptions~\ref{ass:iid}--\ref{ass:est} that $r_t \sim N(0,\sigma^2)$, that is, the returns are normal and the strategy has no edge. Then
+\begin{equation}
+\label{eq:exactt}
+\sqrt{T}\,\SRhat \;\sim\; t_{T-1}
+\end{equation}
+exactly, for every $T \ge 3$. Consequently
+\begin{equation}
+\label{eq:exactmoments}
+\mathbb{E}\big[\SRhat\big] = 0
+\qquad\text{and}\qquad
+\operatorname{Var}\big(\SRhat\big) = \frac{1}{T}\cdot\frac{T-1}{T-3},
+\end{equation}
+the mean holding for $T \ge 2$ and the variance for $T \ge 4$.
+\end{theorem}
+
+\begin{proof}
+Under normality, $\sqrt{T}\,\bar r/\sigma \sim N(0,1)$ and $(T-1)s^2/\sigma^2 \sim \chi^2_{T-1}$, and by Cochran's theorem $\bar r$ and $s^2$ are independent. Hence
+\begin{equation*}
+\sqrt{T}\,\SRhat \;=\; \frac{\sqrt{T}\,\bar r}{s}
+\;=\; \frac{\sqrt{T}\,\bar r/\sigma}{\sqrt{\big[(T-1)s^2/\sigma^2\big]/(T-1)}}
+\end{equation*}
+is a standard normal divided by the square root of an independent $\chi^2_{T-1}$ over its degrees of freedom, which is the definition of $t_{T-1}$. This is \eqref{eq:exactt}. The moments follow from those of the $t$ distribution, $\mathbb{E}[t_\nu]=0$ for $\nu>1$ and $\operatorname{Var}(t_\nu)=\nu/(\nu-2)$ for $\nu>2$, divided by $T$ per \eqref{eq:identity}.
+\end{proof}
+
+\begin{corollary}[The stated approximation]
+\label{cor:stated}
+Under the conditions of Theorem~\ref{thm:exact}, $\SRhat$ is asymptotically normal with mean zero and standard error $1/\sqrt{T}$ per period, since $t_{T-1} \to N(0,1)$ as $T \to \infty$ and $(T-1)/(T-3) \to 1$.
+\end{corollary}
+
+Two remarks make clear how good, and how exact, this is.
+
+\begin{remark}[The mean is exactly zero, not approximately]
+\label{rem:unbiased}
+$\SRhat$ is a ratio, and ratios are generically biased, so it is worth noting that no bias arises here. Under the Gaussian null, $\bar r$ and $s$ are independent, so $\mathbb{E}[\bar r/s] = \mathbb{E}[\bar r]\,\mathbb{E}[1/s] = 0$ regardless of how badly behaved $\mathbb{E}[1/s]$ may be, provided only that it is finite. The independence is doing the work; away from the null it fails and a small $O(1/T)$ bias reappears.
+\end{remark}
+
+\begin{remark}[The approximation is excellent even at moderate $T$]
+\label{rem:accuracy}
+The correction factor $(T-1)/(T-3)$ in \eqref{eq:exactmoments} is $1.0016$ at $T=1260$, five years of daily returns, so the exact standard error exceeds the approximate one by less than two parts in a thousand. In annualized terms, developed in Section~\ref{sec:annualize}, the exact value is $0.4476$ against the approximation's $0.4472$. Likewise the exact one-sided $5\%$ critical value is $t_{1259,0.95} = 1.6461$ against the normal's $1.6449$. Nothing in practice turns on the difference, which is why the main text quotes the approximation.
+\end{remark}
+
+\section{The General Asymptotic Distribution}
+\label{sec:asymptotic}
+
+Theorem~\ref{thm:exact} assumed normal returns, which financial returns famously are not. The following result drops that assumption, holds for any $\SR$ rather than only the null, and shows that $1/\sqrt{T}$ is exactly the null case of a more general formula.
+
+\begin{theorem}[Lo's asymptotic variance]
+\label{thm:lo}
+Under Assumption~\ref{ass:iid} with normally distributed returns of arbitrary mean,
+\begin{equation}
+\label{eq:lo}
+\sqrt{T}\,\big(\SRhat - \SR\big) \;\xrightarrow{\;d\;}\; N\!\left(0,\; 1 + \frac{\SR^2}{2}\right),
+\end{equation}
+so that $\operatorname{SE}(\SRhat) \approx \sqrt{(1+\SR^2/2)/T}$. Setting $\SR = 0$ recovers $\operatorname{SE}(\SRhat) \approx 1/\sqrt{T}$.
+\end{theorem}
+
+\begin{proof}
+Write $\SRhat = g(\bar r, s^2)$ with $g(m,v) = m/\sqrt{v}$, a function continuously differentiable in a neighborhood of $(\mu,\sigma^2)$ since $\sigma^2>0$. Its gradient there is
+\begin{equation*}
+\frac{\partial g}{\partial m} = \frac{1}{\sigma}, \qquad
+\frac{\partial g}{\partial v} = -\frac{\mu}{2\sigma^3}.
+\end{equation*}
+By the central limit theorem applied jointly to the sample mean and sample variance of i.i.d.\ normal observations,
+\begin{equation*}
+\sqrt{T}\begin{pmatrix} \bar r - \mu \\ s^2 - \sigma^2\end{pmatrix}
+\;\xrightarrow{\;d\;}\;
+N\!\left(\mathbf{0},\; \begin{pmatrix} \sigma^2 & 0 \\ 0 & 2\sigma^4 \end{pmatrix}\right),
+\end{equation*}
+the off-diagonal zero being the independence of $\bar r$ and $s^2$ under normality and the $2\sigma^4$ being the asymptotic variance of the sample variance in that case. The delta method then gives asymptotic variance
+\begin{equation*}
+\left(\frac{1}{\sigma}\right)^{\!2}\sigma^2 \;+\; \left(\frac{\mu}{2\sigma^3}\right)^{\!2} 2\sigma^4
+\;=\; 1 \;+\; \frac{\mu^2}{2\sigma^2} \;=\; 1 + \frac{\SR^2}{2},
+\end{equation*}
+which is \eqref{eq:lo}.
+\end{proof}
+
+The decomposition inside that proof is the substantive content, and it is worth reading off directly. The first term, equal to $1$, is the sampling noise in the numerator $\bar r$. The second, equal to $\SR^2/2$, is the sampling noise in the denominator $s$. \emph{Under the null the second term vanishes identically}, which is the structural reason the null standard error is so clean: when the true mean is zero, the estimated Sharpe ratio inherits all of its variability from the estimated mean and none from the estimated volatility. To first order one is simply looking at $\bar r/\sigma$, a scaled sample mean, because $\bar r = O_p(T^{-1/2})$ while $s \to_p \sigma$, so the estimation error in $s$ multiplies a numerator that is already vanishing.
+
+\begin{proposition}[Non-normal returns]
+\label{prop:mertens}
+If the returns are i.i.d.\ but non-normal, with skewness $\gamma_3$ and kurtosis $\gamma_4$, the asymptotic variance in \eqref{eq:lo} generalizes (Mertens, 2002; Opdyke, 2007) to
+\begin{equation}
+\label{eq:mertens}
+1 \;+\; \frac{\SR^2}{2} \;-\; \gamma_3\,\SR \;+\; \frac{\gamma_4 - 3}{4}\,\SR^2 .
+\end{equation}
+Under $\SR = 0$ this reduces to $1$, so the null standard error $1/\sqrt{T}$ is unaffected by skewness or fat tails.
+\end{proposition}
+
+Proposition~\ref{prop:mertens} is a genuinely useful robustness statement and, given the reputation of financial return distributions, a mildly surprising one: every non-normality term in \eqref{eq:mertens} carries a factor of $\SR$ or $\SR^2$, so all of them vanish at the null. Monte Carlo confirms it directly. Simulating $200{,}000$ five-year daily histories of zero-mean returns and annualizing gives a sampling standard deviation of $0.4474$ for normal returns, $0.4470$ for Student-$t$ returns with four degrees of freedom (infinite kurtosis in the fourth moment sense is not even required for the result to hold up numerically), and $0.4496$ for shifted-exponential returns with skewness $+2$, against a theoretical $0.4472$ in all three cases. What skewness does perturb is the point estimate rather than its spread: the exponential case shows a mean of $-0.012$ rather than $0$, a small downward bias that reflects the failure of the independence argument in Remark~\ref{rem:unbiased}, and that is negligible beside a standard error of $0.45$.
+
+\section{Why the Sampling Frequency Cancels}
+\label{sec:annualize}
+
+Sharpe ratios are quoted annualized, and the main text's $1/\sqrt{\text{years}}$ is the annualized form of Corollary~\ref{cor:stated}. The step from one to the other is short, but its consequence is the single most practically important statement in this note.
+
+\begin{proposition}[Frequency invariance of the annualized standard error]
+\label{prop:annual}
+Let there be $k$ periods per year, so that $T = k \times Y$ for $Y$ years of data, and adopt the usual annualization convention $\SRhat_{\text{annual}} = \sqrt{k}\,\SRhat$. Then under the null,
+\begin{equation}
+\label{eq:annual}
+\boxed{\;\operatorname{SE}\big(\SRhat_{\text{annual}}\big) \;=\; \frac{\sqrt{k}}{\sqrt{T}} \;=\; \frac{\sqrt{k}}{\sqrt{kY}} \;=\; \frac{1}{\sqrt{Y}}\;}
+\end{equation}
+independently of $k$.
+\end{proposition}
+
+\begin{proof}
+The convention $\SRhat_{\text{annual}} = \sqrt{k}\,\SRhat$ follows from Assumption~\ref{ass:iid}: over $k$ independent periods the mean scales by $k$ and the standard deviation by $\sqrt{k}$, so their ratio scales by $\sqrt{k}$. Multiplying a random variable by the constant $\sqrt{k}$ multiplies its standard error by $\sqrt{k}$, and Corollary~\ref{cor:stated} gives $\operatorname{SE}(\SRhat) = 1/\sqrt{T}$. Substituting $T=kY$ cancels $k$.
+\end{proof}
+
+The economics of Proposition~\ref{prop:annual} deserves to be stated bluntly, because it contradicts an intuition almost every practitioner starts with. Moving a backtest from daily bars to five-minute bars multiplies the observation count $T$ by about $78$, which \emph{does} reduce the per-period standard error by a factor of $\sqrt{78}$; but it also shrinks the per-period Sharpe ratio being estimated by exactly the same factor, and the two effects cancel to the last digit. \textbf{Sampling a strategy more finely buys no statistical power whatsoever for the question of whether it has an edge.} Only calendar span does. A five-year backtest is a five-year backtest whether it contains $1{,}260$ observations or $98{,}000$, and the millions of rows in a high-frequency dataset create an impression of statistical mass that, for this particular question, is entirely illusory.
+
+Two secondary consequences follow. First, the Mertens correction \eqref{eq:mertens} is far smaller in practice than its algebraic form suggests, because the $\SR$ appearing in it is the \emph{per-period} Sharpe ratio, which is the annualized figure divided by $\sqrt{k}$. A respectable annualized $\SR = 0.5$ estimated from daily data corresponds to a per-period $\SR$ of $0.0315$, giving $1 + \SR^2/2 = 1.0005$; the same annualized figure estimated from annual returns would give $1.125$, a correction two hundred and fifty times larger. High-frequency data does not help with power, but it does render the higher-moment corrections irrelevant.
+
+Second, and more cautionary, \eqref{eq:annual} is only as good as the independence assumption underneath the $\sqrt{k}$ convention, and finer sampling makes that assumption harder to sustain, not easier. Section~\ref{sec:discussion} returns to this.
+
+\section{The Best of \texorpdfstring{$N$}{N}: What a Search Reports}
+\label{sec:maxN}
+
+Everything above concerns one pre-specified strategy. A grid search reports the maximum of $N$ estimates, and the distribution of a maximum is not the distribution of a draw.
+
+\begin{proposition}[Distribution of the best of $N$ worthless strategies]
+\label{prop:maxN}
+Let $\SRhat_1,\dots,\SRhat_N$ be the annualized estimated Sharpe ratios of $N$ strategies, each with no genuine edge, whose return series are mutually independent. Write $\SRhat_{(N)} = \max_i \SRhat_i$ and $\sigma_Y = 1/\sqrt{Y}$. Then, in the normal approximation of Corollary~\ref{cor:stated},
+\begin{align}
+\Pr\big(\SRhat_{(N)} \le x\big) &= \Phi\!\left(\frac{x}{\sigma_Y}\right)^{\!N},
+\label{eq:maxcdf}\\
+\mathbb{E}\big[\SRhat_{(N)}\big] &= \sigma_Y \cdot a_N, \qquad a_N \;=\; \int_0^\infty \!\Big[1-\Phi(z)^N\Big]dz \;-\; \int_{-\infty}^0 \!\Phi(z)^N dz,
+\label{eq:maxmean}
+\end{align}
+and the threshold a search's winner must clear for a level-$\alpha$ test \emph{of the search as a whole} is
+\begin{equation}
+\label{eq:hurdle}
+c_N(\alpha) \;=\; \sigma_Y \cdot \Phi^{-1}\!\big((1-\alpha)^{1/N}\big).
+\end{equation}
+\end{proposition}
+
+\begin{proof}
+Independence gives \eqref{eq:maxcdf} directly, the maximum being below $x$ exactly when all $N$ are. Equation~\eqref{eq:maxmean} is the standard tail-integral expression for the expectation of a random variable, applied to $\SRhat_{(N)}/\sigma_Y$, whose CDF is $\Phi(\cdot)^N$. For \eqref{eq:hurdle}, a level-$\alpha$ test rejects when the maximum exceeds $c$, so we require $\Pr(\SRhat_{(N)} > c) = \alpha$, that is $\Phi(c/\sigma_Y)^N = 1-\alpha$, and solving gives the stated value.
+\end{proof}
+
+The contrast between \eqref{eq:hurdle} and the naive hurdle $\sigma_Y\,\Phi^{-1}(1-\alpha)$ is the entire multiple-testing problem in one line. The naive hurdle controls the probability that \emph{a particular pre-specified strategy} looks good by chance; \eqref{eq:hurdle} controls the probability that \emph{any of $N$} does. Note also that $a_N \to \infty$ as $N \to \infty$, though only at rate $\sqrt{2\ln N}$: the expected best in-sample Sharpe ratio of a pool of worthless strategies grows without bound in the size of the search, which is why the number of configurations tried is not a footnote to a backtest but a necessary input to reading it.
+
+\section{Worked Numerical Example}
+\label{sec:example}
+
+Take the main text's setting: five years of daily returns, so $Y=5$, $k=252$, $T=1260$, and $\sigma_Y = 1/\sqrt{5} = 0.4472$.
+
+\paragraph{One strategy.} A single worthless strategy clears the conventional one-sided $5\%$ test whenever its measured annualized Sharpe ratio exceeds $1.6449 \times 0.4472 = 0.736$, and by construction it does so one time in twenty. Nothing about the number $0.74$ is impressive; it is what luck alone produces at a rate of $5\%$.
+
+\paragraph{Many strategies.} Table~\ref{tab:maxN} evaluates Proposition~\ref{prop:maxN} at four search sizes. The first numeric column is $a_N$ from \eqref{eq:maxmean}, the expected maximum expressed in standard-normal units; the second multiplies it by $\sigma_Y$ to give the expected best in-sample Sharpe ratio; the third is the honest hurdle \eqref{eq:hurdle} at $\alpha = 0.05$. These reproduce the table in the main text exactly.
+
+\begin{table}[htbp]
+\centering
+\caption{Best-of-$N$ in-sample annualized Sharpe ratios when every strategy searched is worthless, five years of daily data}
+\label{tab:maxN}
+\begin{tabular}{rrrr}
+\toprule
+Configurations $N$ & $a_N = \mathbb{E}[\max]$ in $z$ & Expected best Sharpe & Honest $5\%$ hurdle \\
+\midrule
+1       & $0.000$ & $0.000$ & $0.736$ \\
+10      & $1.539$ & $0.688$ & $1.148$ \\
+100     & $2.508$ & $1.121$ & $1.468$ \\
+1{,}000 & $3.241$ & $1.450$ & $1.737$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+A search over one hundred configurations, five short windows by five long windows by four exit rules, is what most researchers would call modest, and it is expected to return a best in-sample annualized Sharpe ratio of $1.121$ with every one of the hundred strategies worthless by construction. That figure clears the naive hurdle of $0.736$ by a comfortable margin and would be presented in most settings as a strong result. The honest hurdle is $1.468$, almost exactly twice the naive one.
+
+\paragraph{Monte Carlo confirmation.} Simulating $10{,}000$ searches, each over one hundred independent zero-edge strategies with $1{,}260$ daily returns apiece, gives a mean best in-sample annualized Sharpe ratio of $1.124$ against the analytic $1.121$, and a $4.95\%$ probability that the best of the hundred exceeds $1.468$ against the $5\%$ the hurdle is constructed to deliver. The probability that the best exceeds the \emph{naive} hurdle of $0.736$ is $99.3\%$: a hundred-configuration search over pure noise produces an apparently significant result almost every single time.
+
+\paragraph{How much data a real edge needs.} Invert the same arithmetic. A strategy whose \emph{true} annualized Sharpe ratio is $0.5$, a genuine and respectable edge, has an expected estimate of $0.5$ at any sample size, so it clears the naive hurdle half the time when $0.5 = 1.6449/\sqrt{Y}$, that is at $Y = 10.8$, about eleven years. To clear the hundred-configuration hurdle on the same fifty-fifty terms requires $0.5 = 3.283/\sqrt{Y}$, that is $Y = 43.1$, about forty-three years. Table~\ref{tab:power} adds the more demanding and more conventional requirement of $80\%$ power, obtained by replacing the hurdle $z$ with $z + \Phi^{-1}(0.80) = z + 0.842$.
+
+\begin{table}[htbp]
+\centering
+\caption{Years of data needed to detect a true annualized Sharpe ratio of $0.5$ at the one-sided $5\%$ level}
+\label{tab:power}
+\begin{tabular}{lrr}
+\toprule
+ & $50\%$ power & $80\%$ power \\
+\midrule
+Single pre-specified test & $10.8$ & $24.7$ \\
+Best of $100$ configurations & $43.1$ & $68.1$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Very little strategy research runs on anything approaching these histories, and by Proposition~\ref{prop:annual} no amount of intraday resampling shortens them by a single day. This is the strongest argument available for pre-specifying a few economically motivated candidates rather than letting a grid search decide, after the fact, what the hypothesis should have been.
+
+\section{Discussion: Three Ways \texorpdfstring{$1/\sqrt{T}$}{1/sqrt(T)} Is Optimistic}
+\label{sec:discussion}
+
+Each of the following makes the true standard error \emph{larger} than $1/\sqrt{T}$, so the hurdles of Section~\ref{sec:example} are, if anything, too generous.
+
+\subsection{Serial correlation, which is by far the worst}
+
+Assumption~\ref{ass:iid} requires independent returns, and the $\sqrt{k}$ annualization convention requires it too. Real strategy returns are frequently autocorrelated: momentum strategies by design, illiquid or infrequently marked positions through stale pricing, and any strategy holding positions longer than one sampling period almost mechanically. If returns follow an AR(1) with parameter $\phi$, the long-run variance is inflated by $(1+\phi)/(1-\phi)$ relative to the one-period variance, and the naively annualized estimator's standard error is inflated by the square root of that:
+\begin{equation}
+\label{eq:ar1}
+\operatorname{SE}\big(\SRhat_{\text{annual}}\big) \;\approx\; \frac{1}{\sqrt{Y}}\sqrt{\frac{1+\phi}{1-\phi}} .
+\end{equation}
+Monte Carlo over five years of daily AR(1) returns confirms \eqref{eq:ar1} closely: at $\phi = 0.1$ the simulated standard error is $0.494$ against the formula's $0.494$ and the naive $0.447$; at $\phi = 0.2$ it is $0.551$ against $0.548$ and $0.447$. A first-order autocorrelation of $0.2$, small enough to be easy to overlook in a diagnostic plot, inflates the standard error by $23\%$ and therefore inflates every hurdle in Table~\ref{tab:maxN} by the same factor. Lo (2002) gives the general correction, replacing $\sqrt{k}$ with $k/\sqrt{k + 2\sum_{j=1}^{k-1}(k-j)\rho_j}$ for autocorrelations $\rho_j$, and it should be used whenever the estimated $\rho_1$ is anything but negligible. Note the direction of the error: positive autocorrelation, the common case, means the naive figure \emph{overstates} significance.
+
+\subsection{Correlated trials, which cuts the other way}
+
+Proposition~\ref{prop:maxN} assumed the $N$ searched strategies independent, and neighboring grid points are nothing of the sort: a $49$-day and a $50$-day moving average produce nearly identical positions and nearly identical returns. The effective number of independent trials is therefore well below the raw count, and the hurdles of Table~\ref{tab:maxN} overcorrect. The main text quantifies this for its own example, finding that imposing a pairwise correlation of $0.5$ across the hundred configurations lowers the expected best Sharpe ratio from $1.121$ to $0.80$, equivalent by \eqref{eq:maxmean} to roughly eighteen independent trials rather than a hundred. This is the one item on the list that makes the naive analysis \emph{conservative}, and it is a genuine effect, but it should not be overread: eighteen effective trials still carries a hurdle far above the single-test $0.736$, and the correction is milder than the raw grid size implies rather than absent.
+
+\subsection{Non-normality, which matters only away from the null}
+
+By Proposition~\ref{prop:mertens} the null standard error is immune to skewness and kurtosis, and Section~\ref{sec:asymptotic} verified this numerically. Higher moments nonetheless enter every calculation performed under the \emph{alternative}, including the power figures of Table~\ref{tab:power}, and a strategy with strong negative skew, an option-selling or carry program, will have a genuinely wider sampling distribution around a nonzero true Sharpe ratio than \eqref{eq:lo} implies. The deflated Sharpe ratio of Bailey and L\'opez de Prado (2014) is the standard instrument here precisely because it handles the two corrections that matter together, adjusting simultaneously for the number of trials via \eqref{eq:hurdle} and for the non-normality of real strategy returns via \eqref{eq:mertens}.
+
+\subsection{What none of it can manufacture}
+
+The corrections above adjust a hurdle. None of them creates information. The binding constraint identified in Section~\ref{sec:example} is that separating a genuine $0.5$ Sharpe ratio from zero requires roughly a decade of history for a single pre-specified test and roughly four decades after a modest search, and Proposition~\ref{prop:annual} closes off the only escape route a researcher would naturally reach for. This is why the honest response to Table~\ref{tab:power} is not a better estimator but a smaller $N$: economic reasoning that narrows the hypothesis set before the data is examined is, in a literal and quantifiable sense, a substitute for decades of returns that do not exist.
+
+\section{Summary}
+\label{sec:summary}
+
+The estimated Sharpe ratio is the one-sample $t$-statistic divided by $\sqrt{T}$ (Lemma~\ref{lem:identity}), an algebraic identity that requires no distributional assumption and from which everything else follows. Under a Gaussian null the rescaled statistic is exactly $t_{T-1}$ (Theorem~\ref{thm:exact}), so the estimator has mean exactly zero and variance $(T-1)/\big(T(T-3)\big)$, which is $1/T$ to within two parts in a thousand at five years of daily data; the normal approximation with standard error $1/\sqrt{T}$ per period is the large-$T$ limit of that exact result (Corollary~\ref{cor:stated}). Dropping normality and allowing a nonzero true Sharpe ratio, the delta method gives asymptotic variance $(1+\SR^2/2)/T$ (Theorem~\ref{thm:lo}), whose second term is the contribution of the estimated volatility and vanishes identically at the null, and whose skewness and kurtosis extensions (Proposition~\ref{prop:mertens}) vanish there too, so the null standard error is robust to the fat tails of real returns. Annualizing cancels the sampling frequency exactly (Proposition~\ref{prop:annual}), leaving $1/\sqrt{\text{years}}$: finer sampling buys no power, only calendar span does. Applying the null distribution to the maximum of $N$ searched configurations (Proposition~\ref{prop:maxN}) reproduces the main text's best-of-$N$ table in closed form, confirming that a modest hundred-configuration search over pure noise returns an expected best annualized Sharpe ratio of $1.121$ and clears the naive $5\%$ hurdle $99.3\%$ of the time. The figure $1/\sqrt{T}$ is optimistic in practice for three reasons of unequal weight (Section~\ref{sec:discussion}): serial correlation in returns, which at a first-order autocorrelation of only $0.2$ inflates the standard error by $23\%$; correlation among the searched configurations, the one effect that cuts in the researcher's favor; and non-normality, which matters only away from the null. What none of them changes is the amount of history a real edge needs before it can be distinguished from luck.
+
+\section*{References}
+
+\begin{itemize}
+\item Bailey, D. H., and M. L\'opez de Prado, ``The Deflated Sharpe Ratio: Correcting for Selection Bias, Backtest Overfitting, and Non-Normality,'' \emph{Journal of Portfolio Management}, vol. 40, no. 5, 2014, pp. 94--107.
+\item Bailey, D. H., J. Borwein, M. L\'opez de Prado, and Q. J. Zhu, ``The Probability of Backtest Overfitting,'' \emph{Journal of Computational Finance}, vol. 20, no. 4, 2017, pp. 39--69.
+\item Harvey, C. R., and Y. Liu, ``Backtesting,'' \emph{Journal of Portfolio Management}, vol. 42, no. 1, 2015, pp. 13--28.
+\item Harvey, C. R., Y. Liu, and H. Zhu, ``\dots{} and the Cross-Section of Expected Returns,'' \emph{Review of Financial Studies}, vol. 29, no. 1, 2016, pp. 5--68.
+\item Jobson, J. D., and B. M. Korkie, ``Performance Hypothesis Testing with the Sharpe and Treynor Measures,'' \emph{Journal of Finance}, vol. 36, no. 4, 1981, pp. 889--908.
+\item Lo, A. W., ``The Statistics of Sharpe Ratios,'' \emph{Financial Analysts Journal}, vol. 58, no. 4, 2002, pp. 36--52.
+\item Memmel, C., ``Performance Hypothesis Testing with the Sharpe Ratio,'' \emph{Finance Letters}, vol. 1, 2003, pp. 21--23.
+\item Mertens, E., ``Comments on Variance of the IID Estimator in Lo (2002),'' working paper, University of Basel, 2002.
+\item Opdyke, J. D., ``Comparing Sharpe Ratios: So Where Are the p-Values?'' \emph{Journal of Asset Management}, vol. 8, no. 5, 2007, pp. 308--336.
+\item Sharpe, W. F., ``The Sharpe Ratio,'' \emph{Journal of Portfolio Management}, vol. 21, no. 1, 1994, pp. 49--58.
+\item White, H., ``A Reality Check for Data Snooping,'' \emph{Econometrica}, vol. 68, no. 5, 2000, pp. 1097--1126.
+\end{itemize}
+
+\end{document}
