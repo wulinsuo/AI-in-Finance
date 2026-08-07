@@ -438,7 +438,7 @@ Figure~\ref{fig:binomial_tree} places both trees side by side for direct compari
 \begin{lrbox}{\bookmeasuredbox}
     \begin{minipage}{0.48\linewidth}
         \centering
-        \begin{tikzpicture}[scale=0.85,transform shape,every node/.style={font=\small}]
+        \begin{tikzpicture}[scale=0.72,transform shape,every node/.style={font=\small}]
             \node[draw,rounded corners,align=center] (s0) at (0,0) {$S_0=\$50$\\$C_0\approx\$6.27$};
             \node[draw,rounded corners,align=center] (su) at (3.2,1.8) {$S_u=\$60$\\$C_u\approx\$11.92$};
             \node[draw,rounded corners,align=center] (sd) at (3.2,-1.8) {$S_d=\$45$\\$C_d\approx\$1.79$};
@@ -458,7 +458,7 @@ Figure~\ref{fig:binomial_tree} places both trees side by side for direct compari
     \hfill
     \begin{minipage}{0.48\linewidth}
         \centering
-        \begin{tikzpicture}[scale=0.85,transform shape,every node/.style={font=\small}]
+        \begin{tikzpicture}[scale=0.72,transform shape,every node/.style={font=\small}]
             \node[draw,rounded corners,align=center] (s0) at (0,0) {$S_0=\$50$\\$P_0\approx\$2.56$};
             \node[draw,rounded corners,align=center] (su) at (3.2,1.8) {$S_u=\$60$\\$P_u=\$0.00$};
             \node[draw,rounded corners,align=center] (sd) at (3.2,-1.8) {$S_d=\$45$\\$P_d=\$5.00^*$};
@@ -623,7 +623,7 @@ This joint variation across both strike and maturity, not strike alone, is preci
 \begin{figure}[htbp]
 \centering
 \begin{lrbox}{\bookmeasuredbox}
-    \begin{tikzpicture}[scale=1.0]
+    \begin{tikzpicture}[scale=0.85]
         \draw[->] (0,0) -- (6.8,0) node[right] {Strike ($K$)};
         \draw[->] (0,0) -- (0,5.0) node[above] {Implied volatility};
         \foreach \x/\lbl in {0/\$40, 1.5/\$45, 3/\$50, 4.5/\$55, 6/\$60} {

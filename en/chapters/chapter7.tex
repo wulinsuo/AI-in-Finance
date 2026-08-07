@@ -40,7 +40,7 @@ Nearly every later chapter in this book that touches a time-ordered quantity, GA
 
 Financial series violate the independence every earlier chapter assumed, and this part develops the vocabulary for saying how.
 
-\subsubsection*{Why Time Series Analysis Matters in Finance}
+\subsection{Why Time Series Analysis Matters in Finance}
 
 Financial data are overwhelmingly time series: daily prices, quarterly earnings, monthly inflation, tick-by-tick trades. Three features of financial time series make them harder to work with than the typical machine learning dataset. First, observations are not independent; today's return is statistically related to yesterday's, even if only weakly, which violates the independent-and-identically-distributed assumption behind many standard statistical procedures. Second, the variance of returns is itself time-varying, quiet periods are followed by quiet periods and volatile periods by volatile periods, a phenomenon called volatility clustering.
 Third, the underlying process generating the data can change over time (Chapter 6's non-stationarity concern), so a model fit on one period may not describe the next.
@@ -51,7 +51,7 @@ It is worth being explicit about what makes this chapter's models different from
 
 Every technique in this chapter, from the correlogram to GARCH to walk-forward validation, exists specifically to model, exploit, or correctly evaluate a model in the presence of this dependence, rather than assuming it away.
 
-\subsubsection*{Stationarity, White Noise, and Random Walks}
+\subsection{Stationarity, White Noise, and Random Walks}
 \label{sec:random-walk}
 
 Suppose an analyst fits a seemingly solid model relating an interest rate series to its own past values, only to find the fitted relationship falls apart the moment new data arrives, not because the estimation was done incorrectly, but because the series itself was never behaving consistently enough to model in the first place. This section makes precise exactly what kind of consistency a time series needs for a fitted model to have any hope of generalizing. A time series $\{X_t\}$ is weakly stationary if its mean and variance do not change over time and the covariance between $X_t$ and $X_{t-k}$ depends only on the lag $k$, not on $t$ itself:
@@ -194,7 +194,7 @@ Since $|\hat\phi| = 0.71 < 1$, the fitted process is stationary, with an implied
 \end{equation*}
 This is the essential logic of every autoregressive forecast: today's fitted relationship, applied to the most recent observation, produces tomorrow's point forecast.
 
-\subsection{Confidence Intervals and $p$-Values for Model Parameters}
+\subsubsection*{Confidence Intervals and $p$-Values for Model Parameters}
 \label{sec:ci-pvalue}
 
 A point estimate such as $\hat\phi = 0.71$ is only half the story; without some sense of how precisely $\hat\phi$ is known, it is impossible to say whether the fitted mean reversion is a genuine feature of the process or an artifact of a short, noisy sample.
@@ -245,7 +245,7 @@ Two features of Table~\ref{tab:multistep} illustrate general properties of stati
 
 Second, the uncertainty around these forecasts also grows with the horizon but, unlike a random walk, does not grow without bound: the variance of the $h$-step forecast is proportional to $\sum_{j=0}^{h-1} \hat\phi^{2j}$, which converges to $1/(1-\hat\phi^2) \approx 2.01$ times the one-step forecast variance as $h \to \infty$, rather than growing linearly with $h$ as it would for a non-stationary series. This is a direct, quantitative version of the qualitative warning in this chapter's challenges section that longer-horizon forecasts are less reliable than one-step forecasts, and it shows precisely how much less reliable, and why that unreliability eventually levels off, for a genuinely mean-reverting series.
 
-\subsection{Diagnosing the Fit: The Ljung-Box Test and Choosing Between AR(1) and AR(2)}\index{Ljung-Box test}
+\subsubsection*{Diagnosing the Fit: The Ljung-Box Test and Choosing Between AR(1) and AR(2)}\index{Ljung-Box test}
 \label{sec:ljung-box}
 
 Fitting a model is not the end of the process; the residuals should be checked for leftover structure the model failed to capture, the ``did this actually work'' question the Box-Jenkins methodology introduced later in this chapter is built around. The Ljung-Box test formalizes this check: it tests the joint null hypothesis that the first $h$ residual autocorrelations are all zero, meaning an adequately specified model should leave behind nothing but white noise, using the statistic

@@ -47,11 +47,11 @@ In practice, the statements are analyzed together rather than in isolation. The 
 \begin{figure}[htbp]
 \centering
 \begin{lrbox}{\bookmeasuredbox}
-    \begin{tikzpicture}[>=latex,thick,node distance=1.1cm]
-        \node[draw,rounded corners,minimum width=3.0cm,minimum height=0.9cm,align=center] (bs1) {Balance Sheet\\(Start of Period)};
-        \node[draw,rounded corners,minimum width=3.0cm,minimum height=0.9cm,right=of bs1,align=center] (is) {Income Statement\\(Over Period)};
-        \node[draw,rounded corners,minimum width=3.0cm,minimum height=0.9cm,right=of is,align=center] (cf) {Cash Flow Statement\\(Over Period)};
-        \node[draw,rounded corners,minimum width=3.0cm,minimum height=0.9cm,below=1.3cm of is,align=center] (bs2) {Balance Sheet\\(End of Period)};
+    \begin{tikzpicture}[>=latex,thick,node distance=0.85cm,scale=0.85]
+        \node[draw,rounded corners,minimum width=2.5cm,minimum height=0.8cm,align=center] (bs1) {Balance Sheet\\(Start of Period)};
+        \node[draw,rounded corners,minimum width=2.5cm,minimum height=0.8cm,right=of bs1,align=center] (is) {Income Statement\\(Over Period)};
+        \node[draw,rounded corners,minimum width=2.5cm,minimum height=0.8cm,right=of is,align=center] (cf) {Cash Flow Statement\\(Over Period)};
+        \node[draw,rounded corners,minimum width=2.5cm,minimum height=0.8cm,below=1.05cm of is,align=center] (bs2) {Balance Sheet\\(End of Period)};
         \draw[->] (bs1) -- (is);
         \draw[->] (is) -- (cf);
         \draw[->] (is) -- (bs2);

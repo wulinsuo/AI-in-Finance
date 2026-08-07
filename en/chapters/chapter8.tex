@@ -37,7 +37,7 @@ Later sections extend the same VaR machinery in three directions: to options pos
 
 This part builds the standard measures in order of increasing honesty about the tail, each worked numerically on the same portfolio.
 
-\subsubsection*{Types of Financial Risk}
+\subsection{Types of Financial Risk}
 \label{sec:risk-types}
 
 Suppose a risk manager reports simply that the fund ``lost money because of risk.'' The statement is true but useless: it does not say whether the loss came from prices moving against a held position, a counterparty failing to pay what it owed, or a position becoming impossible to sell without moving its own price further down, three genuinely different problems that call for three different responses. Financial risk is not a single quantity but a family of related concerns, and confusing one type for another is a common and costly mistake.
@@ -79,7 +79,7 @@ Systemic risk & Stress testing, contagion modeling & Chapter 3's financial crise
 }
 \end{table}
 
-\subsubsection*{Value at Risk: Parametric and Historical Methods}
+\subsection{Value at Risk: Parametric and Historical Methods}
 \label{sec:var}
 
 Value at Risk (VaR) answers a specific, deliberately narrow question: over a given holding period and at a given confidence level, what is the loss that will not be exceeded except with some small, specified probability? Formally, the $\alpha$-level VaR of a portfolio is the smallest loss $L$ such that
@@ -169,7 +169,7 @@ summing to the portfolio variance of $0.000034$ exactly as required. Scaling the
 which sum back to the \$19,182 total, exactly as the decomposition guarantees. AssetB's component is \emph{negative}, even though AssetB has positive standalone volatility on its own. Its strongly negative correlation with AssetA (Section~\ref{sec:stress-testing} computes it as $\rho\approx-0.896$) makes it a diversifier within this specific portfolio: adding more of AssetB, holding AssetA fixed, would actually \emph{reduce} total portfolio risk, not add to it. That is a fact the standalone volatility figures for AssetA and AssetB alone could never reveal.
 This is precisely why risk limits at a real trading firm are typically set and monitored using component or marginal VaR rather than standalone position size or standalone volatility: a position's true risk contribution depends on how it interacts with everything else already in the book, not on how risky it looks in isolation.
 
-\subsubsection*{Expected Shortfall: Going Beyond VaR}
+\subsection{Expected Shortfall: Going Beyond VaR}
 
 VaR has a well-known conceptual weakness: it answers ``how much can I lose with 95\% confidence,'' but says nothing about how bad the remaining 5\% of outcomes actually are. Two portfolios can have identical VaR while one has a slightly worse tail and the other has a catastrophically worse one. Expected Shortfall (ES), also called Conditional VaR, addresses this directly by averaging the losses in the tail beyond VaR rather than simply reporting its boundary:
 \begin{equation*}
@@ -219,7 +219,7 @@ Because ES is a coherent risk measure\index{Coherent Risk Measure} in a precise 
 }
 \end{figure}
 
-\subsubsection*{Maximum Drawdown: A Path-Dependent Risk Measure}\index{Maximum drawdown}
+\subsection{Maximum Drawdown: A Path-Dependent Risk Measure}\index{Maximum drawdown}
 \label{sec:max-drawdown}
 
 Value at Risk and Expected Shortfall both summarize the distribution of possible one-day losses, but neither says anything about a different, equally practical question: how much value would an investor holding this portfolio actually have seen erode from its own peak over an extended period, not just on any single day? Maximum drawdown answers this. Given a portfolio value path $V_0, V_1, \ldots, V_T$, the drawdown at time $t$ is the percentage decline from the running peak up to and including that point,
@@ -238,7 +238,7 @@ This is the sense in which maximum drawdown captures something the chapter's dai
 Maximum drawdown is used throughout this book wherever a full return path, not just a single day's distribution, is the natural object of interest. Chapter 13 uses it directly, alongside the Sharpe ratio and hit rate, to evaluate a backtested trading strategy's worst peak-to-trough decline. Asset managers and hedge funds routinely report it as a standard risk statistic, precisely because, unlike VaR, it requires no distributional assumption at all, only a value path. It is also immediately interpretable to an investor asking, in plain language, ``how much could I have lost had I been unlucky enough to enter at the worst possible time.''
 Its main limitation mirrors that same simplicity. A single realized maximum drawdown is one historical observation of a path-dependent statistic, not an estimate of a full distribution the way VaR or Expected Shortfall are. Comparing two strategies' historical maximum drawdowns therefore says less about their future worst-case risk than comparing their VaR or Expected Shortfall figures would.
 
-\subsubsection*{Monte Carlo Simulation for Risk Measurement}
+\subsection{Monte Carlo Simulation for Risk Measurement}
 
 A third approach, Monte Carlo simulation, sits between the parametric and historical methods: it assumes a distributional model, as the parametric method does, but instead of relying on a closed-form formula, it simulates a very large number of hypothetical return scenarios from that model and reads VaR and ES directly off the simulated distribution, exactly as the historical method reads them off the observed one.
 Simulating 100,000 draws from a normal distribution with the same mean and standard deviation as Table~\ref{tab:portfolio_returns} ($\bar r=-0.32\%$, $\hat\sigma=0.937\%$) gives $\text{VaR}_{95\%} \approx \$187{,}460$, $\text{VaR}_{99\%} \approx \$251{,}690$, and $\text{ES}_{95\%} \approx \$226{,}378$. All are close to the parametric formulas above, as they should be: with enough simulated draws, Monte Carlo VaR converges to the exact parametric answer whenever the underlying model is one for which a closed form exists at all.
@@ -276,7 +276,7 @@ That is the general procedure: rescaling a standardized residual by today's fore
 
 A risk number nobody has tested is a decoration; this part checks the measures against realized losses and extends them where the simple versions break.
 
-\subsubsection*{Backtesting Value at Risk Models}
+\subsection{Backtesting Value at Risk Models}
 \label{sec:backtesting-var}
 
 A VaR model is only useful if it is actually calibrated\index{calibration} correctly, and the standard way to check this is backtesting: comparing how often realized losses actually exceeded the model's VaR threshold (an ``exception'') against how often the model itself predicted an exception should occur. A well-calibrated 95\% VaR model should produce an exception on roughly 5\% of days, no more and, just as importantly, no fewer, since a model that is never exceeded is not necessarily good news; it may simply be too conservative, tying up capital that could otherwise be deployed productively.
@@ -329,7 +329,7 @@ which for $T=10$ gives a true 10-day volatility about $9.4\%$ higher than the sq
 Economic capital extends this same time-scaling logic one step further, from a 10-day regulatory horizon to a full one-year horizon calibrated to a much higher confidence level, typically 99.9\% or higher, chosen to be consistent with the default probability of the credit rating (commonly single-A or double-A) a bank wants its own solvency to reflect; Chapter 9 develops the analogous calculation directly for credit portfolios using the Vasicek model.
 Unlike the regulatory VaR multiplier in Section~\ref{sec:backtesting-var}, which is a supervisory capital charge computed from a specific, prescribed methodology, economic capital is a bank's own internal estimate of how much capital its entire risk-taking business genuinely needs to survive a severe, low-probability year. It is used as much for internal capital allocation and performance measurement as for regulatory compliance: a desk generating a given return on a smaller economic-capital charge is, all else equal, using the firm's scarce capital more efficiently.
 
-\subsubsection*{Liquidity Risk and Liquidity-Adjusted VaR}
+\subsection{Liquidity Risk and Liquidity-Adjusted VaR}
 
 Every VaR calculation so far has implicitly assumed that a position can be liquidated at the current market price, but Chapter 3 already established that this is not quite right: selling a position, especially a large or illiquid one, costs at least half the bid-ask spread relative to the mid price, and a large enough order can walk through several levels of the order book at a progressively worse price, just as in Chapter 3's limit-order-book example. Liquidity-adjusted VaR (LVaR) incorporates this directly by adding an estimated liquidation cost to the standard VaR figure,
 \begin{equation*}
@@ -385,14 +385,14 @@ within a few cents of the full-revaluation figures of \$980.79 and \$1,403.99, c
 This growing gap is exactly gamma's effect: delta describes the option's slope at the current stock price, but a genuinely large move travels far enough along the price-value curve that the slope itself has changed by the time the move is complete, and gamma measures precisely that curvature.
 The delta-normal method is a reasonable, cheap approximation for small moves or a portfolio with little gamma exposure relative to its size, but it systematically understates risk for a portfolio with meaningful gamma, understating it more severely the larger and more extreme the move being measured, exactly why the 99\% gap above is proportionally wider than the 95\% gap. A trading desk with substantial options exposure therefore typically supplements delta-normal VaR with full revaluation, or with a second-order delta-gamma approximation that adds a quadratic correction term, precisely to correct for this shortfall.
 
-\subsubsection*{Sensitivity-Based Risk Limits}\index{Sensitivity-based risk limits}
+\subsection{Sensitivity-Based Risk Limits}\index{Sensitivity-based risk limits}
 \label{sec:sensitivity-limits}
 
 A desk can sit comfortably inside every VaR limit it has been given and still be carrying the position that ends its year. The reason is structural rather than a failure of calibration: VaR compresses an entire book into a single number, and that compression is exactly what hides where the risk actually sits. Two desks reporting the same \$300,000 daily VaR can hold portfolios with nothing in common, one of them perfectly hedged against the move that is about to happen and the other pointed directly into it.
 
 Practitioners therefore run sensitivities alongside VaR, never instead of it. A sensitivity answers a different and much narrower question than VaR does: not ``how bad could tomorrow be, all things considered,'' but ``if this one risk factor moves by one unit, and nothing else changes, how much money do we make or lose?'' The answers are unglamorous, linear, and immediately actionable, which is precisely why the trading floor lives on them.
 
-\subsection{The Greeks as Limits in Their Own Right}
+\subsubsection*{The Greeks as Limits in Their Own Right}
 
 Chapter 5 computed delta, gamma, vega, and theta for the option this chapter has been using, and Section~\ref{sec:delta-normal} then drew on the first two of them, but only as ingredients in a VaR approximation. On a real derivatives desk each is a limit in its own right, monitored and enforced independently of any VaR number. Return to that section's position, a market maker short 1,000 of Chapter 5's one-year \$50-strike calls ($S_0=K=\$50$, $r=4\%$, $\sigma=30\%$), and read the whole set as a risk report rather than as pricing output. Table~\ref{tab:greek_limits} collects them, scaled to the position and joined by rho, the one Greek Chapter 5 did not compute.
 
@@ -437,7 +437,7 @@ The critical observation is the one the VaR machinery of this chapter cannot mak
 \end{equation*}
 against a $99\%$ full-revaluation VaR of \$1,403.99 attributed to price moves alone. A routine volatility move, invisible to the risk report, is worth $68\%$ of the entire price-driven $99\%$ VaR. This is not an argument against VaR. It is an argument for reading a vega limit next to it.
 
-\subsection{Bucketed Sensitivities: The DV01 Ladder}\index{DV01}
+\subsubsection*{Bucketed Sensitivities: The DV01 Ladder}\index{DV01}
 
 The same logic applies with even more force to interest-rate books, where the risk factor is not a single price but an entire yield curve. The standard sensitivity there is DV01, the dollar value of a basis point: the profit or loss produced by a one-basis-point move in yields. A single aggregate DV01 for the whole book is the rates equivalent of a single VaR number, and it conceals the same thing.
 
@@ -484,7 +484,7 @@ This is not merely a practitioner convention. It is also the direction regulatio
 
 There is also a direct link back to Chapter 7's principal component analysis of the yield curve, which is worth making explicit because it explains \emph{why} the ladder decomposes risk the way it does. That analysis found that essentially all of the curve's daily variation is captured by three factors: a level factor that shifts all maturities together, a slope factor that tilts short against long, and a curvature factor. Projecting this desk's ladder onto those factors restates the whole example in one line. A net DV01 of zero is exactly zero exposure to the \emph{level} factor, which is why the parallel shift produces nothing; the desk's real position is a large exposure to the \emph{slope} factor, and the flattening scenario is simply a slope-factor move. Bucketing by maturity and then reasoning about the buckets is the practitioner's version of a factor decomposition, and a desk that has already run the PCA can set limits on the three factor exposures directly, which is both more compact and better aligned with how the curve actually moves than limits on four maturity buckets treated as if independent.
 
-\subsection{Computing Sensitivities at Scale: Adjoint Differentiation}\index{Adjoint algorithmic differentiation}
+\subsubsection*{Computing Sensitivities at Scale: Adjoint Differentiation}\index{Adjoint algorithmic differentiation}
 \label{sec:aad}
 
 The two preceding subsections asked for five Greeks and four DV01 buckets, nine numbers in total. A real trading book asks for thousands, across every instrument, every risk factor, and every maturity bucket, recomputed at least daily. How those numbers are actually produced turns out to be a computational problem with a direct and rather elegant answer from machine learning.
@@ -526,7 +526,7 @@ This reframing is deliberately designed to counteract a subtle bias in forward s
 Concretely, suppose the desk running the \$10 million portfolio in Table~\ref{tab:portfolio_returns} has been allocated a risk capital cushion of \$500,000 specifically to absorb this book's trading losses before it would need additional capital from elsewhere in the firm. Reverse stress testing asks directly: what single-day return would exhaust this cushion? Since $\text{Loss} = |r| \times \$10{,}000{,}000$, solving $500{,}000 = |r| \times 10{,}000{,}000$ gives $|r| = 5\%$, a single-day move of $-5\%$ or worse.
 Comparing this to the $-7\%$ historical stress scenario used above, the reverse stress test reveals something the forward scenario alone did not make explicit: the historical stress scenario, if it recurred, would not merely breach this cushion but exceed it by $\$700{,}000 - \$500{,}000 = \$200{,}000$, a genuine capital shortfall rather than a mere limit breach, information a risk committee needs well before such a day actually arrives rather than discovering it only after the fact.
 
-\subsection{Correlation Stress Testing: Quantifying ``Correlations Go to One''}\index{Correlation Stress Testing}
+\subsubsection*{Correlation Stress Testing: Quantifying ``Correlations Go to One''}\index{Correlation Stress Testing}
 
 The case vignette below describes correlations rising sharply during a genuine crisis, but it is worth making that claim numerically concrete using the same two-asset position from Section~\ref{sec:matrix-var}. Chapter 2's AssetA/AssetB covariance matrix implies a calm-period correlation of
 \begin{equation*}
@@ -545,7 +545,7 @@ Every technique in this chapter so far is a classical statistical model, chosen 
 
 Volatility forecasting is the most direct extension: a recurrent neural network or gradient-boosted tree ensemble can, in principle, capture nonlinear volatility patterns that a fixed GARCH(1,1) specification cannot, feeding the same volatility-adjusted VaR machinery of Section~\ref{sec:garch-var} with a more flexible forecast, at the cost of the overfitting and interpretability concerns Chapter 6 raised and this chapter's own challenges section returns to below.
 
-\subsection{A Head-to-Head Test: GARCH(1,1) versus Gradient Boosting on Asymmetric Volatility}\index{Gradient boosting for volatility forecasting}
+\subsubsection*{A Head-to-Head Test: GARCH(1,1) versus Gradient Boosting on Asymmetric Volatility}\index{Gradient boosting for volatility forecasting}
 \label{sec:ml-vol-forecast}
 
 Chapter 7 flagged a specific, well-documented shortcoming of GARCH(1,1): because its recursion depends only on $\varepsilon_{t-1}^2$, it treats a positive and a negative shock of the same size as equally informative about tomorrow's variance, when in practice negative shocks (the leverage effect) tend to raise volatility more. A gradient-boosted tree, given the lagged return's sign as an explicit input feature rather than only its square, can in principle learn this asymmetry, something a plain GARCH(1,1) specification structurally cannot represent at all.
@@ -587,7 +587,7 @@ Every tool built so far in this chapter answers a question of the form ``how muc
 
 There are only four things a firm can do with a risk it has measured. It can \textbf{accept} the risk, which is a legitimate decision when the exposure is small relative to capital and is being paid for. It can \textbf{reduce} it by cutting the position. It can \textbf{hedge} it by taking an offsetting position in a related instrument, keeping the exposure it wants and shedding the exposure it does not. Or it can \textbf{transfer} it to someone else through an insurance contract or a derivative, which Chapter 11 develops from the perspective of the party accepting such risks for a living. The rest of this section works through the mechanics of the two middle options, since those are the ones that require calculation.
 
-\subsection{Hedging: Removing an Exposure You Do Not Want}\index{Delta Hedging}
+\subsubsection*{Hedging: Removing an Exposure You Do Not Want}\index{Delta Hedging}
 
 Return once more to the short call position of Section~\ref{sec:sensitivity-limits}. Its delta of $-611.5$ says that the position loses \$611.50 for every \$1 the stock rises. A market maker who wants to earn the option's time decay without taking a directional view on the stock can eliminate that exposure directly, by buying $611.5$ shares of the underlying. The hedged book's delta is then zero by construction, and the first-order price risk is gone.
 
@@ -601,7 +601,7 @@ This is the honest general shape of hedging. A hedge does not remove risk; it ex
 
 That residual is also the opening for a machine learning treatment of the same problem, and Chapter 19 takes it up directly on this very position. The calculation above quietly assumes the hedge can be rebalanced continuously and for free. It cannot: every adjustment to the share position pays a bid-ask spread, so a hedger who rebalances often enough to keep delta near zero pays away the option premium in transaction costs, while one who rebalances rarely enough to keep costs down carries the residual gamma risk just computed. There is no closed-form answer to where the optimum sits, because it depends on the cost structure, the volatility, and how much tail risk the desk is willing to tolerate. Chapter 19 solves it as a sequential decision problem, finding a rebalancing band that beats daily delta hedging on both average cost and tail risk simultaneously, and then generalizes the band to a neural hedging policy trained directly on the distribution of outcomes. The classical delta hedge computed here is the baseline that work is measured against.
 
-\subsection{Position Sizing: Controlling Risk Before It Exists}\index{Volatility targeting}
+\subsubsection*{Position Sizing: Controlling Risk Before It Exists}\index{Volatility targeting}
 
 Hedging acts on a position that already exists. The cheaper control acts before the position is put on at all, by choosing its size so that the resulting risk is the risk the firm wanted in the first place.
 
@@ -619,7 +619,7 @@ The catch is the one the whole chapter has been circling, and it is what makes p
 
 A volatility-targeted portfolio therefore rescales continually, cutting exposure as markets get turbulent and adding it back as they calm. That is the intended behavior, but it also means such a strategy sells into falling markets mechanically, alongside every other volatility-targeted fund doing the same arithmetic on the same day, which is a mechanism for the kind of correlated forced selling that Section~\ref{sec:stress-testing} stress-tests for.
 
-\subsection*{Stop-Losses and Drawdown Triggers, and Why They Disappoint}\index{Stop-loss}
+\subsubsection*{Stop-Losses and Drawdown Triggers, and Why They Disappoint}\index{Stop-loss}
 
 The last common control is the crudest: set a threshold, and when losses reach it, cut the position regardless of what any model says. Stop-losses have an obvious appeal, since they require no distributional assumption whatsoever and cannot be gamed by a mis-specified covariance matrix.
 

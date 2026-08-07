@@ -73,3 +73,11 @@ vol_risk_premium_*
 # content moved into en/. This is the abandoned production/MLOps appendix; it stays
 # local and must never reach the public repository.
 draft_appendix_production.*
+
+# Local scratch, never part of either book. All four predate or postdate the
+# en/ move and never had a rule; they surfaced as untracked once the layout
+# settled. Unanchored so they stay ignored wherever they end up on disk.
+frontmatter_extract*.tex
+fix_watermark.py
+inspect_watermark.py
+update_watermark.py

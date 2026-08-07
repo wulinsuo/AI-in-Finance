@@ -48,6 +48,8 @@ Crime type & Typical detection approach & Developed in \\
 \midrule
 Card and payment fraud & Real-time transaction scoring, anomaly detection & Sections~\ref{sec:anomaly-bayes}, \ref{sec:fraud-scoring} \\
 Account takeover & Behavioral biometrics, device and login anomaly detection & Section~\ref{sec:risk-tiering} \\
+Synthetic identity fraud & Cultivation-pattern and shared-attribute linkage; unsupervised detection where labels are absent & Section~\ref{sec:new-fraud-types} \\
+Authorized push payment (scam) fraud & Deviation from the customer's own payment history; mule detection on the receiving side & Section~\ref{sec:new-fraud-types} \\
 Money laundering & Rule-based transaction monitoring, network analysis, structuring detection & Section~\ref{sec:aml-structuring} \\
 Market manipulation (spoofing, layering) & Order-book pattern surveillance & Chapter 14's spoofing case vignette \\
 Insider trading & Anomaly detection linking trading activity to material news events & Chapter 1's Bayesian updating, extended here \\
@@ -267,6 +269,43 @@ Fitting an Isolation Forest to the same simulated training transactions, with th
 
 One evaluation pitfall deserves its own mention. The receiver operating characteristic (ROC) curve plots the true-positive rate against the false-positive rate across every possible threshold, and its area under the curve (ROC-AUC) is a common single-number summary of a classifier's overall ranking ability. Under the severe class imbalance this entire chapter has emphasized, ROC-AUC can look deceptively good: because the false-positive rate is computed as a share of an enormous legitimate population, even a model that performs only modestly well at actually ranking fraud can still show a low false-positive rate and a high ROC-AUC, precisely the same base-rate distortion Section~\ref{sec:anomaly-bayes}'s Bayes' theorem example exposed for a fixed confusion matrix. The precision-recall (PR) curve, plotting precision against recall across thresholds, and its area (PR-AUC), does not have this blind spot, since precision is computed directly against the number of \emph{predicted} positives rather than against the (huge) total negative population, making it the more informative single-number summary whenever the event being detected is rare, the situation this chapter's fraud, insider-trading, and AML examples all share.
 
+\subsection{Two Fraud Types That Defeat Transaction-Level Scoring}
+\label{sec:new-fraud-types}
+
+Everything in this part has assumed a fraudulent transaction is, in principle, distinguishable from a legitimate one given enough features and a good enough model. Two of the fastest-growing categories of fraud violate that assumption outright, each in a different way, and both are worth understanding precisely because they show where the statistical machinery developed above stops being sufficient.
+
+\subsubsection*{Synthetic Identity Fraud: The Case With No Labels}\index{Synthetic Identity Fraud}
+
+A synthetic identity is not a stolen one. The fraudster assembles a person who does not exist, typically pairing a real but unused identity number, often belonging to a child, a recent immigrant, or a deceased person whose records are not actively monitored, with a fabricated name, date of birth, and address. Because no real person owns the composite, no real person ever notices it, disputes a charge, or files a report.
+
+That single fact changes the detection problem. The account is then \emph{cultivated}: it takes a small credit line, pays every bill on time, and is rewarded with progressively higher limits, exactly as a genuinely creditworthy new customer would be. Suppose four tradelines are grown from a \$500 to a \$10,000 limit over eighteen months, with about \$120 a month paid across all of them,
+\begin{equation*}
+\text{Paid in} = 18 \times \$120 = \$2{,}160, \qquad \text{Exposure at bust-out} = 4 \times \$10{,}000 = \$40{,}000,
+\end{equation*}
+so the ``bust-out,'' drawing every line to its limit and disappearing, nets roughly \$37,840 on an outlay of \$2,160, a return of about eighteen times. Note what the behavioral risk score of Section~\ref{sec:risk-tiering} would have said throughout: transaction velocity normal, geography stable, activity consistent with the profile declared at onboarding. Every input this chapter has built points the wrong way, because during cultivation the account genuinely is a model customer. The score spikes only at the bust-out, when the money is already gone.
+
+The deeper problem is the labels. A bust-out is usually written off as ordinary credit loss, since there is no victim to reclassify it and no obvious moment of theft. If $5\%$ of a lender's $100{,}000$ annual charge-offs are in fact synthetic identities, then $5{,}000$ fraud cases a year are sitting in the training data labeled ``default,'' and a supervised fraud model never learns them at all. This is the same structural blindness Chapter 9's reject inference describes, in a more damaging form: the measured fraud base rate is understated, so every precision figure computed against those labels is optimistic by an unknown margin.
+
+It is also the strongest argument in this chapter for the unsupervised methods of Section~\ref{sec:advanced-imbalance}. An Isolation Forest or autoencoder never needed a confirmed fraud label in the first place, and the cultivation pattern, several thin-file accounts sharing an address, a device fingerprint, or a phone number, and all maturing on similar trajectories, is precisely the kind of structure an anomaly detector or the network analysis of Section~\ref{sec:aml-structuring} can surface without one.
+
+\subsubsection*{Authorized Push Payment Fraud: The Case Where Every Feature Is Legitimate}\index{Authorized Push Payment (APP) Fraud}
+
+In an authorized push payment scam the customer is deceived, by a fake invoice, an impersonated bank official, or a romance or investment pretext, into sending the money themselves. The credentials are correct, the device is the customer's usual one, the authentication succeeds, and the instruction is genuine. This is transaction 9 of Table~\ref{tab:fraud_scoring_data} carried to its limit: not merely a fraudulent payment that looks unremarkable, but one that is, at the moment of authorization, indistinguishable from a legitimate payment on every feature a transaction-level model observes, because it \emph{is} a legitimate instruction from the account holder.
+
+For a long time this was treated as a customer-education problem rather than a modeling one, on the reasoning that a bank that correctly executed an authorized instruction had done nothing wrong. Mandatory reimbursement regimes, most prominently the United Kingdom's, which since 2024 has required the sending and receiving payment firms to split reimbursement of qualifying scam losses between them, moved the loss onto the bank's own books and converted it into an ordinary expected-cost calculation.
+
+The economics then become favorable very quickly. Suppose a bank processes $500{,}000$ faster payments a month, $0.02\%$ of which are scams, at an average loss of \$4,200, and that it bears half of the reimbursement,
+\begin{equation*}
+\text{Scams} = 0.0002 \times 500{,}000 = 100, \qquad \text{Bank's exposure} = 100 \times \$4{,}200 \times 0.5 = \$210{,}000 \text{ per month}.
+\end{equation*}
+A model operating at $60\%$ recall and only $5\%$ precision, poor by any of this chapter's earlier standards, catches 60 scams while raising $60/0.05 = 1{,}200$ alerts. At 15 minutes per intervention, a call to the customer before the payment is released, and the same \$45 hourly cost,
+\begin{equation*}
+\text{Cost} = \frac{1{,}200 \times 15}{60} \times \$45 = \$13{,}500, \qquad \text{Loss prevented} = 60 \times \$4{,}200 \times 0.5 = \$126{,}000,
+\end{equation*}
+a net benefit of \$112,500 a month, or \$1.35 million a year. Solving for the recall at which the intervention cost is exactly recovered gives $6.43\%$: the model pays for itself once it stops between six and seven of the hundred monthly scams. That is a far more forgiving operating point than anything in Section~\ref{sec:alert-economics}, and it is the direct consequence of a single missed case costing the bank \$2,100 rather than nothing.
+
+Because the payment instruction itself carries no signal, detection has to look elsewhere: at deviation from the customer's own payment history rather than from any population norm (a first-time payee, an unusual amount, an account that has never before sent a faster payment at all), at contextual signals such as a payment initiated during or immediately after a long inbound call, and above all at the \emph{receiving} side, where mule accounts show the short-dwell, high-pass-through pattern that Section~\ref{sec:aml-structuring}'s layering example already taught us to recognize. The victim's transaction looks normal; the beneficiary's does not.
+
 \section{Risk Tiering, Survival, and Money Laundering}
 
 Beyond a single score, this part ranks customers by behavior, models time-to-detection, and turns to laundering typologies.
@@ -370,7 +409,7 @@ Day $t_i$ & At risk $n_i$ & Fraud closures $d_i$ & Factor $(1-d_i/n_i)$ & $\hat 
 }
 \end{table}
 
-Two features of Table~\ref{tab:km_table} are worth pausing on. First, the number at risk, $n_i$, drops not only when a fraud closure occurs but also whenever a censored observation passes that day, which is why $n_i$ falls from 12 to 9 between day 5 and day 12 even though only two confirmed closures occurred in between (day 8's censored account and no additional confirmed closures reduce the count without contributing a $d_i$ term).
+Two features of Table~\ref{tab:km_table} are worth pausing on. First, the number at risk, $n_i$, drops not only when a fraud closure occurs but also whenever a censored observation passes that day, which is why $n_i$ falls from 12 to 9 between day 5 and day 12 even though only two confirmed closures occurred in between: the account censored on day 8 also leaves the risk set, accounting for the third of those three departures without contributing a $d_i$ term.
 
 This is precisely the mechanism by which censored observations still contribute information, they remain in the risk set for as long as they are actually observed, without being incorrectly counted as either a confirmed event or an assumed survivor beyond their last observed day.
 
@@ -480,7 +519,7 @@ Delta & \$470{,}596.00 & \$461{,}184.08 & \$9{,}411.92 \\
 
 After four hops, $\$461{,}184.08$, over $92\%$ of the original placed amount, reaches its ultimate destination, with only $\$38{,}815.92$ lost to the network's own retained ``fees'' along the way, having passed through four legally separate entities in under a week. Figure~\ref{fig:layering_network} draws this chain as the network it actually is, rather than as four separate, individually unremarkable rows in a table.
 
-No individual hop in Table~\ref{tab:layering_network} looks obviously wrong; each is a plausible-looking business payment of a plausible size. What is anomalous is the pattern viewed as a network: a near-total pass-through ratio (each entity forwards almost exactly what it received, rather than retaining or redeploying it as a genuine operating business would), extremely short dwell time between receipt and forwarding, and a chain topology, each entity receiving from only one source and sending to only one destination, that has no obvious legitimate business rationale.
+No individual hop in Table~\ref{tab:layering_network} looks obviously wrong; each is a plausible-looking business payment of a plausible size. What is anomalous is the pattern viewed as a network, and each of its three features is a number rather than an impression: a pass-through ratio of exactly $0.98$ at every hop, where a real operating business retains and redeploys most of what it receives; a dwell time under 24 hours, against the weeks a genuine payables cycle takes; and an in-degree and out-degree of exactly one at every interior node, where a real supplier has many customers and many suppliers. Each has innocent explanations on its own. All three at once, repeated four hops in a row, do not.
 
 This is precisely why anti-money-laundering systems increasingly supplement Section~\ref{sec:risk-tiering}'s per-account behavioral scoring with network or graph-based analysis, examining the structure of relationships between accounts rather than any single account's activity alone, since a layering scheme is, by design, constructed so that every individual node in the chain looks unremarkable.
 
@@ -547,7 +586,70 @@ Figure~\ref{fig:crime_pipeline} places this rule-based structuring and layering 
 
 Beyond structuring, AML regulation imposes an ongoing due-diligence obligation that goes beyond fraud detection's largely reactive posture: Customer Due Diligence (CDD)\index{Customer Due Diligence (CDD)} at onboarding establishes a customer's expected activity profile (Section~\ref{sec:risk-tiering}'s KYC inputs), Enhanced Due Diligence (EDD)\index{Enhanced Due Diligence (EDD)} applies heightened scrutiny to higher-risk customers such as politically exposed persons or those in high-risk jurisdictions, and ongoing monitoring compares actual behavior against that expected profile continuously, the account-level, time-varying risk view Section~\ref{sec:survival-fraud}'s survival framework formalizes.
 
-Sanctions screening, checking counterparties against government-maintained lists of prohibited individuals, entities, and countries, is a related but distinct compliance obligation, typically implemented as a direct name-matching rule rather than a statistical model, precisely because a sanctioned-party match is a binary legal fact rather than a probabilistic risk estimate.
+Two of these obligations are increasingly discharged with the language models Chapter 16 develops. Adverse-media screening, checking whether a customer appears in news reporting tied to fraud, corruption, or sanctions evasion, is a document-classification problem of exactly the kind that chapter's Naive Bayes and embedding methods address, and it inherits this chapter's precision problem in acute form, since most name matches in news text are simply the wrong person. Drafting the suspicious-activity report itself, a structured account of what was observed and why it appears suspicious, is now commonly assisted by a large language model working from the alert's own records. Both uses are governed rather than autonomous: a filed SAR is a legal statement by the institution, so the model proposes and an investigator signs, and the model is itself subject to the validation regime of Section~\ref{sec:governance-3lod}.
+
+\subsubsection*{Sanctions Screening: A Matching Problem, Not a Lookup}\index{Sanctions Screening}
+\label{sec:sanctions-screening}
+
+A bank must not move money for a party on a government sanctions list, and unlike almost every other obligation in this chapter, this one admits no risk appetite: the prohibition is absolute, and in the United States liability under the Office of Foreign Assets Control (OFAC)\index{Office of Foreign Assets Control (OFAC)} regime is strict, meaning a bank that processes a prohibited payment has violated the law whether or not it knew, intended, or profited.
+
+It is tempting to conclude from this that sanctions screening is a database lookup rather than a modeling problem. The legal \emph{consequence} of a match is indeed binary, but the \emph{match itself} is not, and conflating the two is the most common way to misunderstand where the difficulty lies. A watchlist records a name in one particular romanization; a payment message arrives carrying whatever spelling, word order, punctuation, and truncation the originating bank's system happened to produce. Nothing guarantees the two strings agree character for character even when they name the same person, and nothing prevents two genuinely different people from having names that differ by a single letter.
+
+The standard tool for comparing two strings that should be the same but are not is the edit distance, or Levenshtein distance\index{Levenshtein distance}, $d(a,b)$: the minimum number of single-character insertions, deletions, or substitutions needed to turn one string into the other, normalized into a similarity score bounded in $[0,1]$,
+\begin{equation*}
+\text{sim}(a,b) = 1 - \frac{d(a,b)}{\max(|a|,|b|)}.
+\end{equation*}
+Two short surnames make the mechanics concrete. Turning \texttt{SMITH} into \texttt{SMYTH} requires one substitution, so $d=1$ and $\text{sim} = 1 - 1/5 = 0.800$; turning \texttt{SMITH} into \texttt{SCHMIDT} requires four edits against a longer target, giving $\text{sim} = 1 - 4/7 \approx 0.429$. A screening engine flags any pair scoring above some threshold and sends it to an analyst.
+
+Table~\ref{tab:sanctions_matching} applies this to a watchlist entry, \texttt{Mohammed Al-Rashid}, against seven incoming counterparty names, four of which are the same individual and three of which are not. Scores are computed twice: once after simple normalization (uppercase, punctuation stripped), and once after additionally sorting the name's tokens alphabetically, a standard preprocessing step meant to defeat surname-first ordering.
+
+\begin{table}[htbp]
+\centering
+\begin{lrbox}{\bookmeasuredbox}
+\begin{tabular}{lcrr}
+\toprule
+Counterparty name & Same person? & Normalized & Token-sorted \\
+\midrule
+Mohammad Al-Rashid  & yes & 0.9412 & 0.9412 \\
+Mohamed Alrashid    & yes & 0.9412 & 0.9412 \\
+Muhammad Al-Rasheed & yes & 0.7778 & 0.7778 \\
+Al-Rashid, Mohammed & yes & 0.2941 & 1.0000 \\
+Mohammed Al-Rashad  & no  & 0.9412 & 0.9412 \\
+Ahmed Al-Rashid     & no  & 0.7647 & 0.2941 \\
+Mohammed Al-Karim   & no  & 0.7647 & 0.7647 \\
+\bottomrule
+\end{tabular}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\floatbox[\capbot]{table}[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
+\caption{Name-similarity scores against the watchlist entry \texttt{Mohammed Al-Rashid}}
+\label{tab:sanctions_matching}
+}
+\end{table}
+
+Token sorting earns its place immediately: \texttt{Al-Rashid, Mohammed} is the same name written surname-first, and plain edit distance scores it $0.2941$, below every non-match in the table, because reversing two words costs almost as many edits as rewriting the string. Sorting the tokens first raises it to a perfect $1.0000$. The same step also pushes \texttt{Ahmed Al-Rashid}, a different person, down from $0.7647$ to $0.2941$, improving separation in both directions at once.
+
+The result that matters, though, is the one no amount of preprocessing fixes. \texttt{Mohammed Al-Rashad}, a different individual whose family name differs from the target's by a single vowel, scores $0.9412$, tying \emph{exactly} with two of the four genuine matches, while the weakest genuine match, \texttt{Muhammad Al-Rasheed}, scores only $0.7778$. The highest-scoring non-match therefore outranks a true match, and no threshold whatsoever separates the two classes: set the bar at $0.90$ and the engine clears a sanctioned party while flagging an innocent one; set it at $0.75$ and it catches everything at the cost of flagging almost everyone.
+
+This is not a defect in the Levenshtein metric that a better string distance would repair. It is a statement about the information content of a name: a name alone does not identify a person, and two of these strings are simply too close for any function of the characters to tell apart. Production screening systems accordingly treat the string score as a first-stage filter and resolve the remainder with secondary identifiers, date of birth, nationality, passport or national identity number, and address, which is precisely why the Know-Your-Customer records collected at onboarding (Section~\ref{sec:risk-tiering}) do double duty as screening inputs rather than sitting inertly in a compliance file.
+
+The strict-liability point now bites. Section~\ref{sec:fraud-scoring}'s threshold choice was an economic trade-off, and Section~\ref{sec:alert-economics} prices it in analyst hours; here one missed true match is a legal violation regardless of how favorable the arithmetic looks, so a bank cannot buy precision by accepting a little less recall. It sets the threshold low enough to make a miss nearly impossible and absorbs whatever false-positive volume results. That inverted operating point is what makes screening expensive.
+
+The scale follows directly. Suppose a mid-sized bank screens $1{,}200{,}000$ payment messages a month against consolidated watchlists, that $15$ of them genuinely involve a sanctioned party, and that a threshold set for near-certain recall produces a $0.5\%$ false-positive rate against the remaining traffic. Then
+\begin{equation*}
+\text{Alerts} = 0.99(15) + 0.005(1{,}199{,}985) \approx 6{,}015, \qquad \text{Precision} = \frac{14.85}{6{,}015} \approx 0.00247,
+\end{equation*}
+so roughly $0.25\%$ of screening alerts are genuine, against the $3.0\%$ alert-to-SAR conversion Section~\ref{sec:alert-economics} computed for transaction monitoring: a precision twelve times worse. At $10$ minutes of analyst time per screening alert, half what an AML alert takes because most are cleared on sight, and the same fully loaded \$45 hourly cost,
+\begin{equation*}
+\text{Analyst hours} = \frac{6{,}015 \times 10}{60} \approx 1{,}002, \qquad \text{Monthly cost} \approx 1{,}002 \times \$45 \approx \$45{,}100,
+\end{equation*}
+or roughly \$541,000 a year. This is a second alert queue, three-quarters the size of the $8{,}000$-alert transaction-monitoring queue in Section~\ref{sec:alert-economics}, running at one-twelfth its precision, and it exists at every institution that moves money across borders. A reader who takes only one operational fact from this chapter should take this one: in most banks, name screening, not transaction monitoring, is the largest single source of compliance alerts, and reducing its false-positive rate without touching recall is among the highest-value applications of machine learning anywhere in financial crime compliance.
 
 \subsection{Privacy-Preserving Collaboration: Federated Learning Across Institutions}
 \label{sec:federated-aml}
@@ -564,7 +666,7 @@ Model updates are not automatically harmless, though: a parameter estimate compu
 
 \section{Economics and Governance}
 
-A detection model's value is decided by the cost of its false positives and by who is accountable for it.
+A detection model's value is decided by the cost of its false positives and by who is accountable for it. This part is deliberately the shortest in the chapter, and the imbalance is itself the point: detection methods earn their length because they can be taught with worked examples, whereas the failures that actually produce enforcement actions are organizational, and are better shown once and concretely, by the case vignette that follows, than developed at method length.
 
 \subsection{Alert Economics and the Cost of Low Precision}
 \label{sec:alert-economics}
@@ -641,7 +743,7 @@ Several challenges recur across nearly every application in this chapter, and ma
 
 \textbf{The adversary adapts, which most of this book's other models do not have to contend with.} A credit-scoring model's population of borrowers (Chapter 9) is not actively trying to defeat the model; a launderer engaged in structuring (Section~\ref{sec:aml-structuring}) is specifically designing behavior to evade a known detection rule, meaning a fraud or AML model's effectiveness can decay not just through the ordinary concept drift Chapter 14 discussed for order-flow models, but through deliberate, targeted evasion once a detection threshold becomes known or guessable.
 
-\textbf{Data across institutions and jurisdictions is fragmented.} The correspondent-banking structure behind this chapter's case vignette illustrates a recurring practical limit: any single institution's monitoring system, however well built, only observes its own slice of a transaction chain that may span several banks and countries, which is why network-level and cross-institutional information sharing, within the legal limits privacy and banking secrecy law impose, materially improves detection relative to any one institution acting alone.
+\textbf{Data across institutions and jurisdictions is fragmented.} The correspondent-banking structure behind this chapter's case vignette illustrates a recurring practical limit: any single institution's monitoring system, however well built, only observes its own slice of a transaction chain that may span several banks and countries, which is why network-level and cross-institutional information sharing, within the legal limits privacy and banking secrecy law impose, materially improves detection relative to any one institution acting alone, and why the federated learning of Section~\ref{sec:federated-aml} is worth the operational complexity it adds.
 
 \textbf{False positives carry a real customer and reputational cost, not just an operational one.} Every incorrectly frozen account or declined transaction identified in Section~\ref{sec:alert-economics}'s alert queue is also a legitimate customer temporarily denied normal use of their own funds, a cost that does not show up in a precision or recall statistic but matters directly to customer relationships and, in aggregate, to regulatory scrutiny of whether a program's false-positive rate is itself proportionate.
 
@@ -656,6 +758,10 @@ Fraud detection and anti-money-laundering compliance apply the classification to
 Chapter 1's Bayes' theorem fraud example, scaled to a full day of transaction volume and re-applied to insider trading surveillance, shows concretely why even an apparently accurate model generates a large false-positive alert queue, and that precision at a low base rate is far more sensitive to the false-positive rate than to the true-positive rate, so alert economics, not just statistical accuracy, must guide how a fraud or AML program is designed and staffed.
 
 A single-transaction scoring model, however well fit, structurally cannot catch a fraud that looks unremarkable in isolation, which motivates account-level behavioral risk tiering and, this chapter's methodologically new contribution, survival analysis, the Kaplan-Meier estimator, to characterize how account risk accumulates and resolves over time using both confirmed events and censored observations.
+
+Two growing fraud types defeat transaction-level scoring outright rather than merely straining it. A synthetic identity has no victim to report it, so its losses are booked as ordinary credit loss and never reach a supervised model's training labels at all, which is the strongest case in this chapter for unsupervised detection and for linkage analysis across accounts. An authorized push payment scam is genuinely authorized by the customer, so no feature of the payment itself carries signal, and detection must move to the customer's own baseline and to the beneficiary account; mandatory reimbursement is what turned that from a customer-education problem into an expected-cost calculation a bank can solve.
+
+Sanctions screening looks like a lookup and is in fact a matching problem: Section~\ref{sec:sanctions-screening}'s worked example shows a non-match tying exactly with two genuine matches on name similarity alone, so no threshold separates them and secondary identifiers must finish the job. Because liability for a missed match is strict, recall cannot be traded for precision the way it can everywhere else in this chapter, which is why name screening is typically a bank's largest single alert queue and its least precise one.
 
 Anti-money-laundering regulation adds a reporting and due-diligence apparatus, CTRs, SARs, KYC, and sanctions screening, with no direct counterpart in ordinary credit or fraud risk modeling, built specifically around legally defined thresholds that launderers attempt to evade through the placement-layering-integration sequence, structuring at the placement stage and shell-entity network chains at the layering stage. The Danske Bank Estonia case shows that the binding constraint on a compliance program is at least as often organizational, whether the three lines of defense actually function independently, as it is statistical, and that governance discipline, not just modeling sophistication, is what separates a monitoring system that works on paper from one that works in practice.
 
@@ -674,17 +780,16 @@ Anti-money-laundering regulation adds a reporting and due-diligence apparatus, C
     \item A customer makes four cash deposits of \$9,200 each within five days. Compute the total deposited, and explain, using Section~\ref{sec:aml-structuring}'s structuring discussion, why no individual deposit triggers a Currency Transaction Report even though the total clearly would if deposited at once.
     \item Using Table~\ref{tab:layering_network}'s method, compute a five-hop layering chain starting from \$300,000, with each entity retaining $3\%$ and forwarding the rest, and report the amount reaching the final destination and the total retained across all five hops.
     \item A bank's monitoring system generates $12{,}000$ alerts per month, of which $180$ become filed SARs, and each alert takes an average of 25 minutes to review. Compute the alert-to-SAR conversion rate and the total analyst-hours required per month, and compare both figures to Section~\ref{sec:alert-economics}'s worked example.
-    \item Using Section~\ref{sec:alert-economics}'s cost figures, compute the monthly alert volume, analyst hours, and dollar cost if precision improved to $4.0\%$ instead of $6.0\%$ (holding the $240$ monthly SARs and the \$45-per-hour analyst rate fixed), and express the resulting cost as a percentage of the original \$120,000 figure.
-    \item Describe, in a short paragraph, why a rule of the form ``flag any single cash transaction over \$10,000'' is, by construction, unable to detect the structuring pattern in Section~\ref{sec:aml-structuring}'s worked example, and propose an alternative rule that would catch it.
     \item Using Table~\ref{tab:precision_drift}, identify the month in which precision first falls below a $19\%$ floor instead of the $20\%$ floor discussed in the text, and explain why setting the floor in advance, rather than deciding case by case, matters for a model-monitoring program's effectiveness.
     \item Using Section~\ref{sec:governance-3lod}'s three-lines-of-defense framework, identify which line (first, second, or third) each of the following failures most directly represents, and explain why: (a) a branch employee ignores an internal escalation policy for a suspicious customer; (b) an independent audit team reports directly to the same regional manager whose unit it is auditing; (c) the compliance function never independently tests whether the transaction-monitoring model's alert thresholds are still appropriate.
     \item Pick two of the challenges listed in this chapter and describe a concrete scenario, not already used in the text, in which that challenge could cause a fraud or AML program to fail despite a well-designed underlying statistical model, and explain briefly why adding more computing power or a more flexible model would not, by itself, resolve either scenario you describe.
     \item Explain, using the Danske Bank Estonia case vignette, why correspondent banking relationships make financial crime detection harder for any single institution acting alone, and describe one mechanism (discussed in this chapter or otherwise), such as cross-institution information sharing or a shared utility for sanctions and beneficial-ownership screening, that could mitigate this limitation.
     \item Compare the class-imbalance problem in this chapter's fraud examples to the loan-default classification example in Chapter 6: using Chapter 6's confusion matrix (a 75\% true-positive rate and, among the six actual non-defaulters, one false positive), compute what the loan portfolio's default rate would need to be, holding the same true-positive and false-positive rates constant, for precision to fall to the same 24.2\% level as this chapter's fraud example.
     \item Using this chapter's composite risk-tiering example, recompute the composite score if the KYC-consistency sub-score were only $60$ instead of $90$ (velocity and geographic-diversity sub-scores unchanged), and determine whether the account would still fall in the High tier of Table~\ref{tab:risk_tiers}.
-    \item Using this chapter's composite risk-tiering weights ($40\%$ velocity, $35\%$ geographic diversity, $25\%$ KYC consistency), find the minimum KYC-consistency sub-score, holding velocity at $70$ and geographic diversity at $50$, that would push the composite score into the Enhanced Due Diligence tier ($85$ or above), and comment on whether a single extreme sub-score could plausibly drive an account into that tier on its own under these weights.
     \item Using Greenwood's formula, compute $\widehat{\text{Var}}[\hat S(12)]$ and the resulting 95\% confidence interval for $\hat S(12)\approx0.7407$, and compare its width to the width of the interval already computed at $t=20$ in the text, explaining why the earlier time point's interval is narrower even though both are computed from the same 12 accounts.
-    \item Explain, in your own words, why the Kaplan-Meier confidence interval computed at $t=35$ is so much wider than the point estimate alone might suggest, and describe what a compliance team should do differently, if anything, when reporting a survival estimate whose confidence interval spans nearly the entire $[0,1]$ range.
+    \item Using Section~\ref{sec:sanctions-screening}'s similarity definition, compute $\text{sim}$ for the pairs \texttt{MOHAMMED ALRASHID}/\texttt{MUHAMMED ALRASHID} and \texttt{MOHAMMED ALRASHID}/\texttt{MOHAMMED ALRASHEED}, and explain why the second pair, which involves a genuinely different family name, nonetheless scores higher than \texttt{Muhammad Al-Rasheed} does in Table~\ref{tab:sanctions_matching}.
+    \item Using Section~\ref{sec:sanctions-screening}'s screening-volume example, recompute the monthly alert count, precision, analyst hours, and dollar cost if a better matching engine cut the false-positive rate from $0.5\%$ to $0.2\%$ while holding recall at $99\%$, and express the annual saving relative to the \$541,000 figure in the text. Then compute what the same $60\%$ reduction in false positives would save in Section~\ref{sec:alert-economics}'s transaction-monitoring queue, and explain why a bank might nonetheless prioritize the screening engine even though the transaction-monitoring saving turns out to be the larger of the two.
+    \item Explain why a bank cannot manage its sanctions-screening alert volume the way Section~\ref{sec:fraud-scoring} manages its fraud-scoring alert volume, by raising the classification threshold, and describe what a screening program can change instead in order to reduce false positives without reducing recall.
     \item \textbf{Challenge (real data).} Download the Kaggle ``Credit Card Fraud Detection'' dataset (Universit\'e Libre de Bruxelles; roughly 285,000 European cardholder transactions over two days, with 492 confirmed frauds and features already anonymized via PCA). Its $0.172\%$ fraud rate is far more extreme than Table~\ref{tab:fraud_scoring_data}'s ten-transaction toy example. (a) Fit a logistic regression with and without class weighting, as in Section~\ref{sec:advanced-imbalance}, and report precision, recall, $F_1$, and precision-recall AUC for both, since accuracy alone is uninformative at this imbalance. (b) Using Section~\ref{sec:alert-economics}'s cost-based framework and assuming a \$50 review cost per flagged transaction and a \$200 average loss per missed fraud, find the threshold that minimizes total expected cost, and compare its alert volume to what a naive $0.5$ threshold would produce. (c) Since the features are already anonymized PCA components rather than raw transaction attributes, this dataset cannot support the same kind of domain-driven feature engineering (for example, distance from home) used in this chapter's own toy example; discuss what information a real bank's fraud team has access to that this public, privacy-scrubbed dataset deliberately withholds.
 \end{enumerate}
 
@@ -695,6 +800,7 @@ Anti-money-laundering regulation adds a reporting and due-diligence apparatus, C
     \item Chawla, Bowyer, Hall, and Kegelmeyer, ``SMOTE: Synthetic Minority Over-sampling Technique,'' \emph{Journal of Artificial Intelligence Research}. The original paper introducing the resampling technique discussed in Section~\ref{sec:advanced-imbalance}.
     \item Klein, \emph{Survival Analysis: Techniques for Censored and Truncated Data}. A standard, thorough reference on the Kaplan-Meier estimator and censoring introduced in Section~\ref{sec:survival-fraud}.
     \item Financial Action Task Force (FATF), \emph{International Standards on Combating Money Laundering and the Financing of Terrorism and Proliferation}. The primary international regulatory framework underlying the KYC, CDD, and reporting obligations discussed in Section~\ref{sec:aml-structuring}.
+    \item U.S. Department of the Treasury, Office of Foreign Assets Control, \emph{A Framework for OFAC Compliance Commitments}. The regulator's own statement of what a sanctions compliance program must include, and the primary source for the strict-liability standard underlying Section~\ref{sec:sanctions-screening}.
     \item U.S. Financial Crimes Enforcement Network (FinCEN), \emph{Bank Secrecy Act Regulations and Guidance}. The primary U.S. regulatory source for the CTR and SAR reporting requirements discussed in this chapter.
     \item Meiklejohn, Pomarole, Jordan, Levchenko, McCoy, Voelker, and Savage, ``A Fistful of Bitcoins: Characterizing Payments Among Men with No Names,'' \emph{Proceedings of the 2013 Internet Measurement Conference}. The paper formalizing the common-input-ownership clustering heuristic underlying Section~\ref{sec:blockchain-forensics}.
     \item Bruun \& Hjejle, \emph{Report on the Non-Resident Portfolio at Danske Bank's Estonian Branch}. The external investigation commissioned by Danske Bank itself, the primary source for the factual account in this chapter's case vignette.
