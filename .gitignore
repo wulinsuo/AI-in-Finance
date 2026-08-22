@@ -28,11 +28,13 @@ ch12_data/
 # None of this is manuscript content, and it stays local rather than going to the
 # public repo. The whole directory is ignored, so material added under it later is
 # covered without another rule.
-# UNANCHORED on purpose. '/Instructors/' matched only the repo root, so after the
-# 2026-08-05 move of the English content into en/ it stopped covering
-# en/Instructors/ (444 files: slide decks, the build system, and the answer keys).
+# UNANCHORED on purpose, and this rule has now survived two reorganisations in
+# opposite directions: the 2026-08-05 move of the English content into en/, which
+# broke the old anchored '/Instructors/' (444 files: slide decks, the build system,
+# and the answer keys), and the 2026-08-21 move back out to the repository root.
 # A leading slash anchors a pattern to the .gitignore's own directory; a slash-free
-# one matches at any depth and therefore survives a reorganisation.
+# one matches at any depth and therefore survives a reorganisation in either
+# direction. Keep every rule below unanchored unless it must be root-only.
 Instructors/
 
 # The two solutions rules below are now subsumed by /Instructors/ above, since the
@@ -69,14 +71,15 @@ vol_risk_premium_*
 # book (the draft_insurance.tex pattern) should be tracked instead of matched
 # here, so add such files by exact name rather than widening this glob.
 # UNANCHORED, for the same reason as Instructors/ above: 'chapters/...' contains a
-# slash and so was anchored to the repo root, and stopped matching once the English
-# content moved into en/. This is the abandoned production/MLOps appendix; it stays
-# local and must never reach the public repository.
+# slash and so was anchored to the repo root, and stopped matching when the English
+# content moved into en/. Left unanchored after the 2026-08-21 move back to the
+# root, so it holds whichever way the tree is arranged. This is the abandoned
+# production/MLOps appendix; it stays local and must never reach the public repo.
 draft_appendix_production.*
 
-# Local scratch, never part of either book. All four predate or postdate the
-# en/ move and never had a rule; they surfaced as untracked once the layout
-# settled. Unanchored so they stay ignored wherever they end up on disk.
+# Local scratch, never part of either book. These never had a rule and surfaced
+# as untracked once the layout settled. Unanchored so they stay ignored wherever
+# they end up on disk.
 frontmatter_extract*.tex
 fix_watermark.py
 inspect_watermark.py
