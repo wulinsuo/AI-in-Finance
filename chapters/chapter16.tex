@@ -614,14 +614,14 @@ Diffusion models take a different approach, motivated by physical diffusion proc
 
 \subsubsection*{A Worked Example: One Forward Diffusion Step}
 
-Consider a toy stress-test scenario variable, a multiplier applied to a baseline loss, with baseline (undiffused) value $x_0 = 1.00$ (no stress) and a noise draw $\epsilon = 0.50$. At an early diffusion step with
+Consider a toy stress-test scenario variable, a multiplier applied to a baseline loss, with baseline (undiffused) value $x_0 = 1.00$ (no stress) and a noise draw $\epsilon = -0.50$. At an early diffusion step with
 $\alpha_t = 0.80$,
-$$x_t = \sqrt{0.80}\,(1.00) + \sqrt{0.20}\,(0.50) = 1.1180.$$
+$$x_t = \sqrt{0.80}\,(1.00) + \sqrt{0.20}\,(-0.50) = 0.6708.$$
 At a later, noisier step with $\alpha_t = 0.55$,
-$$x_t = \sqrt{0.55}\,(1.00) + \sqrt{0.45}\,(0.50) = 1.0770.$$
-As $\alpha_t$ falls from 0.80 to 0.55, the scenario value moves from 1.1180 down to 1.0770,
-drifting away from the deterministic baseline of 1.00 and toward the random noise draw of 0.50; continuing this process to $\alpha_t \to 0$
-would carry $x_t$ all the way to $\epsilon$ itself, pure noise with no remaining trace of the original scenario. A trained diffusion model learns
+$$x_t = \sqrt{0.55}\,(1.00) + \sqrt{0.45}\,(-0.50) = 0.4062.$$
+As $\alpha_t$ falls from 0.80 to 0.55, the scenario value moves from 0.6708 down to 0.4062,
+drifting away from the deterministic baseline of 1.00 and toward the random noise draw of $-0.50$; continuing this process to $\alpha_t \to 0$
+would carry $x_t$ all the way to $\epsilon$ itself, pure noise with no remaining trace of the original scenario. Note that the two coefficients are square roots chosen so that $\big(\sqrt{\alpha_t}\big)^2 + \big(\sqrt{1-\alpha_t}\big)^2 = 1$: they hold the \emph{variance} of $x_t$ constant as noise replaces signal, and they are deliberately not a weighted average of $x_0$ and $\epsilon$, since they sum to more than one. A same-signed noise draw can therefore push $x_t$ temporarily outside the range spanned by $x_0$ and $\epsilon$ before it settles toward $\epsilon$. A trained diffusion model learns
 to run this process in reverse, starting from noise and reconstructing a plausible, never-before-observed stress scenario, one that
 Chapter 8's stress-testing discussion could use to probe portfolio losses under conditions beyond anything in the historical sample.
 
@@ -798,7 +798,7 @@ capacity from per-token compute cost, and BloombergGPT demonstrates the Loughran
     \item Using Section~\ref{sec:rag}'s precision@k example, recompute Precision@4 if Doc5 from the previous exercise (also not relevant to a revenue question) is retrieved fourth, and explain in words why adding a fifth, similarly irrelevant document could never increase precision at any $k$, only decrease it or leave it unchanged.
     \item Using Section~\ref{sec:rag}'s faithfulness-score example, an answer embeds at $(0.80, 0.25, 0.00)$. Compute its faithfulness score against Doc1, and state whether it would pass a review threshold of $0.90$.
     \item Write a zero-shot prompt, a two-example few-shot prompt, and a chain-of-thought prompt, following Section~\ref{sec:prompting}'s patterns, for the task of classifying whether a sentence from a 10-K risk-factors section describes credit risk or market risk (the task Section~\ref{sec:naive-bayes-text} solved with Naive Bayes instead).
-    \item Using Section~\ref{sec:generative-synthetic}'s worked example, compute $x_t$ for a third diffusion step with $\alpha_t = 0.30$, holding $x_0 = 1.00$ and $\epsilon = 0.50$ fixed, and confirm that $x_t$ has moved even closer to $\epsilon$
+    \item Using Section~\ref{sec:generative-synthetic}'s worked example, compute $x_t$ for a third diffusion step with $\alpha_t = 0.30$, holding $x_0 = 1.00$ and $\epsilon = -0.50$ fixed, and confirm that $x_t$ has moved even closer to $\epsilon$
      than the two steps already computed.
     \item Explain, in a short paragraph, why validating a generative AI system requires sampling many outputs rather than checking a single prediction against a labeled test set, referencing Section~\ref{sec:genai-governance} and contrasting it with how Chapter 6 evaluates a classification model.
     \item Pick two of the challenges listed in this chapter and describe a concrete scenario, not already used in the text, in which that challenge could cause an NLP-based financial application to fail despite technically correct code.
