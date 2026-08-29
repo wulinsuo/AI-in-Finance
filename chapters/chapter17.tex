@@ -341,7 +341,7 @@ h_3 &= \tanh(0.6(0.9) + 0.4(0.1312) + 0.1) = \tanh(0.69248) = 0.5996.
 \end{align*}
 Notice that $h_2$ is small, close to zero, not because $x_2$ was extreme (it was mildly negative) but because it also carries a damped memory of $h_1$; the hidden state genuinely blends past and present rather than reacting to the latest input alone.
 
-Passing the final hidden state through an output layer, $\hat y = \sigma(w_y h_3 + b_y)$ with $w_y = 1.2$ and $b_y = -0.3$, gives $\hat y = \sigma(1.2(0.5996) - 0.3) = \sigma(0.4195) = 0.6034$, which might, for instance, be interpreted as a 60.3\% estimated probability that Cascade's upcoming quarter shows accelerating (rather than decelerating) revenue growth. Figure~\ref{fig:rnn_unrolled} unrolls this same computation across its three time steps, making explicit how each hidden state depends on both the current input and the previous hidden state.
+Passing the final hidden state through an output layer, $\hat y = \sigma(w_y h_3 + b_y)$, where $\sigma(z) = 1/(1+e^{-z})$ is Chapter 6's sigmoid, with $w_y = 1.2$ and $b_y = -0.3$, gives $\hat y = \sigma(1.2(0.5996) - 0.3) = \sigma(0.4195) = 0.6034$, which might, for instance, be interpreted as a 60.3\% estimated probability that Cascade's upcoming quarter shows accelerating (rather than decelerating) revenue growth. Figure~\ref{fig:rnn_unrolled} unrolls this same computation across its three time steps, making explicit how each hidden state depends on both the current input and the previous hidden state.
 
 \begin{figure}[htbp]
 \centering

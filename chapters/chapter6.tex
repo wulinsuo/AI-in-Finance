@@ -919,7 +919,11 @@ Suppose an analyst suspects that default risk depends on leverage and profitabil
 \begin{equation*}
 \hat y = \sigma_2\big(W_2\, \sigma_1(W_1 x + b_1) + b_2\big),
 \end{equation*}
-where $W_1, b_1, W_2, b_2$ are learned weight matrices and bias vectors, and $\sigma_1, \sigma_2$ are nonlinear activation functions, such as the rectified linear unit $\text{ReLU}(z) = \max(0,z)$ for hidden layers or the sigmoid function for a binary output layer. Stacking more such layers produces a deep network. The weights are learned by minimizing a loss function (mean squared error for regression, log-loss for classification) using gradient descent, with gradients computed efficiently via backpropagation\index{backpropagation}, an efficient algorithm for computing the gradient of the loss with respect to every weight in the network by applying the chain rule layer by layer from the output back to the input.
+where $W_1, b_1, W_2, b_2$ are learned weight matrices and bias vectors, and $\sigma_1, \sigma_2$ are nonlinear activation functions, such as the rectified linear unit $\text{ReLU}(z) = \max(0,z)$ for hidden layers or, for a binary output layer, the sigmoid function\index{Sigmoid Function}
+\begin{equation*}
+\sigma(z) = \frac{1}{1+e^{-z}},
+\end{equation*}
+which maps any real number into the interval $(0,1)$ so that the output can be read as a probability, and which is the same function logistic regression applied in Section~\ref{sec:classification-example} above. The subscripted $\sigma_1$ and $\sigma_2$ stand for whichever activation a given layer happens to use; a bare $\sigma(\cdot)$, here and in every later chapter, means this sigmoid specifically. Stacking more such layers produces a deep network. The weights are learned by minimizing a loss function (mean squared error for regression, log-loss for classification) using gradient descent, with gradients computed efficiently via backpropagation\index{backpropagation}, an efficient algorithm for computing the gradient of the loss with respect to every weight in the network by applying the chain rule layer by layer from the output back to the input.
 
 A small numerical example makes the forward pass (computing a prediction from an input) concrete. Suppose a network has two inputs, a hidden layer with two ReLU units, and a single sigmoid output, with weights
 \begin{equation*}
