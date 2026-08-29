@@ -478,14 +478,14 @@ Roughly $80\%$ of $c_1$'s information survives to $c_3$ in the LSTM, against rou
 \begin{figure}[htbp]
 \centering
 \begin{lrbox}{\bookmeasuredbox}
-\begin{tikzpicture}[>=latex,thick,node distance=1.0cm and 0.5cm,every node/.style={font=\small}]
-    \node[draw,rounded corners,align=center,minimum width=5.4cm] (inputs) at (4.5,4.6) {Inputs at $t=1$: $h_0=0$, $x_1=0.5$};
-    \node[draw,rounded corners,align=center,minimum width=2.0cm] (forget) at (0,2.3) {Forget gate\\$f_1=\sigma(2.15)$\\$=0.8957$};
-    \node[draw,rounded corners,align=center,minimum width=2.0cm] (input) at (3.0,2.3) {Input gate\\$i_1=\sigma(0.25)$\\$=0.5622$};
-    \node[draw,rounded corners,align=center,minimum width=2.0cm] (cand) at (6.0,2.3) {Candidate\\$\tilde c_1=\tanh(0.25)$\\$=0.2449$};
-    \node[draw,rounded corners,align=center,minimum width=2.0cm] (output) at (9.0,2.3) {Output gate\\$o_1=\sigma(0.25)$\\$=0.5622$};
-    \node[draw,rounded corners,align=center,minimum width=3.4cm] (cell) at (3.0,0) {New cell state\\$c_1=f_1c_0+i_1\tilde c_1=0.1377$};
-    \node[draw,rounded corners,align=center,minimum width=3.4cm] (hidden) at (9.0,0) {New hidden state\\$h_1=o_1\tanh(c_1)=0.0769$};
+\begin{tikzpicture}[>=latex,thick,node distance=1.0cm and 0.5cm,every node/.style={font=\footnotesize}]
+    \node[draw,rounded corners,align=center,minimum width=4.6cm] (inputs) at (4.05,3.6) {Inputs at $t=1$: $h_0=0$, $x_1=0.5$};
+    \node[draw,rounded corners,align=center,minimum width=1.7cm] (forget) at (0,1.9) {Forget gate\\$f_1=\sigma(2.15)$\\$=0.8957$};
+    \node[draw,rounded corners,align=center,minimum width=1.7cm] (input) at (2.7,1.9) {Input gate\\$i_1=\sigma(0.25)$\\$=0.5622$};
+    \node[draw,rounded corners,align=center,minimum width=1.7cm] (cand) at (5.4,1.9) {Candidate\\$\tilde c_1=\tanh(0.25)$\\$=0.2449$};
+    \node[draw,rounded corners,align=center,minimum width=1.7cm] (output) at (8.1,1.9) {Output gate\\$o_1=\sigma(0.25)$\\$=0.5622$};
+    \node[draw,rounded corners,align=center,minimum width=2.9cm] (cell) at (2.7,0) {New cell state\\$c_1=f_1c_0+i_1\tilde c_1=0.1377$};
+    \node[draw,rounded corners,align=center,minimum width=2.9cm] (hidden) at (8.1,0) {New hidden state\\$h_1=o_1\tanh(c_1)=0.0769$};
     \draw[->] (inputs) -- (forget);
     \draw[->] (inputs) -- (input);
     \draw[->] (inputs) -- (cand);
@@ -526,17 +526,17 @@ In practice, this would be the kind of quarter a data-quality analyst should inv
 \centering
 \begin{lrbox}{\bookmeasuredbox}
 \begin{tikzpicture}[>=latex,thick,
-    io/.style={draw,circle,minimum size=1.5cm,align=center,font=\small},
-    bottleneck/.style={draw,circle,minimum size=1.3cm,align=center,font=\small,fill=gray!15}]
-    \node[io] (xcar) at (0,2.4) {car\\$=0.6$};
+    io/.style={draw,circle,minimum size=1.15cm,inner sep=1pt,align=center,font=\footnotesize},
+    bottleneck/.style={draw,circle,minimum size=1.05cm,inner sep=1pt,align=center,font=\footnotesize,fill=gray!15}]
+    \node[io] (xcar) at (0,1.8) {car\\$=0.6$};
     \node[io] (xweb) at (0,0) {web\\$=1.5$};
-    \node[io] (xcard) at (0,-2.4) {card\\$=0.8$};
+    \node[io] (xcard) at (0,-1.8) {card\\$=0.8$};
 
-    \node[bottleneck] (z) at (4.8,0) {$z$\\$=0.91$};
+    \node[bottleneck] (z) at (3.6,0) {$z$\\$=0.91$};
 
-    \node[io] (rcar) at (9.6,2.4) {$\hat{\text{car}}$\\$=0.455$};
-    \node[io] (rweb) at (9.6,0) {$\hat{\text{web}}$\\$=0.273$};
-    \node[io] (rcard) at (9.6,-2.4) {$\hat{\text{card}}$\\$=0.182$};
+    \node[io] (rcar) at (7.2,1.8) {$\hat{\text{car}}$\\$=0.455$};
+    \node[io] (rweb) at (7.2,0) {$\hat{\text{web}}$\\$=0.273$};
+    \node[io] (rcard) at (7.2,-1.8) {$\hat{\text{card}}$\\$=0.182$};
 
     \draw[->] (xcar) -- node[above,sloped,font=\scriptsize]{$0.5$} (z);
     \draw[->] (xweb) -- node[above,font=\scriptsize]{$0.3$} (z);
@@ -550,9 +550,9 @@ In practice, this would be the kind of quarter a data-quality analyst should inv
     % "below=1.9cm of <node>", but z sits 2.4cm above the bottom row, so its label
     % landed 2.4cm higher than the other two -- visibly misaligned, and it stretched
     % the picture's bounding box far below the diagram to reach the outer two.
-    \node[font=\small] at (0,-3.75) {Encoder input $x$};
-    \node[font=\small] at (4.8,-3.75) {Bottleneck $z=w\cdot x$};
-    \node[font=\small] at (9.6,-3.75) {Decoder output $\hat x = z\,w$};
+    \node[font=\footnotesize] at (0,-2.85) {Encoder input $x$};
+    \node[font=\footnotesize] at (3.6,-2.85) {Bottleneck $z=w\cdot x$};
+    \node[font=\footnotesize] at (7.2,-2.85) {Decoder output $\hat x = z\,w$};
 \end{tikzpicture}
 \end{lrbox}
 \ifdim\wd\bookmeasuredbox<0.65\linewidth
