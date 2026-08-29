@@ -393,49 +393,52 @@ where
 $$f_t = \sigma(W_f[h_{t-1},x_t] + b_f)$$
 is a forget gate controlling how much of the previous cell state to retain,
 $$i_t = \sigma(W_i[h_{t-1},x_t]+b_i)$$
-is an input gate controlling how much of a new candidate value $\tilde c_t$ to admit, and $\odot$ denotes elementwise multiplication; a third, output gate
+is an input gate controlling how much of a new candidate value
+$$\tilde c_t = \tanh(W_c[h_{t-1},x_t]+b_c)$$
+to admit, and $\odot$ denotes elementwise multiplication; a third, output gate
 $$o_t = \sigma(W_o[h_{t-1},x_t]+b_o)$$ then controls how much of $c_t$ is exposed as the hidden state
 $$h_t = o_t \odot \tanh(c_t).$$
-Figure~\ref{fig:lstm_schematic} puts these five equations in one picture, with the cell state running along the top and the gates feeding it from below.
+The three gates use $\sigma$, whose output lies in $(0,1)$ and so reads as a fraction retained or admitted, while the candidate uses $\tanh$, whose output lies in $(-1,1)$ and so carries a signed value to be written into the cell state. The worked example below turns on precisely that difference: from identical arguments it computes $i_1 = \sigma(0.25) = 0.5622$ but $\tilde c_1 = \tanh(0.25) = 0.2449$.
+Figure~\ref{fig:lstm_schematic} puts these six equations in one picture, with the cell state running along the top and the gates feeding it from below.
 
 \begin{figure}[htbp]
 \centering
 \begin{lrbox}{\bookmeasuredbox}
-\begin{tikzpicture}[>=latex,thick,font=\small,
-    box/.style={draw,rounded corners,align=center,minimum width=1.5cm,minimum height=7mm},
-    op/.style={draw,circle,inner sep=0pt,minimum size=6mm}]
+\begin{tikzpicture}[>=latex,thick,font=\footnotesize,
+    box/.style={draw,rounded corners,align=center,inner sep=2pt,minimum width=1.05cm,minimum height=5.5mm},
+    op/.style={draw,circle,inner sep=0pt,minimum size=4.6mm}]
     % The cell-state highway runs straight across the top, uninterrupted except
     % by one multiplication and one addition: this is the point of the picture.
-    \node (cprev) at (0,3.0) {$c_{t-1}$};
-    \node[op] (m1) at (2.1,3.0) {$\times$};
-    \node[op] (pl) at (4.5,3.0) {$+$};
-    \coordinate (br) at (6.0,3.0);
-    \node (cnext) at (7.3,3.0) {$c_t$};
+    \node (cprev) at (0,2.35) {$c_{t-1}$};
+    \node[op] (m1) at (1.55,2.35) {$\times$};
+    \node[op] (pl) at (3.25,2.35) {$+$};
+    \coordinate (br) at (4.25,2.35);
+    \node (cnext) at (5.2,2.35) {$c_t$};
     \draw[->] (cprev) -- (m1);
     \draw[->] (m1) -- (pl);
     \draw[->] (pl) -- (cnext);
 
     % Exposure path: tanh the cell state, scale it by the output gate.
-    \node[box] (th) at (8.0,1.6) {$\tanh$};
-    \node[op] (m2) at (9.7,1.6) {$\times$};
-    \node (ht) at (10.9,1.6) {$h_t$};
+    \node[box] (th) at (6.15,1.25) {$\tanh$};
+    \node[op] (m2) at (7.5,1.25) {$\times$};
+    \node (ht) at (8.4,1.25) {$h_t$};
     \draw[->] (br) |- (th.west);
     \draw[->] (th) -- (m2);
     \draw[->] (m2) -- (ht);
 
     % Gates, all four computed from the same concatenated input.
-    \node[box] (f) at (2.1,0.5) {$f_t$};
-    \node[box] (i) at (3.7,0.5) {$i_t$};
-    \node[box] (cand) at (5.4,0.5) {$\tilde c_t$};
-    \node[box] (o) at (9.7,0.5) {$o_t$};
-    \node[op] (m3) at (4.5,1.6) {$\times$};
+    \node[box] (f) at (1.55,0.35) {$f_t$};
+    \node[box] (i) at (2.7,0.35) {$i_t$};
+    \node[box] (cand) at (3.9,0.35) {$\tilde c_t$};
+    \node[box] (o) at (7.5,0.35) {$o_t$};
+    \node[op] (m3) at (3.25,1.25) {$\times$};
     \draw[->] (f) -- (m1);
     \draw[->] (i) -- (m3);
     \draw[->] (cand) -- (m3);
     \draw[->] (m3) -- (pl);
     \draw[->] (o) -- (m2);
 
-    \node[box,minimum width=3.6cm] (in) at (3.7,-0.9) {$[\,h_{t-1},\,x_t\,]$};
+    \node[box,minimum width=2.7cm] (in) at (2.7,-0.75) {$[\,h_{t-1},\,x_t\,]$};
     \draw[->] (in) -- (f);
     \draw[->] (in) -- (i);
     \draw[->] (in) -- (cand);
