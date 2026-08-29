@@ -744,7 +744,7 @@ value increases with uncertainty, remains a useful lens for evaluating investmen
 A simplified numerical illustration makes the option-to-wait logic concrete, even without a fully specified binomial tree of traded prices. Suppose the mining company's deposit costs $K = \$50$ million to develop, and, if developed today, is worth exactly $\$50$ million, a marginal project with $\text{NPV} = 50.0 - 50.0 = \$0$ that a naive analysis would treat as a coin flip, worth doing but not clearly attractive. Suppose that if the firm waits one year, the deposit's value will have moved to either $\$70$ million (if commodity prices rise) or $\$35$ million (if they fall), each with probability $0.5$, and the firm develops the deposit only if doing so is still profitable at that point.
 The expected payoff from waiting is
 \begin{equation*}
-E[\text{Payoff}] = 0.5 \times \max(70.0 - 50.0,\ 0) + 0.5 \times \max(35.0 - 50.0,\ 0) = 0.5(20.0) + 0.5(0) = \$10.0 \text{ million},
+E[\text{Payoff}] = 0.5 \times \max(70.0 - 50.0,\ 0) + 0.5 \times \max(35.0 - 50.0,\ 0) = 0.5 \times 20.0 + 0.5 \times 0 = \$10.0 \text{ million},
 \end{equation*}
 which, discounted one year at a risk-free rate of $5\%$, has a present value of $10.0/1.05 \approx \$9.52$ million, substantially higher than the $\$0$ NPV of developing immediately. Figure~\ref{fig:real_options_tree} lays out this comparison as a one-step decision tree: developing immediately is a single certain outcome, while waiting branches into the two possible commodity-price states, each carrying its own payoff.
 

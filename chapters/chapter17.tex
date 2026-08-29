@@ -335,13 +335,13 @@ so that $h_t$ is, in principle, a function of every input the network has seen s
 
 Suppose Cascade's e-commerce site shows three successive weekly readings of normalized web-traffic growth in the final three weeks before its next earnings release, $x_1 = 0.5$, $x_2 = -0.2$, $x_3 = 0.9$, and a single-hidden-unit RNN with weights $w_x = 0.6$, $w_h = 0.4$, $b = 0.1$, and initial hidden state $h_0 = 0$. Step by step:
 \begin{align*}
-h_1 &= \tanh(0.6(0.5) + 0.4(0) + 0.1) = \tanh(0.400) = 0.3799, \\
-h_2 &= \tanh(0.6(-0.2) + 0.4(0.3799) + 0.1) = \tanh(0.13196) = 0.1312, \\
-h_3 &= \tanh(0.6(0.9) + 0.4(0.1312) + 0.1) = \tanh(0.69248) = 0.5996.
+h_1 &= \tanh(0.6 \times 0.5 + 0.4 \times 0 + 0.1) = \tanh(0.400) = 0.3799, \\
+h_2 &= \tanh(0.6 \times (-0.2) + 0.4 \times 0.3799 + 0.1) = \tanh(0.13196) = 0.1312, \\
+h_3 &= \tanh(0.6 \times 0.9 + 0.4 \times 0.1312 + 0.1) = \tanh(0.69248) = 0.5996.
 \end{align*}
 Notice that $h_2$ is small, close to zero, not because $x_2$ was extreme (it was mildly negative) but because it also carries a damped memory of $h_1$; the hidden state genuinely blends past and present rather than reacting to the latest input alone.
 
-Passing the final hidden state through an output layer, $\hat y = \sigma(w_y h_3 + b_y)$, where $\sigma(z) = 1/(1+e^{-z})$ is Chapter 6's sigmoid, with $w_y = 1.2$ and $b_y = -0.3$, gives $\hat y = \sigma(1.2(0.5996) - 0.3) = \sigma(0.4195) = 0.6034$, which might, for instance, be interpreted as a 60.3\% estimated probability that Cascade's upcoming quarter shows accelerating (rather than decelerating) revenue growth. Figure~\ref{fig:rnn_unrolled} unrolls this same computation across its three time steps, making explicit how each hidden state depends on both the current input and the previous hidden state.
+Passing the final hidden state through an output layer, $\hat y = \sigma(w_y h_3 + b_y)$, where $\sigma(z) = 1/(1+e^{-z})$ is Chapter 6's sigmoid, with $w_y = 1.2$ and $b_y = -0.3$, gives $\hat y = \sigma(1.2 \times 0.5996 - 0.3) = \sigma(0.4195) = 0.6034$, which might, for instance, be interpreted as a 60.3\% estimated probability that Cascade's upcoming quarter shows accelerating (rather than decelerating) revenue growth. Figure~\ref{fig:rnn_unrolled} unrolls this same computation across its three time steps, making explicit how each hidden state depends on both the current input and the previous hidden state.
 
 \begin{figure}[htbp]
 \centering
@@ -462,14 +462,14 @@ Figure~\ref{fig:lstm_schematic} puts these six equations in one picture, with th
 A worked numerical example makes this concrete rather than leaving it as a qualitative claim. Applying a single-unit LSTM to the identical three-week input sequence used for the plain RNN above ($x_1=0.5$, $x_2=-0.2$, $x_3=0.9$, $h_0=0$, $c_0=0$), with illustrative gate weights $w_{f,h}=0.5$, $w_{f,x}=0.3$, $b_f=2.0$ (a deliberately large bias, chosen so the forget gate stays close to $1$ and the memory-retention effect is visible) and $w_{i,h}=w_{i,x}=w_{c,h}=w_{c,x}=w_{o,h}=w_{o,x}=0.5$ with all other biases at $0$, the first step gives
 \begin{align*}
 f_1 &= \sigma(2.15) = 0.8957, & i_1 &= \sigma(0.25) = 0.5622, & \tilde c_1 &= \tanh(0.25) = 0.2449, \\
-c_1 &= f_1(0) + i_1\tilde c_1 = 0.1377, & o_1 &= \sigma(0.25) = 0.5622, & h_1 &= o_1\tanh(c_1) = 0.0769.
+c_1 &= f_1 c_0 + i_1\tilde c_1 = 0.1377, & o_1 &= \sigma(0.25) = 0.5622, & h_1 &= o_1\tanh(c_1) = 0.0769.
 \end{align*}
 Continuing this recursion through the second and third steps gives
 \begin{align*}
 f_2 &= 0.8785, & c_2 &= 0.0912, & h_2 &= 0.0441, \\
 f_3 &= 0.9082, & c_3 &= 0.3537, & h_3 &= 0.2092;
 \end{align*}
-passing $h_3$ through the same output layer as the plain RNN example ($w_y=1.2$, $b_y=-0.3$) gives $\hat y=\sigma(1.2(0.2092)-0.3)=0.4878$.
+passing $h_3$ through the same output layer as the plain RNN example ($w_y=1.2$, $b_y=-0.3$) gives $\hat y=\sigma(1.2 \times 0.2092 - 0.3)=0.4878$.
 
 The forget gates $f_2=0.8785$ and $f_3=0.9082$ are the mechanism worth isolating: their product, $0.8785\times0.9082\approx0.7979$, is the fraction of the original cell state $c_1$ that survives, purely through the forget gate's own multiplicative decay, two additional time steps later, versus only $w_h^2=0.4^2=0.16$ for the plain RNN's equivalent two-step decay of its hidden state's direct dependence on $h_1$.
 
@@ -637,7 +637,7 @@ Three further techniques extend the neural network toolkit of Section~\ref{sec:n
 Section~\ref{sec:alt-data-quality} noted that a newly available alternative-data feed typically has only a short history, too little, on its own, to train a large CNN's millions of weights from scratch. Transfer learning sidesteps this: a CNN already trained on a large, general image dataset (which has already learned generic filters for edges, textures, and shapes) is reused as a frozen feature extractor, and only a small final layer, mapping its output features to the task at hand, car count, cloud cover, construction status, is trained on the limited task-specific data available. Because the frozen backbone contributes no gradient updates, this final-layer training is a direct application of Chapter 6's gradient descent\index{gradient descent} to far fewer parameters than training a full network would require.
 
 Suppose a pretrained backbone, frozen, produces a two-dimensional feature vector $f = (0.7, 0.3)$ for a new satellite image patch, and the task is to fine-tune a final logistic layer, currently $w = (0.4, 0.4)$, $b = -0.1$, to predict whether the patch contains a car cluster (label $y=1$ for this patch). The current prediction is
-$$\hat y = \sigma(w \cdot f + b) = \sigma(0.4(0.7) + 0.4(0.3) - 0.1) = \sigma(0.30) = 0.5744.$$
+$$\hat y = \sigma(w \cdot f + b) = \sigma(0.4 \times 0.7 + 0.4 \times 0.3 - 0.1) = \sigma(0.30) = 0.5744.$$
 Following Chapter 6's gradient descent update with learning rate $\eta = 0.5$, the gradient of the log-loss with respect to $w$ is
 $$(\hat y - y)f = (0.5744-1)(0.7, 0.3) = (-0.298, -0.128),$$
 and with respect to $b$ is $\hat y - y = -0.426$, giving updated weights
@@ -645,7 +645,7 @@ $$w \leftarrow (0.4, 0.4) - 0.5(-0.298,-0.128) = (0.549, 0.464)$$
 and
 $$b \leftarrow -0.1 - 0.5(-0.426) = 0.113.$$
 Recomputing the prediction with these updated weights gives
-$$\hat y = \sigma(0.549(0.7) + 0.464(0.3) + 0.113) = \sigma(0.636) = 0.6539,$$
+$$\hat y = \sigma(0.549 \times 0.7 + 0.464 \times 0.3 + 0.113) = \sigma(0.636) = 0.6539,$$
 closer to the true label of 1 after a single gradient step on a handful of parameters, illustrating why transfer learning lets a fund with only a few hundred labeled satellite patches still fine-tune a usable classifier, rather than needing the millions of labeled images a full CNN would require if trained from scratch.
 
 \subsubsection*{Graph Neural Networks for Ownership and Counterparty Networks}
