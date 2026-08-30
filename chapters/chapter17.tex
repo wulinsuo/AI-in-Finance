@@ -86,7 +86,7 @@ First, a fund identifies a candidate hypothesis, does satellite-derived parking-
 
 This procurement cycle is itself a source of adverse selection\index{adverse selection} worth naming directly: a vendor has every incentive to showcase the historical period and the subset of covered firms where its data performed best, since that is what sells subscriptions, so a trial dataset's strong backtested performance is not automatically evidence that the data will perform as well in the future or across firms the trial period did not happen to include. This is a version of the multiple-testing concern Chapter 6 raised about a researcher's own model search, now applied to a vendor's marketing rather than a researcher's specification search.
 
-A subscription decision ultimately comes down to a cost-benefit calculation, whether the expected trading edge, scaled to the capital actually deployed on it, exceeds the data's licensing cost. Suppose a fund would deploy a \$50 million position whenever Section~\ref{sec:alt-data-pipeline}'s signal fires long, which happened in five of the eight quarters tabulated in Table~\ref{tab:multisource_signal} below. Suppose too that the signal's incremental edge over an unconditional baseline is the 0.54 percentage points computed there, the 0.88\% average return on signaled quarters minus the 0.34\% average return across all quarters. With four earnings releases per year and a $5/8$ signal frequency, the fund expects roughly $4 \times 5/8 = 2.5$ signaled events annually, for an expected incremental profit of $\$50\text{M} \times 0.54\% \times 2.5 \approx \$678{,}000$ per year. Against Section~\ref{sec:case-vignette-satellite}'s subscription-cost range, a satellite feed at \$250,000 per year plus a smaller web and card-panel bundle at \$150,000 per year, total data costs come to \$400,000. The net expected benefit is therefore roughly \$278,000 per year: a genuine but modest edge once data costs are netted out, and one that Section~\ref{sec:alt-data-quality} warns will shrink further as more funds license the same feeds and compete the edge away.
+A subscription decision ultimately comes down to a cost-benefit calculation, whether the expected trading edge, scaled to the capital actually deployed on it, exceeds the data's licensing cost. Suppose a fund would deploy a \$50 million position whenever Section~\ref{sec:alt-data-pipeline}'s signal fires long, which happened in five of the eight quarters tabulated in Table~\ref{tab:multisource_signal} below. Suppose too that the signal's incremental edge over an unconditional baseline is the 0.5425 percentage points computed there, the 0.88\% average return on signaled quarters minus the 0.3375\% average return across all quarters. With four earnings releases per year and a $5/8$ signal frequency, the fund expects roughly $4 \times 5/8 = 2.5$ signaled events annually, for an expected incremental profit of $\$50\text{M} \times 0.54\% \times 2.5 \approx \$678{,}000$ per year. Against Section~\ref{sec:case-vignette-satellite}'s subscription-cost range, a satellite feed at \$250,000 per year plus a smaller web and card-panel bundle at \$150,000 per year, total data costs come to \$400,000. The net expected benefit is therefore roughly \$278,000 per year: a genuine but modest edge once data costs are netted out, and one that Section~\ref{sec:alt-data-quality} warns will shrink further as more funds license the same feeds and compete the edge away.
 
 This same arithmetic underlies a build-versus-buy decision many larger funds eventually face. Once expected trading volume across many similar signals is large enough, building an in-house satellite-analytics or web-scraping team can be cheaper in the long run than paying a vendor's margin on top of the same underlying imagery or logs. The cost is taking on the computer-vision and data-engineering work Section~\ref{sec:nn-structured-unstructured} describes directly, rather than buying an already-processed feature. Smaller funds typically lack the scale to justify this fixed cost and remain vendor customers indefinitely. That is one more way, alongside Section~\ref{sec:case-vignette-satellite}'s subscription-cost figures, in which alternative data's advantages concentrate among larger, better-resourced market participants.
 
@@ -126,7 +126,7 @@ Q8 & 1.0 & $-0.2$ \\
 }
 \end{table}
 
-Fitting the simple regression $\text{Revenue growth} = \alpha + \beta\,(\text{Car-count growth})$ by ordinary least squares, following Chapter 6's Section 6.3.1 method, gives $\bar x = 1.7125$, $\bar y = 1.6625$, $S_{xy} = \sum(x_i - \bar x)(y_i - \bar y) = 34.09625$, $S_{xx} = \sum(x_i-\bar x)^2 = 52.24875$, so $\hat\beta = S_{xy}/S_{xx} = 0.6528$ and $\hat\alpha = \bar y - \hat\beta \bar x = 0.5446$.
+Fitting the simple regression $\text{Revenue growth} = \alpha + \beta\,(\text{Car-count growth})$ by ordinary least squares, following Chapter 6's Section 6.3.1 method, gives $\bar x = 1.7125$, $\bar y = 1.6625$, $S_{xy} = \sum(x_i - \bar x)(y_i - \bar y) = 43.92375$, $S_{xx} = \sum(x_i-\bar x)^2 = 67.28875$, so $\hat\beta = S_{xy}/S_{xx} = 0.6528$ and $\hat\alpha = \bar y - \hat\beta \bar x = 0.5446$.
 
 The fitted line, $\widehat{\text{Revenue growth}} = 0.5446 + 0.6528\,(\text{Car-count growth})$, achieves $R^2 = 0.870$, car-count growth alone explains 87\% of the quarter-to-quarter variation in Cascade's revenue growth in this sample, genuinely strong for a single proxy variable, but, consistent with this book's practice of not overstating a model's fit, still leaves 13\% of the variation unexplained.
 
@@ -182,7 +182,7 @@ Q4 & 0.6 & 1.5 & 0.8 & 0.0 & $-0.44$ & Flat & 0.3 \\
 Q5 & 6.2 & 4.0 & 4.5 & 2.0 & 2.46 & Long & $-0.4$ \\
 Q6 & $-3.0$ & $-2.0$ & $-1.8$ & $-1.5$ & $-1.92$ & Flat & $-1.4$ \\
 Q7 & 3.5 & 2.5 & 2.0 & 2.3 & 1.66 & Long & 1.5 \\
-Q8 & 1.0 & 2.0 & 0.5 & $-0.3$ & 0.18 & Long & 0.2 \\
+Q8 & 1.0 & 2.0 & 0.5 & $-1.2$ & 0.18 & Long & 0.2 \\
 \bottomrule
 \end{tabular}
 \end{lrbox}
@@ -518,7 +518,7 @@ An autoencoder is trained without any label at all: it learns an encoder that co
 
 Consider a simple linear autoencoder, encoder weights $w = (0.5, 0.3, 0.2)$ applied to Table~\ref{tab:multisource_signal}'s three alternative-data growth rates $x = (\text{car}, \text{web}, \text{card})$ for each quarter, producing a single bottleneck code $z = w \cdot x$, and a tied-weight decoder that reconstructs $\hat x = z\, w$. For Q4, $x = (0.6, 1.5, 0.8)$, so $z = 0.5(0.6) + 0.3(1.5) + 0.2(0.8) = 0.91$, and $\hat x = 0.91(0.5, 0.3, 0.2) = (0.455, 0.273, 0.182)$, giving a reconstruction error $\sum(x_i - \hat x_i)^2 = (0.6-0.455)^2 + (1.5-0.273)^2 + (0.8-0.182)^2 = 1.909$.
 
-Carrying this out for all eight quarters and expressing each quarter's error relative to its own total energy $\sum x_i^2$ (so that quarters with naturally larger growth rates are not automatically flagged just for being larger) gives relative errors ranging from 39.5\% (Q7) to 58.7\% (Q4). Q4 stands out as the quarter whose alternative-data pattern the autoencoder reconstructs worst, not because its numbers are the largest in absolute terms, Q5's raw error of 30.9 is far larger, but because Q4's web-traffic growth (1.5\%) is unusually large relative to its car-count and card growth (0.6\% and 0.8\%), a pattern this particular bottleneck direction does not represent well.
+Carrying this out for all eight quarters and expressing each quarter's error relative to its own total energy $\sum x_i^2$ (so that quarters with naturally larger growth rates are not automatically flagged just for being larger) gives relative errors ranging from 39.4\% (Q7) to 58.7\% (Q4). Q4 stands out as the quarter whose alternative-data pattern the autoencoder reconstructs worst, not because its numbers are the largest in absolute terms, Q5's raw error of 30.9 is far larger, but because Q4's web-traffic growth (1.5\%) is unusually large relative to its car-count and card growth (0.6\% and 0.8\%), a pattern this particular bottleneck direction does not represent well.
 
 In practice, this would be the kind of quarter a data-quality analyst should investigate first, is the web-traffic reading itself an error, a one-time promotional spike, or a genuine early signal the other two sources have not yet picked up, before that quarter's data is trusted in a downstream model.
 
@@ -645,7 +645,7 @@ $$w \leftarrow (0.4, 0.4) - 0.5(-0.298,-0.128) = (0.549, 0.464)$$
 and
 $$b \leftarrow -0.1 - 0.5(-0.426) = 0.113.$$
 Recomputing the prediction with these updated weights gives
-$$\hat y = \sigma(0.549 \times 0.7 + 0.464 \times 0.3 + 0.113) = \sigma(0.636) = 0.6539,$$
+$$\hat y = \sigma(0.549 \times 0.7 + 0.464 \times 0.3 + 0.113) = \sigma(0.6365) = 0.6540,$$
 closer to the true label of 1 after a single gradient step on a handful of parameters, illustrating why transfer learning lets a fund with only a few hundred labeled satellite patches still fine-tune a usable classifier, rather than needing the millions of labeled images a full CNN would require if trained from scratch.
 
 \subsubsection*{Graph Neural Networks for Ownership and Counterparty Networks}
@@ -668,9 +668,9 @@ $$\text{Attention}(Q,K,V) = \text{softmax}(QK^\top/\sqrt{d_k})V,$$
 exactly as before, but now fusing modalities instead of fusing word tokens.
 
 Suppose a tabular query vector $Q = (0.6, 0.8)$ (summarizing Cascade's alternative-data growth direction) attends over an image modality with key $K_{\text{img}} = (0.9, 0.1)$ and value $V_{\text{img}} = (0.7, 0.2)$, and a text-sentiment modality with key $K_{\text{txt}} = (0.2, 0.9)$ and value $V_{\text{txt}} = (-0.3, 0.6)$ (a mildly cautious sentiment reading). With $d_k = 2$, the scaled dot-product scores are
-$$Q \cdot K_{\text{img}}/\sqrt{2} = 0.62/1.4142 = 0.4385$$
+$$Q \cdot K_{\text{img}}/\sqrt{2} = 0.62/1.4142 = 0.4384$$
 and
-$$Q \cdot K_{\text{txt}}/\sqrt{2} = 0.84/1.4142 = 0.5941;$$
+$$Q \cdot K_{\text{txt}}/\sqrt{2} = 0.84/1.4142 = 0.5940;$$
 applying softmax gives attention weights $0.4612$ on the image modality and $0.5388$ on the text modality. The fused representation is
 $$0.4612(0.7,0.2) + 0.5388(-0.3,0.6) = (0.161, 0.416),$$
 a single vector that leans slightly more on the cautious text signal than on the image signal, and that a downstream model, a trading rule in the spirit of Section~\ref{sec:alt-data-pipeline}, a credit decision, a fraud flag, can consume in place of either modality alone, without the analyst having to hand-specify how much weight each modality deserves.
@@ -681,7 +681,9 @@ Section~\ref{sec:advanced-altdata}'s transfer-learning example assumed a pretrai
 
 Suppose an encoder produces embedding $a = (0.6, 0.8)$ for one crop of a satellite patch, $p = (0.55, 0.83)$ for a second, differently augmented crop of the \emph{same} patch, and $n = (0.1, 0.9)$ for a crop of a genuinely different patch. Using Chapter 16's cosine similarity (Section 16.3.3), $\cos(a,p) = 0.9983$ and $\cos(a,n) = 0.8614$, the same view of the same underlying scene is, as intended, geometrically closer than a different scene.
 
-A contrastive loss converts these similarities into a probability that the positive pair is correctly identified among the candidates, $\Pr(\text{positive}) = e^{\cos(a,p)/\tau} / \big[e^{\cos(a,p)/\tau} + e^{\cos(a,n)/\tau}\big]$, a softmax over similarities exactly analogous to Section~\ref{sec:advanced-altdata}'s cross-attention softmax, with a temperature parameter $\tau$ controlling how sharply the model is pushed to separate positive from negative. With $\tau = 0.1$, $\Pr(\text{positive}) = e^{9.983}/(e^{9.983} + e^{8.614}) = 0.797$, already favoring the true positive pair well above chance (50\%) even before any training, and training drives this probability further toward 1 by adjusting the encoder's weights so that same-image crops end up even closer together, and different-image crops even farther apart, than they start.
+A contrastive loss converts these similarities into a probability that the positive pair is correctly identified among the candidates, 
+$$\Pr(\text{positive}) = \frac{e^{\cos(a,p)/\tau}}{e^{\cos(a,p)/\tau} + e^{\cos(a,n)/\tau}},$$
+a softmax over similarities exactly analogous to Section~\ref{sec:advanced-altdata}'s cross-attention softmax, with a temperature parameter $\tau$ controlling how sharply the model is pushed to separate positive from negative. With $\tau = 0.1$, $\Pr(\text{positive}) = e^{9.983}/(e^{9.983} + e^{8.614}) = 0.797$, already favoring the true positive pair well above chance (50\%) even before any training, and training drives this probability further toward 1 by adjusting the encoder's weights so that same-image crops end up even closer together, and different-image crops even farther apart, than they start.
 
 Once trained this way on a large, unlabeled archive of satellite imagery, the resulting encoder is the frozen backbone Section~\ref{sec:advanced-altdata}'s transfer-learning example fine-tuned with only a handful of labeled examples, closing the loop between this chapter's two ways of coping with scarce alternative-data labels.
 
