@@ -178,7 +178,7 @@ This distinction between the slope's overwhelming significance and the intercept
 \subsection{How Models Learn: Gradient Descent}
 \label{sec:gradient-descent}
 
-The closed-form OLS solution above exists because linear regression's loss function has a special structure: it is quadratic in the parameters, so its minimum can be found in one step by solving a system of linear equations. Most machine learning models, including logistic regression, neural networks, and many others introduced later in this chapter, do not have this convenient property, and their parameters must instead be found iteratively using an optimization algorithm called gradient descent.
+The closed-form OLS solution above exists because linear regression's loss function has a special structure: it is quadratic in the parameters, so its minimum can be found in one step by solving a system of linear equations. Most machine learning models, including logistic regression, neural networks, and many others introduced later in this chapter, do not have this convenient property, and their parameters must instead be found iteratively using an optimization algorithm called gradient descent. Figure~\ref{fig:gradient_descent_bowl} shows the idea for a single generic parameter, written $\theta$ there and standing for whichever parameters a given model has to fit.
 
 \begin{figure}[htbp]
 \centering
