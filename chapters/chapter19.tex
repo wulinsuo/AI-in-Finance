@@ -51,7 +51,7 @@ This part sets up the sequential decision problem and the value functions that m
 
 Consider a market maker deciding, moment by moment, how to skew its bid and ask quotes as its inventory evolves, or a trader deciding how many shares of a large order to release this minute versus holding back for a better price later: in both cases, today's decision changes tomorrow's starting position, so the two decisions cannot be solved separately, one at a time, the way most of the models in Chapters 12 and 13 do. A reinforcement learning problem is formalized as a Markov decision process, a tuple $(\mathcal{S}, \mathcal{A}, P, R, \gamma)$, precisely to capture this kind of interlocking, path-dependent decision problem.
 
-At each discrete time step $t$, an \textbf{agent} observes a \textbf{state} $s_t \in \mathcal{S}$, a summary of everything about the environment relevant to the decision at hand (a market maker's current inventory and the prevailing bid-ask spread; a trading agent's remaining order size and elapsed time; a portfolio manager's current holdings and estimated risk factors). The agent selects an \textbf{action} $a_t \in \mathcal{A}$ (post a quote at a given skew; sell a given number of shares this period; rebalance toward a given target weight) according to a \textbf{policy} $\pi(a \mid s)$, a mapping, possibly stochastic, from states to actions.
+At each discrete time step $t$, an \textbf{agent} observes a \textbf{state} $s_t \in \mathcal{S}$, a summary of everything about the environment relevant to the decision at hand (a market maker's current inventory and the prevailing bid-ask spread; a trading agent's remaining order size and elapsed time; a portfolio manager's current holdings and estimated risk factors). The agent selects an \textbf{action} $a_t \in \mathcal{A}$ (post a quote at a given skew; sell a given number of shares this period; rebalance toward a given target weight) according to a \textbf{policy} $\pi(a \mid s)$, which gives the probability of taking action $a$ in state $s$ and so maps each state to a probability distribution over the available actions, with $\sum_a \pi(a \mid s) = 1$. A policy that places all of its probability on one action per state is deterministic, the special case where the agent always does the same thing from the same state.
 
 The environment then transitions to a new state $s_{t+1}$ according to a transition function $P(s_{t+1} \mid s_t, a_t)$ and returns a scalar \textbf{reward} $r_{t+1}$ (realized profit and loss net of costs; a small quadratic risk penalty; an exercise payoff), governed by a reward function $R(s_t, a_t, s_{t+1})$. Figure~\ref{fig:rl_loop} depicts this loop; it repeats until the episode ends, either at a fixed horizon (the market closes, the order is fully executed) or when the agent reaches an absorbing state (a position is liquidated, an option is exercised).
 
@@ -111,7 +111,7 @@ A reader who worked through Chapter 5's two-step binomial tree (Section 5.4.1) h
 \subsection{A Taxonomy of Reinforcement Learning Methods}
 \label{sec:rl-taxonomy}
 
-Two further distinctions organize the wide range of reinforcement learning algorithms in use today, and fixing both precisely now makes it easier to place every method the rest of this chapter introduces. Figure~\ref{fig:rl_method_map} previews where each of them fits before the text below explains why.
+Two further distinctions organize the wide range of reinforcement learning algorithms in use today, and fixing both precisely now makes it easier to place every method the rest of this chapter introduces. Figure~\ref{fig:rl_method_map} previews where each of them fits before the text below explains why; $\pi_\theta$ there denotes a policy carrying tunable parameters $\theta$, the form Section~\ref{sec:policy-gradient} develops.
 
 \begin{figure}[htbp]
 \centering
@@ -120,8 +120,8 @@ Two further distinctions organize the wide range of reinforcement learning algor
         \node (root) {Reinforcement Learning};
         \node[below left=of root,text width=3.1cm] (mb) {\textbf{Model-based}\\Chapter 5's tree: known $P$, $R$, solved by backward induction};
         \node[below right=of root,text width=3.4cm] (mf) {\textbf{Model-free}\\learns from sampled experience alone};
-        \node[below=1.7cm of mf,xshift=-2.3cm,text width=3.1cm] (vb) {\textbf{Value-based}\\learn $Q(s,a)$, act greedily: tabular Q-learning (17.6), Deep Q-Network (17.7)};
-        \node[below=1.7cm of mf,xshift=2.3cm,text width=3.1cm] (pb) {\textbf{Policy-based}\\learn $\pi_\theta$ directly: REINFORCE, actor-critic, PPO (17.8)};
+        \node[below=1.7cm of mf,xshift=-2.3cm,text width=3.1cm] (vb) {\textbf{Value-based}\\learn $Q(s,a)$, act greedily: tabular Q-learning (\ref{sec:rl-qlearning}), Deep Q-Network (\ref{sec:dqn})};
+        \node[below=1.7cm of mf,xshift=2.3cm,text width=3.1cm] (pb) {\textbf{Policy-based}\\learn $\pi_\theta$ directly: REINFORCE, actor-critic, PPO (\ref{sec:policy-gradient})};
         \draw (root) -- (mb);
         \draw (root) -- (mf);
         \draw (mf) -- (vb);
