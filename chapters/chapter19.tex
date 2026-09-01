@@ -11,9 +11,7 @@
 \SetWatermarkText{Wulin.Suo@Queensu.ca}
 \SetWatermarkScale{1.4}
 \SetWatermarkColor{gray!35}
-\SetWatermarkAngle{90}
-\SetWatermarkHorCenter{0.94\paperwidth}
-\SetWatermarkVerCenter{0.5\paperheight}
+\SetWatermarkAngle{45}
 
 \usepackage{makeidx}
 \makeindex
@@ -92,6 +90,73 @@ where the \textbf{discount factor} $\gamma \in [0,1]$ plays a role directly anal
 It is worth being explicit about why the models developed in Chapters 12 and 13 did not need this machinery, since the answer clarifies exactly what reinforcement learning adds. The Almgren-Chriss optimal-execution model (Chapter 13's Section 13.3.5) assumes a known, fixed functional form for market impact, quadratic in the trade rate, and a known, fixed risk-aversion parameter $\lambda$; given those assumptions, the entire optimal trajectory can be solved in closed form in one step, with no need to learn anything from experience, because the model already specifies exactly how the environment will respond to every possible action. Chapter 13's Avellaneda-Stoikov\index{Avellaneda-Stoikov model} inventory model (Section 13.4) is more genuinely dynamic, the market maker's quotes are recomputed at every instant as inventory and time-to-close evolve, but the update rule is itself a closed-form formula derived from an assumed order-arrival process, not a policy learned from trial and error. Chapter 12's Section 12.4.1 practical-allocation discussion goes furthest toward acknowledging the sequential nature of real portfolio management, noting that rebalancing decisions recur over time and that transaction costs make each rebalancing decision depend on the portfolio's current position, not only on today's estimated optimal weights, but it stops short of solving that sequential problem directly, instead treating each rebalancing decision as a separate, myopic optimization. Each of these models is exactly right within its assumptions, and each remains the correct tool to reach for whenever those assumptions hold: a known, well-estimated impact function and a well-specified risk-aversion parameter make a closed-form solution both more accurate and vastly cheaper to compute than a learned one.
 
 Reinforcement learning becomes the more appropriate tool precisely when that closed form is unavailable, because the true market-impact function is not well approximated by any simple parametric form, because transaction costs interact with the portfolio's history in ways too complex to solve analytically, or because the reward the agent actually cares about, a client's realized utility net of taxes, fees, and behavioral tolerance for drawdowns, does not reduce cleanly to a quadratic cost function at all. In every one of these harder cases, the underlying problem is still a sequential decision problem exactly as formalized in Section~\ref{sec:rl-framework}; what changes is only that no one can write down $P$ and $R$ in closed form, which rules out the direct optimization Chapters 12 and 13 rely on and motivates learning a good policy from simulated or historical experience instead.
+
+\subsection{The Simplest Case: Multi-Armed Bandits}
+\label{sec:rl-bandit}
+
+A trading desk sending orders to market has a choice most descriptions of execution quietly skip past: which venue to send each order to. A large-cap U.S. equity trades on a dozen or more venues, and the same order routed to two of them will come back with different realized prices, because each venue has its own mix of resting liquidity, its own fee schedule, and its own population of counterparties. A desk that knew each venue's average price improvement would simply route everything to the best one. No desk knows this. Worse, the only way to find out what a venue delivers is to send it orders, which means the desk is paying, in worse fills, for every order it spends learning rather than earning.
+
+This is the tension that separates reinforcement learning from everything in Chapters 6 and 7. A supervised model is handed a fixed dataset and never influences what it gets to see next; here, the agent's own choices determine which data it ever observes, so an action that looks bad early may simply never be tried again, and its true value never discovered. The problem in its purest form is the \textbf{multi-armed bandit}\index{multi-armed bandit}, named for a row of slot machines with unknown payout rates: at each step the agent picks one of $K$ actions, called \textbf{arms}, and receives a noisy reward drawn from that arm's own fixed but unknown distribution.
+
+What makes the bandit the right place to start is everything it leaves out. There is one state, which never changes; the reward depends only on the action just taken, never on history; and no action moves the agent anywhere, so there is no next state to look ahead to. The entire apparatus of Section~\ref{sec:bellman}'s Bellman equation, discounting, bootstrapping, and credit assignment across a trajectory, is unnecessary here, because $Q(a)$ is nothing more elaborate than the mean reward of arm $a$, estimable by averaging. The only genuine difficulty left is the one this chapter cannot avoid anywhere: the \textbf{exploration-exploitation trade-off}\index{exploration-exploitation trade-off}, choosing between the arm that currently looks best and one whose value is still uncertain.
+
+\subsubsection*{A Worked Example: Routing Orders Across Three Venues}
+\label{sec:rl-bandit-worked}
+
+A desk routes each arriving order to one of three venues. Measured in basis points of price improvement against the arrival mid-price, venue $A$ delivers a mean of $1.2$, venue $B$ a mean of $2.0$, and venue $C$ a mean of $0.5$, each with a standard deviation of $2.0$ basis points. Those means are stated here so the example can be checked; the desk does not know them, and must infer them from the fills it receives. Since the standard deviation of a single fill is $2.5$ times the $0.8$ basis-point gap between the best venue and the second best, one order tells the desk almost nothing.
+
+The desk keeps an estimate $Q(a)$ of each venue's mean and a count $N(a)$ of orders sent there, updating after each fill by the running-average rule
+\begin{equation*}
+Q(a) \leftarrow Q(a) + \frac{1}{N(a)}\big[r - Q(a)\big],
+\end{equation*}
+which is exactly the sample mean of the rewards seen from $a$, written so it can be updated one fill at a time without storing them. After sending one order to each venue to get started, it follows an $\varepsilon$-greedy policy with $\varepsilon=0.2$: with probability $0.2$ route to a uniformly random venue, otherwise route to whichever venue currently has the highest $Q$. Table~\ref{tab:bandit_trace} traces the first twelve orders.
+
+\begin{table}[htbp]
+\centering
+\begin{lrbox}{\bookmeasuredbox}
+\begin{tabular}{rllrrrr}
+\toprule
+Order & Rule & Venue & Fill & $Q(A)$ & $Q(B)$ & $Q(C)$ \\
+\midrule
+1 & warm-up & $A$ & $1.45$ & $1.450$ & --- & --- \\
+2 & warm-up & $B$ & $1.74$ & $1.450$ & $1.740$ & --- \\
+3 & warm-up & $C$ & $1.78$ & $1.450$ & $1.740$ & $1.780$ \\
+4 & explore & $A$ & $1.92$ & $1.685$ & $1.740$ & $1.780$ \\
+5 & exploit & $C$ & $2.39$ & $1.685$ & $1.740$ & $2.085$ \\
+6 & exploit & $C$ & $-2.03$ & $1.685$ & $1.740$ & $0.713$ \\
+7 & exploit & $B$ & $2.08$ & $1.685$ & $1.910$ & $0.713$ \\
+8 & exploit & $B$ & $1.56$ & $1.685$ & $1.793$ & $0.713$ \\
+9 & exploit & $B$ & $0.54$ & $1.685$ & $1.480$ & $0.713$ \\
+10 & exploit & $A$ & $0.57$ & $1.313$ & $1.480$ & $0.713$ \\
+11 & exploit & $B$ & $4.09$ & $1.313$ & $2.002$ & $0.713$ \\
+12 & explore & $C$ & $3.23$ & $1.313$ & $2.002$ & $1.342$ \\
+\bottomrule
+\end{tabular}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\floatbox[\capbot]{table}[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
+\caption{The first twelve orders of the venue-routing bandit. Fills and estimates are in basis points of price improvement; a dash marks a venue not yet tried. Every estimate follows from the running-average rule applied to the fills above it, so each row can be checked by hand.}
+\label{tab:bandit_trace}
+}
+\end{table}
+
+The opening rounds show precisely the failure mode that makes exploration necessary. The single warm-up order to venue $C$ returned $1.78$ basis points, a good fill drawn by chance from the \emph{worst} of the three venues, and that one lucky draw was enough to make $C$ the greedy choice. Orders 5 and 6 duly went there. What rescued the desk was not a clever exploration rule but simple repetition: order 6 came back at $-2.03$, dragging $Q(C)$ from $2.085$ down to $0.713$ and demoting $C$ below both rivals. Exploiting a wrong estimate long enough tends to correct it, because every exploit is also a sample. By order 12 the desk has $Q(B)$ highest and is routing to the genuinely best venue, though $Q(A)=1.313$ and $Q(C)=1.342$ remain badly estimated off three and four orders respectively.
+
+Run the same policy for $5{,}000$ orders and the estimates sharpen to $Q(A)=1.25$, $Q(B)=1.99$, and $Q(C)=0.40$, against true means of $1.2$, $2.0$, and $0.5$. The desk routes $86.2\%$ of its orders to $B$ and realizes an average of $1.826$ basis points per order.
+
+That average is the point worth dwelling on, because it is visibly short of the $2.0$ basis points a desk that simply knew the answer would earn. The shortfall, $868$ basis points in total across the $5{,}000$ orders, is the \textbf{regret}\index{regret (bandit)}: what learning cost, measured against an oracle that never had to learn. Most of it is not the early mistakes, which cost little and are over quickly. It is the $\varepsilon$-greedy rule itself, which keeps routing one order in five at random forever, long after the answer is no longer in doubt. That permanent tax is exactly
+\begin{equation*}
+\varepsilon \times \left(2.0 - \tfrac{1}{3}(1.2 + 2.0 + 0.5)\right) = 0.2 \times 0.7667 = 0.1533 \text{ basis points per order},
+\end{equation*}
+which is why the asymptotic average is $0.8 \times 2.0 + 0.2 \times 1.2333 = 1.8467$ rather than $2.0$, and why the realized $1.826$ sits just below it. The remedy is to explore hard early and taper off: decaying $\varepsilon$ over the same $5{,}000$ orders lifts the share routed to $B$ from $86.2\%$ to $95.2\%$ and the average fill from $1.826$ to $1.943$ basis points, without giving up the early exploration that found $B$ in the first place. Every worked example later in this chapter uses a decayed exploration schedule for this reason.
+
+Two threads run forward from here. Add a next state, so that today's action changes tomorrow's situation, and averaging is no longer enough: the agent must reason about consequences that arrive later, which is what Section~\ref{sec:bellman}'s Bellman equation supplies and what Section~\ref{sec:rl-qlearning}'s Q-learning example puts to work. Keep the single state but shrink the gap between arms relative to the noise, and even this simplest of problems becomes genuinely hard: Section~\ref{sec:rl-kelly-worked} returns to a bandit whose best and second-best arms differ by so little against so much noise that $200{,}000$ rounds still leave the agent on the wrong one.
 
 \subsection{Value Functions and the Bellman Equation}
 \label{sec:bellman}
@@ -545,7 +610,7 @@ Multi-period portfolio choice has a classical closed-form precedent worth naming
 \subsubsection*{A Worked Example: Why Model-Free Search Struggles Here}
 \label{sec:rl-kelly-worked}
 
-Running that sanity check honestly, rather than only asserting it would work, is instructive precisely because it does not go as cleanly as Sections~\ref{sec:rl-qlearning} and~\ref{sec:rl-execution-worked}. Chapter 1's repeated bet, an even-money wager ($b=1$) won with probability $p=0.6$, has closed-form optimal fraction $f^*=p-q/b=0.20$ and long-run growth rate $g(f^*)\approx0.0201$. Framed as a Markov decision process, this is a single, repeated state (the optimal fraction does not depend on current wealth, so no wealth variable needs to be tracked) with action $f$ discretized to a grid of $5\%$ increments, $f\in\{0.00,0.05,\ldots,0.95\}$, and an immediate, noisy reward $r=\ln(1+f)$ with probability $p$ or $r=\ln(1-f)$ with probability $q$, drawn independently every period, no bootstrapping required since there is no next state to look ahead to.
+Running that sanity check honestly, rather than only asserting it would work, is instructive precisely because it does not go as cleanly as Sections~\ref{sec:rl-qlearning} and~\ref{sec:rl-execution-worked}. Chapter 1's repeated bet, an even-money wager ($b=1$) won with probability $p=0.6$, has closed-form optimal fraction $f^*=p-q/b=0.20$ and long-run growth rate $g(f^*)\approx0.0201$. Framed as a Markov decision process, this is a single, repeated state (the optimal fraction does not depend on current wealth, so no wealth variable needs to be tracked) with action $f$ discretized to a grid of $5\%$ increments, $f\in\{0.00,0.05,\ldots,0.95\}$, and an immediate, noisy reward $r=\ln(1+f)$ with probability $p$ or $r=\ln(1-f)$ with probability $q$, drawn independently every period, no bootstrapping required since there is no next state to look ahead to. In other words this is a multi-armed bandit, structurally identical to Section~\ref{sec:rl-bandit}'s venue-routing problem with twenty arms in place of three. What it does not share with that problem is any hope of an easy answer, and the reason is worth stating before the numbers arrive.
 
 What makes this problem genuinely hard for a model-free method is the relationship between the reward's noise and the size of what there is to learn: the gap between the optimal action's growth rate and its nearest neighbors on the grid, $g(0.20)-g(0.15)\approx0.0013$ and $g(0.20)-g(0.25)\approx0.0013$, is tiny, while a single bet's outcome swings between $\ln(1.20)\approx0.182$ and $\ln(0.80)\approx-0.223$, a standard deviation roughly $150$ times larger than the gap Q-learning needs to resolve.
 
@@ -744,6 +809,7 @@ Markets are also not single-agent environments: other participants adapt to a le
     \item Explain, in your own words, why maximizing expected log-wealth (the Kelly criterion, Section~\ref{sec:rl-portfolio}) produces a different, generally more conservative allocation than maximizing expected wealth directly, and describe why this makes the Kelly fraction a useful sanity check for a reinforcement-learning portfolio agent trained on a simplified simulated market.
     \item Using Section~\ref{sec:rl-multiagent}'s discussion, explain why a reinforcement-learning execution agent trained against a fixed historical simulator might perform worse than expected once deployed at large enough scale to influence the very order flow it was trained on, and describe one practical step a firm could take to detect this problem before it causes significant losses.
     \item Explain why behavioral cloning (Section~\ref{sec:imitation}) can fail badly in a state the expert trader rarely visited, even though it performs well on states similar to the expert's typical behavior, and describe how inverse reinforcement learning's approach, inferring a reward function rather than directly imitating actions, is intended to address this specific weakness.
+    \item Section~\ref{sec:rl-bandit-worked}'s desk has sent four orders to venue $A$, giving $Q(A)=1.60$, and six to venue $B$, giving $Q(B)=1.85$. (a) A fifth order to $A$ fills at $3.00$ basis points; apply the running-average rule to compute the updated $Q(A)$, and state which venue the greedy policy now selects. (b) A single fill has a standard deviation of $2.0$ basis points. Compute the standard error of each of the two estimates and explain why the switch in part (a) is far weaker evidence than it looks. (c) A fourth venue $D$, whose true mean of $2.4$ basis points beats every existing venue, is now connected, and the desk keeps $\varepsilon=0.2$ with exploration spread uniformly over all four. Compute the new permanent shortfall $\varepsilon(\mu^{*}-\bar{\mu})$, compare it to the three-venue figure, and explain why adding a venue better than all the others nonetheless raises the per-order cost of a fixed exploration rate.
     \item \textbf{Challenge (real data).} Download at least three years of daily prices for a real, liquid stock (via \texttt{yfinance}). (a) Discretize the state space into a small number of buckets based on the sign and magnitude of the trailing five-day return, in the spirit of Section~\ref{sec:rl-qlearning}'s three-state example, and train a tabular Q-learning agent with actions \{buy, hold, sell\} and a reward equal to the next day's realized return (long) or its negative (short), using this chapter's Q-learning update rule. (b) Compare the trained agent's cumulative return over the full sample to a simple buy-and-hold benchmark, then re-run training on only the first half of the sample and evaluate the resulting policy on the second half, and report whether the agent's apparent advantage survives this split. (c) Using Section~\ref{sec:rl-evaluation}'s discussion of off-policy evaluation, explain why backtesting a single historical price path is an especially weak form of policy evaluation for a trading agent, and describe one practical safeguard, drawing on Section~\ref{sec:rl-multiagent} or Chapter 8's model-risk-management framework, a firm should require before deploying such an agent with real capital.
 \end{enumerate}
 
