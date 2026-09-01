@@ -10,3 +10,4 @@ never feel lost.
 I am still actively revising the book.
 
 Note: Added chapters on Insurance and ABM. The book has been revised substantially.
+Note: Latest update: August 21, 2026
