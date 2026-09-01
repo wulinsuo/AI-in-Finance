@@ -32,9 +32,7 @@
 \SetWatermarkText{Wulin.Suo@Queensu.ca}
 \SetWatermarkScale{1.4}
 \SetWatermarkColor{gray!35}
-\SetWatermarkAngle{90}
-\SetWatermarkHorCenter{0.94\paperwidth}
-\SetWatermarkVerCenter{0.5\paperheight}
+\SetWatermarkAngle{45}
 
 \usepackage{subfiles}
 
@@ -59,9 +57,28 @@
 \fancyhf{}
 \setlength{\headheight}{15pt}
 \fancyhead[LE]{\slshape\thepage}
-\fancyhead[RE]{\slshape AI in Finance}
-\fancyhead[LO]{\slshape\leftmark}
+\fancyhead[RE]{\slshape\leftmark}
+\fancyhead[LO]{\slshape\rightmark}
 \fancyhead[RO]{\slshape\thepage}
+
+% Even pages carry the chapter number, odd pages the chapter title. book.cls
+% packs both into \leftmark as a single "CHAPTER N. TITLE" string, so they are
+% split here: the number into \leftmark, the title into \rightmark. Deferred to
+% \AtBeginDocument because book.cls (re)defines these two inside \ps@headings,
+% not once in the class preamble, and would otherwise clobber them the moment
+% the document begins. \sectionmark is emptied for the same reason the split is
+% needed at all: \section would otherwise overwrite \rightmark with a section
+% title, and the odd-page head would stop showing the chapter partway in.
+\makeatletter
+\AtBeginDocument{%
+  \renewcommand{\chaptermark}[1]{%
+    \markboth{%
+      \ifnum \c@secnumdepth >\m@ne
+        \if@mainmatter \MakeUppercase{\@chapapp\ \thechapter}\fi
+      \fi}{\MakeUppercase{#1}}}%
+  \renewcommand{\sectionmark}[1]{}%
+}
+\makeatother
 \renewcommand{\headrulewidth}{0pt}
 
 % Loaded last, as hyperref requires, so it can patch the other packages'
