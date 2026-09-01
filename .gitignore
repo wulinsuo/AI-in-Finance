@@ -84,3 +84,10 @@ frontmatter_extract*.tex
 fix_watermark.py
 inspect_watermark.py
 update_watermark.py
+
+# Dropbox conflicted copies. The whole tree lives in Dropbox, so a build that
+# races the sync can leave "chapter18 (Wulin Suo's conflicted copy 2026-08-31).pdf"
+# beside the real file. Chapter PDFs ARE tracked, so such a stray matched no rule
+# and would have ridden along on the next `git add -A` into the PUBLIC repo.
+# Unanchored, per this file's standing rule, so it holds at any depth.
+*conflicted copy*
