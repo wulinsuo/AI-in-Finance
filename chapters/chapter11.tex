@@ -11,9 +11,7 @@
 \SetWatermarkText{Wulin.Suo@Queensu.ca}
 \SetWatermarkScale{1.4}
 \SetWatermarkColor{gray!35}
-\SetWatermarkAngle{90}
-\SetWatermarkHorCenter{0.94\paperwidth}
-\SetWatermarkVerCenter{0.5\paperheight}
+\SetWatermarkAngle{45}
 
 \usepackage{makeidx}
 \makeindex
@@ -67,7 +65,7 @@ Insurance inverts the production cycle of almost every other business: the price
 
 The economic engine is risk pooling\index{risk pooling}, and it is worth seeing the engine's mathematics once, because a single calculation explains why the industry exists. Suppose each of $n$ independent policies produces an annual loss with mean $\mu = \$720$ and standard deviation $\sigma = \$3{,}000$, a violently uncertain individual prospect, with a coefficient of variation of $3{,}000/720 \approx 417\%$. The pooled loss across $n = 10{,}000$ such policies has mean $n\mu = \$7.2$ million but standard deviation only $\sigma\sqrt{n} = \$300{,}000$, a coefficient of variation of $4.17\%$: aggregation has shrunk relative uncertainty by a factor of $\sqrt{n} = 100$. A loss more than $10\%$ above expectation is a $z = 2.4$ event, roughly a $0.8\%$ probability under a normal approximation. Individually unpredictable losses have become collectively predictable, and \emph{that predictability, not risk-bearing appetite, is the product}: the insurer sells the law of large numbers, retail. The calculation also displays its own failure mode, which Section~\ref{sec:ins-cat} takes up: everything above assumed independence, and a hurricane, correlating a hundred thousand claims into one event, deletes the $\sqrt{n}$.
 
-Two classic frictions limit the engine. Adverse selection\index{adverse selection (insurance)} is the tendency of higher-risk customers to seek more coverage, which the insurer combats with underwriting and risk-based pricing; moral hazard\index{moral hazard} is the tendency of insured parties to take more risk once covered, combated with deductibles and coverage limits. Both frictions are, at bottom, information problems, which is precisely why an industry built on them has always been an early adopter of any technology that reduces information asymmetry, from the mortality table to the telematics device of Section~\ref{sec:ins-telematics}.
+Two classic frictions limit the engine. Adverse selection\index{adverse selection} is the tendency of higher-risk customers to seek more coverage, which the insurer combats with underwriting and risk-based pricing; moral hazard\index{moral hazard} is the tendency of insured parties to take more risk once covered, combated with deductibles and coverage limits. Both frictions are, at bottom, information problems, which is precisely why an industry built on them has always been an early adopter of any technology that reduces information asymmetry, from the mortality table to the telematics device of Section~\ref{sec:ins-telematics}.
 
 The reader will recognize the analytical machinery immediately. An insurance portfolio's annual loss is a compound frequency-severity sum, exactly the loss distribution approach Chapter 10 developed for operational risk, and for the same reason: both fields face losses that arrive as a random number of events of random size. The historical direction of travel, worth appreciating, is that operational risk borrowed this machinery \emph{from} actuarial science, not the other way around.
 

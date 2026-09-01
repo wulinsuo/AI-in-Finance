@@ -11,9 +11,7 @@
 \SetWatermarkText{Wulin.Suo@Queensu.ca}
 \SetWatermarkScale{1.4}
 \SetWatermarkColor{gray!35}
-\SetWatermarkAngle{90}
-\SetWatermarkHorCenter{0.94\paperwidth}
-\SetWatermarkVerCenter{0.5\paperheight}
+\SetWatermarkAngle{45}
 
 \usepackage{makeidx}
 \makeindex
@@ -657,8 +655,8 @@ where $N(v)$ is the set of $v$'s neighbors in the graph.
 Consider a four-node layering chain, $A \to B \to C \to D$, extending Chapter 15's shell-company example, with initial suspicion scores $x_A = 0.9$ (a flagged placement account), $x_B = 0.2$, $x_C = 0.1$, and $x_D = 0.05$ (an apparently unremarkable integration account), and neighbor sets
 $$N(A)=\{B\},\ N(B)=\{A,C\},\ N(C)=\{B,D\},\  N(D)=\{C\}.$$
  With weights $w_1=0.6$, $w_2=0.8$, $b=-0.05$, one round of mean-aggregation gives
-$$h_B = \sigma\big(0.6(0.2) + 0.8\cdot\tfrac{0.9+0.1}{2} - 0.05\big) = \sigma(0.47) = 0.6154$$ and
-$$h_C = \sigma\big(0.6(0.1) + 0.8\cdot\tfrac{0.2+0.05}{2} - 0.05\big) = \sigma(0.11) = 0.5275,$$
+$$h_B = \sigma\big(0.6 \times 0.2 + 0.8 \times \tfrac{0.9+0.1}{2} - 0.05\big) = \sigma(0.47) = 0.6154$$ and
+$$h_C = \sigma\big(0.6 \times 0.1 + 0.8 \times \tfrac{0.2+0.05}{2} - 0.05\big) = \sigma(0.11) = 0.5275,$$
 compared to $h_A = \sigma(0.65) = 0.6570$ and $h_D = \sigma(0.06) = 0.5150$. Node B's updated score, 0.615, is far higher than its own raw feature of 0.2 would suggest, purely because it is one hop from the flagged account A, and even node C, two hops away, shows a modest elevation to 0.528 from a raw 0.1; a model that scored each account independently, the way Chapter 15's original logistic regression\index{logistic regression} did, would miss this kind of network-propagated risk.
 
 \subsubsection*{Multi-Modal Fusion via Cross-Attention}\index{Multi-Modal Fusion via Cross-Attention}
