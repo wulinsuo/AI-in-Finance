@@ -10,4 +10,9 @@ never feel lost.
 I am still actively revising the book.
 
 Note: Added chapters on Insurance and ABM. The book has been revised substantially.
-Note: Latest update: August 21, 2026
+====================================
+§20.2.2 $V$/$C$ subscripts
+§19.2.3 bandit section — chapter, notebook, slides, index, Exercise 12 
+Figure 20.3 topology diagram
+
+Note: Latest update: September 1, 2026
