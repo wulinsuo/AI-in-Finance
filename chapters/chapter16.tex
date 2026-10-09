@@ -9,9 +9,10 @@
 \usepackage{draftwatermark}
 
 \SetWatermarkText{Wulin.Suo@Queensu.ca}
-\SetWatermarkScale{1.4}
+\SetWatermarkScale{0.8}
 \SetWatermarkColor{gray!35}
-\SetWatermarkAngle{45}
+\SetWatermarkAngle{0}
+\SetWatermarkVerCenter{0.955\paperheight}
 
 \usepackage{makeidx}
 \makeindex
@@ -515,7 +516,7 @@ Multimodal models extend the same architecture to inputs beyond plain text, read
 
 Retrieval-augmented generation (RAG) is the most widely deployed mitigation for hallucination in financial applications. Rather than relying solely on facts an LLM absorbed during training, potentially outdated, generic, or simply never seen, a RAG system first retrieves the most relevant passages from a trusted, current document collection (a bank's own filings, policy manuals, or licensed research), then conditions the model's generated answer on those specific retrieved passages.
 
-This converts an open-ended generation task into something closer to a closed-book comprehension task: the model is asked to answer using the retrieved text, not to recall facts unaided, and its output can be traced back to a specific source passage for verification, exactly what an auditor or compliance reviewer needs. The retrieval step is a direct application of Section~\ref{sec:embeddings}'s embedding geometry: embed the user's query and every candidate document in the same vector space, then rank documents by cosine similarity to the query and pass the top-ranked passages to the generative model.
+This converts an open-ended generation task into something closer to an open-book comprehension task: the model is asked to answer using the retrieved text, not to recall facts unaided, and its output can be traced back to a specific source passage for verification, exactly what an auditor or compliance reviewer needs. The retrieval step is a direct application of Section~\ref{sec:embeddings}'s embedding geometry: embed the user's query and every candidate document in the same vector space, then rank documents by cosine similarity to the query and pass the top-ranked passages to the generative model.
 
 \subsubsection*{A Worked Example: Retrieving the Right Passage from a Toy Knowledge Base}
 

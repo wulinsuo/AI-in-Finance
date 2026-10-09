@@ -9,9 +9,10 @@
 \usepackage{draftwatermark}
 
 \SetWatermarkText{Wulin.Suo@Queensu.ca}
-\SetWatermarkScale{1.4}
+\SetWatermarkScale{0.8}
 \SetWatermarkColor{gray!35}
-\SetWatermarkAngle{45}
+\SetWatermarkAngle{0}
+\SetWatermarkVerCenter{0.955\paperheight}
 
 \usepackage{makeidx}
 \makeindex
@@ -661,7 +662,7 @@ Several challenges recur across nearly every algorithmic trading application.
 
 \textbf{Market impact is itself uncertain and strategy-dependent.} The clean market-impact numbers in Section~\ref{sec:market-impact} come from a simplified, static order book; real market impact depends on prevailing volatility, on whether other market participants can detect and react to a large order being worked, and on overall market liquidity conditions that themselves vary over time, all of which make market impact considerably harder to estimate precisely than the other inputs to a trading strategy.
 
-\textbf{Latency and technology risk.} Execution algorithms and market-making strategies alike depend on fast, reliable technology, and a software bug, a connectivity failure, or a delay in receiving market data can turn a theoretically sound strategy into a source of real, sometimes rapid, losses; this is the specific operational risk category from Chapter 9 applied to a domain where a failure can compound within seconds rather than days.
+\textbf{Latency and technology risk.} Execution algorithms and market-making strategies alike depend on fast, reliable technology, and a software bug, a connectivity failure, or a delay in receiving market data can turn a theoretically sound strategy into a source of real, sometimes rapid, losses; this is the specific operational risk category from Chapter 10 applied to a domain where a failure can compound within seconds rather than days.
 
 \textbf{Adverse selection from faster participants.} A trading algorithm that posts a limit order risks that order being filled specifically by a faster or better-informed participant at the moment when doing so is disadvantageous, the same adverse-selection component of the bid-ask spread introduced in Chapter 3; the more of this risk a strategy is exposed to, the wider the effective spread it must earn just to break even.
 

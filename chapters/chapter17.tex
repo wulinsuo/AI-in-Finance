@@ -9,9 +9,10 @@
 \usepackage{draftwatermark}
 
 \SetWatermarkText{Wulin.Suo@Queensu.ca}
-\SetWatermarkScale{1.4}
+\SetWatermarkScale{0.8}
 \SetWatermarkColor{gray!35}
-\SetWatermarkAngle{45}
+\SetWatermarkAngle{0}
+\SetWatermarkVerCenter{0.955\paperheight}
 
 \usepackage{makeidx}
 \makeindex
@@ -657,7 +658,7 @@ $$N(A)=\{B\},\ N(B)=\{A,C\},\ N(C)=\{B,D\},\  N(D)=\{C\}.$$
  With weights $w_1=0.6$, $w_2=0.8$, $b=-0.05$, one round of mean-aggregation gives
 $$h_B = \sigma\big(0.6 \times 0.2 + 0.8 \times \tfrac{0.9+0.1}{2} - 0.05\big) = \sigma(0.47) = 0.6154$$ and
 $$h_C = \sigma\big(0.6 \times 0.1 + 0.8 \times \tfrac{0.2+0.05}{2} - 0.05\big) = \sigma(0.11) = 0.5275,$$
-compared to $h_A = \sigma(0.65) = 0.6570$ and $h_D = \sigma(0.06) = 0.5150$. Node B's updated score, 0.615, is far higher than its own raw feature of 0.2 would suggest, purely because it is one hop from the flagged account A, and even node C, two hops away, shows a modest elevation to 0.528 from a raw 0.1; a model that scored each account independently, the way Chapter 15's original logistic regression\index{logistic regression} did, would miss this kind of network-propagated risk.
+compared to $h_A = \sigma(0.65) = 0.6570$ and $h_D = \sigma(0.06) = 0.5150$. Node B's updated score, 0.615, is far higher than its own raw feature of 0.2 would suggest, purely because it is one hop from the flagged account A, while node C, two hops away, reaches only 0.528, barely above D's 0.515: after a single round, A's signal has not yet arrived there, and a second round of aggregation is needed to carry it that far; a model that scored each account independently, the way Chapter 15's original logistic regression\index{logistic regression} did, would miss this kind of network-propagated risk.
 
 \subsubsection*{Multi-Modal Fusion via Cross-Attention}\index{Multi-Modal Fusion via Cross-Attention}
 
@@ -738,7 +739,7 @@ Section~\ref{sec:advanced-altdata} went one level deeper still: transfer learnin
     \item Using Section~\ref{sec:altdata-feature-engineering}'s method, recompute the peer-adjusted regression's slope and $R^2$ if the sector-average car-count growth for Q5 is revised from 2.5\% to 5.0\% (a sector-wide surge that quarter), holding all other quarters fixed, and explain why the peer-adjusted model's $R^2$ falls even though Cascade's own reported revenue growth has not changed.
     \item A vendor offers a trial dataset covering only the three quarters (of Table~\ref{tab:multisource_signal}) in which its data predicted the following quarter's earnings surprise correctly. Using Section~\ref{sec:vendor-ecosystem}'s discussion, explain what is wrong with evaluating the vendor's data quality using only this trial.
     \item Using Section~\ref{sec:vendor-ecosystem}'s cost-benefit method, recompute the expected net annual benefit if the fund can only deploy a \$20 million position per signaled event (instead of \$50 million), holding the signal frequency, edge, and data costs fixed, and state whether the subscription is still worth its \$400,000 annual cost.
-    \item Using Section~\ref{sec:nn-structured-unstructured}'s autoencoder example, compute the reconstruction error and relative error for Q2 ($\text{car}=-1.5$, $\text{web}=-0.5$, $\text{card}=-1.0$) using the same encoder/decoder weights $w=(0.5,0.3,0.2)$, and state whether Q2 would be flagged ahead of Q7 (relative error 39.5\%) for data-quality review.
+    \item Using Section~\ref{sec:nn-structured-unstructured}'s autoencoder example, compute the reconstruction error and relative error for Q2 ($\text{car}=-1.5$, $\text{web}=-0.5$, $\text{card}=-1.0$) using the same encoder/decoder weights $w=(0.5,0.3,0.2)$, and state whether Q2 would be flagged ahead of Q7 (relative error 39.4\%) for data-quality review.
     \item Using Section~\ref{sec:advanced-altdata}'s transfer-learning example, perform a second gradient-descent step starting from the updated weights $w=(0.549,0.464)$, $b=0.113$, and report the new prediction, confirming that it continues to move toward the true label of 1.
     \item Using Section~\ref{sec:advanced-altdata}'s graph neural network example, compute $h_A$ and $h_D$'s updated scores using the same weights, and explain, using the network's chain structure $A \to B \to C \to D$, why $h_D$'s score barely moves from its raw feature while $h_B$'s moves substantially.
     \item Using Section~\ref{sec:advanced-altdata}'s cross-attention example, recompute the fused output if the text modality's key becomes $K_{\text{txt}} = (0.8, 0.2)$ (a much less distinctive key vector, more similar to $K_{\text{img}}$), and explain in words why the two attention weights move closer to 50/50.

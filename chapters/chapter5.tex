@@ -10,9 +10,10 @@
 \usepackage{draftwatermark}
 
 \SetWatermarkText{Wulin.Suo@Queensu.ca}
-\SetWatermarkScale{1.4}
+\SetWatermarkScale{0.8}
 \SetWatermarkColor{gray!35}
-\SetWatermarkAngle{45}
+\SetWatermarkAngle{0}
+\SetWatermarkVerCenter{0.955\paperheight}
 
 \usepackage{makeidx}
 \makeindex
@@ -819,7 +820,7 @@ The models in this chapter are elegant and, within their assumptions, exact. App
 
 \textbf{Credit risk complicates bond pricing.} The bond pricing formula in this chapter assumes the promised cash flows are paid with certainty. A corporate bond carries default risk, so its price reflects both discounting and the probability-weighted possibility of missed payments, which requires the credit models developed in Chapter 9.
 
-\textbf{Calibration\index{calibration} versus estimation at scale.} A trading desk must reprice large portfolios of derivatives continuously as market conditions change, which requires the underlying models to be calibrated quickly and consistently across thousands of instruments. This operational requirement, not just theoretical accuracy, is a major reason simpler closed-form models such as Black-Scholes-Merton remain in wide use even though more elaborate stochastic volatility and jump-diffusion model\index{diffusion model}s are known to fit historical data better.
+\textbf{Calibration\index{calibration} versus estimation at scale.} A trading desk must reprice large portfolios of derivatives continuously as market conditions change, which requires the underlying models to be calibrated quickly and consistently across thousands of instruments. This operational requirement, not just theoretical accuracy, is a major reason simpler closed-form models such as Black-Scholes-Merton remain in wide use even though more elaborate stochastic volatility and jump-diffusion models\index{jump-diffusion model} are known to fit historical data better.
 
 \textbf{Where machine learning fits in.} Because closed-form models are known to deviate from observed market prices in systematic ways (the volatility smile is a direct symptom), researchers and practitioners have used machine learning both to learn the deviation directly (predicting the gap between a model price and the observed market price) and to learn pricing functions or implied volatility surfaces end to end from data. These approaches can capture patterns a fixed formula cannot, but they inherit the same risk-management burden as any other statistical model, including the overfitting\index{overfitting} and non-stationarity concerns raised in Chapter 6: a pricing model trained on historical option data can fail exactly when market conditions shift away from the training regime, which is usually when accurate pricing matters most.
 
@@ -848,7 +849,7 @@ The exercises below draw on every major tool developed in this chapter, bond pri
 
 \begin{enumerate}
     \item A 2-year bond with face value \$1,000 and an annual coupon rate of 6\% is priced at a market yield of 8\%. Compute its price using the discounting formula from Section 5.2.2.
-    \item Using the Gordon growth model, find the fair price of a stock expected to pay a dividend of \$2.50 next year, assuming a required return of 10\% and a long-run dividend growth rate of 6\%. Then recompute the price assuming growth of 8\% instead, and comment on how sensitive the price is to this one-percentage-point change.
+    \item Using the Gordon growth model, find the fair price of a stock expected to pay a dividend of \$2.50 next year, assuming a required return of 10\% and a long-run dividend growth rate of 6\%. Then recompute the price assuming growth of 8\% instead, and comment on how sensitive the price is to this two-percentage-point change.
     \item Using the one-step binomial model with $S_0 = \$40$, $u = 1.25$, $d = 0.8$, $R = 1.05$, and strike $K = \$40$, compute the risk-neutral probability $q$ and the fair price of a call option today.
     \item Verify put-call parity using the Black-Scholes-Merton call and put prices computed in Section 5.4.2, and explain in your own words why put-call parity must hold regardless of which option pricing model is used.
     \item Using the two-stage dividend discount model from Section 5.3.2, compute the fair price of a stock with $D_0=\$2.00$, a high-growth rate of $g_1=15\%$ for the first 4 years, a terminal growth rate of $g_2=5\%$, and a required return of $r=11\%$. What fraction of the total price comes from the terminal value?

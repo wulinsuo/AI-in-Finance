@@ -9,9 +9,10 @@
 \usepackage{draftwatermark}
 
 \SetWatermarkText{Wulin.Suo@Queensu.ca}
-\SetWatermarkScale{1.4}
+\SetWatermarkScale{0.8}
 \SetWatermarkColor{gray!35}
-\SetWatermarkAngle{45}
+\SetWatermarkAngle{0}
+\SetWatermarkVerCenter{0.955\paperheight}
 
 \usepackage{makeidx}
 \makeindex
@@ -372,7 +373,7 @@ To make the ABM-versus-MARL distinction concrete rather than only abstract, reco
 E[\text{profit}_H] &= \Pr(v\ge 58)\times(58-40) = \tfrac{2}{5}\times18 = 7.2,\\
 E[\text{profit}_{Lo}] &= \Pr(v\ge 47)\times(47-40) = \tfrac{4}{5}\times7 = 5.6,
 \end{align*}
-so Arm H, despite trading less than half as often, is actually the better arm: its larger profit per trade more than compensates for its lower fill rate, a genuinely non-obvious tradeoff that neither arm's raw trade frequency reveals on its own.
+so Arm H, despite trading only half as often, is actually the better arm: its larger profit per trade more than compensates for its lower fill rate, a genuinely non-obvious tradeoff that neither arm's raw trade frequency reveals on its own.
 
 The learning seller explores both arms twice (rounds 1 through 4, alternating H, Lo, H, Lo) and then plays greedily, choosing whichever arm has the higher running-average realized profit so far. Table~\ref{tab:abm-bandit} traces one representative 12-round history. After the four exploration rounds, Arm H's running average stands at $\$18.00$ against Arm Lo's $\$7.00$, so the seller plays Arm H for the remainder of the sequence, exactly matching the true optimal choice, and its running average, noisy at first, drifts down toward the true value of $\$7.2$ as more rounds accumulate.
 

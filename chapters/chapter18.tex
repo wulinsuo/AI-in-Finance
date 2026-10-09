@@ -9,9 +9,10 @@
 \usepackage{draftwatermark}
 
 \SetWatermarkText{Wulin.Suo@Queensu.ca}
-\SetWatermarkScale{1.4}
+\SetWatermarkScale{0.8}
 \SetWatermarkColor{gray!35}
-\SetWatermarkAngle{45}
+\SetWatermarkAngle{0}
+\SetWatermarkVerCenter{0.955\paperheight}
 
 \usepackage{makeidx}
 \makeindex
@@ -345,7 +346,7 @@ the model systematically under-predicts risk for Alpha and over-predicts it for 
 
 Both fairness definitions above are \emph{group} fairness notions: they compare an aggregate statistic, an approval rate or an error rate, across two or more predefined groups. A third paradigm, \textbf{individual fairness} (Dwork, Hardt, Pitassi, Reingold, and Zemel, 2012), asks a different question entirely: are two individuals who are similar with respect to the task at hand treated similarly by the model, regardless of which group either belongs to? Formally, this requires a task-specific similarity metric, a notion of distance between applicants that captures what ``similar with respect to creditworthiness'' actually means, and a model satisfies individual fairness if it maps similar inputs to similar outputs under that metric.
 
-Table~\ref{tab:fairness_audit}'s Alpha-2 and Beta-3 illustrate why this third lens matters: their predicted default probabilities are 13.2\% and 6.2\% respectively, not identical but broadly comparable, despite belonging to different groups and receiving different final decisions (approved and approved, in this case, though a stricter similarity threshold could flag even this small gap as an individual-fairness violation worth investigating). The practical difficulty individual fairness faces is the difficulty this parenthetical hints at. Choosing the similarity metric itself requires the same kind of value judgment that group fairness definitions push onto the choice of protected groups and outcome statistics: which features count as legitimately relevant to creditworthiness and which do not. Individual fairness therefore does not so much resolve the value judgment Section~\ref{sec:fairness}'s impossibility result identifies as relocate it, from ``which group statistic to equalize'' to ``which similarity metric to adopt.''
+Table~\ref{tab:fairness_audit}'s Alpha-2 and Beta-3 illustrate why this third lens matters: their predicted default probabilities are 13.2\% and 6.2\% respectively, not identical but broadly comparable, despite belonging to different groups, and both receive the same final decision (approval, in this case, though a stricter similarity threshold could flag even this small gap in predicted probability as an individual-fairness violation worth investigating). The practical difficulty individual fairness faces is the difficulty this parenthetical hints at. Choosing the similarity metric itself requires the same kind of value judgment that group fairness definitions push onto the choice of protected groups and outcome statistics: which features count as legitimately relevant to creditworthiness and which do not. Individual fairness therefore does not so much resolve the value judgment Section~\ref{sec:fairness}'s impossibility result identifies as relocate it, from ``which group statistic to equalize'' to ``which similarity metric to adopt.''
 
 \subsection{Case Vignette: The Apple Card Gender-Bias Controversy}\index{Apple Card gender-bias controversy}
 \label{sec:apple-card-vignette}

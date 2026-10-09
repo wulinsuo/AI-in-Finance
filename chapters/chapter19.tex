@@ -9,9 +9,10 @@
 \usepackage{draftwatermark}
 
 \SetWatermarkText{Wulin.Suo@Queensu.ca}
-\SetWatermarkScale{1.4}
+\SetWatermarkScale{0.8}
 \SetWatermarkColor{gray!35}
-\SetWatermarkAngle{45}
+\SetWatermarkAngle{0}
+\SetWatermarkVerCenter{0.955\paperheight}
 
 \usepackage{makeidx}
 \makeindex
@@ -241,8 +242,8 @@ That tree has exactly three decision points: today, at $S_0=\$50$; after one up 
 three states the holder chooses between two actions: \textbf{exercise}, receive the intrinsic value $\max(K-S,0)$ immediately and end the episode, or
 \textbf{hold}, receive nothing now and let the tree evolve one more step.
 
-The two terminal nodes reachable only through the up state, $S_{uu}=\$72$ and $S_{ud}=\$54$, both pay $\max(50-S,0)=\$0$; the one terminal node reachable
-through the down state, $S_{dd}=\$40.50$, pays $\max(50-40.50,0)=\$9.50$.
+The two terminal nodes reachable from the up state, $S_{uu}=\$72$ and $S_{ud}=\$54$, both pay $\max(50-S,0)=\$0$; of the two reachable
+from the down state, $S_{ud}$ again pays \$0, while $S_{dd}=\$40.50$ pays $\max(50-40.50,0)=\$9.50$.
 
 Putting these pieces together, this is precisely a Markov decision process with states $\mathcal{S}=\{S_0, S_u, S_d\}$ and actions $\mathcal{A}=\{\text{exercise}, \text{hold}\}$. Transition probabilities are given by $q$ and $1-q$, rewards by the intrinsic-value and terminal-payoff structure above, and $\gamma=1/R$ discounts every step exactly as Chapter 5's tree already did.
 
@@ -547,7 +548,7 @@ Q-learning (learned, discretized) & $(250, 195, 145, 95, 45, 0)$ & $139.52$ \\
 }
 \end{table}
 
-Figure~\ref{fig:execution_trajectories} plots the same three trajectories, making the front-loading pattern immediately visible: the fully aggressive strategy liquidates instantly, the uniform TWAP schedule is a straight line, and the Q-learning trajectory sits just above TWAP early on, trading a little faster than uniform while inventory is largest and tapering to match TWAP by the final interval, exactly the mild front-loading Chapter 13's continuous closed-form solution also produced.
+Figure~\ref{fig:execution_trajectories} plots the same three trajectories, making the front-loading pattern immediately visible: the fully aggressive strategy liquidates instantly, the uniform TWAP schedule is a straight line, and the Q-learning trajectory sits just below TWAP from the first interval on, with fewer shares left unexecuted, trading a little faster than uniform while inventory is largest and tapering to match TWAP by the final interval, exactly the mild front-loading Chapter 13's continuous closed-form solution also produced.
 
 \begin{figure}[htbp]
 \centering
