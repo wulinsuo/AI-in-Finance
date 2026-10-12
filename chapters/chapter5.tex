@@ -29,7 +29,7 @@ The preceding chapters built the pieces needed to price a financial asset: Chapt
 The chapter answers this question with worked numerical examples for the three main instrument classes introduced in Chapter 3: bonds, equities, and derivatives. Every formula here is accompanied by a computation a reader can check by hand or reproduce in the companion notebook, in keeping with this book's view that a quantitative finance practitioner should be able to compute a price directly, not just describe the logic behind it qualitatively.
 
 The chapter is organized to build in complexity. It begins with the simplest possible cash flow structures, a single-maturity bond and a constant-growth dividend stream, where closed-form formulas exist and every number can be verified by hand.
-It then introduces two ways of estimating the discount rate that all of these formulas depend on, the term structure of interest rates and the cost of capital, before turning to the more complex, nonlinear payoffs of options, which require the replication and no-arbitrage arguments central to modern derivatives pricing. A useful way to read the chapter is as a single valuation story: Meridian Fabrication\index{Meridian Fabrication Inc.}, the running example introduced in Chapter 4, is first valued from its projected cash flows, then compared with a market-based multiple, and finally used to illustrate how a firm's financing mix determines the discount rate. The goal is not to treat bonds, equities, and options as unrelated topics, but to show that the same present-value logic reappears in each context.
+It then introduces two ways of estimating the discount rate that all of these formulas depend on, the term structure of interest rates and the cost of capital, before turning to the more complex, nonlinear payoffs of options, which require the replication and no-arbitrage arguments central to modern derivatives pricing. A useful way to read the chapter is as a single valuation story: Meridian Fabrication\index{Meridian Fabrication Inc.}, the running example introduced in Chapter 4, first illustrates how a firm's financing mix determines the discount rate, is then valued with a market-based multiple, and is finally valued from its projected cash flows, with the two values compared side by side. The goal is not to treat bonds, equities, and options as unrelated topics, but to show that the same present-value logic reappears in each context.
 
 \section{Discounting and Fixed Income}
 
@@ -189,7 +189,7 @@ higher than either the 1-year or 2-year spot rate, exactly what an upward-slopin
 \begin{equation*}
 f_{2,5} = \left(\frac{(1+y_5)^5}{(1+y_2)^2}\right)^{1/3} - 1 \approx 5.07\%,
 \end{equation*}
-again above both the 2-year and 5-year spot rates, consistent with the curve's continued upward slope over that stretch. Forward rates matter well beyond this arithmetic exercise: they are the rates a company can lock in today via a forward-starting swap or a forward-rate agreement (both introduced in Chapter 3) to hedge future borrowing costs, and, under the pure expectations theory of the term structure, they can be interpreted (with important caveats about the term premium mentioned above) as the market's best current forecast of where future short-term rates will actually be.
+again above both the 2-year and 5-year spot rates, consistent with the curve's continued upward slope over that stretch. Forward rates matter well beyond this arithmetic exercise: they are the rates a company can lock in today via a forward-starting swap or a forward-rate agreement (close relatives of the interest rate swaps and forward contracts introduced in Chapter 3) to hedge future borrowing costs, and, under the pure expectations theory of the term structure, they can be interpreted (with important caveats about the term premium mentioned above) as the market's best current forecast of where future short-term rates will actually be.
 
 \section{Valuing Equity}
 
@@ -198,7 +198,7 @@ An equity claim has no maturity and no promised payment, so its value depends en
 \subsection{The Cost of Capital: CAPM and WACC}\index{capital asset pricing model (CAPM)}
 \label{sec:wacc}
 
-Every valuation formula in this chapter takes a discount rate $r$ as an input, and it is worth pausing to show how that rate is actually estimated in practice, since the bond pricing and dividend discount examples so far have simply been given a value of $r$ to use. Firms are financed by a mix of debt and equity, and each source of capital has its own cost.
+Every valuation formula in this chapter takes a discount rate $r$ as an input, and it is worth pausing to show how that rate is actually estimated in practice, since the bond pricing examples so far, like the dividend discount examples that follow, have simply been given a value of $r$ to use. Firms are financed by a mix of debt and equity, and each source of capital has its own cost.
 
 The cost of debt is the most straightforward: it is simply the yield the firm currently pays on its debt (or would pay on new debt of similar risk), adjusted for the tax deductibility of interest payments, since interest expense reduces taxable income,
 \begin{equation*}
@@ -218,16 +218,17 @@ Using Meridian Fabrication's Year 2 figures from Chapter 4,
 \begin{align*}
 E &= \$54.0 \text{ million (equity)}, & D &= \$58.0 \text{ million (total debt)}, \\
 r_f &= 4\%, & \text{Market risk premium} &= 6\%, \\
-\beta &= 1.2, & \text{Pretax cost of debt} &= 5\%, \\
+\beta &= 1.2, & \text{Pretax cost of debt} &= 4.0/58.0 \approx 6.90\%, \\
 \text{Tax rate} &= 25\%, & &
 \end{align*}
+where the pretax cost of debt is read off Meridian's own statements rather than assumed: Year 2 interest expense of \$4.0 million on the \$58.0 million of debt outstanding at year end. A rate nearly three percentage points above the risk-free rate is what one would expect for a firm whose Altman Z$'$-score places it in the grey zone (Chapter 4). Then
 \begin{equation*}
-r_e = 0.04 + 1.2(0.06) = 11.2\%, \qquad r_d^{\text{after-tax}} = 0.05(1-0.25) = 3.75\%,
+r_e = 0.04 + 1.2(0.06) = 11.2\%, \qquad r_d^{\text{after-tax}} = 0.0690(1-0.25) \approx 5.17\%,
 \end{equation*}
 \begin{equation*}
-\text{WACC} = \frac{54.0}{112.0}(11.2\%) + \frac{58.0}{112.0}(3.75\%) \approx 0.482(11.2\%) + 0.518(3.75\%) \approx 7.34\%.
+\text{WACC} = \frac{54.0}{112.0}(11.2\%) + \frac{58.0}{112.0}(5.17\%) \approx 0.482(11.2\%) + 0.518(5.17\%) \approx 8.08\%.
 \end{equation*}
-This WACC of 7.34\% is precisely the kind of discount rate that would be used to compute Meridian's enterprise value via the free-cash-flow valuation formula in Chapter 4, and it is also the discount rate that belongs in the economic-profit formula, $\text{Invested capital} \times (\text{ROIC} - \text{WACC})$, introduced when that chapter discussed how firms create value: a firm earning a return on invested capital below its WACC of 7.34\% is destroying value even if it is reporting positive accounting profit. Notice how sensitive WACC is to its inputs: a beta of 1.5 instead of 1.2 would raise the cost of equity to $0.04+1.5(0.06)=13\%$ and the WACC to roughly $8.2\%$, which is precisely the discount-rate uncertainty flagged as a challenge later in this chapter.
+Book equity stands in for $E$ here because Meridian's shares have no market price in this example; Section 5.5 returns to what changes when a market-based equity value is used instead. This WACC of 8.08\%, close to the 8\% Chapter 4's economic-profit example assumed, is precisely the kind of discount rate that would be used to compute Meridian's enterprise value via the free-cash-flow valuation formula in Chapter 4, and it is also the discount rate that belongs in the economic-profit formula, $\text{Invested capital} \times (\text{ROIC} - \text{WACC})$, introduced when that chapter discussed how firms create value: a firm earning a return on invested capital below its WACC of 8.08\% is destroying value even if it is reporting positive accounting profit. Notice how sensitive WACC is to its inputs: a beta of 1.5 instead of 1.2 would raise the cost of equity to $0.04+1.5(0.06)=13\%$ and the WACC to roughly $8.95\%$, which is precisely the discount-rate uncertainty flagged as a challenge later in this chapter.
 
 \subsection{The Dividend Discount Model for Equities}\index{dividend discount model (DDM)}
 
@@ -374,7 +375,7 @@ Crucially, $q$ is not the investor's real-world belief about the probability of 
 
 \subsubsection*{Extending to Two Steps}
 
-A single step is enough to introduce the mechanics, but a multi-step tree is what actually converges to the Black-Scholes-Merton\index{Black-Scholes-Merton model} price, as the companion notebook demonstrates numerically for tree sizes up to 5,000 steps. Extending the same stock and option to two periods, each still with $u=1.2$, $d=0.9$, $R=1.04$, produces three possible terminal prices: $S_{uu} = 50(1.2)^2 = \$72$, $S_{ud} = 50(1.2)(0.9) = \$54$, and $S_{dd} = 50(0.9)^2 = \$40.50$, with call payoffs $C_{uu} = \$22$, $C_{ud} = \$4$, and $C_{dd} = \$0$. The risk-neutral probability $q=0.467$ is unchanged, since it depends only on $u$, $d$, and $R$, not on the number of steps, so the tree is solved by working backward one period at a time:
+A single step is enough to introduce the mechanics, but a multi-step tree whose up- and down-moves are calibrated to the underlying's volatility is what actually converges to the Black-Scholes-Merton\index{Black-Scholes-Merton model} price, as the companion notebook demonstrates numerically for tree sizes up to 5,000 steps. Extending the same stock and option to two periods, each still with $u=1.2$, $d=0.9$, $R=1.04$, produces three possible terminal prices: $S_{uu} = 50(1.2)^2 = \$72$, $S_{ud} = 50(1.2)(0.9) = \$54$, and $S_{dd} = 50(0.9)^2 = \$40.50$, with call payoffs $C_{uu} = \$22$, $C_{ud} = \$4$, and $C_{dd} = \$0$. The risk-neutral probability $q=0.467$ is unchanged, since it depends only on $u$, $d$, and $R$, not on the number of steps, so the tree is solved by working backward one period at a time:
 \begin{equation*}
 C_u = \frac{1}{R}[q\,C_{uu} + (1-q)\,C_{ud}] = \frac{1}{1.04}[0.467(22) + 0.533(4)] \approx \$11.92,
 \qquad C_d = \frac{1}{R}[q\,C_{ud} + (1-q)\,C_{dd}] \approx \$1.79,
@@ -382,7 +383,7 @@ C_u = \frac{1}{R}[q\,C_{uu} + (1-q)\,C_{ud}] = \frac{1}{1.04}[0.467(22) + 0.533(
 \begin{equation*}
 C_0 = \frac{1}{R}[q\,C_u + (1-q)\,C_d] \approx \$6.27.
 \end{equation*}
-This two-step price of \$6.27 is already closer to the Black-Scholes-Merton price of \$6.88 computed later in this chapter than the one-step price of \$4.49 was. That is consistent with the convergence pattern shown numerically in the companion notebook: as the number of steps grows and each step covers a shorter interval, the binomial price converges to the continuous-time Black-Scholes-Merton price.
+This two-step price of \$6.27 should not be compared with the Black-Scholes-Merton price of \$6.88 computed later in this chapter, and neither should the one-step price of \$4.49: the hand tree's $u$ and $d$ imply a lower volatility than the 30\% that the Black-Scholes-Merton example uses, so moving from one step to two with $u$ and $d$ held fixed shows the mechanics of backward induction, not convergence. Convergence requires each step's up- and down-moves to be calibrated to the same annualized volatility, as the next paragraph does.
 
 The $u=1.2$ and $d=0.9$ used above were chosen for hand-computability, not to represent a specific step size; a tree with an arbitrary number of steps instead derives $u$ and $d$ from the underlying's annualized volatility using the Cox-Ross-Rubinstein\index{Cox-Ross-Rubinstein (CRR) parametrization} parametrization $u=e^{\sigma\sqrt{\Delta t}}$, $d=1/u$, where $\Delta t$ is the length of one step, so that every tree, regardless of how many steps it has, reflects the same annualized volatility $\sigma$. Table~\ref{tab:binomial_convergence} prices the same at-the-money call ($S_0=K=\$50$, $r=4\%$, $\sigma=30\%$, $T=1$ year) with a CRR tree of increasing step count; the price oscillates while converging, but the error shrinks steadily, from \$1.40 at one step to under \$0.001 by 5,000 steps, confirming that the Black-Scholes-Merton formula is the limit this discrete tree approaches as the step size shrinks toward zero.
 
@@ -505,8 +506,7 @@ and looking up $N(0.283) = 0.6115$ and $N(-0.017) = 0.4934$ gives
 \begin{equation*}
 C = 50(0.6115) - 50\,e^{-0.04}(0.4934) \approx \$6.88.
 \end{equation*}
-This is noticeably higher than the one-step binomial price of \$4.49 for the same strike and initial price, because the binomial example allowed only two possible outcomes over the full year,
-while Black-Scholes-Merton assumes prices can move continuously and allows for a full year of compounded volatility; a multi-step binomial tree with enough steps converges to the Black-Scholes-Merton price as the step size shrinks.
+This is the price that the CRR tree of Table~\ref{tab:binomial_convergence}, calibrated to the same $\sigma=30\%$, approaches as its step size shrinks. It is not directly comparable with the hand-computed one- and two-step prices of \$4.49 and \$6.27, whose $u=1.2$ and $d=0.9$ were chosen for arithmetic convenience and imply a lower volatility.
 The corresponding put price is
 \begin{equation*}
 P = K e^{-rT} N(-d_2) - S_0 N(-d_1) \approx \$4.92,
@@ -683,7 +683,7 @@ WorldCom bankruptcy and accounting-scandal selloff that closed out the dot-com b
 Flash Crash (Chapter 3's own case study; $40.95$), the August 2011 U.S. sovereign credit downgrade ($48.00$), the August 2015 selloff triggered by a surprise
 Chinese currency devaluation ($40.74$), the February 2018 ``Volmageddon'' collapse of short-volatility exchange-traded products ($37.32$), the March 2020
 COVID-19 selloff (the all-time closing high of $82.69$), the August 2024 yen carry-trade unwind, when a surprise Bank of Japan rate hike met a weak U.S. jobs
-report ($65.73$ intraday, $38.57$ at the close), and the April 2025 tariff war ($52.33$, the third-highest close on record). Every spike shares the same shape:
+report ($65.73$ intraday, $38.57$ at the close), and the April 2025 tariff war ($52.33$, the third-highest peak of any VIX episode on record, behind only 2008 and 2020, although dozens of individual daily closes during those two crises were higher). Every spike shares the same shape:
 VIX drifts in a narrow band, then jumps to $40\%$-$80\%$ or more within days when a shock forces an abrupt repricing of risk, then subsides once the acute
 phase passes, the volatility clustering and mean reversion that Chapter 7's GARCH(1,1) recursion models directly.
 
@@ -745,7 +745,7 @@ The expected payoff from waiting is
 \begin{equation*}
 E[\text{Payoff}] = 0.5 \times \max(70.0 - 50.0,\ 0) + 0.5 \times \max(35.0 - 50.0,\ 0) = 0.5 \times 20.0 + 0.5 \times 0 = \$10.0 \text{ million},
 \end{equation*}
-which, discounted one year at a risk-free rate of $5\%$, has a present value of $10.0/1.05 \approx \$9.52$ million, substantially higher than the $\$0$ NPV of developing immediately. Figure~\ref{fig:real_options_tree} lays out this comparison as a one-step decision tree: developing immediately is a single certain outcome, while waiting branches into the two possible commodity-price states, each carrying its own payoff.
+which, discounted one year at a risk-free rate of $5\%$, has a present value of $10.0/1.05 \approx \$9.52$ million, substantially higher than the $\$0$ NPV of developing immediately. The probability $0.5$ is not an arbitrary guess, and discounting at the risk-free rate is legitimate only because of it: it is exactly the risk-neutral probability of Section 5.4.1 implied by the deposit's current value, $q = (1.05 \times 50 - 35)/(70 - 35) = 0.5$, the value of $q$ that makes today's \$50 million equal the discounted risk-neutral expectation of the two end-of-year outcomes. A real-world probability of $0.5$ would instead call for a risk-adjusted discount rate, and changing either end-of-year value while holding today's value fixed changes $q$ as well (Exercise 17). Figure~\ref{fig:real_options_tree} lays out this comparison as a one-step decision tree: developing immediately is a single certain outcome, while waiting branches into the two possible commodity-price states, each carrying its own payoff.
 
 The value of waiting comes entirely from the asymmetry built into the option to walk away: the firm captures the full upside if prices rise but avoids the downside entirely if they fall, an asymmetry a simple point-estimate NPV calculation, which implicitly commits to developing the project regardless of how prices move, cannot capture at all.
 This is why a corporate finance team that evaluates a marginal project using only a single expected NPV, without asking whether waiting for more information is itself a valuable and available choice, can systematically pass over projects, or approve them prematurely, in ways that ignore real, quantifiable option value. Chapter 19 revisits the closely related American-option early-exercise decision from Section~\ref{sec:american-options} using a model-free reinforcement-learning algorithm, Q-learning, and shows that it recovers the exact same optimal exercise policy without ever being told the tree's transition probabilities or payoff structure in advance, an instructive machine-learning counterpart to the closed-form, model-based reasoning used throughout this section.
@@ -768,8 +768,8 @@ This is why a corporate finance team that evaluates a marginal project using onl
             \node[draw,rounded corners,align=center] (s0) at (0,0) {Wait One Year\\$V_0=\$50.0$M};
             \node[draw,rounded corners,align=center] (up) at (4.0,1.8) {Price Rises\\$V_u=\$70.0$M\\Develop: Payoff$=\$20.0$M};
             \node[draw,rounded corners,align=center] (down) at (4.0,-1.8) {Price Falls\\$V_d=\$35.0$M\\Walk Away: Payoff$=\$0.00$M};
-            \draw[->] (s0) -- node[above,sloped,font=\scriptsize] {$p=0.5$} (up);
-            \draw[->] (s0) -- node[below,sloped,font=\scriptsize] {$p=0.5$} (down);
+            \draw[->] (s0) -- node[above,sloped,font=\scriptsize] {$q=0.5$} (up);
+            \draw[->] (s0) -- node[below,sloped,font=\scriptsize] {$1-q=0.5$} (down);
         \end{tikzpicture}
 
         \small Option to wait: $E[\text{Payoff}]=\$10.0$M, $PV\approx\$9.52$M
@@ -792,19 +792,55 @@ This is why a corporate finance team that evaluates a marginal project using onl
 
 This chapter has now developed both major approaches to valuing a business, discounted cash flow and relative valuation multiples, and it is worth applying both to Meridian Fabrication side by side, using the WACC computed earlier in this chapter, to see how differently they can answer the same question.
 
-For the DCF approach, suppose Meridian's free cash flow, currently $-\$8.0$ million in Year 2 (Chapter 4), gradually recovers as its working-capital investment matures: $-\$2.0$ million in Year 3, $\$3.0$ million in Year 4, and $\$6.0$ million in Year 5, after which free cash flow grows at a stable long-run rate of $g=3\%$ forever. Discounting at the full-precision WACC of $7.342\%$ computed earlier in this chapter (before rounding to $7.34\%$ for display),
+For the DCF approach, the valuation date is the end of Year 2, the date of Meridian's latest balance sheet, so Year 3's free cash flow arrives one period from now and Year 5's three periods from now (Figure~\ref{fig:meridian_timeline}). Chapter 4's percent-of-sales forecast supplies the first of these: free cash flow recovers from $-\$8.0$ million in Year 2 to $\$0.52$ million in Year 3, as working capital absorbs less cash. Beyond that one-year forecast, suppose the recovery continues as Meridian's working-capital investment matures, to $\$3.0$ million in Year 4 and $\$6.0$ million in Year 5, after which free cash flow grows at a stable long-run rate of $g=3\%$ forever. Discounting at the full-precision WACC of $8.079\%$ computed earlier in this chapter (before rounding to $8.08\%$ for display),
 \begin{equation*}
-PV(\text{Years 3-5 FCF}) = \frac{-2.0}{1.07342} + \frac{3.0}{1.07342^2} + \frac{6.0}{1.07342^3} \approx \$5.59 \text{ million},
+PV(\text{Years 3-5 FCF}) = \frac{0.52}{1.08079} + \frac{3.0}{1.08079^2} + \frac{6.0}{1.08079^3} \approx \$7.80 \text{ million},
 \end{equation*}
 and the terminal value at the end of Year 5, using the Gordon growth formula on Year 6's free cash flow, is
 \begin{equation*}
-TV_5 = \frac{6.0(1.03)}{0.07342 - 0.03} \approx \$142.33 \text{ million}, \qquad PV(TV_5) = \frac{142.33}{1.07342^5} \approx \$99.87 \text{ million}.
+TV_5 = \frac{6.0(1.03)}{0.08079 - 0.03} \approx \$121.69 \text{ million}, \qquad PV(TV_5) = \frac{121.69}{1.08079^3} \approx \$96.39 \text{ million},
 \end{equation*}
-The DCF enterprise value is $5.59 + 99.87 \approx \$105.47$ million, and subtracting net debt of $\$58.0 - \$9.0 = \$49.0$ million gives an implied equity value of approximately $\$56.47$ million.
+discounted three periods, not five, because $TV_5$ sits at the end of Year 5, exactly as far from the valuation date as Year 5's own free cash flow. The DCF enterprise value is $7.80 + 96.39 \approx \$104.19$ million, and subtracting net debt of $\$58.0 - \$9.0 = \$49.0$ million gives an implied equity value of approximately $\$55.19$ million.
+
+\begin{figure}[htbp]
+\centering
+\begin{lrbox}{\bookmeasuredbox}
+\begin{tikzpicture}[>=latex,every node/.style={font=\small}]
+    \draw[->,thick] (0,0) -- (10.4,0);
+    \foreach \x in {0,2.6,5.2,7.8} {\draw[thick] (\x,0.12) -- (\x,-0.12);}
+    \node[below] at (0,-0.15) {End of Year 2};
+    \node[below] at (2.6,-0.15) {Year 3};
+    \node[below] at (5.2,-0.15) {Year 4};
+    \node[below] at (7.8,-0.15) {Year 5};
+    \node[below] at (0,-0.6) {$t=0$};
+    \node[below] at (2.6,-0.6) {$t=1$};
+    \node[below] at (5.2,-0.6) {$t=2$};
+    \node[below] at (7.8,-0.6) {$t=3$};
+    \node[above,align=center] at (0,0.2) {Valuation date\\net debt $49.0$};
+    \node[above] at (2.6,0.2) {FCF $0.52$};
+    \node[above] at (5.2,0.2) {FCF $3.0$};
+    \node[above,align=center] at (7.8,0.2) {FCF $6.0$\\$+\;TV_5=121.69$};
+    \node[above] at (9.9,0.2) {$g=3\%$};
+\end{tikzpicture}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\ffigbox[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
+    \caption{Cash-flow timeline for the Meridian DCF (\$ millions). The valuation date, $t=0$, is the end of Year 2, so Year 3's free cash flow is discounted one period, and Year 5's free cash flow and the terminal value $TV_5$ three periods.}
+    \label{fig:meridian_timeline}
+}
+\end{figure}
 
 Compare this to the multiples-based equity value computed in Section 5.3.3: $\$107.0$ million, nearly twice as large. Both are legitimate valuation methods applied to the same company; the large gap between them reflects a real economic disagreement, not a computational error. The DCF value is driven by Meridian's own, currently weak, cash generation and its slow projected recovery, while the multiples value assumes Meridian deserves to trade at the same EBITDA multiple as healthier comparable firms, effectively assuming its cash flow problems are temporary and will not persist.
 
-Interestingly, the DCF-implied equity value of \$56.47 million is still fairly close to Meridian's \$54.0 million book value of equity, while the multiples-based value is far above it, which itself is informative: it suggests the DCF assumptions are the more conservative, and arguably the more defensible, starting point until there is concrete evidence, such as an improving cash conversion cycle or margin expansion, that Meridian's operating performance is converging toward that of its healthier peers.
+The two methods are not even fully independent. The WACC used book equity of \$54.0 million as $E$, which the formula permits only when no market value is available; substituting the multiples-implied \$107.0 million would raise the equity weight from 48.2\% to 64.8\% and the WACC from 8.08\% to 9.08\%, which would lower the DCF value further and widen the gap. The choice of capital-structure weights is therefore itself a judgment about which of the two values is closer to the truth.
+
+Interestingly, the DCF-implied equity value of \$55.19 million is close to Meridian's \$54.0 million book value of equity, while the multiples-based value is far above it. That proximity should not be over-read, since book value is a historical-cost figure and nothing forces a DCF to land near it, but it is consistent with the DCF assumptions being the more conservative starting point until there is concrete evidence, such as an improving cash conversion cycle or margin expansion, that Meridian's operating performance is converging toward that of its healthier peers.
 
 This kind of triangulation across methods, and an honest accounting of why they disagree, is standard practice in real valuation work and is a more useful output than any single number produced by either method alone. In practice, the analyst would not stop at the two values; the next step would be to test how much each estimate changes under alternative market multiples, discount rates, and cash-flow scenarios. That sensitivity analysis is often more informative than the point estimate itself.
 
@@ -838,7 +874,7 @@ Every valuation problem in this chapter reduces to the same idea: discount the r
 
 The chapter also connected valuation directly to the statements and institutions covered earlier in the book. The WACC example in Section 5.3.1 discounted Meridian Fabrication's own capital structure from Chapter 4, showing exactly how a firm's balance sheet feeds into the rate used to value it. The credit-risk-adjusted bond price in Section 5.2.2 previewed the probability-of-default and recovery-rate concepts that Chapter 9's credit models estimate statistically rather than assume. And the Greeks and implied volatility material showed that even a formula as elegant as Black-Scholes-Merton is best understood as a lens for organizing risk exposures and market expectations, rather than as a black box that simply outputs a single correct price. Carrying this perspective, elegant models as organizing frameworks, not oracles, forward is the mindset the rest of this book tries to instill.
 
-The closing Meridian valuation in Section 5.5 is perhaps the single most important exercise in the chapter to internalize, precisely because it did not produce a single answer. A DCF value of \$56.47 million and a multiples-based value of \$107.0 million are both defensible, both computed correctly from the formulas in this chapter, and yet they disagree by nearly a factor of two.
+The closing Meridian valuation in Section 5.5 is perhaps the single most important exercise in the chapter to internalize, precisely because it did not produce a single answer. A DCF value of \$55.19 million and a multiples-based value of \$107.0 million are both defensible, both computed correctly from the formulas in this chapter, and yet they disagree by nearly a factor of two.
 
 Two further points follow from this. First, the disagreement itself is informative: it isolates exactly which assumption, Meridian's own projected cash-flow recovery versus the market's willingness to price it like a healthier peer, is driving the difference, which is a far more useful diagnostic than either number alone.
 Second, this is the situation a machine learning model trained to predict ``fair value'' from historical data would face silently and without comment: absent an explicit decomposition like the one performed here, a model blending signals from both approaches could produce a single confident-looking number while obscuring a genuine, economically meaningful disagreement about which valuation philosophy is more appropriate for this specific company at this specific time. Preserving, rather than collapsing, this kind of interpretability is a theme this book returns to directly in Chapter 18.
@@ -864,7 +900,7 @@ The exercises below draw on every major tool developed in this chapter, bond pri
     \item Using the multiples method in Section 5.3.3 and Solstice Robotics' Chapter 4 figures (EBIT of \$27.0 million, depreciation and amortization of \$5.0 million, total debt of \$10.0 million, and cash of \$40.0 million), compute its implied enterprise and equity value assuming comparable technology firms trade at an EV/EBITDA multiple of $12\times$. Compare the implied equity value to its book equity of \$75.0 million.
     \item Explain, using the DCF-versus-multiples comparison in Section 5.5, one reason a DCF valuation and a multiples-based valuation of the same company might disagree substantially, and describe what an analyst should do when they do.
     \item Describe a real option (using the framework in Section 5.4.5) that a pharmaceutical company holds when deciding whether to continue funding a drug at each stage of clinical trials, and explain why higher uncertainty about the drug's eventual efficacy makes this option more, not less, valuable.
-    \item Using Section 5.4.5's option-to-wait example, recompute the value of waiting one year if the deposit's up-state value were $\$90$ million instead of $\$70$ million (down-state value, development cost, probabilities, and the risk-free rate unchanged), and explain why increasing only the upside, while leaving the downside unchanged, increases the option's value by more than half of the dollar increase in the up-state value itself.
+    \item Using Section 5.4.5's option-to-wait example, recompute the value of waiting one year if the deposit's up-state value were $\$90$ million instead of $\$70$ million (down-state value, development cost, today's \$50 million value, and the risk-free rate unchanged). Do it twice: first holding the probability at $0.5$, then using the risk-neutral probability $q$ implied by the new up-state value. Show that the first calculation raises the option's present value by less than half of the \$20 million increase in the up-state value, and explain why only the second calculation is consistent with no arbitrage.
     \item Using Section 5.5's Meridian DCF as a template, recompute the enterprise and equity value if the terminal growth rate were $g=2\%$ instead of $3\%$, holding the WACC and the Year 3-5 free cash flow forecasts fixed, and explain why the terminal growth assumption has such a large effect on the total valuation.
     \item A junior analyst argues that because the DCF and multiples valuations for Meridian disagree so much, one of the two methods must simply be ``wrong'' and should be discarded. Write a short paragraph, drawing on Section 5.5, explaining why this conclusion does not necessarily follow.
     \item Using Table~\ref{tab:yield_curve}, compute the implied 1-year forward rate spanning years 4 to 5 using the 5-year and (assumed) 4-year spot rates of $4.8\%$ and $4.7\%$ respectively, and compare it to the two forward rates already computed in the text.

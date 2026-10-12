@@ -243,26 +243,26 @@ This formalizes, with actual mathematical structure, the intuitive tradeoff Sect
 
 \subsection{A Worked Example: The Almgren-Chriss Optimal Trajectory}\index{Almgren-Chriss model}
 
-Almgren and Chriss formalize the tradeoff above by minimizing a risk-adjusted total cost, expected temporary-impact cost plus $\lambda$ times its variance from timing risk, where $\lambda\ge 0$ is the trader's risk-aversion parameter,
+Almgren and Chriss formalize the tradeoff above by minimizing a risk-adjusted total cost, expected temporary-impact cost plus $\phi$ times its variance from timing risk, where $\phi\ge 0$ is the trader's risk-aversion parameter (written $\phi$ here rather than the $\lambda$ of Almgren and Chriss's own paper, to keep it distinct from Kyle's lambda above),
 \begin{equation*}
-\min_{x_1,\ldots,x_{N-1}} \; \underbrace{\eta\sum_{j=1}^N \frac{(x_{j-1}-x_j)^2}{\tau}}_{\text{expected impact cost}} \; + \; \lambda\underbrace{\sigma^2\tau\sum_{j=1}^N x_j^2}_{\text{timing-risk variance}},
+\min_{x_1,\ldots,x_{N-1}} \; \underbrace{\eta\sum_{j=1}^N \frac{(x_{j-1}-x_j)^2}{\tau}}_{\text{expected impact cost}} \; + \; \phi\underbrace{\sigma^2\tau\sum_{j=1}^N x_j^2}_{\text{timing-risk variance}},
 \end{equation*}
 where $x_j$ is the number of shares still unexecuted after interval $j$ (so $x_0=X$, the full order, and $x_N=0$, fully executed), $\tau$ is the length of each interval, $\eta$ is the temporary-impact cost coefficient, and $\sigma^2$ is the per-interval return variance. The closed-form solution to this minimization is
 \begin{equation*}
-x_j = X\,\frac{\sinh(\kappa(T-t_j))}{\sinh(\kappa T)}, \qquad \kappa=\sqrt{\frac{\lambda\sigma^2}{\eta}},
+x_j = X\,\frac{\sinh(\kappa(T-t_j))}{\sinh(\kappa T)}, \qquad \kappa=\sqrt{\frac{\phi\sigma^2}{\eta}},
 \end{equation*}
-with $T=N\tau$ the total execution horizon; $\kappa$ is the single parameter that governs how front-loaded the optimal trajectory is, growing with risk aversion $\lambda$ and volatility $\sigma$ and shrinking with the impact cost $\eta$. The trajectory is stated here without proof; this book's companion technical note on the Almgren-Chriss model derives it from the discrete first-order condition, which turns out to be a linear second-order difference equation, and verifies the two limiting cases that make the result trustworthy: uniform, TWAP-style trading as risk aversion vanishes, and immediate liquidation as it grows without bound.
+with $T=N\tau$ the total execution horizon; $\kappa$ is the single parameter that governs how front-loaded the optimal trajectory is, growing with risk aversion $\phi$ and volatility $\sigma$ and shrinking with the impact cost $\eta$. The trajectory is stated here without proof; this book's companion technical note on the Almgren-Chriss model derives it from the discrete first-order condition, which turns out to be a linear second-order difference equation, and verifies the two limiting cases that make the result trustworthy: uniform, TWAP-style trading as risk aversion vanishes, and immediate liquidation as it grows without bound.
 
-Applying this to Section~\ref{sec:market-impact}'s $250$-share order split across the same $N=5$ intervals, with illustrative parameters $\sigma=2\%$ per interval, $\eta=0.01$, and a modest risk aversion of $\lambda=0.5$ (so $\kappa\approx0.1414$), the optimal trajectory leaves
+Applying this to Section~\ref{sec:market-impact}'s $250$-share order split across the same $N=5$ intervals, with illustrative parameters $\sigma=2\%$ per interval, $\eta=0.01$, and a modest risk aversion of $\phi=0.5$ (so $\kappa\approx0.1414$), the optimal trajectory leaves
 \begin{align*}
 \text{Unexecuted shares:} &\quad x=(250,\ 194.2,\ 142.4,\ 93.4,\ 46.2,\ 0), \\
 \text{Traded per interval:} &\quad (55.8,\ 51.9,\ 49.0,\ 47.1,\ 46.2),
 \end{align*}
-mildly front-loaded relative to the perfectly uniform $50$-share-per-interval TWAP schedule of Section~\ref{sec:market-impact}. Raising risk aversion tenfold to $\lambda=5$ (so $\kappa\approx0.4472$) sharpens this front-loading considerably,
+mildly front-loaded relative to the perfectly uniform $50$-share-per-interval TWAP schedule of Section~\ref{sec:market-impact}. Raising risk aversion tenfold to $\phi=5$ (so $\kappa\approx0.4472$) sharpens this front-loading considerably,
 \begin{align*}
 \text{Traded per interval:} &\quad (92.8,\ 60.9,\ 41.3,\ 30.1,\ 25.0),
 \end{align*}
-nearly double the first-interval quantity of the low-risk-aversion trajectory: a more risk-averse trader accepts a higher expected impact cost from trading more aggressively up front specifically to shrink the variance contributed by however much of the order remains exposed to further price moves. Figure~\ref{fig:almgren_chriss_trajectories} plots both optimal trajectories against the uniform TWAP baseline, making the front-loading pattern, and how much more pronounced it becomes as $\lambda$ rises, directly visible.
+nearly double the first-interval quantity of the low-risk-aversion trajectory: a more risk-averse trader accepts a higher expected impact cost from trading more aggressively up front specifically to shrink the variance contributed by however much of the order remains exposed to further price moves. Figure~\ref{fig:almgren_chriss_trajectories} plots both optimal trajectories against the uniform TWAP baseline, making the front-loading pattern, and how much more pronounced it becomes as $\phi$ rises, directly visible.
 
 \begin{figure}[htbp]
 \centering
@@ -282,8 +282,8 @@ nearly double the first-interval quantity of the low-risk-aversion trajectory: a
         \draw[dashed] plot coordinates {(0,5) (1.4,3.884) (2.8,2.848) (4.2,1.868) (5.6,0.924) (7.0,0)};
         \draw[solid] plot coordinates {(0,5) (1.4,3.144) (2.8,1.926) (4.2,1.10) (5.6,0.5) (7.0,0)};
         \draw[dotted] (8.3,5.4) -- (8.9,5.4); \node[right,font=\small] at (8.9,5.4) {Uniform TWAP};
-        \draw[dashed] (8.3,4.8) -- (8.9,4.8); \node[right,font=\small] at (8.9,4.8) {$\lambda=0.5$ (mild)};
-        \draw[solid] (8.3,4.2) -- (8.9,4.2); \node[right,font=\small] at (8.9,4.2) {$\lambda=5$ (risk-averse)};
+        \draw[dashed] (8.3,4.8) -- (8.9,4.8); \node[right,font=\small] at (8.9,4.8) {$\phi=0.5$ (mild)};
+        \draw[solid] (8.3,4.2) -- (8.9,4.2); \node[right,font=\small] at (8.9,4.2) {$\phi=5$ (risk-averse)};
     \end{tikzpicture}
 \end{lrbox}
 \ifdim\wd\bookmeasuredbox<0.65\linewidth
@@ -299,13 +299,13 @@ nearly double the first-interval quantity of the low-risk-aversion trajectory: a
 }
 \end{figure}
 
-Scoring all three strategies, this front-loaded optimal trajectory, the uniform TWAP schedule, and the fully aggressive single-shot execution of Section~\ref{sec:market-impact}, on the identical risk-adjusted objective at $\lambda=0.5$ makes the tradeoff numerically concrete:
+Scoring all three strategies, this front-loaded optimal trajectory, the uniform TWAP schedule, and the fully aggressive single-shot execution of Section~\ref{sec:market-impact}, on the identical risk-adjusted objective at $\phi=0.5$ makes the tradeoff numerically concrete:
 \begin{align*}
 \text{Optimal trajectory:} &\quad \text{cost} = 139.4, \\
 \text{Uniform TWAP:} &\quad \text{cost} = 140.0, \\
 \text{Fully aggressive single-shot:} &\quad \text{cost} = 625.0,
 \end{align*}
-the TWAP schedule barely worse since $\lambda=0.5$ is only mildly risk-averse here, and the fully aggressive execution over four times worse, since it eliminates timing-risk variance entirely but pays a quadratically larger impact cost for trading the entire order in one interval. This is the efficient-frontier logic described qualitatively above, made concrete: the fully aggressive and perfectly uniform schedules are both feasible points, but neither is optimal once risk aversion is weighed formally against expected cost, and the specific front-loaded shape of the true optimum, more pronounced the more risk-averse the trader, is not a generic property of ``spreading an order out'' but the precise output of this closed-form solution.
+the TWAP schedule barely worse since $\phi=0.5$ is only mildly risk-averse here, and the fully aggressive execution over four times worse, since it eliminates timing-risk variance entirely but pays a quadratically larger impact cost for trading the entire order in one interval. This is the efficient-frontier logic described qualitatively above, made concrete: the fully aggressive and perfectly uniform schedules are both feasible points, but neither is optimal once risk aversion is weighed formally against expected cost, and the specific front-loaded shape of the true optimum, more pronounced the more risk-averse the trader, is not a generic property of ``spreading an order out'' but the precise output of this closed-form solution.
 
 It is worth being explicit about what that closed form costs, because the assumptions are stronger than the elegance of the result suggests. The trajectory above is optimal only if impact is linear in the trading rate, volatility is constant across the horizon, and the trader has no view whatever on where the price is heading. All three are false in ways any execution desk would recognize, and relaxing any single one destroys the closed form entirely. What survives is the problem rather than the solution: choosing a sequence of trade sizes to minimize expected cost plus a penalty on risk is a sequential decision problem, solvable by learning a policy from simulated episodes instead of by solving a difference equation. Chapter 19 does precisely this, recovering the trajectory above for these same parameters using tabular Q-learning, then pushing the machinery into frictions the closed form has no way to express.
 
@@ -648,7 +648,7 @@ Circuit breakers interact directly with the execution and market-making concepts
 
 \subsection{Case Vignette: The Knight Capital Trading Glitch}\index{Knight Capital trading glitch}
 
-On August 1, 2012, Knight Capital Group, then one of the largest market makers in US equities, deployed new trading software to its production servers. A deployment error left obsolete code active on one of eight servers, code that, combined with the new software, caused the firm's systems to send a rapid, unintended stream of erroneous orders into the market. Within approximately 45 minutes, before the problem was identified and the system halted, Knight Capital had accumulated large, unintended positions across dozens of stocks, and unwinding them resulted in a loss of about \$440 million, an amount exceeding the firm's entire market capitalization at the time and one that ultimately forced Knight into a rescue merger with a competitor.
+On August 1, 2012, Knight Capital Group, then one of the largest market makers in US equities, deployed new trading software to its production servers. A deployment error left obsolete code active on one of eight servers, code that, combined with the new software, caused the firm's systems to send a rapid, unintended stream of erroneous orders into the market. Within approximately 45 minutes, before the problem was identified and the system halted, Knight Capital had accumulated large, unintended positions across dozens of stocks, and unwinding them resulted in a loss of about \$440 million, more than the firm's capital cushion could absorb; its share price fell by roughly three-quarters within two days, wiping out most of its equity value, and the loss forced Knight to accept an emergency capital infusion and ultimately a rescue merger with a competitor.
 
 This episode is a direct, real-world illustration of the technology and latency risk flagged later in this chapter's challenges section, and it is worth being specific about why it happened, since the failure was not a flawed trading strategy in the sense this chapter has otherwise discussed. Knight's algorithms were not making a bad prediction or a poorly calibrated\index{calibration} risk-reward tradeoff; a software deployment error caused the firm's own execution infrastructure, the very machinery this chapter has treated as neutral plumbing for implementing a trading decision, to behave in a way no human ever intended or approved.
 
@@ -709,7 +709,7 @@ The next chapter narrows the focus to the extreme, millisecond-scale end of this
     \item A statistical arbitrage fund holds 200 similar mean-reversion positions across a sector. Explain, referencing the 2007 quant quake, why this diversification might provide less protection than the number of positions alone would suggest.
     \item Using Table~\ref{tab:statarb}, explain why Stock W's large residual $z$-score alone does not tell a trader whether to actually put on the suggested trade, and describe what additional information (beyond the regression output itself) an analyst would want before shorting Stock W against its sector peers.
     \item A backtest of a value strategy is run only on stocks currently listed on a major exchange, using their full, publicly available price history. Identify the specific bias this introduces, referencing this chapter's discussion of backtesting pitfalls, and describe one concrete step a researcher could take to correct it.
-    \item Using the Almgren-Chriss worked example, compute $\kappa$ and the resulting optimal trajectory $x_j$ for the same $250$-share order and $N=5$ intervals if risk aversion were $\lambda=2$ instead of $0.5$ or $5$, and state whether the resulting schedule is more or less front-loaded than both trajectories computed in the text.
+    \item Using the Almgren-Chriss worked example, compute $\kappa$ and the resulting optimal trajectory $x_j$ for the same $250$-share order and $N=5$ intervals if risk aversion were $\phi=2$ instead of $0.5$ or $5$, and state whether the resulting schedule is more or less front-loaded than both trajectories computed in the text.
     \item \textbf{VWAP under a mistaken volume forecast.} Section~\ref{sec:twap-vwap} argues that a VWAP algorithm is only as good as its forecast of the day's volume curve. Using Table~\ref{tab:twap_vwap}'s prices and realized volumes, suppose an algorithm works a 1,000-share buy order according to a forecast volume profile of $15\%$, $20\%$, $25\%$, $15\%$, and $25\%$ across the five intervals. (a) Compute the realized-volume VWAP benchmark and the average price the algorithm actually achieves. (b) Report the shortfall against that benchmark in cents per share, in basis points, and in dollars on the full order. (c) Identify which intervals' forecast errors caused the shortfall and which one partially offset it, and explain why an error in an interval whose price sits close to the VWAP costs almost nothing.
     \item \textbf{Challenge (real data).} Download at least two years of daily prices for a real, liquid stock (via \texttt{yfinance}) and implement this chapter's moving-average crossover strategy (Table~\ref{tab:ma_crossover}) using a 20-day short window and a 50-day long window. (a) Backtest the strategy's cumulative return against a simple buy-and-hold benchmark over the full sample, and compute both strategies' Sharpe ratios. (b) Using walk-forward validation rather than a single in-sample backtest, as this chapter's own discussion (building on Chapter 7) recommends, split your sample into several sequential training/testing windows and report whether the strategy's out-of-sample Sharpe ratio holds up as well as its in-sample Sharpe ratio. (c) Compute the feature set in Table~\ref{tab:trading_features} (momentum, realized volatility, RSI) for your real price series, and discuss whether the same volatility-clustering pattern this chapter's toy twelve-day example showed around its crossover reversal appears at your strategy's actual entry and exit points.
 \end{enumerate}

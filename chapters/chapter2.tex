@@ -299,7 +299,7 @@ print(returns.round(4))
 # 2024-01-08 -0.0096  0.0200
 \end{verbatim}
 
-Notice that AssetB's returns (0.0100, 0.0150, $-$0.0051, 0.0200) move in almost the opposite direction from AssetA's returns (0.0200, $-$0.0098, 0.0297, $-$0.0096) on three of the four days. This pattern will reappear as a strong negative correlation later in the chapter, and it is the entire reason diversification will turn out to help so much in this example.
+Notice that AssetB's returns (0.0100, 0.0150, $-$0.0051, 0.0200) move in almost the opposite direction from AssetA's returns (0.0200, $-$0.0098, 0.0297, $-$0.0096) on three of the four days. This pattern will reappear as a strong negative correlation later in the chapter, and it is the entire reason diversification will turn out to help so much in this example, although, as Section~\ref{sec:worked-example} will show, four observations pin that correlation down only very loosely.
 
 This simple transformation, from a series of price levels to a series of returns, underlies much of modern empirical finance. Returns are more convenient than levels for many statistical models, especially because they are approximately stationary and easier to compare across assets of very different price scales.
 
@@ -364,7 +364,7 @@ print(weekly_return.round(4))
 # 2024-01-19    0.0185
 \end{verbatim}
 
-Computing weekly returns this way, from resampled weekly prices, is subtly different from summing or compounding the underlying daily returns within each week, though for simple returns the two approaches are closely related; resampling is typically the more direct and less error-prone method when the analysis genuinely only needs the coarser frequency.
+Computing weekly returns this way, from resampled weekly prices, gives exactly the same answer as compounding the underlying daily simple returns within each week, $\prod_t (1+r_t) - 1$; for the week ending January 12, both give $0.0385$. It is not the same as summing the daily returns, which gives $0.0384$ here and is only an approximation for simple returns. Resampling is typically the more direct and less error-prone method when the analysis genuinely only needs the coarser frequency.
 
 \subsection{Visualization}\index{Visualization}
 
@@ -463,6 +463,8 @@ plt.tight_layout()
     \label{fig:ch2-histogram}
 }
 \end{figure}
+
+Because the simulated returns are drawn from a normal distribution, Figure~\ref{fig:ch2-histogram} can show neither skewness nor heavy tails, only sampling noise around a bell shape. Real daily returns typically have noticeably heavier tails than a normal distribution, which is exactly the feature a histogram of real data would expose, and the one the market-risk measures of Chapter 8 have to contend with.
 
 A scatter plot of one asset's returns against another's is the most direct way to visualize a correlation like the one computed numerically in Section~\ref{sec:worked-example}:
 
@@ -580,7 +582,7 @@ corr = returns.corr().iloc[0, 1]
 print(round(corr, 3))
 # -0.896
 \end{verbatim}
-so the two assets have a strong negative correlation of about $-0.90$. The variance of an equally weighted two-asset portfolio is given by
+so the two assets have a strong negative correlation of about $-0.90$. That estimate rests on only four pairs of returns, however, and a correlation estimated from so few observations is very imprecise: the standard Fisher-$z$ 95\% confidence interval runs from about $-0.998$ to $+0.467$, wide enough to include zero and even a moderately positive correlation. The example is chosen so that every number can be checked by hand, not as evidence about any real pair of assets, and Chapter 12 returns to the damage that this kind of estimation error does to portfolio optimization. The variance of an equally weighted two-asset portfolio is given by
 \begin{equation*}
 \sigma_p^2 = w_A^2 \sigma_A^2 + w_B^2 \sigma_B^2 + 2 w_A w_B \sigma_{AB},
 \end{equation*}
@@ -624,7 +626,7 @@ print(f"Equal-weighted 3-asset portfolio volatility: {np.sqrt(port_var3):.4f}")
 # Equal-weighted 3-asset portfolio volatility: 0.0030
 \end{verbatim}
 
-The expression \texttt{weights3 @ cov3.values @ weights3} is the matrix form of the portfolio variance formula, $w^\top \Sigma w$, mentioned in Section 2.6.3, and it works identically whether $w$ has 2, 3, or 200 entries. This is the practical payoff of writing analysis code in terms of vectors and matrices rather than named variables for each individual asset: a script built this way for a two-asset illustration is already, without any rewriting, the same script a researcher would use on a portfolio of hundreds of securities, which is the setting Chapter 12's portfolio optimization methods are built to handle.
+The expression \texttt{weights3 @ cov3.values @ weights3} is the matrix form of the portfolio variance formula, $w^\top \Sigma w$, which Section 2.6.3 restates for $n$ assets, and it works identically whether $w$ has 2, 3, or 200 entries. This is the practical payoff of writing analysis code in terms of vectors and matrices rather than named variables for each individual asset: a script built this way for a two-asset illustration is already, without any rewriting, the same script a researcher would use on a portfolio of hundreds of securities, which is the setting Chapter 12's portfolio optimization methods are built to handle.
 
 \subsubsection*{Object-Oriented Programming: A Reusable \texttt{Portfolio} Class}\index{Object-Oriented Programming}
 
@@ -739,7 +741,7 @@ Returning \texttt{nan} (not-a-number) rather than letting the program crash allo
     \item \textbf{Silent \texttt{NaN} propagation.} Almost any arithmetic operation involving \texttt{NaN} produces another \texttt{NaN} rather than an error, so a single bad data point can silently spread through an entire calculation (a covariance matrix, for example) without any visible warning.
     \item \textbf{Comparing floating-point numbers for exact equality.} Because of how computers represent decimal numbers, a calculation that should mathematically equal \texttt{0.3} may instead equal \texttt{0.30000\allowbreak 00000\allowbreak 00000\allowbreak 04}; use a tolerance-based comparison (\texttt{np.isclose}) rather than \texttt{==} when checking floating-point results.
     \item \textbf{Mutating a DataFrame while iterating over it.} Modifying rows of a DataFrame inside a loop over that same DataFrame can produce confusing, order-dependent results; it is almost always better to build a new column or DataFrame with a vectorized expression instead.
-    \item \textbf{Off-by-one errors in lagged calculations.} Return, rolling-window, and lag calculations are especially prone to off-by-one mistakes, using today's price where yesterday's was intended, which can silently introduce look-ahead bias into a backtest, the same problem discussed in Section 2.7.
+    \item \textbf{Off-by-one errors in lagged calculations.} Return, rolling-window, and lag calculations are especially prone to off-by-one mistakes, using today's price where yesterday's was intended, which can silently introduce look-ahead bias into a backtest, a problem Section 2.7 takes up below.
 \end{itemize}
 
 \subsection{Descriptive Statistics and Portfolio Analytics}
@@ -800,7 +802,7 @@ test_portfolio_variance_matches_formula()
 # Test passed: formula-based and direct portfolio variance agree.
 \end{verbatim}
 
-The specific tolerance, $10^{-10}$, matters: it is loose enough to absorb ordinary floating-point rounding but tight enough to catch a genuine error, for example an accidentally transposed covariance term or a forgotten factor of two on the cross term, the kind of subtle bug this book's own notebooks have caught in earlier chapters (Chapter 13's \texttt{statistics.mean} silent-truncation bug is a real example of precisely this failure mode).
+The specific tolerance, $10^{-10}$, matters: it is loose enough to absorb ordinary floating-point rounding but tight enough to catch a genuine error, for example an accidentally transposed covariance term or a forgotten factor of two on the cross term, the kind of subtle bug that otherwise slips through silently. Python's own \texttt{statistics.mean} offers an example of how quietly such bugs arise: handed a list of NumPy integers such as prices of 100, 101, and 103, it returns the truncated integer 101 rather than 101.3333, with no error or warning, a wrong answer that only a check against an independently computed value, here \texttt{np.mean}, would catch.
 A single test like this one costs a few lines to write and runs in a fraction of a second, but it converts a fact an analyst has verified once, by hand, into a fact that is re-verified automatically every single time the surrounding code changes, catching a regression immediately rather than only when a downstream number looks suspicious.
 Production financial codebases typically collect dozens or hundreds of such tests, run automatically before any code change is accepted, using a dedicated testing framework such as \texttt{pytest} rather than calling test functions manually as shown here, but the underlying principle, encode a known-correct result as an executable check rather than a comment, is the same at any scale.
 

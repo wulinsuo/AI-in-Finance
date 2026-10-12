@@ -101,7 +101,7 @@ By Proposition~\ref{prop:sllna},
 almost surely, so $\ln[W_n(f_1)/W_n(f_2)] \to \infty$ almost surely, which is equivalent to the stated limit.
 \end{proof}
 
-Corollary~\ref{cor:dominance} is the actual force of the Kelly argument: the fraction that maximizes $g(f)$ does not merely have a higher \emph{expected} terminal wealth than any other fixed fraction (a weaker, purely distributional claim, and one that a risk-averse investor could reasonably discount); it eventually accumulates \emph{more wealth on almost every sample path}, a pathwise, not merely average-case, statement. This is why the argument below proceeds by maximizing $g(f)$ rather than by any appeal to risk preferences.
+Corollary~\ref{cor:dominance} is the actual force of the Kelly argument: the fraction that maximizes $g(f)$ is \emph{not} the one that maximizes expected terminal wealth. Since trials are independent, $E[W_n]=W_0\,(1+f\,E[R])^n$, which increases in $f$ whenever $E[R]>0$ and is therefore maximized by staking everything, $f=1$, the very strategy Proposition~\ref{prop:ruin} shows ruins almost surely: its expected value is propped up by an ever more improbable path of uninterrupted wins. What the Kelly fraction offers instead is stronger and more useful: it eventually accumulates \emph{more wealth on almost every sample path} than any other fixed fraction, a pathwise, not average-case, statement. This is why the argument below proceeds by maximizing $g(f)$ rather than by any appeal to risk preferences.
 
 \section{Deriving the Kelly Fraction}
 \label{sec:derivation}

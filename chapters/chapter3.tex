@@ -265,7 +265,7 @@ For quantitative readers, this point is especially important. Statistical method
 
 A concrete illustration makes this abstract point specific. Suppose a machine learning model identifies a statistical pattern predicting that a small-cap stock will outperform over the next week, based purely on historical price and volume data.
 
-Before acting on this signal, a quantitatively sophisticated practitioner asks several institutional questions that the model itself cannot answer: How wide is the bid-ask spread for this stock, and does the expected outperformance exceed the round-trip cost of trading it, using the spread decomposition introduced later in this chapter? How much of the stock's average daily volume would the intended position represent, and would establishing that position via the order-book mechanics described in Section~\ref{sec:order-book-example} move the price enough to erode the expected gain? Is the stock easy to borrow if the strategy requires shorting, and are there restrictions on short selling of small-cap names during periods of stress?
+Before acting on this signal, a quantitatively sophisticated practitioner asks several institutional questions that the model itself cannot answer: How wide is the bid-ask spread for this stock, and does the expected outperformance exceed the round-trip cost of trading it, using the spread decomposition introduced earlier in this chapter? How much of the stock's average daily volume would the intended position represent, and would establishing that position via the order-book mechanics described in Section~\ref{sec:order-book-example} move the price enough to erode the expected gain? Is the stock easy to borrow if the strategy requires shorting, and are there restrictions on short selling of small-cap names during periods of stress?
 
 None of these questions are visible in the historical price data the model was trained on, yet each one can determine whether a statistically significant signal is also an economically exploitable one. This is the precise sense in which market structure, not just statistical significance, determines whether a trading idea survives contact with a real market.
 
@@ -307,6 +307,7 @@ Market data fees are a third, increasingly significant revenue source: exchanges
 These revenue streams matter for a quantitative reader for two reasons. First, they explain why exchanges have strong commercial incentives to attract high-frequency trading activity specifically, since such activity generates outsized transaction and data-fee revenue relative to its economic footprint, which is part of the broader political and regulatory debate about whether current market structure appropriately balances the interests of high-frequency participants against those of long-term investors. Second, they are a reminder that the market data used throughout this book, and assumed to arrive at negligible cost in every worked example so far, is itself a commercial product whose cost, coverage, and latency vary enormously depending on how much a firm is willing to pay, a practical constraint that shapes what kind of strategy is even feasible for a given research budget.
 
 \subsection{Clearing, Settlement, and Systemic Risk}
+\label{sec:clearing}
 
 Once a trade is executed, the market must ensure that the agreement is honored. Clearing refers to the process of determining obligations between counterparties, while settlement refers to the final exchange of cash and securities. In exchange-traded markets, a clearinghouse often acts as the central counterparty, guaranteeing the trade if one side defaults. This reduces bilateral credit risk, but it also creates a new concentration of risk in the clearinghouse itself.
 
@@ -314,41 +315,8 @@ The importance of clearing and settlement becomes most obvious during periods of
 
 The 2008 global financial crisis showed how quickly seemingly isolated problems could become systemic. Mortgage defaults in the United States spread through securitization structures, derivatives markets, and funding markets, eventually affecting banks, insurers, and governments around the world. The lesson was not simply that risk had been mispriced, but that the financial system had become highly interconnected and insufficiently transparent. The crisis also highlighted the importance of regulations on leverage, capital, and liquidity.
 
-A central clearinghouse manages its own concentrated risk primarily through margin requirements: each clearing member must post collateral, called initial margin, sized to cover the clearinghouse's potential loss if that member defaults under plausible adverse price moves, and must post additional variation margin daily (or, during volatile periods, intraday) to cover losses on open positions as prices move. This mechanism protects the clearinghouse, but it also means that a sharp, sudden price move can trigger simultaneous margin calls across many participants at once, forcing coordinated selling precisely when the market is least able to absorb it, a dynamic that played a visible role in the Flash Crash\index{Flash Crash of 2010} case study later in this chapter and in various episodes of the 2008 crisis.
+A central clearinghouse manages its own concentrated risk primarily through margin requirements: each clearing member must post collateral, called initial margin, sized to cover the clearinghouse's potential loss if that member defaults under plausible adverse price moves, and must post additional variation margin daily (or, during volatile periods, intraday) to cover losses on open positions as prices move. This mechanism protects the clearinghouse, but it also means that a sharp, sudden price move can trigger simultaneous margin calls across many participants at once, forcing coordinated selling precisely when the market is least able to absorb it, a dynamic that played a visible role in various episodes of the 2008 crisis.
 Clearinghouses have themselves become large enough, and interconnected enough with their member banks, that regulators now treat major clearinghouses as systemically important institutions in their own right, subject to their own capital and risk-management standards.
-
-Variation margin differs from the initial-margin mechanics of Section~\ref{sec:short-selling-margin} in one important respect: rather than being called only once a position breaches a maintenance threshold, it is settled to zero at the end of every trading day, marking every open position to its current market price.
-
-Suppose a trader buys one stock-index futures contract with a notional value of $\$50{,}000$ and posts an initial margin of $\$5{,}000$ ($10\%$ of notional). If the index falls $2\%$ that day, the trader's mark-to-market loss is $0.02 \times \$50{,}000 = \$1{,}000$, reducing the margin balance to $\$5{,}000 - \$1{,}000 = \$4{,}000$; the clearinghouse issues a variation margin call for exactly $\$1{,}000$ to restore the balance to $\$5{,}000$ before trading resumes the next day. Because this settlement happens daily rather than only at a maintenance-breach threshold, losses on a futures position never accumulate silently the way they can in the stock-margin example above, but it also means that a clearing member with many leveraged futures positions faces a new, and potentially large, daily cash obligation every time the market moves sharply against it, which is precisely the liquidity-drain mechanism this section's systemic-risk discussion refers to.
-
-Table~\ref{tab:margin_comparison} summarizes the two margin mechanics side by side, since it is easy to conflate them despite their different timing and trigger conditions.
-
-\begin{table}[htbp]
-\centering
-\begin{lrbox}{\bookmeasuredbox}
-\begin{tabular}{lll}
-\toprule
-& Short-sale margin (Section~\ref{sec:short-selling-margin}) & Futures variation margin \\
-\midrule
-Counterparty & Broker & Central clearinghouse \\
-Settlement frequency & Only when a threshold is breached & Every trading day \\
-Trigger & Equity falls below maintenance \% & Any price move, however small \\
-Typical use case & Individual equity short position & Standardized futures and swaps \\
-\bottomrule
-\end{tabular}
-\end{lrbox}
-\ifdim\wd\bookmeasuredbox<0.65\linewidth
-\setlength{\bookcapwidth}{0.65\linewidth}
-\else
-\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
-\fi
-\floatbox[\capbot]{table}[\bookcapwidth]{
-\usebox{\bookmeasuredbox}
-}{
-\caption{Two margin mechanisms compared: bilateral broker margin on a short sale versus centrally cleared futures margin}
-\label{tab:margin_comparison}
-}
-\end{table}
 
 The settlement machinery described in this section is also where one genuinely new piece of market plumbing has appeared. Asset tokenization\index{tokenization (of assets)} means issuing a conventional security, a money-market fund share, a Treasury bill, a bond, as a digital token whose ownership record is a blockchain rather than an entry at a custodian or transfer agent, and the motivation is settlement economics rather than speculation: a tokenized security can settle in minutes rather than days, with delivery and payment executed atomically in a single transaction so that neither leg can fail on its own, collapsing both the intermediation cost and the counterparty-risk window this section exists to explain. Atomic settlement requires both legs to live on the same rails, which is where stablecoins\index{stablecoin} enter, tokens engineered to hold a fixed value, almost always \$1, against reserves of cash and short-term Treasuries. A stablecoin is economically a money-market fund share that has renounced yield in exchange for functioning as money, which means the quality of its reserves is exactly the credit question Chapter 9 would ask of any issuer, a question made vivid whenever a stablecoin has ``broken the buck'' and traded below its peg during a stress episode.
 
@@ -421,11 +389,44 @@ As the stock price $P$ moves, the trader's liability, the cost of buying back th
 \begin{equation*}
 \text{Equity}(P) = 7{,}500 - 100P.
 \end{equation*}
-A broker typically requires a maintenance margin of at least $25\%$ of the current value of the short position, meaning $\text{Equity}(P)/100P \geq 0.25$. Setting this ratio equal to exactly $0.25$ and solving for $P$ gives the price at which a margin call is triggered:
+For short positions in stocks priced at \$5 or more, FINRA Rule 4210 requires a maintenance margin of at least $30\%$ of the current value of the short position (many brokers require more), meaning $\text{Equity}(P)/100P \geq 0.30$. Setting this ratio equal to exactly $0.30$ and solving for $P$ gives the price at which a margin call is triggered:
 \begin{equation*}
-7{,}500 - 100P = 0.25(100P) \quad\Longrightarrow\quad 7{,}500 = 125P \quad\Longrightarrow\quad P = \$60.
+7{,}500 - 100P = 0.30(100P) \quad\Longrightarrow\quad 7{,}500 = 130P \quad\Longrightarrow\quad P \approx \$57.69.
 \end{equation*}
-At $P=\$60$, the trader's liability has grown to $100 \times \$60 = \$6{,}000$ while equity has fallen to $\$7{,}500 - \$6{,}000 = \$1{,}500$, exactly $25\%$ of the $\$6{,}000$ liability, confirming the calculation. A price increase of only $20\%$, from $\$50$ to $\$60$, is enough to trigger a margin call on a position that started with $150\%$ initial margin, illustrating precisely how leverage compounds a short seller's losses: the loss on the position itself is $\$1{,}000$, but it consumes $\$1{,}000$ out of only $\$2{,}500$ of the trader's own capital, a $40\%$ loss on equity from a $20\%$ adverse price move. If the trader cannot deposit additional funds once the call is issued, the broker will buy back some or all of the borrowed shares on the trader's behalf, often at whatever price is available, which is the kind of forced selling into a moving market described in this chapter's Flash Crash case study and, at the scale of an entire highly leveraged fund rather than a single position, in the LTCM episode discussed later in this chapter.
+At this price ($7{,}500/130$ at full precision), equity has fallen to $\$1{,}730.77$, exactly $30\%$ of the trader's liability, confirming the calculation. A price increase of only $15.38\%$, from $\$50$ to $\$57.69$, is enough to trigger a margin call on a position that started with $150\%$ initial margin, illustrating precisely how leverage compounds a short seller's losses: the loss on the position itself is $\$769.23$, but it consumes $30.77\%$ of the trader's own $\$2{,}500$ of capital, twice the adverse price move in percentage terms. If the trader cannot deposit additional funds once the call is issued, the broker will buy back some or all of the borrowed shares on the trader's behalf, often at whatever price is available, the same kind of price-insensitive trading into a moving market that this chapter's Flash Crash case study describes and, at the scale of an entire highly leveraged fund rather than a single position, in the LTCM episode discussed later in this chapter.
+
+Variation margin, the clearinghouse mechanism introduced in Section~\ref{sec:clearing}, differs from the broker margin just worked through in one important respect: rather than being called only once a position breaches a maintenance threshold, it is settled to zero at the end of every trading day, marking every open position to its current market price.
+
+Suppose a trader buys one stock-index futures contract with a notional value of $\$50{,}000$ and posts an initial margin of $\$5{,}000$ ($10\%$ of notional). If the index falls $2\%$ that day, the trader's mark-to-market loss is $0.02 \times \$50{,}000 = \$1{,}000$, reducing the margin balance to $\$5{,}000 - \$1{,}000 = \$4{,}000$; the clearinghouse issues a variation margin call for exactly $\$1{,}000$ to restore the balance to $\$5{,}000$ before trading resumes the next day. Because this settlement happens daily rather than only at a maintenance-breach threshold, losses on a futures position never accumulate silently the way they can in the short-sale example above, but it also means that a clearing member with many leveraged futures positions faces a new, and potentially large, daily cash obligation every time the market moves sharply against it, which is precisely the liquidity-drain mechanism that the systemic-risk discussion of Section~\ref{sec:clearing} refers to.
+
+Table~\ref{tab:margin_comparison} summarizes the two margin mechanics side by side, since it is easy to conflate them despite their different timing and trigger conditions.
+
+\begin{table}[htbp]
+\centering
+\begin{lrbox}{\bookmeasuredbox}
+\begin{tabular}{lll}
+\toprule
+& Short-sale margin (Section~\ref{sec:short-selling-margin}) & Futures variation margin \\
+\midrule
+Counterparty & Broker & Central clearinghouse \\
+Settlement frequency & Only when a threshold is breached & Every trading day \\
+Trigger & Equity falls below maintenance \% & Any price move, however small \\
+Typical use case & Individual equity short position & Standardized futures and swaps \\
+\bottomrule
+\end{tabular}
+\end{lrbox}
+\ifdim\wd\bookmeasuredbox<0.65\linewidth
+\setlength{\bookcapwidth}{0.65\linewidth}
+\else
+\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
+\fi
+\floatbox[\capbot]{table}[\bookcapwidth]{
+\usebox{\bookmeasuredbox}
+}{
+\caption{Two margin mechanisms compared: bilateral broker margin on a short sale versus centrally cleared futures margin}
+\label{tab:margin_comparison}
+}
+\end{table}
 
 \subsection{A Simple No-Arbitrage Example}
 \label{sec:no-arbitrage}
