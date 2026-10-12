@@ -29,7 +29,7 @@ This chapter introduces the main ideas behind machine learning in a way that is 
 
 By the end of the chapter, the reader will have seen how a model's parameters are actually found (via a closed-form solution or gradient descent\index{gradient descent}), how several qualitatively different algorithms, distance-based, margin-based, probabilistic, and tree-based, all address the same underlying prediction problem from different angles, and how to select among them and their hyperparameters without silently overfitting the selection process itself. These foundations are used directly and repeatedly in every applied chapter that follows: the credit models of Chapter 9, the portfolio methods of Chapter 12, the trading strategies of Chapters 13 and 14, the fraud detection systems of Chapter 15, the text-based methods of Chapter 16, the deep-learning extensions of Chapter 17, the explainability tools of Chapter 18, and the end-to-end case study of Chapter 21 all build on the vocabulary and techniques introduced here, rather than re-deriving them from scratch.
 
-\section{What Machine Learning Is}
+\section{The Learning Problem}
 
 Two questions come before any algorithm: what a learning system actually does, and what kind of problem is being posed to it.
 
@@ -157,7 +157,7 @@ print(model.score(X, y))               # 0.9915...
 
 Real credit spread data would show far more scatter than this toy example; the point is to make the mechanics of fitting and evaluating a linear model completely transparent before adding real-world noise and complexity.
 
-\subsubsection*{Standard Errors, Confidence Intervals, and $p$-Values for Coefficients}
+\subsection{Standard Errors, Confidence Intervals, and $p$-Values for Coefficients}
 \label{sec:regression-inference}
 
 The point estimate $\hat\beta_1 = 47$ says nothing on its own about how confidently the analyst should treat that number, and a machine learning workflow that reports only a point estimate and an $R^2$ is leaving useful information on the table. With $n=5$ observations and two estimated parameters ($\hat\beta_0,\hat\beta_1$), there are $n-2=3$ residual degrees of freedom, and the estimated noise variance is
@@ -939,9 +939,10 @@ For an input $x = (1.0, 0.5)$, the hidden layer's pre-activation values are $W_1
 
 Every one of the millions of parameters in a modern deep network is used in this way, matrix multiplications and elementwise nonlinearities, repeated layer after layer; what makes deep learning powerful is not any single computation's complexity but the ability to learn, via backpropagation and gradient descent, weight values across many layers that jointly capture useful nonlinear structure in the data. Figure~\ref{fig:toy_feedforward_network} lays out this exact network: two input neurons feed forward into two ReLU hidden neurons, which feed forward into a single sigmoid output neuron, with every edge and bias labeled with the weight values above and every neuron labeled with the value it computes.
 
-\subsubsection*{A Worked Example: Backpropagation, One Layer at a Time}
+\subsection{A Worked Example: Backpropagation, One Layer at a Time}
+\label{sec:backprop-example}
 
-Section 6.3.2 introduced gradient descent for a single-layer linear regression, where the gradient of the loss with respect to each parameter could be written down directly. A multi-layer network needs the chain rule to propagate a gradient backward through each layer in turn, backpropagation, and the same toy network above makes every step concrete. Suppose this network is being trained as a classifier and the true label for input $x=(1.0,0.5)$ is $y=1$ (a positive case, using the log-loss $L=-[y\ln\hat y+(1-y)\ln(1-\hat y)]$ standard for classification). A well-known simplification, for this pairing of sigmoid output and log-loss, is that the gradient of the loss with respect to the output layer's pre-activation $z_2$ collapses to simply $\hat y - y$:
+Section 6.3.3 introduced gradient descent for a single-layer linear regression, where the gradient of the loss with respect to each parameter could be written down directly. A multi-layer network needs the chain rule to propagate a gradient backward through each layer in turn, backpropagation, and the same toy network above makes every step concrete. Suppose this network is being trained as a classifier and the true label for input $x=(1.0,0.5)$ is $y=1$ (a positive case, using the log-loss $L=-[y\ln\hat y+(1-y)\ln(1-\hat y)]$ standard for classification). A well-known simplification, for this pairing of sigmoid output and log-loss, is that the gradient of the loss with respect to the output layer's pre-activation $z_2$ collapses to simply $\hat y - y$:
 \begin{equation*}
 \frac{\partial L}{\partial z_2} = \hat y - y = 0.5585 - 1 = -0.4415.
 \end{equation*}
@@ -959,7 +960,7 @@ where $\text{ReLU}'(z)=1$ if $z>0$ and $0$ otherwise, and $\odot$ denotes elemen
 \end{equation*}
 Every one of these four gradients was obtained purely by repeated application of the chain rule, working from the loss backward to the output layer, then backward again through the hidden layer, never once needing to re-derive the forward pass from scratch; this reuse of intermediate quantities computed once, moving backward, is precisely what makes backpropagation efficient enough to train networks with millions of parameters, rather than the (computationally infeasible) alternative of perturbing each weight individually and re-running the entire forward pass to estimate its gradient numerically.
 
-A single gradient descent step with learning rate $\eta=0.1$, the update rule Section 6.3.2 introduced, moves every parameter a small step opposite its gradient, $W_2 \leftarrow W_2 - \eta\,\partial L/\partial W_2$ and likewise for $b_2$, $W_1$, and $b_1$, nudging the network's prediction for this particular example fractionally closer to the target $y=1$, and repeating this update across many training examples and many iterations is, in its entirety, how a deep network's weights are actually learned.
+A single gradient descent step with learning rate $\eta=0.1$, the update rule Section 6.3.3 introduced, moves every parameter a small step opposite its gradient, $W_2 \leftarrow W_2 - \eta\,\partial L/\partial W_2$ and likewise for $b_2$, $W_1$, and $b_1$, nudging the network's prediction for this particular example fractionally closer to the target $y=1$, and repeating this update across many training examples and many iterations is, in its entirety, how a deep network's weights are actually learned.
 
 \begin{figure}[htbp]
 \centering

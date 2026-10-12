@@ -194,7 +194,8 @@ a recall figure that, by design, exactly mirrors Chapter 6's own loan-default co
 
 Transaction 9 is instructive precisely because it illustrates a structural limitation of any single-transaction scoring model: a fraudulent transaction that looks unremarkable in isolation, an ordinary amount at a nearby location, will not be caught by a model that only ever looks at one transaction at a time, no matter how well it is fit, which is why Section~\ref{sec:risk-tiering} layers a behavioral, account-level risk score on top of transaction-level scoring, and why Section~\ref{sec:survival-fraud} tracks how account risk accumulates over time rather than resetting with every new transaction.
 
-\subsubsection*{The Threshold Choice: A Precision-Recall Trade-off}
+\subsection{The Threshold Choice: A Precision-Recall Trade-off}
+\label{sec:threshold-choice}
 
 The 0.5 threshold used above is a modeling choice, not a mathematical requirement, and moving it trades precision against recall in the way Chapter 6 described in the abstract. Table~\ref{tab:threshold_tradeoff} recomputes the same ten-transaction confusion matrix at two alternative thresholds.
 
@@ -232,7 +233,7 @@ C(\tau) = \$50 \times \text{(transactions flagged)} + \$200 \times \text{(frauds
 \end{equation*}
 On the ten fitted probabilities this gives \$350 at the default $\tau = 0.5$ (three reviews and one missed fraud) and \$500 at $\tau = 0.85$, against a minimum of \$250 at $\tau = 0.25$, where five transactions are flagged and none is missed. The default threshold is $29\%$ more expensive than the best one available, and the optimum is no accident of this sample: flagging pays whenever the expected loss avoided exceeds the review cost, $p \times \$200 > \$50$, so the cost-minimizing threshold is just the ratio $\$50/\$200 = 0.25$. A threshold of $0.5$ is correct only when a missed fraud costs exactly twice a review, which no one has claimed here. Section~\ref{sec:alert-economics} runs the same calculation at the scale of a real alert queue.
 
-\subsection{Advanced Models and Techniques for Class Imbalance}
+\subsection{Class Imbalance: Reweighting and Resampling}
 \label{sec:advanced-imbalance}
 
 Every example so far has used ordinary logistic regression at a default decision threshold to make the underlying statistical issue, extreme class imbalance\index{class imbalance}, as transparent as possible. Production fraud and AML systems typically go further, using both more expressive models and dedicated techniques for the imbalance problem itself, and it is worth being precise about what each one actually does, since they solve different parts of the problem and are frequently combined rather than used as substitutes for one another.
@@ -264,7 +265,8 @@ Applying SMOTE directly to Table~\ref{tab:fraud_scoring_data}'s four real fraud 
 \end{align*}
 the linear interpolation the algorithm is defined to perform, verified here by solving for each point's interpolation fraction $\lambda$ along the amount-$z$-score axis and confirming it reproduces the distance coordinate exactly. Neither synthetic point corresponds to an actual observed transaction, which is precisely the risk described above: both happen to fall between genuinely similar fraud cases here, but SMOTE has no way to know whether that will hold for every pair it selects on a larger, messier dataset.
 
-\subsubsection*{More Expressive Models: Ensembles and Unsupervised Anomaly Detection}
+\subsection{More Expressive Models: Ensembles and Unsupervised Anomaly Detection}
+\label{sec:expressive-models}
 
 Logistic regression's score is additive in its features, amount, distance, and lateness each contribute independently, which is part of why Section~\ref{sec:fraud-scoring}'s coefficients are easy to interpret, but real fraud often depends on \emph{combinations} of features interacting in ways an additive model can only approximate. Chapter 6's tree-based ensembles, Random Forest and gradient boosting\index{gradient boosting}, split the feature space recursively and can represent a rule like ``flag this transaction only if the amount is unusual \emph{and} it occurs at an unusual location \emph{and} at an unusual time, but not if only one of these is true,'' a genuinely nonlinear interaction a single logistic regression coefficient vector cannot express directly. This added flexibility does not, on its own, solve class imbalance, a gradient-boosted model trained on the same skewed data will show the same base-rate problem Section~\ref{sec:anomaly-bayes} quantified unless it is also combined with class weighting or resampling, and it comes at the cost of interpretability, which Section~\ref{sec:governance-3lod} returns to as a regulatory constraint on model choice.
 
@@ -280,12 +282,13 @@ Fitting an Isolation Forest to the same simulated training transactions, with th
 
 One evaluation pitfall deserves its own mention. The receiver operating characteristic (ROC) curve plots the true-positive rate against the false-positive rate across every possible threshold, and its area under the curve (ROC-AUC) is a common single-number summary of a classifier's overall ranking ability. Under the severe class imbalance this entire chapter has emphasized, ROC-AUC can look deceptively good: because the false-positive rate is computed as a share of an enormous legitimate population, even a model that performs only modestly well at actually ranking fraud can still show a low false-positive rate and a high ROC-AUC, precisely the same base-rate distortion Section~\ref{sec:anomaly-bayes}'s Bayes' theorem example exposed for a fixed confusion matrix. The precision-recall (PR) curve, plotting precision against recall across thresholds, and its area (PR-AUC), does not have this blind spot, since precision is computed directly against the number of \emph{predicted} positives rather than against the (huge) total negative population, making it the more informative single-number summary whenever the event being detected is rare, the situation this chapter's fraud, insider-trading, and AML examples all share.
 
-\subsection{Two Fraud Types That Defeat Transaction-Level Scoring}
+\section{Two Fraud Types That Defeat Transaction-Level Scoring}
 \label{sec:new-fraud-types}
 
-Everything in this part has assumed a fraudulent transaction is, in principle, distinguishable from a legitimate one given enough features and a good enough model. Two of the fastest-growing categories of fraud violate that assumption outright, each in a different way, and both are worth understanding precisely because they show where the statistical machinery developed above stops being sufficient.
+Everything in the preceding part has assumed a fraudulent transaction is, in principle, distinguishable from a legitimate one given enough features and a good enough model. Two of the fastest-growing categories of fraud violate that assumption outright, each in a different way, and both are worth understanding precisely because they show where the statistical machinery developed above stops being sufficient.
 
-\subsubsection*{Synthetic Identity Fraud: The Case With No Labels}\index{Synthetic Identity Fraud}
+\subsection{Synthetic Identity Fraud: The Case With No Labels}\index{Synthetic Identity Fraud}
+\label{sec:synthetic-identity}
 
 A synthetic identity is not a stolen one. The fraudster assembles a person who does not exist, typically pairing a real but unused identity number, often belonging to a child, a recent immigrant, or a deceased person whose records are not actively monitored, with a fabricated name, date of birth, and address. Because no real person owns the composite, no real person ever notices it, disputes a charge, or files a report.
 
@@ -297,9 +300,10 @@ so the ``bust-out,'' drawing every line to its limit and disappearing, nets roug
 
 The deeper problem is the labels. A bust-out is usually written off as ordinary credit loss, since there is no victim to reclassify it and no obvious moment of theft. If $5\%$ of a lender's $100{,}000$ annual charge-offs are in fact synthetic identities, then $5{,}000$ fraud cases a year are sitting in the training data labeled ``default,'' and a supervised fraud model never learns them at all. This is the same structural blindness Chapter 9's reject inference describes, in a more damaging form: the measured fraud base rate is understated, so every precision figure computed against those labels is optimistic by an unknown margin.
 
-It is also the strongest argument in this chapter for the unsupervised methods of Section~\ref{sec:advanced-imbalance}. An Isolation Forest or autoencoder never needed a confirmed fraud label in the first place, and the cultivation pattern, several thin-file accounts sharing an address, a device fingerprint, or a phone number, and all maturing on similar trajectories, is precisely the kind of structure an anomaly detector or the network analysis of Section~\ref{sec:aml-structuring} can surface without one.
+It is also the strongest argument in this chapter for the unsupervised methods of Section~\ref{sec:expressive-models}. An Isolation Forest or autoencoder never needed a confirmed fraud label in the first place, and the cultivation pattern, several thin-file accounts sharing an address, a device fingerprint, or a phone number, and all maturing on similar trajectories, is precisely the kind of structure an anomaly detector or the network analysis of Section~\ref{sec:aml-structuring} can surface without one.
 
-\subsubsection*{Authorized Push Payment Fraud: The Case Where Every Feature Is Legitimate}\index{Authorized Push Payment (APP) Fraud}
+\subsection{Authorized Push Payment Fraud: The Case Where Every Feature Is Legitimate}\index{Authorized Push Payment (APP) Fraud}
+\label{sec:app-fraud}
 
 In an authorized push payment scam the customer is deceived, by a fake invoice, an impersonated bank official, or a romance or investment pretext, into sending the money themselves. The credentials are correct, the device is the customer's usual one, the authentication succeeds, and the instruction is genuine. This is transaction 9 of Table~\ref{tab:fraud_scoring_data} carried to its limit: not merely a fraudulent payment that looks unremarkable, but one that is, at the moment of authorization, indistinguishable from a legitimate payment on every feature a transaction-level model observes, because it \emph{is} a legitimate instruction from the account holder.
 
@@ -317,9 +321,9 @@ a net benefit of \$112,500 a month, or \$1.35 million a year. Solving for the re
 
 Because the payment instruction itself carries no signal, detection has to look elsewhere: at deviation from the customer's own payment history rather than from any population norm (a first-time payee, an unusual amount, an account that has never before sent a faster payment at all), at contextual signals such as a payment initiated during or immediately after a long inbound call, and above all at the \emph{receiving} side, where mule accounts show the short-dwell, high-pass-through pattern that Section~\ref{sec:aml-structuring}'s layering example already taught us to recognize. The victim's transaction looks normal; the beneficiary's does not.
 
-\section{Risk Tiering, Survival, and Money Laundering}
+\section{Risk Tiering and Survival Analysis}
 
-Beyond a single score, this part ranks customers by behavior, models time-to-detection, and turns to laundering typologies.
+Beyond a single score, this part ranks customers by behavior and models time-to-detection.
 
 \subsection{Behavioral Risk Frameworks and Customer Risk Tiering}
 \label{sec:risk-tiering}
@@ -388,7 +392,8 @@ Simply dropping censored observations, or treating them as if fraud were confirm
 \end{equation*}
 where $\hat S(t)$ is the estimated probability that an account survives, meaning it remains unconfirmed as fraud, beyond time $t$, $n_i$ is the number of accounts still under observation (not yet closed or censored) just before time $t_i$, and $d_i$ is the number of confirmed-fraud closures exactly at time $t_i$. This book's companion technical note on the Kaplan-Meier estimator shows that this product-limit formula is not an ad hoc device for coping with censored data but the exact nonparametric maximum-likelihood estimator of the survival function once right censoring is written into the likelihood correctly, which is also why the curve steps down only at observed event times and never at censoring times.
 
-\subsubsection*{A Worked Example: Kaplan-Meier Survival of Flagged Accounts}\index{Kaplan-Meier Survival of Flagged Accounts}
+\subsection{A Worked Example: Kaplan-Meier Survival of Flagged Accounts}\index{Kaplan-Meier Survival of Flagged Accounts}
+\label{sec:km-example}
 
 Suppose a bank's fraud team tracks 12 accounts flagged by Section~\ref{sec:risk-tiering}'s risk-tiering system, recording, for each, the number of days until either a confirmed fraud closure (an event) or an unrelated account closure or the end of the observation window (a censored observation, marked with a $+$): 5, 8, 8$^+$, 12, 15, 15$^+$, 20, 24$^+$, 30, 30$^+$, 35, 40$^+$. Table~\ref{tab:km_table} works through the Kaplan-Meier calculation at each day on which a confirmed fraud closure actually occurred.
 
@@ -428,7 +433,8 @@ This is precisely the mechanism by which censored observations still contribute 
 
 Second, the estimated probability that a flagged account survives (remains unconfirmed) beyond 35 days is only about $20.3\%$. Roughly $80\%$ of accounts in this sample that are eventually confirmed as fraud are therefore confirmed within a little over a month of being flagged. That is a concrete, evidence-based number a compliance team can use to set service-level targets for how quickly a flagged account's investigation should be completed. It also lets the team recognize that an account still open and unresolved well beyond that horizon is behaving atypically relative to the rest of the flagged population, an idea developed further next.
 
-\subsubsection*{How Precise Is $\hat S(t)$? Greenwood's Formula}\index{Greenwood's formula}
+\subsection{How Precise Is $\hat S(t)$? Greenwood's Formula}\index{Greenwood's formula}
+\label{sec:greenwood}
 
 A survival estimate like $\hat S(35)\approx0.2025$ is, exactly like every other point estimate in this book, only half the story without some sense of how precisely it is known from only 12 accounts.
 
@@ -448,6 +454,10 @@ This is also where the survival curve earns the prioritization role claimed for 
 
 Kaplan-Meier is deliberately nonparametric and uses no covariates at all, which is why it can say \emph{when} flagged accounts are confirmed but not \emph{which} ones. The learning extensions supply the missing half. Cox proportional hazards multiplies a baseline hazard by a function of an account's features, and survival forests and gradient-boosted survival models drop the proportionality assumption entirely, so the same censored data behind Table~\ref{tab:km_table} yields a per-account predicted time to confirmation, which is what an alert-ranking system actually consumes. Chapter 9's discrete-time hazard formulation is the credit-risk counterpart of the same idea.
 
+\section{Money Laundering and Sanctions}
+
+This part turns to laundering typologies, sanctions screening, and detection shared across institutions.
+
 \subsection{Anti-Money Laundering: Structuring, Monitoring, and Regulation}
 \label{sec:aml-structuring}
 
@@ -465,7 +475,8 @@ an amount that, deposited as a single transaction, would unambiguously trigger a
 
 Effective structuring detection instead applies a rule across a rolling window of activity, for example, flagging any customer with three or more cash deposits within a seven-day period each falling within \$1,000 of the reporting threshold, which the five \$9,500 deposits above would trigger even though no single deposit would. This is a direct illustration of the behavioral, account-level monitoring philosophy introduced in Section~\ref{sec:risk-tiering}: the relevant signal is a pattern across transactions and across time, not any single transaction viewed in isolation.
 
-\subsubsection*{Placement, Layering, and Integration: A Network Example}
+\subsection{Placement, Layering, and Integration: A Network Example}
+\label{sec:aml-network}
 
 Structuring is the classic technique for the first of three stages regulators and investigators use to describe how illicit funds are laundered: \emph{placement}, introducing cash into the financial system in the first place, the deposit pattern in the worked example above. \emph{Layering} follows placement: moving the placed funds through a chain of transactions and accounts, often across several institutions and jurisdictions, specifically to obscure the connection between the funds and their criminal origin.
 
@@ -538,7 +549,7 @@ After four hops, $\$461{,}184.08$, over $92\%$ of the original placed amount, re
 
 No individual hop in Table~\ref{tab:layering_network} looks obviously wrong; each is a plausible-looking business payment of a plausible size. What is anomalous is the pattern viewed as a network, and each of its three features is a number rather than an impression: a pass-through ratio of exactly $0.98$ at every hop, where a real operating business retains and redeploys most of what it receives; a dwell time under 24 hours, against the weeks a genuine payables cycle takes; and, at every interior node, exactly one party paying in and exactly one party paid out, an in-degree and out-degree of one in the vocabulary of graphs\index{in-degree and out-degree}, where a real supplier has many customers and many suppliers. Each has innocent explanations on its own. All three at once, repeated four hops in a row, do not.
 
-That conjunction is a reason to look, not a conclusion. A factoring company, an escrow agent, or a freight forwarder shows high pass-through and short dwell as a matter of ordinary business, and a sole-source subcontractor genuinely does have one customer and one supplier; what the shape of the network cannot supply on its own is a reason to believe the money is criminal. Three further tests do that work. The first is \emph{commercial substance}\index{commercial substance}: a real intermediary has employees, premises, and counterparties outside this one chain, whereas Alpha has a bank account, an incorporation date shortly before the flows began, and a registered address it shares with dozens of unrelated entities. The second is \emph{common control}: shared directors or beneficial owners, a shared address, telephone number, or device, or four accounts opened at one branch within days of each other, which turns four legally separate companies into one hand moving its own money and has no innocent reading at all. The third is the fee. Two percent of principal, identical at every hop, is a cut rather than a price, because a genuine service is charged for work performed and does not scale exactly with the sum passing through. Only once such corroboration is in hand does an alert amount to the suspicion of criminal origin that a Suspicious Activity Report requires; the graph by itself reports, exactly as Section~\ref{sec:advanced-imbalance} said of any unsupervised flag, that something is unusual rather than that it is a crime.
+That conjunction is a reason to look, not a conclusion. A factoring company, an escrow agent, or a freight forwarder shows high pass-through and short dwell as a matter of ordinary business, and a sole-source subcontractor genuinely does have one customer and one supplier; what the shape of the network cannot supply on its own is a reason to believe the money is criminal. Three further tests do that work. The first is \emph{commercial substance}\index{commercial substance}: a real intermediary has employees, premises, and counterparties outside this one chain, whereas Alpha has a bank account, an incorporation date shortly before the flows began, and a registered address it shares with dozens of unrelated entities. The second is \emph{common control}: shared directors or beneficial owners, a shared address, telephone number, or device, or four accounts opened at one branch within days of each other, which turns four legally separate companies into one hand moving its own money and has no innocent reading at all. The third is the fee. Two percent of principal, identical at every hop, is a cut rather than a price, because a genuine service is charged for work performed and does not scale exactly with the sum passing through. Only once such corroboration is in hand does an alert amount to the suspicion of criminal origin that a Suspicious Activity Report requires; the graph by itself reports, exactly as Section~\ref{sec:expressive-models} said of any unsupervised flag, that something is unusual rather than that it is a crime.
 
 This is precisely why anti-money-laundering systems increasingly supplement Section~\ref{sec:risk-tiering}'s per-account behavioral scoring with network or graph-based analysis, examining the structure of relationships between accounts rather than any single account's activity alone, since a layering scheme is, by design, constructed so that every individual node in the chain looks unremarkable.
 
@@ -573,6 +584,9 @@ Figure~\ref{fig:crime_pipeline} places this rule-based structuring and layering 
     \label{fig:crime_pipeline}
 }
 \end{figure}
+
+\subsection{Ongoing Due Diligence and Adverse-Media Screening}
+\label{sec:aml-due-diligence}
 
 Beyond structuring, AML regulation imposes an ongoing due-diligence obligation that goes beyond fraud detection's largely reactive posture: Customer Due Diligence (CDD)\index{Customer Due Diligence (CDD)} at onboarding establishes a customer's expected activity profile (Section~\ref{sec:risk-tiering}'s KYC inputs), Enhanced Due Diligence (EDD)\index{Enhanced Due Diligence (EDD)} applies heightened scrutiny to higher-risk customers such as politically exposed persons or those in high-risk jurisdictions, and ongoing monitoring compares actual behavior against that expected profile continuously, the account-level, time-varying risk view Section~\ref{sec:survival-fraud}'s survival framework formalizes.
 
@@ -745,7 +759,7 @@ Several challenges recur across nearly every application in this chapter, and ma
 
 \section{Key Takeaways}
 
-Fraud detection and anti-money-laundering compliance apply the classification tools Chapter 6 developed and Chapter 9 specialized to credit risk to a domain defined by extreme class imbalance and an adversary that actively adapts to known detection rules. Beyond a single logistic regression, production systems draw on a broader toolkit developed in Section~\ref{sec:advanced-imbalance}: class weighting and resampling techniques such as SMOTE address the imbalance directly, tree-based ensembles capture nonlinear feature interactions a purely additive model misses, unsupervised anomaly detection catches patterns no confirmed label yet describes, and precision-recall AUC, not ROC-AUC, is the evaluation metric suited to a rare-event problem like this one.
+Fraud detection and anti-money-laundering compliance apply the classification tools Chapter 6 developed and Chapter 9 specialized to credit risk to a domain defined by extreme class imbalance and an adversary that actively adapts to known detection rules. Beyond a single logistic regression, production systems draw on a broader toolkit developed in Sections~\ref{sec:advanced-imbalance} and~\ref{sec:expressive-models}: class weighting and resampling techniques such as SMOTE address the imbalance directly, tree-based ensembles capture nonlinear feature interactions a purely additive model misses, unsupervised anomaly detection catches patterns no confirmed label yet describes, and precision-recall AUC, not ROC-AUC, is the evaluation metric suited to a rare-event problem like this one.
 
 Chapter 1's Bayes' theorem fraud example, scaled to a full day of transaction volume and re-applied to insider trading surveillance, shows concretely why even an apparently accurate model generates a large false-positive alert queue, and that precision at a low base rate is far more sensitive to the false-positive rate than to the true-positive rate, so alert economics, not just statistical accuracy, must guide how a fraud or AML program is designed and staffed.
 

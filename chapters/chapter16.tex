@@ -192,6 +192,31 @@ March: ``inflation has moderated in recent months and the committee will be pati
 
 The January statement contains 22 words, of which 3 (elevated, increases, strong) are hawkish and none are dovish, giving a net-hawkishness score of $(3-0)/22 \approx +0.1364$. The March statement contains 25 words, of which none are hawkish and 3 (moderated, patient, softening) are dovish, scoring $(0-3)/25 = -0.1200$. The number a rates trader actually cares about, though, is neither level but the \emph{change} between them: a drift of $-0.1200 - 0.1364 \approx -0.2564$, a decisive swing from hawkish to dovish. Because every market participant has already read the previous statement, the information in a new one lies almost entirely in what changed, which is why professional coverage of an FOMC release is dominated by redline comparisons against the prior statement, and why the tone \emph{difference}, not the tone itself, is the natural trading signal, the event-driven logic of the next section applied to the policy calendar instead of the earnings calendar. Research versions of this idea, scoring decades of central-bank communication and measuring the market reaction to the component of each statement that could not have been anticipated, are by now a standard tool in empirical monetary economics (see Further Reading).
 
+\subsection{Disclosure Analysis: Readability and the Gunning Fog Index}
+\label{sec:disclosure-analysis}
+
+Regulators require that public disclosures be understandable to ordinary investors (the U.S. Securities and Exchange Commission's ``Plain English'' rule is one such requirement), and readability metrics give a simple, quantitative way to assess whether a given passage meets that bar. The Gunning Fog index estimates the years of formal education a reader needs to understand a passage on a first reading,
+\begin{equation*}
+\text{Fog} = 0.4 \left[ \frac{\text{words}}{\text{sentences}} + 100 \times \frac{\text{complex words}}{\text{words}} \right],
+\end{equation*}
+where a complex word is (approximately) one with three or more syllables.
+
+\subsubsection*{A Worked Example: Two Disclosure Paragraphs Compared}
+
+Consider two short passages. Paragraph A: ``The firm's sales grew this year. Profits also rose. We expect this trend to grow next year.'' This has 17 words across 3 sentences and zero complex words (every word has one or two syllables), giving $\text{Fog} = 0.4\,[(17/3) + 100(0/17)] = 2.27$.
+
+Paragraph B: ``The Company's operations are subject to numerous regulatory, competitive, and macroeconomic uncertainties. These uncertainties could materially and adversely affect anticipated profitability and operational continuity.'' This has 24 words across 2 sentences, of which 14 are complex (numerous, regulatory, competitive, macroeconomic, uncertainties, materially, adversely, anticipated, profitability, operational, continuity, and others), giving $\text{Fog} = 0.4\,[(24/2) + 100(14/24)] = 28.13$.
+
+A Fog index above roughly 17 corresponds to a post-graduate reading level; Paragraph B's score of 28.13 is far beyond that, and while these two toy paragraphs are deliberately constructed to contrast sharply, the direction of the result matches a well-documented empirical finding: 10-K risk-factor sections and other mandatory disclosures routinely score in this same elevated range in practice, dense, technical, and long-sentence.
+
+Readability metrics like this one give compliance and research teams a simple, automatable way to flag disclosures that may not be meeting the plain-English standard regulators intend, or, for a research application, to test whether unusually low readability in a given filing is itself a predictive signal (some published research finds that harder-to-read disclosures are associated with worse subsequent firm performance, consistent with obfuscation being used strategically).
+
+The Fog index is also useful as a diagnostic during the drafting process itself, not only after the fact. Rewriting Paragraph B in plainer language, ``Our business faces many risks from rules, competition, and the economy. These risks could hurt our profits and how well we operate,'' gives 22 words across 2 sentences with only 3 complex words (competition, economy, operate), so
+\begin{equation*}
+\text{Fog} = 0.4\,[(22/2) + 100(3/22)] \approx 9.85,
+\end{equation*}
+close to Paragraph A's toy score and nowhere near Paragraph B's original 28.13, despite covering essentially the same substantive content, the same categories of risk and the same warning about their potential effect on profitability. This is precisely the practical use case regulators intend a Plain English rule to encourage: the underlying legal and business meaning did not need to change at all to bring the Fog score down by nearly two-thirds, only the sentence structure and word choice, which is why an automated readability check integrated directly into a disclosure-drafting workflow can flag an overly complex passage for simplification before it is ever filed, rather than only after a regulator or researcher measures it externally.
+
 \section{Classical Text Models}
 
 Before transformers, text was classified and traded on with methods that remain fast, auditable, and often sufficient.
@@ -459,7 +484,8 @@ and
 $$PE_{(pos,2i+1)} = \cos\left(\frac{pos}{10000^{2i/d}}\right)$$
 for position $pos$ and embedding dimension index $i$, so that word order, essential to meaning in any language, survives into a mechanism that would otherwise discard it entirely.
 
-\subsubsection*{Encoder-Only, Decoder-Only, and Encoder-Decoder Architectures}
+\subsection{Encoder-Only, Decoder-Only, and Encoder-Decoder Architectures}
+\label{sec:transformer-architectures}
 
 The self-attention mechanism above is the shared building block behind every transformer-based model, but different financial NLP tasks call
 for arranging that block differently, and the resulting three architecture families are not interchangeable. An encoder-only model
@@ -488,9 +514,10 @@ The two representations of the identical word ``rallied,'' in the identical sent
 
 This is precisely why swapping a decoder-only LLM in for a task an encoder-only model was designed for, or vice versa, is not merely a matter of using ``a big enough model'': the two produce systematically different token representations by construction, not merely by training data.
 
-\subsubsection*{How These Models Are Trained, and Why They Eventually Need Retraining}
+\subsection{How These Models Are Trained, and Why They Eventually Need Retraining}
+\label{sec:transformer-training}
 
-No one hand-writes the rule that lets a model correctly guess which distant word a pronoun refers to, or which number a sentence's context makes most plausible; a model this large has to learn it, and the only training signal available at the necessary scale is the text itself, with no human labels attached. None of the weight matrices in Figure~\ref{fig:qkv_architecture}, $W^Q$, $W^K$, $W^V$, or the many more inside a full transformer's feedforward and output layers, are hand-specified; every one of them is learned by ordinary gradient descent (Chapter 6's Section 6.3.2), applied not to a small labeled dataset but to a self-supervised objective computed directly from raw, unlabeled text at enormous scale.
+No one hand-writes the rule that lets a model correctly guess which distant word a pronoun refers to, or which number a sentence's context makes most plausible; a model this large has to learn it, and the only training signal available at the necessary scale is the text itself, with no human labels attached. None of the weight matrices in Figure~\ref{fig:qkv_architecture}, $W^Q$, $W^K$, $W^V$, or the many more inside a full transformer's feedforward and output layers, are hand-specified; every one of them is learned by ordinary gradient descent (Chapter 6's Section 6.3.3), applied not to a small labeled dataset but to a self-supervised objective computed directly from raw, unlabeled text at enormous scale.
 
 An encoder-only model is pretrained by masking a random fraction of tokens in each training sentence and learning to predict the missing token from its surrounding bidirectional context; a decoder-only model is pretrained on the simpler, single objective of predicting each next token from everything before it, applied repeatedly across a very large corpus of general text, the causal-masked computation the worked example above just carried out by hand. This is what ``training'' actually means for a language model: no human labels the correct output token by token, the text itself supplies the training signal, which is precisely why these models can be pretrained on a vastly larger volume of data than any supervised model in this book has needed.
 
@@ -511,7 +538,7 @@ Two further capabilities extend an LLM's usefulness beyond the purely text-in, t
 
 Multimodal models extend the same architecture to inputs beyond plain text, reading a scanned PDF page, a chart embedded in an investor presentation, or a table image directly, and answering questions or extracting figures from it without a separate, brittle optical-character-recognition step, which matters in practice since a great deal of financial disclosure (annual report exhibits, scanned older filings, chart-heavy investor decks) is not available as clean machine-readable text to begin with.
 
-\subsection{Retrieval-Augmented Generation: A Worked Example}
+\subsection{Retrieval-Augmented Generation}
 \label{sec:rag}
 
 Retrieval-augmented generation (RAG) is the most widely deployed mitigation for hallucination in financial applications. Rather than relying solely on facts an LLM absorbed during training, potentially outdated, generic, or simply never seen, a RAG system first retrieves the most relevant passages from a trusted, current document collection (a bank's own filings, policy manuals, or licensed research), then conditions the model's generated answer on those specific retrieved passages.
@@ -560,7 +587,8 @@ Computing cosine similarity between the query and each document gives
 \end{align*}
 Doc1 is retrieved as the top match by a wide margin, and only Doc1 (or, at a higher retrieval count, Doc1 and Doc4) would be passed to the generative model. The model then answers using Doc1's actual text, producing ``Company X's Q3 revenue was \$420 million, up 8\% year over year,'' grounded in a retrieved, verifiable source, rather than a plausible-sounding figure invented from the model's training data alone. Note that Doc2 and Doc3, despite both mentioning Company X or a similar business topic, are correctly ranked far below Doc1 and Doc4, since neither actually answers a revenue question, the discrimination a well-behaved retrieval step needs to make.
 
-\subsubsection*{Evaluating a RAG System: Precision@k and a Faithfulness Score}
+\subsection{Evaluating a RAG System: Precision@k and a Faithfulness Score}
+\label{sec:rag-evaluation}
 
 Retrieving \emph{a} document is not the same as retrieving the \emph{right} document, and a production RAG system needs a quantitative way to check both the retrieval step and the generation step separately, rather than only spot-checking final answers by hand. Precision@k measures the retrieval step alone: of the top $k$ retrieved documents, what fraction are actually relevant to the query? For the revenue question above, only Doc1 genuinely answers it; Doc4 (net margin) and Doc2 (leverage) are topically related to Company X but do not answer \emph{this} question. Ranking documents by the cosine similarities already computed (Doc1, then Doc4, then Doc2, then Doc3),
 \begin{equation*}
@@ -637,12 +665,13 @@ First, non-determinism: the same prompt submitted twice can produce two differen
 
 These risks change how the third line's independent validation function, introduced in Chapter 15, must operate: rather than checking a model's predictions against a fixed, labeled test set, validating a generative system requires sampling many outputs, checking them against source documents for factual grounding (the kind of check Section~\ref{sec:rag}'s retrieval step is meant to support), and explicitly testing for prompt-injection and data-leakage vulnerabilities before deployment, not just at initial launch but on an ongoing basis as the underlying model, retrieved document collection, or user population changes. Regulators have generally extended existing model risk management\index{model risk management} guidance, rather than writing entirely new rules, to cover these systems, which means a generative AI deployment must satisfy the same governance expectations, documented validation, ongoing monitoring, and a clear escalation path, developed for the classical models earlier chapters covered, even though the tools available to satisfy them look different in practice.
 
-\subsection{Advanced Topics: Fine-Tuning, Agents, and Domain Adaptation}
+\section{Advanced Topics: Fine-Tuning, Agents, and Domain Adaptation}
 \label{sec:advanced-nlp}
 
 The base LLM described in Section~\ref{sec:llms-finance}, trained only to predict the next token, is not yet the helpful, instruction-following assistant Section~\ref{sec:rag} and this chapter's case vignette describe. Four further ideas, increasingly used in financial NLP systems, close that gap.
 
-\subsubsection*{Fine-Tuning and Reinforcement Learning from Human Feedback}
+\subsection{Fine-Tuning and Reinforcement Learning from Human Feedback}
+\label{sec:rlhf}
 
 A model pretrained purely to predict the next token is, left as is, an unreliable assistant: asked a direct question, it may just as easily continue writing more text in the same style as actually answer it, since nothing in next-token prediction alone teaches it to follow an instruction or to prefer a helpful, honest response over a fluent but unhelpful one. After next-token pretraining, a model is typically further trained in two stages: supervised fine-tuning on curated (prompt, ideal response) pairs,
 teaching it to follow instructions rather than merely continue text, and reinforcement learning from human feedback\index{reinforcement learning from human feedback (RLHF)} (RLHF), which uses human preference judgments between pairs of candidate outputs to train a reward model, then adjusts the LLM
@@ -653,7 +682,8 @@ $$\Pr(A \succ B) = \text{sigmoid}(r_A - r_B) = \frac{1}{1+e^{-(r_A - r_B)}}.$$
 \subsubsection*{A Worked Example: Reward-Model Preference Probability}
 Suppose a reward model scores a well-grounded, source-accurate earnings-call summary at $r_A = 2.1$ and a fluent but subtly inaccurate alternative summary at $r_B = 0.8$. The estimated preference probability is $\text{sigmoid}(2.1 - 0.8) = \text{sigmoid}(1.3) \approx 0.7858$: the reward model favors the accurate summary about 78.6\% of the time it is compared against the inaccurate one, and RLHF training nudges the underlying LLM's outputs toward whichever behavior the reward model scores this way, in aggregate across many such comparisons.
 
-\subsubsection*{Parameter-Efficient Fine-Tuning: Low-Rank Adaptation (LoRA)}\index{Low-Rank Adaptation (LoRA)}
+\subsection{Parameter-Efficient Fine-Tuning: Low-Rank Adaptation (LoRA)}\index{Low-Rank Adaptation (LoRA)}
+\label{sec:lora}
 
 RLHF and supervised fine-tuning both describe \emph{what} a model is trained to do after pretraining; a separate, practical question is \emph{how} that further training is actually carried out, since updating every one of a large model's weights, full fine-tuning, requires storing a full second copy of the model's parameters (the update itself) alongside the original, and repeating this for every downstream task or client is prohibitively expensive at the scale of a modern LLM.
 
@@ -668,7 +698,8 @@ a reduction factor of $16{,}777{,}216 / 65{,}536 = 256\times$ for this single ma
 
 This is precisely why LoRA has become the default way to adapt a large financial-domain model, whether fine-tuning a base LLM on a specific bank's internal document style or on a specific asset class's terminology. It avoids both the storage cost of a full duplicate model per use case and the computational cost of updating billions of frozen parameters that full fine-tuning would otherwise touch. The frozen base model, potentially already quantized using this section's own quantization technique described below, can be shared across many clients or tasks, with only a small, task-specific $B$ and $A$ pair, a few tens of thousands of parameters rather than billions, stored and swapped in per use case.
 
-\subsubsection*{LLM Agents and Tool Use}
+\subsection{LLM Agents and Tool Use}
+\label{sec:llm-agents}
 
 Computing and cross-checking a company's P/E ratio requires looking up its current price, pulling its latest reported earnings from a filing, dividing the two, and comparing the result against a sector benchmark, a sequence of lookups and arithmetic no single LLM call, which only ever produces text in one pass, can carry out on its own. An agent extends a single-turn LLM call into a multi-step loop: the model can decide to call an external tool, a retrieval system, a calculator, a database query, or a trading API, observe the tool's result, and decide on a next action, repeating until it produces a final answer. This directly composes the retrieval mechanism of Section~\ref{sec:rag} with ordinary computation.
 
@@ -683,25 +714,29 @@ exceeds a pre-set tolerance of, say, $2\%$, so rather than presenting either num
 
 This cross-check step costs one additional tool call but converts a single, silently-possibly-wrong number into either a confidently validated one or an explicitly flagged discrepancy, the kind of independent-verification discipline Chapter 8's model-validation framework requires of a classical risk model, now applied to a single agentic tool-use chain.
 
-\subsubsection*{Mixture-of-Experts: Scaling Without Proportional Compute}
+\subsection{Mixture-of-Experts: Scaling Without Proportional Compute}
+\label{sec:mixture-of-experts}
 
 Making a language model more capable usually means making it larger, but a larger dense feedforward network makes every single token more expensive to process, whether or not that token's context actually needed the model's full capacity. A mixture-of-experts\index{mixture of experts} (MoE) architecture replaces a single large feedforward network inside each transformer layer with several smaller ``expert'' networks and a router that sends each token to only a handful of them, letting total model capacity grow without a proportional increase in the compute needed per token.
 
 \subsubsection*{A Worked Example: Sparse Activation Fraction}
 Consider a MoE layer with 8 experts of 6 billion parameters each (48 billion total expert parameters) that routes each token to only its top 2 experts. Each token activates $2 \times 6 = 12$ billion of the 48 billion expert parameters, an active fraction of $12/48 = 0.25$, or 25\%: the model has the representational capacity of a 48-billion-parameter feedforward layer while each token's forward pass costs only what a 12-billion-parameter layer would.
 
-\subsubsection*{Domain-Adapted Financial Language Models: BloombergGPT}\index{BloombergGPT}
+\subsection{Domain-Adapted Financial Language Models: BloombergGPT}\index{BloombergGPT}
+\label{sec:bloomberggpt}
 
 Section~\ref{sec:sentiment}'s Loughran-McDonald dictionary made a simple, lexicon-based version of a broader point: general-purpose tools built on general-purpose text underperform on financial language. BloombergGPT, announced by Bloomberg in 2023, applies the same principle to a full-scale LLM rather than a hand-built word list: a 50-billion-parameter model trained from scratch on a mixed corpus of over 700 billion tokens, roughly 363 billion tokens of Bloomberg's own financial data (news, filings, and other proprietary financial text spanning decades) combined with roughly 345 billion tokens of general-purpose text, with 569 billion tokens actually sampled for training. The model outperformed similarly sized general-purpose models on financial-specific benchmarks (sentiment analysis, financial named-entity recognition, and financial question answering) while remaining competitive with them on general-purpose language benchmarks, empirical confirmation, at LLM scale, of the same domain-specificity argument Section~\ref{sec:text-data} made about financial vocabulary at the very start of this chapter.
 
-\subsubsection*{Quantization: Deploying a Large Model at Lower Cost}
+\subsection{Quantization: Deploying a Large Model at Lower Cost}
+\label{sec:quantization}
 
 A financial institution that wants to run a model like BloombergGPT on its own infrastructure, rather than sending every query to an external provider's API, an important consideration given Section~\ref{sec:genai-governance}'s data-leakage concern, faces a direct memory and compute cost. Quantization reduces this cost by storing each parameter with fewer bits than the precision used during training, trading a small amount of accuracy for a large reduction in memory footprint.
 
 \subsubsection*{A Worked Example: Memory Footprint Under Quantization}
 A 50-billion-parameter model held at 16-bit precision (2 bytes per parameter) requires $50\times10^9 \times 2 = 100\times10^9$ bytes, 100 gigabytes, just to store its weights, before accounting for activations or the memory a long conversation's key-value cache consumes. Quantizing to 8-bit precision (1 byte per parameter) halves this to 50 gigabytes, and quantizing further to 4-bit precision (0.5 bytes per parameter) brings it to 25 gigabytes, a fourfold reduction from the original 16-bit footprint. This is the kind of trade-off, some accuracy degradation in exchange for a model that fits on cheaper hardware and answers faster, that determines whether an institution can feasibly run a domain-adapted model like this in-house at all, rather than as a purely theoretical exercise.
 
-\subsubsection*{A Worked Example: API Cost Versus Self-Hosting at Scale}
+\subsection{A Worked Example: API Cost Versus Self-Hosting at Scale}
+\label{sec:api-vs-selfhost}
 Quantization's payoff is easiest to see by putting a dollar figure on the alternative, and the right way to frame that figure is as a break-even volume, because API prices move far faster than this book's print cycle. The two cost structures differ in kind. An API bills per token, so its cost is purely variable, and providers bill output tokens at a higher rate than input tokens, typically four to six times as much, since generating a token costs more compute than reading one. Self-hosting is mostly a fixed cost: suppose the 4-bit-quantized 50-billion-parameter model runs on one dedicated cloud GPU node reserved around the clock at \$20 an hour, or \$480 a day (\$14,400 a month), whether it is busy or idle, with capacity for $4{,}000$ queries an hour, $96{,}000$ a day.
 
 Let a query carry $n_{\text{in}}$ input tokens (the prompt plus any retrieved context) and $n_{\text{out}}$ output tokens, with API prices $p_{\text{in}}$ and $p_{\text{out}}$ per million tokens. Self-hosting wins once daily query volume $Q$ exceeds
@@ -711,31 +746,6 @@ Q^{*} = \frac{\$480}{(n_{\text{in}}\,p_{\text{in}} + n_{\text{out}}\,p_{\text{ou
 Take an institution's financial-research assistant handling $40{,}000$ queries a day at $800$ input and $200$ output tokens each. The prices are the parameter that dates. At the 2023 list price of the original GPT-4, \$30 per million input tokens and \$60 per million output tokens, a query cost \$0.036, the API bill came to \$1,440 a day, three times the self-hosted node, and the break-even was only $13{,}333$ queries a day. As of 2026, published list prices span roughly \$0.05 to \$10 per million input tokens and \$0.50 to \$50 per million output tokens, from the smallest models to the frontier ones. At an illustrative frontier-tier price of \$5 in and \$25 out, a query costs \$0.009, the same workload costs \$360 a day through the API, cheaper than the \$480 node, and self-hosting wins only above $53{,}333$ queries a day. At an illustrative mid-tier price of \$2 in and \$10 out, the break-even rises to $133{,}333$ queries a day, more than the node can serve, and at a small model's \$0.10 in and \$0.50 out, about \$7 a day buys the whole workload. Input and output asymmetry matters as much as the headline rate: tilt the same $1{,}000$ tokens toward long generated answers, $200$ in and $800$ out, and the frontier-tier cost per query rises to \$0.021, cutting the break-even to $22{,}857$ queries a day.
 
 The conclusion that survives price changes is the structure, not any single number. Falling per-token prices have pushed the break-even volume up by roughly a factor of four or more since 2023, so a pure cost case for self-hosting now requires either very high volume, an output-heavy workload, or a premium model whose API price is high. The memory-footprint calculation is still what makes the self-hosted option feasible at all, since a model that fits on one accessible GPU only at 4-bit precision is the model that keeps the fixed cost at one node rather than a multi-GPU cluster. And cost is rarely the whole decision: Section~\ref{sec:genai-governance}'s data-leakage concern can favor self-hosting even below the break-even, because it keeps every query's content inside the institution's own infrastructure rather than sending it to an external provider.
-
-\subsection{Disclosure Analysis: Readability and the Gunning Fog Index}
-\label{sec:disclosure-analysis}
-
-Regulators require that public disclosures be understandable to ordinary investors (the U.S. Securities and Exchange Commission's ``Plain English'' rule is one such requirement), and readability metrics give a simple, quantitative way to assess whether a given passage meets that bar. The Gunning Fog index estimates the years of formal education a reader needs to understand a passage on a first reading,
-\begin{equation*}
-\text{Fog} = 0.4 \left[ \frac{\text{words}}{\text{sentences}} + 100 \times \frac{\text{complex words}}{\text{words}} \right],
-\end{equation*}
-where a complex word is (approximately) one with three or more syllables.
-
-\subsubsection*{A Worked Example: Two Disclosure Paragraphs Compared}
-
-Consider two short passages. Paragraph A: ``The firm's sales grew this year. Profits also rose. We expect this trend to grow next year.'' This has 17 words across 3 sentences and zero complex words (every word has one or two syllables), giving $\text{Fog} = 0.4\,[(17/3) + 100(0/17)] = 2.27$.
-
-Paragraph B: ``The Company's operations are subject to numerous regulatory, competitive, and macroeconomic uncertainties. These uncertainties could materially and adversely affect anticipated profitability and operational continuity.'' This has 24 words across 2 sentences, of which 14 are complex (numerous, regulatory, competitive, macroeconomic, uncertainties, materially, adversely, anticipated, profitability, operational, continuity, and others), giving $\text{Fog} = 0.4\,[(24/2) + 100(14/24)] = 28.13$.
-
-A Fog index above roughly 17 corresponds to a post-graduate reading level; Paragraph B's score of 28.13 is far beyond that, and while these two toy paragraphs are deliberately constructed to contrast sharply, the direction of the result matches a well-documented empirical finding: 10-K risk-factor sections and other mandatory disclosures routinely score in this same elevated range in practice, dense, technical, and long-sentence.
-
-Readability metrics like this one give compliance and research teams a simple, automatable way to flag disclosures that may not be meeting the plain-English standard regulators intend, or, for a research application, to test whether unusually low readability in a given filing is itself a predictive signal (some published research finds that harder-to-read disclosures are associated with worse subsequent firm performance, consistent with obfuscation being used strategically).
-
-The Fog index is also useful as a diagnostic during the drafting process itself, not only after the fact. Rewriting Paragraph B in plainer language, ``Our business faces many risks from rules, competition, and the economy. These risks could hurt our profits and how well we operate,'' gives 22 words across 2 sentences with only 3 complex words (competition, economy, operate), so
-\begin{equation*}
-\text{Fog} = 0.4\,[(22/2) + 100(3/22)] \approx 9.85,
-\end{equation*}
-close to Paragraph A's toy score and nowhere near Paragraph B's original 28.13, despite covering essentially the same substantive content, the same categories of risk and the same warning about their potential effect on profitability. This is precisely the practical use case regulators intend a Plain English rule to encourage: the underlying legal and business meaning did not need to change at all to bring the Fog score down by nearly two-thirds, only the sentence structure and word choice, which is why an automated readability check integrated directly into a disclosure-drafting workflow can flag an overly complex passage for simplification before it is ever filed, rather than only after a regulator or researcher measures it externally.
 
 \section{Case Vignette: AI @ Morgan Stanley}\index{Morgan Stanley}
 
@@ -795,13 +805,13 @@ capacity from per-token compute cost, and BloombergGPT demonstrates the Loughran
     \item Using Section~\ref{sec:embeddings}'s toy embeddings, add a seventh term, ``dividend'' $=(0.70, 0.40)$, compute its cosine similarity to ``stock'' and to ``bond,'' and explain which existing term it should be geometrically closest to and why.
     \item Using Section~\ref{sec:embeddings}'s vector-arithmetic example, compute $\text{bearish} - \text{bullish} + \text{stock}$ using the chapter's toy embeddings, and explain in words what analogy this computation is attempting to capture, and why, unlike the $\text{stock}-\text{equity}+\text{bond}$ example, the result does not land exactly on any of the chapter's six labeled terms.
     \item Using Section~\ref{sec:attention-transformers}'s worked example, recompute the self-attention output for the token ``rallied'' (using query $Q_{\text{rallied}} = (0,1)$ instead of $Q_{\text{stocks}}$), and explain which token's value vector now receives the most weight.
-    \item Using Section~\ref{sec:attention-transformers}'s causal-versus-bidirectional worked example, compute ``today'''s own contextual representation (using query $Q_{\text{today}} = (1,1)$) under a causal mask, noting that a token at the last position of a sequence can attend to every earlier token, and explain why, for the very last token in a sentence, a causal mask produces the same output a fully bidirectional model would.
+    \item Using Section~\ref{sec:transformer-architectures}'s causal-versus-bidirectional worked example, compute ``today'''s own contextual representation (using query $Q_{\text{today}} = (1,1)$) under a causal mask, noting that a token at the last position of a sequence can attend to every earlier token, and explain why, for the very last token in a sentence, a causal mask produces the same output a fully bidirectional model would.
     \item Explain, in a short paragraph, why an LLM's hallucination failure mode is harder to catch automatically than a classification model's error rate, referencing Section~\ref{sec:llms-finance}.
     \item Using Section~\ref{sec:disclosure-analysis}'s method, compute the Gunning Fog index for a passage of your own construction with 30 words, 2 sentences, and 6 complex words, and compare it to both worked paragraphs' scores.
     \item Compare this chapter's Naive Bayes document classifier (Section~\ref{sec:naive-bayes-text}) to Chapter 6's original loan-default Naive Bayes discussion: explain, in your own words, why the conditional-independence assumption is more defensible for word-count features in a document than it would be for a firm's financial ratios.
     \item Using Section~\ref{sec:rag}'s worked example, add a fifth knowledge-base document, Doc5, ``Company X's Q3 operating expenses rose 5\% to \$310 million,'' with embedding $(0.75, 0.30, 0.00)$, compute its cosine similarity to the same query, and state where it ranks among the five documents.
-    \item Using Section~\ref{sec:rag}'s precision@k example, recompute Precision@4 if Doc5 from the previous exercise (also not relevant to a revenue question) is retrieved fourth, and explain in words why adding a fifth, similarly irrelevant document could never increase precision at any $k$, only decrease it or leave it unchanged.
-    \item Using Section~\ref{sec:rag}'s faithfulness-score example, an answer embeds at $(0.80, 0.25, 0.00)$. Compute its faithfulness score against Doc1, and state whether it would pass a review threshold of $0.90$.
+    \item Using Section~\ref{sec:rag-evaluation}'s precision@k example, recompute Precision@4 if Doc5 from the previous exercise (also not relevant to a revenue question) is retrieved fourth, and explain in words why adding a fifth, similarly irrelevant document could never increase precision at any $k$, only decrease it or leave it unchanged.
+    \item Using Section~\ref{sec:rag-evaluation}'s faithfulness-score example, an answer embeds at $(0.80, 0.25, 0.00)$. Compute its faithfulness score against Doc1, and state whether it would pass a review threshold of $0.90$.
     \item Write a zero-shot prompt, a two-example few-shot prompt, and a chain-of-thought prompt, following Section~\ref{sec:prompting}'s patterns, for the task of classifying whether a sentence from a 10-K risk-factors section describes credit risk or market risk (the task Section~\ref{sec:naive-bayes-text} solved with Naive Bayes instead).
     \item Using Section~\ref{sec:generative-synthetic}'s worked example, compute $x_t$ for a third diffusion step with $\alpha_t = 0.30$, holding $x_0 = 1.00$ and $\epsilon = -0.50$ fixed, and confirm that $x_t$ has moved even closer to $\epsilon$
      than the two steps already computed.

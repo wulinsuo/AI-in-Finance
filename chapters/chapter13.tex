@@ -517,7 +517,8 @@ Chapter 6 developed the general financial-ML feature patterns, ratios, lagged an
 
 \textbf{Volume-based} features, raw volume, dollar volume (price times volume), and volume relative to its own recent average, capture how much conviction accompanies a price move, a dimension none of the price-based features above can see on their own. \textbf{Microstructure-based} features draw directly on Chapter 3 and this chapter's own market-quality material: the bid-ask spread, and the order-flow imbalance that motivated Kyle's model in Section~\ref{sec:kyle-model}, both change on a timescale of individual trades rather than daily closes and can supply information a purely price-based feature never sees at all.
 
-\subsubsection*{Momentum, Realized Volatility, and RSI}
+\subsection{Momentum, Realized Volatility, and RSI}
+\label{sec:momentum-rsi}
 
 Table~\ref{tab:trading_features} computes three of these features, reusing the identical twelve-day price series from Section~\ref{sec:ma-crossover}'s moving-average crossover example: a 3-day momentum ($\text{Mom3}_t = P_t/P_{t-3} - 1$), a 3-day realized volatility (the rolling standard deviation of the three most recent daily returns), and a 3-period RSI, $\text{RSI} = 100 - 100/(1+RS)$ where $RS$ is the average of the window's positive price changes (gains) divided by the average magnitude of its negative changes (losses).
 
@@ -559,7 +560,8 @@ Realized volatility does something a momentum feature cannot. It stays low and c
 
 RSI illustrates a real limitation alongside its usefulness: because every change in the days-4-through-7 window is positive, RSI saturates at exactly $100$ for four consecutive days, the indicator's conventional ``overbought'' signal, but it cannot distinguish a mild uptrend from an explosive one once every recent change has the same sign, and it falls just as quickly to a saturated $0$ (``oversold'') once the reversal takes hold and every recent change turns negative. A model trained only on RSI would have no way to tell days 4 through 7 apart from each other, despite their visibly different momentum, which is why practitioners typically feed a model both a bounded indicator like RSI and the underlying continuous features, momentum and realized volatility among them, side by side, letting the model itself learn how much weight each deserves rather than discarding the information a saturated indicator throws away.
 
-\subsubsection*{Two Further Technical Indicators}
+\subsection{Two Further Technical Indicators}
+\label{sec:technical-indicators}
 
 Two further technical indicators are common enough in practice to be worth working through numerically alongside RSI, both computed from an exponentially weighted moving average (EMA) rather than the simple moving average of Section~\ref{sec:ma-crossover}: an EMA weights recent prices more heavily than older ones, updating as $\text{EMA}_t = \lambda P_t + (1-\lambda)\text{EMA}_{t-1}$ with smoothing factor $\lambda = 2/(N+1)$ for an $N$-period window, seeded at the first available price.
 
@@ -605,6 +607,11 @@ The APO column tells the same trend story as momentum but with an EMA's smoother
 \textbf{Bollinger Bands} take a different approach to the same underlying price series, wrapping a simple moving average in bands set a fixed number of standard deviations above and below it: $\text{Middle}_t = \text{SMA}_t$, $\text{Upper}_t = \text{SMA}_t + k\cdot\sigma_t$, and $\text{Lower}_t = \text{SMA}_t - k\cdot\sigma_t$, where $\sigma_t$ is the rolling standard deviation of price (not return) over the same window as the moving average and $k$ is conventionally set to $2$. Industry practice typically uses a 20-day window; the table instead uses a 5-day window, for the same reason it shortened the EMA windows above.
 
 The band width (upper minus lower) is itself a volatility indicator, telling the same story as Table~\ref{tab:trading_features}'s Vol3 column: the bands are tight while days 1 through 5 climb smoothly, then widen sharply from day 6 onward and stay wide through day 12, tracking the same days-8-and-9 volatility spike Vol3 flagged and the same GARCH-style clustering Chapter 7 introduced, expressed geometrically around the price chart rather than as a single rolling standard deviation. Both indicators are further transformations of the same rolling mean and dispersion already summarized by momentum and realized volatility, so neither supplies information a model could not in principle extract from those two directly. Their real value is the packaging: a chart-ready representation a human trader can read at a glance, which is why both remain popular in practitioner tools even though a machine-learning pipeline is free to work from the underlying features instead.
+
+\subsection{Putting the Features to Work}
+\label{sec:features-to-work}
+
+Computing indicators is only the first step. The four topics below cover what surrounds them in a working strategy, namely a market-wide regime filter, two data disciplines, the move from features to a portfolio, and out-of-sample validation.
 
 \subsubsection*{A Market-Wide Feature: The VIX}
 
@@ -718,15 +725,15 @@ The next chapter narrows the focus to the extreme, millisecond-scale end of this
 
 \begin{itemize}
     \item Almgren and Chriss, ``Optimal Execution of Portfolio Transactions,'' \emph{Journal of Risk}. The original formalization of the market-impact-versus-timing-risk tradeoff developed in Section~\ref{sec:optimal-execution}.
-    \item Appel, \emph{Technical Analysis: Power Tools for Active Investors}. Written by the creator of the MACD indicator, the closely related, signal-line-smoothed cousin of the Absolute Price Oscillator used in Section~\ref{sec:trading-feature-engineering}'s feature-engineering worked example.
+    \item Appel, \emph{Technical Analysis: Power Tools for Active Investors}. Written by the creator of the MACD indicator, the closely related, signal-line-smoothed cousin of the Absolute Price Oscillator used in Section~\ref{sec:technical-indicators}'s feature-engineering worked example.
     \item Avellaneda and Stoikov, ``High-Frequency Trading in a Limit Order Book,'' \emph{Quantitative Finance}. The original inventory-based market-making model summarized in Section~\ref{sec:inventory}.
     \item Bailey and L\'opez de Prado, ``The Deflated Sharpe Ratio,'' \emph{Journal of Portfolio Management}. The source of the deflation adjustment recommended in Section~\ref{sec:backtest-overfit}, and the standard reference on backtest overfitting.
-    \item Bollinger, \emph{Bollinger on Bollinger Bands}. Written by the creator of the Bollinger Bands indicator used in Section~\ref{sec:trading-feature-engineering}'s feature-engineering worked example.
+    \item Bollinger, \emph{Bollinger on Bollinger Bands}. Written by the creator of the Bollinger Bands indicator used in Section~\ref{sec:technical-indicators}'s feature-engineering worked example.
     \item Chan, \emph{Algorithmic Trading: Winning Strategies and Their Rationale}. A practitioner-oriented treatment of strategy development and backtesting, including the pairs-trading and mean-reversion strategies extended in this chapter.
     \item Harris, \emph{Trading and Exchanges: Market Microstructure for Practitioners}. A comprehensive treatment of order types, market structure, and execution that extends this chapter's introductory coverage and connects directly back to Chapter 3.
     \item Kissell, \emph{The Science of Algorithmic Trading and Portfolio Management}. Covers transaction cost analysis and implementation shortfall, introduced in this chapter, in considerably greater quantitative depth.
     \item Kyle, ``Continuous Auctions and Insider Trading,'' \emph{Econometrica}. The original 1985 paper formalizing the price-impact model summarized in Section~\ref{sec:kyle-model}.
-    \item Wilder, \emph{New Concepts in Technical Trading Systems}. The original source introducing the Relative Strength Index used in Section~\ref{sec:trading-feature-engineering}'s feature-engineering worked example.
+    \item Wilder, \emph{New Concepts in Technical Trading Systems}. The original source introducing the Relative Strength Index used in Section~\ref{sec:momentum-rsi}'s feature-engineering worked example.
     \item Guéant, Lehalle, and Fernandez-Tapia, ``Dealing with the Inventory Risk: A Solution to the Market Making Problem,'' \emph{Mathematics and Financial Economics}. A rigorous, closed-form treatment extending the Avellaneda-Stoikov inventory model of Section~\ref{sec:inventory} to more realistic order-arrival assumptions.
     \item Patterson, \emph{Dark Pools: The Rise of the Machine Traders and the Rigging of the U.S. Stock Market}. A journalistic but well-researched account of the rise of dark pools, algorithmic trading, and the market-structure debates touched on in this chapter's discussion of order routing and venue choice.
 \end{itemize}

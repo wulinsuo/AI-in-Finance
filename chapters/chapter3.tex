@@ -114,7 +114,7 @@ Swaps are used primarily to change the interest rate exposure of an existing pos
 
 Swaps trade almost entirely over-the-counter rather than on exchanges, which historically made the market for them opaque; post-2008 reforms, discussed later in this chapter, pushed much of the standardized swap market toward centralized clearing specifically to reduce the kind of counterparty risk concentration that swaps had exposed during the financial crisis.
 
-\paragraph{A Worked Example: Valuing an Existing Interest Rate Swap}
+\subsubsection*{A Worked Example: Valuing an Existing Interest Rate Swap}
 
 A plain-vanilla interest rate swap can be valued as the difference between two bonds: the fixed leg is valued exactly like a coupon bond, discounting each fixed payment plus a final notional repayment, while the floating leg, because its coupon resets to the prevailing market rate at each reset date, is worth par (its notional value) at any reset date, regardless of what has happened to interest rates since the swap began. Consider a two-year swap with a \$10 million notional and a fixed rate of $5\%$, agreed some time ago, being valued today, immediately after a reset, when the current one-year and two-year discount rates are $4\%$ and $4.5\%$ respectively, lower than the $5\%$ fixed rate locked in at initiation. The fixed leg's annual coupon is $0.05 \times 10{,}000{,}000 = \$500{,}000$, so its present value is
 \begin{equation*}
@@ -463,6 +463,8 @@ one euro should be worth $\pounds0.88$. If the EUR/GBP market instead directly q
 \text{Step 3 (USD} \to \text{GBP at } 1/1.25\text{):} &\quad 1{,}264{,}367.82 \times 0.80 \approx \pounds1{,}011{,}494.25,
 \end{align*}
 a riskless profit of about $\pounds11{,}494$, or roughly $1.15\%$, on the round trip, realized in seconds and requiring no view whatsoever on whether any of the three currencies will rise or fall. Exactly as in the bond and forward examples above, this mispricing cannot persist: high-frequency and algorithmic traders (the subject of Chapters 13 and 14) monitor this kind of three-way consistency continuously, and the resulting arbitrage trading pushes the three rates back into alignment within moments of any deviation appearing, which is precisely why triangular arbitrage opportunities in liquid, major-currency pairs are typically too small and short-lived to exploit manually, existing today mainly as a textbook illustration of a real economic force rather than a realistically accessible trading strategy for anyone without a fully automated, low-latency system.
+
+\subsubsection*{Frictions and the Limits of Arbitrage}
 
 Although financial theory often uses idealized assumptions, real markets are full of frictions. These frictions include transaction costs, taxes, delays, information asymmetry, margin requirements, and limits on borrowing. A frictionless market would make it easy to buy and sell any asset at a known price, but real markets are not like that. The presence of frictions changes the economics of investment and the behavior of prices.
 

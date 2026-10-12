@@ -780,7 +780,8 @@ One of the most important lessons in computational finance is that analysis must
     \item Writing small checks directly into a script or notebook, such as the put-call parity check used in Chapter 5 or the accounting-identity check used in Chapter 4, so that a silent bug is caught immediately rather than discovered much later when it has already propagated into a report or a trading decision.
 \end{itemize}
 
-\subsubsection*{Unit Testing: Making Checks Automatic}\index{Unit Testing}
+\subsection{Unit Testing: Making Checks Automatic}\index{Unit Testing}
+\label{sec:unit-testing}
 
 The ``small checks'' in the list above become far more valuable once they are written as an actual, automatically run test rather than a one-off \texttt{print} statement an analyst has to remember to inspect. A unit test is simply a function that exercises a piece of code and uses Python's \texttt{assert} statement to fail loudly if the result is not what is expected. Section~\ref{sec:worked-example}'s own observation, that the portfolio-variance formula and the direct computation from the return series agree, is exactly the kind of invariant worth encoding this way:
 

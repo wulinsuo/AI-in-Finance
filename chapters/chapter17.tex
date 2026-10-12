@@ -248,12 +248,30 @@ Raw alternative-data readings, like the raw market and fundamental data of Chapt
 
 Suppose sector-average car-count growth for Cascade's peer group across the same eight quarters of Table~\ref{tab:satellite_regression} is $(1.0, -0.5, 2.0, 0.3, 2.5, -1.0, 1.5, 0.5)$; subtracting it from Cascade's own car-count growth gives a peer-adjusted series $(1.1, -1.0, 2.8, 0.3, 3.7, -2.0, 2.0, 0.5)$. Refitting Section~\ref{sec:satellite-example}'s regression with this peer-adjusted series as the predictor gives $\hat\beta = 1.064$, $\hat\alpha = 0.678$, and $R^2 = 0.867$, essentially unchanged from the raw series' $R^2 = 0.870$. In this particular sample sector-wide movements were fairly small relative to Cascade's own idiosyncratic variation, so peer-adjustment does not change the fit much here, but the adjustment matters far more in a period when the whole sector moves together, a broad consumer-spending downturn, a fuel-price spike depressing driving-based foot traffic sector-wide, where an un-adjusted signal would mistake a sector-wide move for firm-specific news.
 
-\subsection{Neural Networks for Structured and Unstructured Data}
+\subsection{Data Quality, Bias, and Integration Challenges}
+\label{sec:alt-data-quality}
+
+Alternative data's advantages, frequency, granularity, and a genuine informational edge before official reporting, come with distinctive quality problems that do not have close analogues in the market and fundamental data earlier chapters used.
+
+\textbf{Coverage bias.} A satellite vendor can only cover stores it has usable imagery for, typically larger, freestanding locations with visible parking lots, so its car-count sample systematically underrepresents smaller-format or mall-based stores, and a model trained only on the covered subset may not generalize to a retailer's business as a whole.
+
+\textbf{Vendor black-box processing.} As Section~\ref{sec:alt-data-sources} noted, a vendor typically sells an already-processed feature, a car count, a traffic index, not raw pixels or logs, so an analyst inherits whatever computer-vision or aggregation errors are baked into that pipeline without being able to inspect or correct them directly; a vendor's undisclosed methodology change between periods can look, in the data, indistinguishable from a genuine change in the underlying business.
+
+\textbf{Delivery lag and look-ahead bias.} A backtest that assumes alternative data was available on the date it describes, rather than the (often later) date it was actually delivered to subscribers, silently uses information that would not have been tradeable in real time; Section~\ref{sec:alt-data-pipeline}'s multi-source signal, for instance, is only genuinely useful if all three data sources reach a trading desk before the earnings release they are meant to anticipate, not merely before the quarter ends, and only in the vintage that actually arrived then, not as later revised and backfilled.
+
+\textbf{Licensing cost and alpha decay.} High-quality alternative data is expensive, often licensed exclusively or semi-exclusively, and Section~\ref{sec:case-vignette-satellite}'s case documents a genuine 4-5\% informational edge around earnings from satellite car counts; as more funds license the same feed and trade on the same signal, that edge is competed away over time in the way Chapter 6 described a known profitable pattern eroding once it becomes widely traded, so an alternative-data edge, like any other, has a shelf life.
+
+\textbf{Privacy and legal exposure.} Card-panel and geolocation data are aggregated and anonymized before sale, but reconstructing individual behavior from supposedly anonymized data has repeatedly proven possible in other domains, so a vendor's privacy practices, and a buyer's own legal exposure, are due-diligence questions that market and fundamental data never raised.
+
+\textbf{The line between alternative data and material non-public information is not always bright.} Card-panel and web-traffic vendors aggregate across many individual cardholders or visitors specifically so that no single company's non-public information is being sold, but the boundary is a matter of legal judgment rather than a fixed technical threshold, and a narrowly enough scoped feed, transaction data from only a handful of a firm's largest customers, say, can approach material non-public information even though it never touches the firm's own systems and no insider ever leaks anything, a genuinely new compliance risk that Chapter 15's insider-trading discussion, framed entirely around information leaking from inside a firm, did not anticipate.
+
+\section{Neural Networks for Structured and Unstructured Data}
 \label{sec:nn-structured-unstructured}
 
 Section~\ref{sec:satellite-example} treated the vendor's car count as a finished number, but the vendor itself had to produce that count from raw satellite pixels, and Section~\ref{sec:alt-data-pipeline}'s web-traffic and card figures likewise start from raw logs or transaction records. Chapter 6 introduced the feedforward network, in which every input feeds every hidden unit with its own independent weight; that architecture ignores two kinds of structure alternative data routinely has, the two-dimensional grid structure of an image and the ordered, sequential structure of a time-stamped log, and specialized architectures were developed to exploit each, alongside a third architecture that needs no labeled target at all.
 
-\subsubsection*{Convolutional Neural Networks for Grid-Structured Data}
+\subsection{Convolutional Neural Networks for Grid-Structured Data}
+\label{sec:cnn-grid}
 
 Suppose a vendor wants to teach a model to count cars automatically in a million-pixel satellite tile rather than paying an analyst to do it by eye. A feedforward network, of the kind Chapter 6 covers, could in principle treat every one of those million pixels as an independent input feature, but it would need a separate learned weight connecting each pixel to each hidden unit, and it would have to relearn from scratch that a cluster of bright pixels in the top-left corner and the identical cluster in the bottom-right corner both mean the same thing, a car, since nothing in a feedforward network's structure tells it that a pattern's meaning does not depend on where in the image it sits.
 
@@ -322,7 +340,8 @@ Stacking convolutional layers naively, however, runs into a practical training p
 
 The architecture that made very deep CNNs practical, the residual network\index{residual network (ResNet)} (ResNet), addresses this with a simple structural change: each block adds a shortcut connection carrying the block's input directly to its output, so the block only has to learn a residual adjustment on top of what already passed through unchanged, rather than having to learn the entire transformation from scratch, letting gradients flow through the shortcut even when a particular block's own learned transformation contributes little. This is the same practical instinct as Chapter 12's shrinkage-based portfolio methods, do not force a model to learn from nothing what could instead be inherited or only mildly adjusted, applied to network depth rather than portfolio weights.
 
-\subsubsection*{Recurrent Neural Networks for Sequential Data}
+\subsection{Recurrent Neural Networks for Sequential Data}
+\label{sec:rnn-sequential}
 
 Suppose an analyst wants to judge whether Cascade's web traffic is accelerating going into its next earnings release using the last several weeks of readings rather than just the most recent one, since a single week's number cannot distinguish a steady climb from a spike that is about to reverse. A feedforward network could take all several weeks as separate input features, but it would treat them as an unordered bag, with nothing in its structure telling it that the reading from three weeks ago came before the reading from last week.
 
@@ -509,7 +528,8 @@ Roughly $80\%$ of $c_1$'s information survives to $c_3$ in the LSTM, against rou
 }
 \end{figure}
 
-\subsubsection*{Autoencoders for Unsupervised Anomaly Detection}
+\subsection{Autoencoders for Unsupervised Anomaly Detection}
+\label{sec:autoencoder-anomaly}
 
 Suppose a data-quality analyst wants to flag whenever a quarter's alternative-data readings look unusual, without knowing in advance what ``unusual'' means and without a single labeled historical example of a bad reading to train against, an unsupervised problem the CNN and RNN examples above cannot address, since both are supervised, trained toward a known target, an estimated car count, a probability of accelerating growth.
 
@@ -569,30 +589,14 @@ In practice, this would be the kind of quarter a data-quality analyst should inv
 }
 \end{figure}
 
-\subsubsection*{Transformers as a Unifying Architecture}
+\subsection{Transformers as a Unifying Architecture}
+\label{sec:vision-transformer}
 
 Chapter 16 developed the transformer architecture and its self-attention\index{self-attention} mechanism (Section 16.4.1) for text, where each token attends to every other token in a sequence. The same mechanism generalizes beyond text: a vision transformer (ViT)\index{Vision Transformer (ViT)} divides an image into fixed-size patches, treats each patch the way a transformer treats a word token, and applies self-attention across patches instead of convolution across pixels, letting a satellite image classifier weigh a distant part of the image against the current patch directly, something a CNN's local filters only do indirectly, through many stacked layers.
 
 The companion notebook makes this concrete by splitting the same $4\times4$ satellite image the CNN example convolved into four non-overlapping $2\times2$ patches, treating each as a token exactly as Chapter 16 treated a word, and computing scaled dot-product self-attention across them. Querying from patch 2 (the top-right car cluster, mean brightness $0.85$) against keys built from each patch's own brightness, patch 2 attends to itself with weight $0.6174$ and to patch 3 (the bottom-left car cluster, mean brightness $0.80$, diagonally the farthest patch in the image) with weight $0.3817$, while the two empty patches 1 and 4 (mean brightness $0.10$ each) receive a combined weight of only $0.001$.
 
 This is the claim above made numerical: patch 2's most relevant neighbor is patch 3, a content-similar patch on the opposite corner of the image, not either of the two empty patches nearer to it, and self-attention identifies that relevance in a single step rather than requiring several stacked convolutional layers to propagate information across that same distance. In current practice, CNNs remain common for smaller or highly structured image tasks (including much car-counting and object-detection work), while transformer-based architectures increasingly dominate both large-scale image classification and the web-traffic and card-transaction sequence modeling that once used RNNs, so that a single architectural family, self-attention, now spans text (Chapter 16), images, and sequences alike.
-
-\subsection{Data Quality, Bias, and Integration Challenges}
-\label{sec:alt-data-quality}
-
-Alternative data's advantages, frequency, granularity, and a genuine informational edge before official reporting, come with distinctive quality problems that do not have close analogues in the market and fundamental data earlier chapters used.
-
-\textbf{Coverage bias.} A satellite vendor can only cover stores it has usable imagery for, typically larger, freestanding locations with visible parking lots, so its car-count sample systematically underrepresents smaller-format or mall-based stores, and a model trained only on the covered subset may not generalize to a retailer's business as a whole.
-
-\textbf{Vendor black-box processing.} As Section~\ref{sec:alt-data-sources} noted, a vendor typically sells an already-processed feature, a car count, a traffic index, not raw pixels or logs, so an analyst inherits whatever computer-vision or aggregation errors are baked into that pipeline without being able to inspect or correct them directly; a vendor's undisclosed methodology change between periods can look, in the data, indistinguishable from a genuine change in the underlying business.
-
-\textbf{Delivery lag and look-ahead bias.} A backtest that assumes alternative data was available on the date it describes, rather than the (often later) date it was actually delivered to subscribers, silently uses information that would not have been tradeable in real time; Section~\ref{sec:alt-data-pipeline}'s multi-source signal, for instance, is only genuinely useful if all three data sources reach a trading desk before the earnings release they are meant to anticipate, not merely before the quarter ends, and only in the vintage that actually arrived then, not as later revised and backfilled.
-
-\textbf{Licensing cost and alpha decay.} High-quality alternative data is expensive, often licensed exclusively or semi-exclusively, and Section~\ref{sec:case-vignette-satellite}'s case documents a genuine 4-5\% informational edge around earnings from satellite car counts; as more funds license the same feed and trade on the same signal, that edge is competed away over time in the way Chapter 6 described a known profitable pattern eroding once it becomes widely traded, so an alternative-data edge, like any other, has a shelf life.
-
-\textbf{Privacy and legal exposure.} Card-panel and geolocation data are aggregated and anonymized before sale, but reconstructing individual behavior from supposedly anonymized data has repeatedly proven possible in other domains, so a vendor's privacy practices, and a buyer's own legal exposure, are due-diligence questions that market and fundamental data never raised.
-
-\textbf{The line between alternative data and material non-public information is not always bright.} Card-panel and web-traffic vendors aggregate across many individual cardholders or visitors specifically so that no single company's non-public information is being sold, but the boundary is a matter of legal judgment rather than a fixed technical threshold, and a narrowly enough scoped feed, transaction data from only a handful of a firm's largest customers, say, can approach material non-public information even though it never touches the firm's own systems and no insider ever leaks anything, a genuinely new compliance risk that Chapter 15's insider-trading discussion, framed entirely around information leaking from inside a firm, did not anticipate.
 
 \section{Applications and Advanced Methods}
 

@@ -40,12 +40,15 @@
 \usepackage{tocloft}
 \setlength{\cftsecnumwidth}{3.2em}
 \setlength{\cftsubsecnumwidth}{4.2em}
+\setlength{\cftsecindent}{1.5em}
+\setlength{\cftsubsecindent}{4.7em}
 \setlength{\cftchapnumwidth}{6.5em}
 
-% Contents lists chapters and sections only. With 427 sections across 21 chapters
-% the subsection entries added length without aiding navigation; \cftsubsecnumwidth
-% above is kept so the setting can be reverted by changing this one counter.
-\setcounter{tocdepth}{1}
+% Contents lists chapters, sections and subsections. It listed sections only until
+% 2026-10-12; the heading-structure repair of that date promoted the book's real
+% topics (Merton, IFRS 9, LDA, RNNs, robo-advisors...) to numbered subsections, and
+% with tocdepth=1 they stayed invisible. Set this counter back to 1 to revert.
+\setcounter{tocdepth}{2}
 
 \usepackage{makeidx}
 \makeindex
@@ -156,6 +159,7 @@
 \tableofcontents
 
 \clearpage
+\cleardoublepage\phantomsection
 \addcontentsline{toc}{chapter}{Preface}
 \chapter*{Preface}
 \markboth{PREFACE}{PREFACE}
@@ -348,6 +352,7 @@ Queen's University\\
 Wulin.Suo@Queensu.ca
 
 \clearpage
+\cleardoublepage\phantomsection
 \addcontentsline{toc}{chapter}{Notation}
 \chapter*{Notation}
 \markboth{NOTATION}{NOTATION}
@@ -410,6 +415,7 @@ VaR, ES & Value at Risk and Expected Shortfall (Chapter 8) \\
 \backmatter
 
 \clearpage
+\cleardoublepage\phantomsection
 \addcontentsline{toc}{chapter}{Bibliography}
 \chapter*{Bibliography}
 \markboth{BIBLIOGRAPHY}{BIBLIOGRAPHY}
@@ -604,6 +610,7 @@ Every chapter's own ``Further Reading'' section lists sources with a short note 
 \end{itemize}
 
 \clearpage
+\cleardoublepage\phantomsection
 \addcontentsline{toc}{chapter}{Index}
 \printindex
 
