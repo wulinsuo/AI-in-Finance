@@ -182,13 +182,13 @@ Take $s=\$100.00$, $\sigma=2$ (per-unit-time price standard deviation, in the un
 r = 100 - 5(0.1)(2)^2(1) = 100-2.00 = \$98.00,
 \end{equation*}
 \begin{equation*}
-r^a-r^b = \gamma\sigma^2(T-t) = 0.1(4)(1) = 2.00, \qquad r^b=98-1.00=\$97.00,\;\; r^a=98+1.00=\$99.00,
+r^a-r^b = \gamma\sigma^2(T-t) = 0.1(4)(1) = 0.40, \qquad r^b=98-0.20=\$97.80,\;\; r^a=98+0.20=\$98.20,
 \end{equation*}
 \begin{equation*}
 \delta^{*} = \frac{1}{0.1}\ln\!\left(1+\frac{0.1}{1.5}\right) = 10\ln(1.0667) \approx 10(0.0645) \approx 0.645,
 \end{equation*}
 \begin{equation*}
-p^b = 97.00-0.645 \approx \$96.35, \qquad p^a = 99.00+0.645 \approx \$99.65, \qquad p^a-p^b \approx \$3.30.
+p^b = 97.80-0.645 \approx \$97.15, \qquad p^a = 98.20+0.645 \approx \$98.85, \qquad p^a-p^b \approx \$1.69.
 \end{equation*}
 Table~\ref{tab:comparison} compares these quotes against a naive, inventory-blind market maker quoting the same total spread symmetrically around the raw mid-price $s=\$100.00$.
 
@@ -200,13 +200,13 @@ Table~\ref{tab:comparison} compares these quotes against a naive, inventory-blin
 \toprule
 & Bid & Ask \\
 \midrule
-Inventory-aware (Corollary~\ref{cor:quotes}) & $\$96.35$ & $\$99.65$ \\
-Naive, centered on $s=\$100.00$ & $\$98.35$ & $\$101.65$ \\
+Inventory-aware (Corollary~\ref{cor:quotes}) & $\$97.15$ & $\$98.85$ \\
+Naive, centered on $s=\$100.00$ & $\$99.15$ & $\$100.85$ \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Both quotes shift down by exactly $s-r=\$2.00$ relative to the naive benchmark, consistent with Corollary~\ref{cor:quotes}: the long market maker's bid becomes markedly less attractive to sellers ($\$96.35$ against a naive $\$98.35$), directly discouraging further accumulation, while its ask becomes markedly more attractive to buyers ($\$99.65$ against a naive $\$101.65$), directly encouraging unwind of the existing long position, with the total spread width itself unchanged by inventory, exactly as Corollary~\ref{cor:quotes}'s symmetric-around-$r$ structure predicts.
+Both quotes shift down by exactly $s-r=\$2.00$ relative to the naive benchmark, consistent with Corollary~\ref{cor:quotes}: the long market maker's bid becomes markedly less attractive to sellers ($\$97.15$ against a naive $\$99.15$), directly discouraging further accumulation, while its ask becomes markedly more attractive to buyers ($\$98.85$ against a naive $\$100.85$), directly encouraging unwind of the existing long position, with the total spread width itself unchanged by inventory, exactly as Corollary~\ref{cor:quotes}'s symmetric-around-$r$ structure predicts.
 
 \section{Discussion: Assumptions and Extensions}
 \label{sec:discussion}

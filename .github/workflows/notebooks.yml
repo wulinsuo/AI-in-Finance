@@ -1,0 +1,66 @@
+# Re-executes the companion notebooks and fails if any output drifts from the
+# committed one (see tools/check_notebooks.py). The book quotes these outputs,
+# so a failure here means a number in the text may no longer be reproducible.
+name: Notebooks reproduce
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "notebooks/**"
+      - "requirements.txt"
+      - "tools/check_notebooks.py"
+      - "tools/check_notebook_refs.py"
+      - "chapters/*.tex"
+      - ".github/workflows/notebooks.yml"
+  pull_request:
+    paths:
+      - "notebooks/**"
+      - "requirements.txt"
+      - "tools/check_notebooks.py"
+      - "tools/check_notebook_refs.py"
+      - "chapters/*.tex"
+      - ".github/workflows/notebooks.yml"
+  schedule:
+    - cron: "17 6 * * 1"   # weekly, Monday 06:17 UTC: also exercises the data downloads
+  workflow_dispatch:
+
+jobs:
+  refs:
+    # Fast, no execution: every "Section N.M" a notebook cites must exist in the chapter.
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+      - run: python tools/check_notebook_refs.py notebooks
+
+  offline:
+    # Every push: all notebooks except the two that download data (ch5 VIX, ch21 UCI).
+    if: github.event_name == 'push' || github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+          cache: pip
+      - run: python -m pip install -r requirements.txt
+      - run: python tools/check_notebooks.py notebooks --no-network
+
+  full:
+    # Weekly or on demand: every notebook, including the downloads.
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+          cache: pip
+      - run: python -m pip install -r requirements.txt
+      - run: python tools/check_notebooks.py notebooks

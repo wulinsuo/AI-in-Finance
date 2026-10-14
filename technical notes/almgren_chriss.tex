@@ -234,9 +234,9 @@ This is the execution-cost analog of the mean-variance efficient frontier of por
 \section{Worked Numerical Example}
 \label{sec:example}
 
-Take $X=250$ shares, $T=1$ (one trading day, normalized), $N=5$ equal intervals, $\sigma=2\%$ per interval, $\eta=0.01$, and $\gamma$ small enough to be neglected ($\tilde\eta\approx\eta/\tau=0.01/0.2=0.05$). At $\lambda=0.5$,
+Take $X=250$ shares liquidated over $N=5$ equal intervals, and measure time in intervals, so $\tau=1$ and $T=5$. Prices are in dollars: $\sigma=\$0.02$ per share per interval (a 2\% move on a \$1 reference price; for a stock at price $S_0$, $\sigma$ is the per-interval return volatility times $S_0$), $\eta=0.01$, and $\gamma$ small enough to be neglected ($\tilde\eta\approx\eta/\tau=0.01$). These are the main text's parameters. Units matter here: $\sigma$ must be quoted per unit of the same time in which $\tau$ is measured, and entering a percentage where a dollar amount is meant rescales $\lambda\sigma^2$ and so the urgency. At $\lambda=0.5$,
 \begin{equation*}
-\cosh(\tilde\kappa\tau) = 1+\frac{0.5(0.02)^2(0.2)^2}{2(0.05)} = 1+0.00008 \;\;\Rightarrow\;\; \tilde\kappa\tau\approx0.01265,\;\; \tilde\kappa\approx0.0632,
+\cosh(\tilde\kappa\tau) = 1+\frac{0.5(0.02)^2(1)^2}{2(0.01)} = 1.01 \;\;\Rightarrow\;\; \tilde\kappa\tau=\tilde\kappa\approx0.14130,
 \end{equation*}
 and Equation~\eqref{eq:trajectory} gives the trajectory in Table~\ref{tab:traj}.
 
@@ -248,17 +248,17 @@ and Equation~\eqref{eq:trajectory} gives the trajectory in Table~\ref{tab:traj}.
 \toprule
 Interval $j$ & $t_j$ & $x_j$ (optimal) & $x_j$ (uniform, $\lambda=0$) \\
 \midrule
-0 & $0.0$ & $250.0$ & $250.0$ \\
-1 & $0.2$ & $199.4$ & $200.0$ \\
-2 & $0.4$ & $149.6$ & $150.0$ \\
-3 & $0.6$ & $100.0$ & $100.0$ \\
-4 & $0.8$ & $50.2$ & $50.0$ \\
-5 & $1.0$ & $0.0$ & $0.0$ \\
+0 & $0$ & $250.0$ & $250.0$ \\
+1 & $1$ & $194.3$ & $200.0$ \\
+2 & $2$ & $142.4$ & $150.0$ \\
+3 & $3$ & $93.4$ & $100.0$ \\
+4 & $4$ & $46.2$ & $50.0$ \\
+5 & $5$ & $0.0$ & $0.0$ \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-The optimal trajectory sells $50.6$ shares in the first interval against a uniform pace of $50.0$, a modest front-loading consistent with the small $\lambda$ chosen; Section~\ref{sec:limits}'s two corollaries are visible at the extremes of this same example, since increasing $\lambda$ by several orders of magnitude pulls the schedule toward front-loaded liquidation within the first interval or two, while $\lambda\to0$ reproduces the uniform column exactly.
+The optimal trajectory sells $55.7$ shares in the first interval against a uniform pace of $50.0$, a clear front-loading. The continuous-time urgency $\kappa=\sqrt{\lambda\sigma^2/\eta}=0.14142$ of Corollary~\ref{cor:continuum} is within $0.1\%$ of the exact $\tilde\kappa=0.14130$ here, which is why the main text, using $\kappa$, reports $194.2$ for $x_1$ against the exact $194.3$; Section~\ref{sec:limits}'s two corollaries are visible at the extremes of this same example, since increasing $\lambda$ by several orders of magnitude pulls the schedule toward front-loaded liquidation within the first interval or two, while $\lambda\to0$ reproduces the uniform column exactly.
 
 \section{Discussion: Assumptions and Extensions}
 \label{sec:discussion}

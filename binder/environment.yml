@@ -1,0 +1,11 @@
+# Binder (mybinder.org) environment for the companion notebooks.
+# Same package versions as requirements.txt at the repository root, which produced the
+# outputs committed in notebooks/ and quoted in the book. repo2docker builds this file.
+name: ai-in-finance
+channels:
+  - conda-forge
+dependencies:
+  - python=3.14
+  - pip
+  - pip:
+      - -r ../requirements.txt

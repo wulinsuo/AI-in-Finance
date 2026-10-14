@@ -1,0 +1,13 @@
+# Optional deep-learning packages for the "at scale" sections at the end of the
+# Chapter 16, 17 and 19 notebooks. Install requirements.txt first, then:
+#     python -m pip install -r requirements-dl.txt
+# CPU-only PyTorch (a much smaller download than the default CUDA build) comes from
+# PyTorch's own package index. Pinned to the versions those sections were run with
+# (Python 3.14, Windows). The sections are seeded but not digit-reproducible across
+# machines, so tools/check_notebooks.py skips them and CI does not install this file.
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.14.1      # resolves to the +cpu build on Windows/Linux; macOS wheels are CPU-only anyway
+gymnasium==1.4.0
+stable-baselines3==2.9.0
+transformers==5.19.0
+chronos-forecasting==2.3.2   # Chapter 7's optional pretrained forecaster (Chronos-Bolt-Small)

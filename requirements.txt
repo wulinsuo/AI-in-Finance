@@ -1,0 +1,23 @@
+# Companion notebooks for "AI in Finance".
+# Pinned to the exact versions that produced the outputs committed in notebooks/
+# (and quoted in the chapter text). Install into a fresh environment:
+#     python -m pip install -r requirements.txt
+# Python 3.14. Check that the notebooks still reproduce with:
+#     python tools/check_notebooks.py
+numpy==2.4.6
+pandas==3.0.3
+scipy==1.18.0
+scikit-learn==1.9.0
+statsmodels==0.14.6
+matplotlib==3.11.0
+imbalanced-learn==0.14.2
+arch==8.0.0
+xgboost==3.4.1
+shap==0.53.0
+numba==0.65.1
+xlrd==2.0.2
+yfinance==1.7.0
+# Running and checking the notebooks
+nbformat==5.10.4
+nbclient==0.11.0
+ipykernel==6.31.0

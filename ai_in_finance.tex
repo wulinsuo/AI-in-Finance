@@ -1,10 +1,20 @@
 \documentclass{book}
+% T1-encoded, scalable Latin Modern rather than the default OT1 Computer Modern
+% bitmaps: the cover's 32pt title used to be silently downsized to 24.88pt (OT1
+% cmr/bx has no larger design size), and OT1 also broke search, copy-paste and
+% hyphenation for accented names (K\"olbel, Gu\'eant, Soci\'et\'e G\'en\'erale).
+% microtype adds character protrusion and font expansion, which also absorbs
+% many of the loose lines in narrow table columns.
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
 \usepackage[margin=1in]{geometry}
 \usepackage{tikz}
 \usetikzlibrary{positioning,matrix,fit}
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{booktabs}
+\usepackage{longtable}
 \usepackage{graphicx}
 \graphicspath{{chapters/}}
 \usepackage{array}
@@ -16,6 +26,76 @@
 
 \newsavebox{\bookmeasuredbox}
 \newlength{\bookcapwidth}
+
+% Measured-box floats (2026-10-13). Every figure and table in the book is set in
+% one of these two environments, so its caption is never wider than the
+% picture or table (but at least 0.65\linewidth), and table captions sit below:
+%
+%   \begin{bookfigure}[<options>][<short caption>]{<caption>}{<label>}
+%     <tikzpicture or \includegraphics>
+%   \end{bookfigure}
+%
+%   \begin{booktable}[<options>][<short caption>]{<caption>}{<label>}
+%     <tabular>
+%   \end{booktable}
+%
+% <options> is the float placement (htbp, htb, ...), optionally followed by
+% captionskip=<length>, floatrow's object-to-caption gap for that one float
+% (default 10pt; \setlength{\abovecaptionskip} does nothing under floatrow).
+% The short caption is optional and goes to the List of Figures/Tables. The
+% body is set in an lrbox, so it is not captured as an argument: verbatim and
+% \index work in it as anywhere else.
+%
+% Tables use \floatbox[\capbot]{table}, never \ttabbox: floatrow.sty defines
+% \newfloatcommand{ttabbox}{table}[\captop][\FBwidth], baking \captop into the
+% command, so \ttabbox always puts the caption on top and no
+% \floatsetup{capposition=bottom} can override it.
+%
+% The float is opened with \figure/\table rather than \begin{figure} so that
+% \end{bookfigure} handles the space after it exactly as \end{figure} did. The
+% spaces inside the \ffigbox/\floatbox arguments reproduce the line breaks of
+% the hand-written idiom this replaced, so the output is identical to it.
+\ExplSyntaxOn
+\clist_new:N \l__bookfloat_place_clist
+\tl_new:N \l__bookfloat_setup_tl
+\keys_define:nn { bookfloat }
+  {
+    captionskip .code:n =
+      \tl_put_right:Nn \l__bookfloat_setup_tl { \floatsetup { captionskip = #1 } }
+  }
+\cs_new_protected:Npn \bookfloatbegin #1#2
+  {
+    \tl_clear:N \l__bookfloat_setup_tl
+    \keys_set_known:nnN { bookfloat } {#2} \l__bookfloat_place_clist
+    \use:x
+      {
+        \exp_not:c {#1}
+        \clist_if_empty:NF \l__bookfloat_place_clist
+          { [ \clist_use:Nn \l__bookfloat_place_clist { , } ] }
+      }
+    \centering
+    \begin{lrbox}{\bookmeasuredbox}
+  }
+\cs_new_protected:Npn \bookfloatsetup { \tl_use:N \l__bookfloat_setup_tl }
+\ExplSyntaxOff
+\newcommand{\bookfloatcapwidth}{%
+  \ifdim\wd\bookmeasuredbox<0.65\linewidth
+    \setlength{\bookcapwidth}{0.65\linewidth}%
+  \else
+    \setlength{\bookcapwidth}{\wd\bookmeasuredbox}%
+  \fi}
+\NewDocumentEnvironment{bookfigure}{O{} o +m m}
+  {\bookfloatbegin{figure}{#1}}
+  {\end{lrbox}%
+   \bookfloatcapwidth
+   \bookfloatsetup
+   \ffigbox[\bookcapwidth]{ \usebox{\bookmeasuredbox} }{ \IfValueTF{#2}{\caption[#2]{#3}}{\caption{#3}} \label{#4} } \endfigure}
+\NewDocumentEnvironment{booktable}{O{} o +m m}
+  {\bookfloatbegin{table}{#1}}
+  {\end{lrbox}%
+   \bookfloatcapwidth
+   \bookfloatsetup
+   \floatbox[\capbot]{table}[\bookcapwidth]{ \usebox{\bookmeasuredbox} }{ \IfValueTF{#2}{\caption[#2]{#3}}{\caption{#3}} \label{#4} } \endtable}
 
 % Last-resort stretch, so a line with no acceptable break point loosens its
 % spacing instead of running into the margin. TeX consults this only on the
@@ -29,26 +109,239 @@
 \definecolor{coverbg}{HTML}{0B1F3A}
 \definecolor{coveraccent}{HTML}{C9A227}
 
-\SetWatermarkText{Wulin.Suo@Queensu.ca}
+% The stamp is typeset at shipout in whatever font happens to be current, so a
+% page that ends inside \texttt or verbatim used to get a typewriter watermark.
+% \normalfont pins the family/series/shape without touching the size. The font
+% size must be stated explicitly: the package default is 0.25\paperwidth
+% (153.6pt), but under OT1 Computer Modern that size did not exist and was
+% silently substituted by 24.88pt, which is the size the 0.8 scale below was
+% tuned against. With scalable Latin Modern the default would really be 153.6pt
+% and the stamp six times too large, so 24.88pt is pinned here; position, angle,
+% scale and the rendered size are exactly as before. (The Chinese master, built
+% with scalable fonts all along, gets the same 19.9pt from 0.13 x 153.6pt.)
+\SetWatermarkText{\normalfont Wulin.Suo@Queensu.ca}
+\SetWatermarkFontSize{24.88pt}
 \SetWatermarkScale{0.8}
 \SetWatermarkColor{gray!35}
 \SetWatermarkAngle{0}
 \SetWatermarkVerCenter{0.955\paperheight}
 
+% Blank versos (the page \cleardoublepage inserts before a recto chapter or part
+% opener, and the page after a part page) carry no running head, no folio and
+% no watermark. emptypage handles the page style; the watermark is a
+% shipout/background hook that ignores page styles, so the inserted page is
+% also shipped inside a group in which draftwatermark's stamp switch is off.
+\usepackage{emptypage}
+\makeatletter
+\newcommand{\bookblankpage}{%
+  \begingroup
+  \DraftwatermarkOptions{stamp=false}%
+  \hbox{}\thispagestyle{empty}\newpage
+  \if@twocolumn\hbox{}\newpage\fi
+  \endgroup}
+\let\emptypage@emptypage\bookblankpage
+
+% Part divisions. As book.cls, but: the part page itself is set in the empty
+% style (no folio under the title), the page after it goes through
+% \bookblankpage, and the Contents entry reads "Part I  Foundations" rather
+% than a bare "I  Foundations".
+\renewcommand{\part}{%
+  \if@openright\cleardoublepage\else\clearpage\fi
+  \thispagestyle{empty}%
+  \@tempswafalse
+  \null\vfil
+  \secdef\@part\@spart}
+\def\@part[#1]#2{%
+  \ifnum \c@secnumdepth >-2\relax
+    \refstepcounter{part}%
+    \addcontentsline{toc}{part}{\partname\ \thepart\hspace{1em}#1}%
+  \else
+    \addcontentsline{toc}{part}{#1}%
+  \fi
+  \markboth{}{}%
+  {\centering
+   \interlinepenalty \@M
+   \normalfont
+   \ifnum \c@secnumdepth >-2\relax
+     \huge\bfseries \partname\nobreakspace\thepart
+     \par
+     \vskip 20\p@
+   \fi
+   \Huge \bfseries #2\par}%
+  \@endpart}
+\def\@endpart{\vfil\newpage
+  \if@twoside\if@openright\bookblankpage\fi\fi}
+\makeatother
+
+% Page breaking: never leave a single line of a paragraph alone at the top or
+% bottom of a page. \@clubpenalty is set as well because LaTeX restores
+% \clubpenalty from it after every heading.
+\widowpenalty=10000
+\clubpenalty=10000
+\makeatletter\@clubpenalty=10000\makeatother
+% Floats: a float page must be at least 70% full (default 50%), so sparse float
+% pages pull the next text in instead; a text page may carry floats down to 15%
+% text (default 20%), with the top area allowed up to 85% (default 70%), which
+% keeps \floatpagefraction below \topfraction so a float can never get stuck.
+\renewcommand{\floatpagefraction}{0.7}
+\renewcommand{\textfraction}{0.15}
+\renewcommand{\topfraction}{0.85}
+
 \usepackage{subfiles}
+% Shared figure styles (series colors, line styles, greyscale-safe fills).
+% \input through \subfix rather than \usepackage, so that a standalone chapter
+% compile, which runs from chapters/, still finds the file at the repository root.
+\input{\subfix{bookfigures.sty}}
 
 \usepackage{tocloft}
 \setlength{\cftsecnumwidth}{3.2em}
 \setlength{\cftsubsecnumwidth}{4.2em}
 \setlength{\cftsecindent}{1.5em}
 \setlength{\cftsubsecindent}{4.7em}
-\setlength{\cftchapnumwidth}{6.5em}
+% Chapter numbers need only two digits' room; the wide box "Appendix A" needs is
+% set where the appendices begin (an \addtocontents line before them, below).
+\setlength{\cftchapnumwidth}{2.0em}
+% Lists of Figures and Tables: room for "12.10" and "A.11".
+\setlength{\cftfignumwidth}{3.2em}
+\setlength{\cfttabnumwidth}{3.2em}
 
 % Contents lists chapters, sections and subsections. It listed sections only until
 % 2026-10-12; the heading-structure repair of that date promoted the book's real
 % topics (Merton, IFRS 9, LDA, RNNs, robo-advisors...) to numbered subsections, and
 % with tocdepth=1 they stayed invisible. Set this counter back to 1 to revert.
 \setcounter{tocdepth}{2}
+
+% ---------------------------------------------------------------------------
+% Stable anchors (added 2026-10-12): chapter keys, numbered worked examples,
+% numbered exercises. The Chinese master carries an identical block.
+% ---------------------------------------------------------------------------
+%
+% Chapter keys. Prose cites other chapters as Chapter~\chnum{creditrisk} (and
+% appendices as Appendix~\apnum{careers}), never as a typed number, so a future
+% renumbering is a one-line change in this table. A plain \ref could not do
+% this: a standalone chapter compile cannot see the other chapters' labels.
+\makeatletter
+\newcommand{\defchapter}[2]{\expandafter\def\csname bk@ch@#1\endcsname{#2}}
+\newcommand{\defappendix}[3]{%
+  \expandafter\def\csname bk@ap@#1\endcsname{#2}% letter
+  \expandafter\def\csname bk@apn@#1\endcsname{#3}}% position (A=1)
+\newcommand{\chnum}[1]{\ifcsname bk@ch@#1\endcsname\csname bk@ch@#1\endcsname
+  \else\textbf{??}\PackageWarning{ai-in-finance}{Unknown chapter key `#1'}\fi}
+\newcommand{\apnum}[1]{\ifcsname bk@ap@#1\endcsname\csname bk@ap@#1\endcsname
+  \else\textbf{??}\PackageWarning{ai-in-finance}{Unknown appendix key `#1'}\fi}
+\defchapter{intro}{1}       \defchapter{python}{2}     \defchapter{markets}{3}
+\defchapter{statements}{4}  \defchapter{valuation}{5}  \defchapter{ml}{6}
+\defchapter{timeseries}{7}  \defchapter{marketrisk}{8} \defchapter{creditrisk}{9}
+\defchapter{oprisk}{10}     \defchapter{insurance}{11} \defchapter{portfolio}{12}
+\defchapter{algotrading}{13}\defchapter{hft}{14}       \defchapter{fraud}{15}
+\defchapter{nlp}{16}        \defchapter{altdata}{17}   \defchapter{xai}{18}
+\defchapter{rl}{19}         \defchapter{abm}{20}       \defchapter{capstone}{21}
+\defappendix{datasets}{A}{1}\defappendix{glossary}{B}{2}\defappendix{careers}{C}{3}
+% \chapterkey{<key>} goes on the line before each \chapter, \appendixkey{<key>}
+% on the line before each appendix's \chapter (after its \appendix). In a
+% standalone compile they set the chapter counter, so the chapter and its
+% sections, figures, tables, equations, worked examples and exercises carry
+% their real numbers (subfiles otherwise numbers every lone chapter 1). In the
+% combined book they only check that the table above matches the \subfile
+% order, and warn if it does not.
+\newcommand{\bk@keycheck}[2]{% #1 key, #2 expected position
+  \ifSubfilesClassLoaded{\setcounter{chapter}{\numexpr#2-1\relax}}{%
+    \ifnum\numexpr\value{chapter}+1\relax=#2\relax\else
+      \PackageWarning{ai-in-finance}{Key `#1' says position #2, but this is
+        chapter \the\numexpr\value{chapter}+1\relax}\fi}}
+\newcommand{\chapterkey}[1]{\bk@keycheck{#1}{\csname bk@ch@#1\endcsname}}
+\newcommand{\appendixkey}[1]{\bk@keycheck{#1}{\csname bk@apn@#1\endcsname}}
+%
+% Numbered worked examples, listed in the front matter. Use in place of the
+% heading command:  \weheading{\subsection}{merton}{The Merton Model}
+% gives "Worked Example 9.4: The Merton Model" at that heading level, the label
+% we:merton (so \ref{we:merton} prints 9.4), and a List of Worked Examples entry.
+\newcommand{\workedexamplename}{Worked Example}
+\newcommand{\listworkedexamplename}{List of Worked Examples}
+\newlistof[chapter]{workedexample}{loe}{\listworkedexamplename}
+\renewcommand{\theworkedexample}{\thechapter.\arabic{workedexample}}
+\setlength{\cftworkedexamplenumwidth}{3.2em}
+\newcommand{\weheading}[3]{%
+  \refstepcounter{workedexample}\label{we:#2}%
+  #1{\workedexamplename~\theworkedexample: #3}%
+  \addcontentsline{loe}{workedexample}{\protect\numberline{\theworkedexample}#3}}
+%
+% Case vignettes (2026-10-13), listed in the front matter like the worked
+% examples but unnumbered. Use in place of the heading command, at whatever
+% level the vignette already has:
+%   \vignetteheading{\subsection}{svb}{Silicon Valley Bank, March 2023}
+% prints "Case Vignette: Silicon Valley Bank, March 2023" at that level, labels
+% it vg:svb (the label captures the heading's own number, so Section~\ref{vg:svb}
+% is right for a numbered heading), and adds a List of Case Vignettes entry
+% carrying the chapter number. Section numbers and existing labels are unchanged.
+\newcommand{\vignettename}{Case Vignette}
+\newcommand{\listvignettename}{List of Case Vignettes}
+\newlistof[chapter]{vignette}{lov}{\listvignettename}
+\setlength{\cftvignettenumwidth}{2.3em}
+\newcommand{\vignetteheading}[3]{%
+  #1{\vignettename: #3}\label{vg:#2}%
+  \addcontentsline{lov}{vignette}{\protect\numberline{\thechapter}#3}}
+%
+% Boilerplate headings kept out of the Contents (2026-10-13). Every chapter
+% opens with "Introduction" and closes with "Key Takeaways", "Suggested
+% Exercises" and "Further Reading"; listed 21 times each they made up a third
+% of the Contents. \notocsection{Key Takeaways} is an ordinary \section (same
+% number, same label behavior, same running head and PDF bookmark), but its
+% Contents line is written at a private level, bkhiddensection, which the
+% Contents typesets as nothing. (A tocdepth toggle written into the .toc would
+% also hide it, but would break the Brief Contents, which re-reads the same file
+% at a different depth.) The "Challenges in ..." sections stay listed: their
+% titles name the chapter's topic, and one of them (Chapter 6) carries a
+% subsection.
+\def\l@bkhiddensection#1#2{}
+\def\toclevel@bkhiddensection{1}
+\def\thebkhiddensection{\thesection}
+\newcommand{\notocsection}[1]{%
+  \let\bk@savedacl\addcontentsline
+  \def\addcontentsline##1##2{\bk@savedacl{##1}{bkhiddensection}}%
+  \section{#1}%
+  \let\addcontentsline\bk@savedacl}
+%
+% Brief Contents: parts and chapters only, read from the same .toc file as the
+% full Contents, with tighter spacing so it fits on one page.
+\newcommand{\briefcontentsname}{Brief Contents}
+\newcommand{\briefcontents}{%
+  \chapter*{\briefcontentsname}%
+  \markboth{\MakeUppercase{\briefcontentsname}}{\MakeUppercase{\briefcontentsname}}%
+  \begingroup
+    \setlength{\cftbeforepartskip}{0.8em}%
+    \setlength{\cftbeforechapskip}{0pt}%
+    \setcounter{tocdepth}{0}%
+    \makeatletter\@input{\jobname.toc}%
+  \endgroup
+  \setcounter{tocdepth}{2}}
+\makeatother
+%
+% Numbered exercises: \begin{enumerate}[exercises] numbers items 9.1, 9.2, ...
+% and \ref to an item prints the same; nested lists keep their (a), (b) labels.
+\usepackage{enumitem}
+\SetEnumitemKey{exercises}{label=\thechapter.\arabic*, ref=\thechapter.\arabic*,
+  leftmargin=*, widest=99.99}
+% Citations (since 2026-10-12): one database, references.bib, read by biber.
+% Further Reading items are written \item \frcite{<key>} <annotation>, which
+% prints "Hull (2022), Options, Futures, and Other Derivatives." from the
+% database; prose attributions use \textcite / \parencite; the Bibliography
+% is generated by \printbibliography. \subfix keeps the path valid when a
+% chapter is compiled on its own from chapters/. Build: pdflatex, biber,
+% pdflatex, pdflatex (plus makeindex for the whole book).
+\usepackage{csquotes}
+\usepackage[backend=biber, style=authoryear, sorting=nyt, maxcitenames=2,
+  maxbibnames=99, uniquename=false, uniquelist=false, useprefix=true,
+  giveninits=true, dashed=false, isbn=false, doi=false, eprint=false]{biblatex}
+\addbibresource{\subfix{references.bib}}
+% American punctuation: \frcite prints its own closing period, which biblatex moves
+% inside a quoted article title ("...Interest Rates." ...). So a Further Reading item
+% is written \item \frcite{<key>} <annotation>, with no period after the macro.
+\uspunctuation
+\DeclareCiteCommand{\frtitle}{\usebibmacro{prenote}}%
+  {\usebibmacro{citeindex}\printtext[bibhyperref]{\printfield[citetitle]{labeltitle}}}%
+  {\multicitedelim}{\usebibmacro{postnote}\adddot}
+\newcommand{\frcite}[1]{\textcite{#1}, \frtitle{#1}}
 
 \usepackage{makeidx}
 \makeindex
@@ -88,11 +381,11 @@
 % Loaded last, as hyperref requires, so it can patch the other packages'
 % internals rather than being patched over. This is what gives the compiled PDF
 % a navigable outline, a clickable Contents page, clickable cross-references and
-% index page numbers, and live URLs in Appendix A's catalogue of data sources.
+% index page numbers, and live URLs in Appendix A's catalog of data sources.
 % Since the PDF is committed precisely so the book can be read without a LaTeX
 % toolchain, that navigation is the reading experience, not a nicety.
 %
-% hidelinks: no coloured text and no boxes, so the printed page is byte-for-byte
+% hidelinks: no colored text and no boxes, so the printed page is byte-for-byte
 % the same design as before; only the annotations underneath are new.
 \usepackage{hyperref}
 \hypersetup{
@@ -138,13 +431,13 @@
 
   \node[align=center,text width=13cm] at ([yshift=-11.7cm]current page.north) {\Large\color{white!85} Finance for Engineers, Scientists, and Data Scientists};
 
-  \node[align=center] at ([yshift=-19.4cm]current page.north) {\Large\bfseries\color{white} W.\ Suo};
+  \node[align=center] at ([yshift=-19.4cm]current page.north) {\Large\bfseries\color{white} Wulin Suo};
   \node[align=center] at ([yshift=-20.5cm]current page.north) {\large\color{coveraccent} Draft Manuscript \quad \textbullet \quad \today};
 
   \node[align=center] at ([yshift=-23.6cm]current page.north) {\small\color{white!55} \copyright\ Wulin Suo};
 \end{tikzpicture}
 \end{titlepage}
-\SetWatermarkText{Wulin.Suo@Queensu.ca}
+\SetWatermarkText{\normalfont Wulin.Suo@Queensu.ca}
 
 \thispagestyle{empty}
 \vspace*{\fill}
@@ -153,10 +446,30 @@
 \noindent This is a draft manuscript. No part of this work may be reproduced, distributed, or transmitted in any form or by any means without the prior written permission of the author, except for brief quotations in a review.
 
 \noindent Contact: Wulin.Suo@Queensu.ca
+
+\noindent\textbf{Disclaimer.} This book is for educational purposes only. Nothing in it is investment, financial, legal, tax, or accounting advice, or a recommendation to buy, sell, or hold any security or to pursue any strategy. The worked examples use simplified or hypothetical data, and the models and code are illustrations, not production systems; past performance does not guarantee future results. Readers should consult a qualified professional before making any financial decision. The author accepts no liability for any loss arising from the use of this material.
 \vspace*{\fill}
 \clearpage
 
+\briefcontents
+
 \tableofcontents
+
+\cleardoublepage\phantomsection
+\addcontentsline{toc}{chapter}{\listworkedexamplename}
+\listofworkedexample
+
+\cleardoublepage\phantomsection
+\addcontentsline{toc}{chapter}{\listfigurename}
+\listoffigures
+
+\cleardoublepage\phantomsection
+\addcontentsline{toc}{chapter}{\listtablename}
+\listoftables
+
+\cleardoublepage\phantomsection
+\addcontentsline{toc}{chapter}{\listvignettename}
+\listofvignette
 
 \clearpage
 \cleardoublepage\phantomsection
@@ -178,28 +491,28 @@ I have written this book for readers who are already comfortable with quantitati
 Python, but who have limited exposure to finance and economics: graduate students and advanced undergraduates in 
 engineering, the physical sciences, statistics, and computer science; practicing data scientists and machine learning 
 engineers moving into a financial role; and anyone building a career on the specific combination of skills this book 
-covers. No prior finance coursework is assumed. Chapter 3 introduces financial markets and institutions from first 
-principles, and every subsequent chapter builds forward from there, so a reader with no finance background at all should be able to start at Chapter 1 and never feel lost.
+covers. No prior finance coursework is assumed. Chapter~\chnum{markets} introduces financial markets and institutions from first 
+principles, and every subsequent chapter builds forward from there, so a reader with no finance background at all should be able to start at Chapter~\chnum{intro} and never feel lost.
 
 \section*{How This Book Is Organized}
 
-The twenty-one chapters are ordered by dependency, not by alphabetical convenience or topical grouping. Chapter 2 teaches 
+The twenty-one chapters are ordered by dependency, not by alphabetical convenience or topical grouping. Chapter~\chnum{python} teaches 
 the Python tools, NumPy, pandas, scikit-learn, matplotlib, that nearly every later chapter's worked examples rely on. 
-Chapter 3's markets and institutions precede Chapter 4's financial statements, and Chapter 4's statements feed directly 
-into Chapter 5's valuation and asset-pricing models, which in turn recur throughout the risk, portfolio, and credit 
-chapters that follow. The four risk chapters themselves run as a deliberate sequence: market risk (Chapter 8) models 
-how much a position's value can move, credit risk (Chapter 9) whether a counterparty will pay at all, and operational 
-risk (Chapter 10) the losses that remain when the institution's own processes, people, or systems fail, each defined by 
-exactly what the one before it leaves out; insurance (Chapter 11) then closes the sequence from the other side of the 
+Chapter~\chnum{markets}'s markets and institutions precede Chapter~\chnum{statements}'s financial statements, and Chapter~\chnum{statements}'s statements feed directly 
+into Chapter~\chnum{valuation}'s valuation and asset-pricing models, which in turn recur throughout the risk, portfolio, and credit 
+chapters that follow. The four risk chapters themselves run as a deliberate sequence: market risk (Chapter~\chnum{marketrisk}) models 
+how much a position's value can move, credit risk (Chapter~\chnum{creditrisk}) whether a counterparty will pay at all, and operational 
+risk (Chapter~\chnum{oprisk}) the losses that remain when the institution's own processes, people, or systems fail, each defined by 
+exactly what the one before it leaves out; insurance (Chapter~\chnum{insurance}) then closes the sequence from the other side of the 
 table, the industry whose entire product is bearing those risks for a price, and whose actuarial machinery the 
-operational-risk chapter has already borrowed. Machine learning fundamentals (Chapter 6) are introduced once, in depth, 
+operational-risk chapter has already borrowed. Machine learning fundamentals (Chapter~\chnum{ml}) are introduced once, in depth, 
 and then reused, not re-taught, in every later chapter that needs a regression, a classifier, or a neural network: 
 fraud scoring, credit scoring, algorithmic trading signals, natural language processing, and the explainability methods 
-of Chapter 18 all build on that same foundation rather than each inventing their own. Chapter 19 closes the methods 
-sequence proper with reinforcement learning, built on the trading and portfolio machinery of Chapters 12 through 14; 
-Chapter 20 then turns to a third modeling paradigm, agent-based models of markets and financial networks, built on that 
-same statistical and portfolio machinery together with Chapter 19's own sequential-decision framing, immediately before 
-Chapter 21's capstone puts every method in the book to work on one real dataset. This ordering was arrived at, in part, 
+of Chapter~\chnum{xai} all build on that same foundation rather than each inventing their own. Chapter~\chnum{rl} closes the methods 
+sequence proper with reinforcement learning, built on the trading and portfolio machinery of Chapters~\chnum{portfolio} through~\chnum{hft}; 
+Chapter~\chnum{abm} then turns to a third modeling paradigm, agent-based models of markets and financial networks, built on that 
+same statistical and portfolio machinery together with Chapter~\chnum{rl}'s own sequential-decision framing, immediately before 
+Chapter~\chnum{capstone}'s capstone puts every method in the book to work on one real dataset. This ordering was arrived at, in part, 
 by actually running the companion notebooks end to end and discovering where an earlier draft asked a chapter to use a
 tool it had not yet been taught. The diagram below draws that structure.
 
@@ -226,40 +539,40 @@ it, should reach for the notebook rather than re-deriving the arithmetic.
 ]
 
 \node[grp,text width=10.9cm] (found) at (0,0)
-  {\textbf{Foundations}\\[1pt]
-   1~Introduction \quad\textbullet\quad 2~Python \quad\textbullet\quad
-   3~Markets and institutions};
+  {\textbf{Getting Started}\\[1pt]
+   \chnum{intro}~Introduction \quad\textbullet\quad \chnum{python}~Python \quad\textbullet\quad
+   \chnum{markets}~Markets and institutions};
 
 \node[grp,text width=7.0cm] (firm) at (0,-1.75)
   {\textbf{The firm and its price}\\[1pt]
-   4~Financial statements \ $\rightarrow$ \ 5~Valuation and asset pricing};
+   \chnum{statements}~Financial statements \ $\rightarrow$ \ \chnum{valuation}~Valuation and asset pricing};
 
 \node[grp,text width=7.0cm] (meth) at (0,-3.4)
   {\textbf{Methods}\\[1pt]
-   6~Machine learning \quad\textbullet\quad 7~Time series};
+   \chnum{ml}~Machine learning \quad\textbullet\quad \chnum{timeseries}~Time series};
 
 \node[grp,text width=5.3cm] (risk) at (-3.05,-5.5)
   {\textbf{Risk}\\[1pt]
-   8~Market \ \textbullet\ \ 9~Credit\\
-   10~Operational \ \textbullet\ \ 11~Insurance};
+   \chnum{marketrisk}~Market \ \textbullet\ \ \chnum{creditrisk}~Credit\\
+   \chnum{oprisk}~Operational \ \textbullet\ \ \chnum{insurance}~Insurance};
 
 \node[grp,text width=5.6cm] (trade) at (3.2,-5.5)
   {\textbf{Portfolio and trading}\\[1pt]
-   12~Portfolio theory\\
-   13~Algorithmic trading \ \textbullet\ \ 14~HFT};
+   \chnum{portfolio}~Portfolio theory\\
+   \chnum{algotrading}~Algorithmic trading \ \textbullet\ \ \chnum{hft}~HFT};
 
 \node[grp,text width=10.9cm] (apps) at (0,-7.8)
   {\textbf{AI applications}\\[1pt]
-   15~Fraud and financial crime \ \textbullet\ \ 16~NLP\\
-   17~Alternative data and deep learning\\
-   18~Explainability, fairness, regulation};
+   \chnum{fraud}~Fraud and financial crime \ \textbullet\ \ \chnum{nlp}~NLP\\
+   \chnum{altdata}~Alternative data and deep learning\\
+   \chnum{xai}~Explainability, fairness, regulation};
 
 \node[grp,text width=7.0cm] (para) at (0,-9.8)
   {\textbf{Two further modeling paradigms}\\[1pt]
-   19~Reinforcement learning \ $\rightarrow$ \ 20~Agent-based models};
+   \chnum{rl}~Reinforcement learning \ $\rightarrow$ \ \chnum{abm}~Agent-based models};
 
 \node[grp,text width=4.8cm] (cap) at (0,-11.4)
-  {\textbf{Capstone}\\[1pt] 21~End-to-end project on real data};
+  {\textbf{Capstone}\\[1pt] \chnum{capstone}~End-to-end project on real data};
 
 \draw[main] (found) -- (firm);
 \draw[main] (firm)  -- (meth);
@@ -271,7 +584,7 @@ it, should reach for the notebook rather than re-deriving the arithmetic.
 \draw[main] (para) -- (cap);
 
 % The load-bearing reuse that crosses tiers, drawn outside the spine. Left
-% unlabelled in the picture and named in the caption instead: labelling them
+% unlabelled in the picture and named in the caption instead: labeling them
 % here made the figure wider than the text block and forced hyphenation inside
 % the boxes.
 \draw[back] (firm.west) to[out=180,in=180,looseness=0.85] (para.west);
@@ -300,23 +613,31 @@ it, should reach for the notebook rather than re-deriving the arithmetic.
 \begin{minipage}{\bookcapwidth}
 \small \textbf{How the chapters depend on one another.} Solid arrows are
 prerequisites. The three dashed arrows mark the places where a later group
-reuses an earlier one's machinery rather than rebuilding it: Chapter 5's option
-pricing returns in Chapters 8, 9, 12, and 19; Chapter 6's models are reused by
-Chapter 9 and Chapters 15 through 18 rather than retaught; and Chapter 13's
-execution model returns in Chapter 19. Chapter 2 underpins every companion
-notebook in the book and Chapter 21 draws on all of it, so neither is drawn with
+reuses an earlier one's machinery rather than rebuilding it: Chapter~\chnum{valuation}'s option
+pricing returns in Chapters~\chnum{marketrisk}, \chnum{creditrisk}, \chnum{portfolio}, and \chnum{rl}; Chapter~\chnum{ml}'s models are reused by
+Chapter~\chnum{creditrisk} and Chapters~\chnum{fraud} through~\chnum{xai} rather than retaught; and Chapter~\chnum{algotrading}'s
+execution model returns in Chapter~\chnum{rl}. Chapter~\chnum{python} underpins every companion
+notebook in the book and Chapter~\chnum{capstone} draws on all of it, so neither is drawn with
 an arrow to each dependent chapter. An instructor short of sessions can cut most
 safely within a group rather than across the spine.
 \end{minipage}
 \end{figure}
 
-Beneath this chapter-by-chapter dependency, the book falls into three broader parts. Chapters 1 through 7 are preparation: the finance vocabulary, institutions, financial statements, and valuation machinery a reader needs before any model can be usefully applied, together with the Python and machine learning fundamentals every later chapter draws on. Chapters 8 through 17 cover the applications a working quantitative finance professional encounters most often: market, credit, operational, and insurance risk, portfolio construction, algorithmic and high-frequency trading, fraud detection, and the natural language processing and alternative-data methods reshaping how firms extract signal from unstructured sources. Chapters 18 through 21 turn to more advanced and specialized territory: explainability, fairness, and regulation; reinforcement learning; agent-based models of markets and financial networks; and a closing capstone that applies the entire toolkit to one real, publicly available dataset end to end. A reader pressed for time could stop after Part II and still have a working, practitioner-level command of AI in finance; Part III is where the book pushes into territory still actively being worked out in research and in practice.
+Beneath this chapter-by-chapter dependency, the book falls into three broader parts, marked as such in the Contents. Part I, Foundations (Chapters~\chnum{intro} through~\chnum{timeseries}), is preparation: the finance vocabulary, institutions, financial statements, and valuation machinery a reader needs before any model can be usefully applied, together with the Python and machine learning fundamentals every later chapter draws on. Part II, Applications (Chapters~\chnum{marketrisk} through~\chnum{altdata}), covers the applications a working quantitative finance professional encounters most often: market, credit, operational, and insurance risk, portfolio construction, algorithmic and high-frequency trading, fraud detection, and the natural language processing and alternative-data methods reshaping how firms extract signal from unstructured sources. Part III, Advanced Topics (Chapters~\chnum{xai} through~\chnum{capstone}), turns to more advanced and specialized territory: explainability, fairness, and regulation; reinforcement learning; agent-based models of markets and financial networks; and a closing capstone that applies the entire toolkit to one real, publicly available dataset end to end. A reader pressed for time could stop after Part II and still have a working, practitioner-level command of AI in finance; Part III is where the book pushes into territory still actively being worked out in research and in practice.
 
 Every chapter follows the same shape: an introduction, several sections of exposition built around at least one fully worked numerical example a reader can check by hand, a discussion of the practical challenges and limitations specific to that chapter's topic, and a closing sequence of Key Takeaways, Suggested Exercises, and Further Reading pointing to the standard textbooks and original papers behind the chapter's material. Most chapters' Suggested Exercises close with a challenge question that asks the reader to redo one of the chapter's own methods on a real, freely obtainable dataset, from sources such as the UCI Machine Learning Repository, Kaggle, SEC EDGAR and the SEC's enforcement releases, or the Consumer Financial Protection Bureau's HMDA and consumer-complaint databases, or, in the handful of cases where no clean real dataset exists (a limit order book fast enough to show latency arbitrage, say), on data generated by a documented simulation instead; the point of each is to show what a real-world version of the chapter's toy example actually looks like, messy edges included.
 
-Each chapter is sized for a single 80-to-90-minute class session, though the chapters are not all the same length. Chapters 6, 13, 16, and 19 carry noticeably more worked material than the rest, Chapter 16 most of all, its generative-AI coverage being deliberately deeper than that of any other single topic here. An instructor who works through every worked example in those four should plan two sessions for each, or else select among their later sections. Chapter 10 is the deliberate opposite, shorter than the rest by design, and Chapter 11 is also on the short side; both leave room within a single session for exercises, discussion, or an early start on the chapter that follows. The book is designed as the backbone of a one-semester course meeting twice a week: at roughly one chapter per session, and about twenty-five sessions once those four longer chapters are given two apiece, the twenty-one chapters fit into such a semester with room left over for review, examinations, and project presentations, and an instructor pressed for sessions can be selective, most naturally among the more specialized chapters (10, 11, 14, 15, 17, 19, and 20), without breaking the dependency chain described above. A course meeting once a week can work from a core of about fourteen chapters, Chapters 1 through 9, then 12, 13, 16, 18, and 21, with the rest assigned as independent reading or term-project material. And the book serves a reader working through it independently at their own pace exactly as well. Three appendices follow the twenty-one chapters: a catalog of real financial datasets and APIs for readers who want to extend the book's examples with real data of their own, a glossary of finance and trading terms for readers who hit an unfamiliar term before the chapter that formally introduces it, and a career map connecting the industry's actual quantitative roles to the chapters that prepare for each, for the reader this book was written for in the first place.
+Each chapter is sized for a single 90-minute class session, though the chapters are not all the same length. Chapters~\chnum{marketrisk}, \chnum{creditrisk}, \chnum{portfolio}, \chnum{fraud}, \chnum{nlp}, and \chnum{rl} carry noticeably more worked material than the rest, each running roughly a fifth longer than a typical chapter, Chapter~\chnum{nlp} most of all, its generative-AI coverage being deliberately deeper than that of any other single topic here. An instructor who works through every worked example in those six should plan two sessions for each, or else select among their later sections. Chapter~\chnum{oprisk} is the deliberate opposite, shorter than the rest by design, and Chapter~\chnum{insurance} is also on the short side; both leave room within a single session for exercises, discussion, or an early start on the chapter that follows. The book is designed as the backbone of a one-semester course meeting twice a week: at roughly one chapter per session, the twenty-one chapters fit into such a semester with room left over for review, examinations, and project presentations. Giving all six longer chapters a second session, about twenty-seven sessions in all, would use up most of that room, so most instructors will double only the two or three that matter most to their course. An instructor pressed for sessions can also be selective, most naturally among the more specialized chapters (\chnum{oprisk}, \chnum{insurance}, \chnum{hft}, \chnum{fraud}, \chnum{altdata}, \chnum{rl}, and~\chnum{abm}), without breaking the dependency chain described above. A course meeting once a week can work from a core of about fourteen chapters, Chapters~\chnum{intro} through~\chnum{creditrisk}, then \chnum{portfolio}, \chnum{algotrading}, \chnum{nlp}, \chnum{xai}, and \chnum{capstone}, with the rest assigned as independent reading or term-project material. And the book serves a reader working through it independently at their own pace exactly as well. Three appendices follow the twenty-one chapters: a catalog of real financial datasets and APIs for readers who want to extend the book's examples with real data of their own, a glossary of finance and trading terms for readers who hit an unfamiliar term before the chapter that formally introduces it, and a career map connecting the industry's actual quantitative roles to the chapters that prepare for each, for the reader this book was written for in the first place.
 
-Real, named case studies are woven throughout rather than confined to a single chapter: the insurer insolvencies after Hurricane Andrew in 1992 that created the catastrophe-modeling industry, the 1998 collapse of Long-Term Capital Management, the 2008 financial crisis and the Gaussian copula's role in mispricing CDO risk, the 2008 Soci\'et\'e G\'en\'erale rogue-trading loss, the 2010 Flash Crash, the 2012 Knight Capital trading malfunction, the 2012 JPMorgan ``London Whale'' loss, the Danske Bank Estonia money-laundering scandal, the 2019 Apple Card gender-bias controversy, and the SEC's 2022 settlement with Schwab over undisclosed robo-advisor cash allocations, among others. These are real events with real consequences, included because the lesson a formula teaches in the abstract is rarely the lesson a genuine failure teaches in practice. Chapter 21's capstone case study goes further still, working a real, publicly available consumer-credit dataset end to end, undocumented category codes, class imbalance, model comparison, calibration, explainability, and fairness auditing included, using nothing invented for the occasion.
+Real, named case studies are woven throughout rather than confined to a single chapter: the insurer insolvencies after Hurricane Andrew in 1992 that created the catastrophe-modeling industry, the 1998 collapse of Long-Term Capital Management, the 2008 financial crisis and the Gaussian copula's role in mispricing CDO risk, the 2008 Soci\'et\'e G\'en\'erale rogue-trading loss, the 2010 Flash Crash, the 2012 Knight Capital trading malfunction, the 2012 JPMorgan ``London Whale'' loss, the Danske Bank Estonia money-laundering scandal, the 2019 Apple Card gender-bias controversy, and the SEC's 2022 settlement with Schwab over undisclosed robo-advisor cash allocations, among others. These are real events with real consequences, included because the lesson a formula teaches in the abstract is rarely the lesson a genuine failure teaches in practice. Chapter~\chnum{capstone}'s capstone case study goes further still, working a real, publicly available consumer-credit dataset end to end, undocumented category codes, class imbalance, model comparison, calibration, explainability, and fairness auditing included, using nothing invented for the occasion.
+
+\section*{What Makes This Book Different}
+
+Five features shape this book more than any other, and a reader deciding whether it suits them should know them in advance. First, it teaches finance from first principles to readers who are already quantitatively trained: no finance background is assumed, but comfort with quantitative reasoning and basic Python is, so the finance is explained in full while the mathematics and machine learning are allowed to move at the pace such a reader expects. Second, every number in the text is reproduced by an executed companion notebook, and that reproduction is checked automatically: the repository pins the library versions that produced the published outputs (\texttt{requirements.txt}) and includes a script (\texttt{tools/check\_notebooks.py}) that re-executes the notebooks and reports any output that has drifted from what the book quotes. Third, each method is taught through at least one worked example small enough to check by hand, so a reader can see exactly what a model computes before trusting it at scale. Fourth, risk and regulation receive sustained depth rather than a closing chapter: four chapters on market, credit, operational, and insurance risk, and a full chapter on explainability, fairness, and the regulation of models, reflecting how much of the industry's actual work with AI is governed by them. Fifth, Appendix~\apnum{careers} maps the industry's quantitative roles to the chapters that prepare for each, so a reader building a career can see which parts of the book matter most for the job they want.
+
+\section*{What This Book Does Not Cover}
+
+A book this broad still has to stop somewhere, and a few neighboring subjects are deliberately left to other texts. Trading strategies for cryptocurrencies and digital assets are not covered; the market-microstructure and trading chapters apply to any electronic market, and on-chain data appears in Chapter~\chnum{altdata} as one alternative-data source among many, but crypto-specific venues, instruments, and strategies are left to specialist sources. Stochastic calculus and derivatives theory beyond the binomial model and Black-Scholes-Merton are not developed here; a reader who needs Itô calculus, exotic options, or term-structure models should turn to a standard derivatives text such as Hull's \emph{Options, Futures, and Other Derivatives} and, beyond it, a text on stochastic calculus for finance. Quantum computing and its prospective financial applications are not discussed. Corporate finance, including capital structure, mergers and acquisitions, and deal valuation, appears only as far as Chapters~\chnum{statements} and~\chnum{valuation} need it; a corporate finance text such as Brealey, Myers, Allen, and Edmans covers it properly. And accounting standards are introduced only to the depth needed to read financial statements and the expected-credit-loss rules; a reader who needs IFRS or US GAAP in detail should consult an intermediate accounting text or the standards themselves.
 
 \section*{The Companion Notebooks}
 
@@ -357,34 +678,237 @@ Wulin.Suo@Queensu.ca
 \chapter*{Notation}
 \markboth{NOTATION}{NOTATION}
 
-Symbols in this book follow each field's own conventions, which means a few letters carry different meanings in different chapters. The table below lists the recurring symbols and the principal uses a reader will encounter, with the chapters where each use appears; notation used only locally is defined where it appears. Typographic conventions, hats for estimates, time subscripts, units and annualization, are collected in Chapter 1's ``Notation and Conventions'' section.
+Symbols in this book follow each field's own conventions, which means a few letters carry different meanings in different chapters. The table below lists the recurring symbols and the principal uses a reader will encounter, with the chapters where each use appears; notation used only locally is defined where it appears. Typographic conventions, hats for estimates, time subscripts, units and annualization, are collected in Chapter~\chnum{intro}'s ``Notation and Conventions'' section.
 
-\begin{center}
-\begin{tabular}{cp{11.2cm}}
+\begin{longtable}{@{}cL{11.2cm}@{}}
 \toprule
 Symbol & Principal uses \\
 \midrule
-$r$, $r_f$ & An interest rate or an asset's return; the risk-free rate (Chapters 3, 5, 12) \\
-$\mu$ & Expected return or drift (Chapters 5, 8, 12) \\
-$\sigma$, $\sigma_t^2$ & Volatility of returns (Chapters 5, 8, 12); conditional variance in GARCH models (Chapter 7) \\
-$\beta$ & Regression coefficient (Chapter 6); CAPM market beta (Chapters 5, 12) \\
-$\alpha$ & Significance level (Chapter 6); ARCH coefficient (Chapter 7); learning rate (Chapter 19); return in excess of a benchmark (Chapters 12, 13) \\
-$\lambda$ & Kyle's lambda price impact (Chapters 13, 14); Poisson intensity (Chapters 10, 11, 14); regularization strength (Chapter 6) \\
-$\rho$ & Correlation (Chapters 2, 8, 12); a convex risk measure (Chapter 19) \\
-$\Delta$, $\Gamma$ & Option delta and gamma (Chapters 5, 8, 19); $\Delta X_t$, a first difference (Chapters 1, 7) \\
-$q$ & Risk-neutral probability (Chapter 5) \\
-$N(\cdot)$, $\phi(\cdot)$ & Standard normal cumulative distribution function and density (Chapters 5, 8); $\phi$ alone, the Almgren-Chriss risk-aversion parameter (Chapters 13, 19) \\
-$Z$, $z$ & Standard normal variate or z-score (Chapters 6, 8, 15); Altman Z-score (Chapter 4); B{\"u}hlmann credibility weight (Chapter 11) \\
-$\varepsilon$ & Regression error term (Chapters 6, 7); exploration rate in $\varepsilon$-greedy learning (Chapter 19) \\
-$\pi$ & A decision policy (Chapter 19) \\
-$\mathbb{E}[\cdot]$ & Expectation \\
-PD, LGD, EAD & Probability of default, loss given default, exposure at default (Chapter 9) \\
-VaR, ES & Value at Risk and Expected Shortfall (Chapter 8) \\
+\endfirsthead
+\toprule
+Symbol & Principal uses \\
+\midrule
+\endhead
 \bottomrule
-\end{tabular}
-\end{center}
+\endfoot
+$r$, $r_f$ & An interest rate or an asset's return; the risk-free rate (Chapters~\chnum{markets}, \chnum{valuation}, \chnum{portfolio}) \\
+$\mu$ & Expected return or drift (Chapters~\chnum{valuation}, \chnum{marketrisk}, \chnum{portfolio}) \\
+$\sigma$, $\sigma_t^2$ & Volatility of returns (Chapters~\chnum{valuation}, \chnum{marketrisk}, \chnum{portfolio}); conditional variance in GARCH models (Chapter~\chnum{timeseries}) \\
+$\beta$ & Regression coefficient (Chapter~\chnum{ml}); CAPM market beta (Chapters~\chnum{valuation}, \chnum{portfolio}) \\
+$\alpha$ & Significance level (Chapter~\chnum{ml}); ARCH coefficient (Chapter~\chnum{timeseries}); return in excess of a benchmark (Chapters~\chnum{portfolio}, \chnum{algotrading}); learning rate (step size) of Q-learning (Chapter~\chnum{rl}) \\
+$\lambda$ & Kyle's lambda price impact (Chapters~\chnum{algotrading}, \chnum{hft}); Poisson intensity (Chapters~\chnum{oprisk}, \chnum{insurance}, \chnum{hft}); regularization strength (Chapter~\chnum{ml}) \\
+$\rho$ & Correlation (Chapters~\chnum{python}, \chnum{marketrisk}, \chnum{portfolio}); a convex risk measure (Chapter~\chnum{rl}) \\
+$\Delta$, $\Gamma$ & Option delta and gamma (Chapters~\chnum{valuation}, \chnum{marketrisk}, \chnum{rl}); $\Delta X_t$, a first difference (Chapters~\chnum{intro}, \chnum{timeseries}) \\
+$q$ & Risk-neutral probability (Chapter~\chnum{valuation}) \\
+$N(\cdot)$, $\phi(\cdot)$ & Standard normal cumulative distribution function and density (Chapters~\chnum{valuation}, \chnum{marketrisk}); $\phi$ alone, the Almgren-Chriss risk-aversion parameter (Chapters~\chnum{algotrading}, \chnum{rl}) and an autoregressive coefficient (Chapter~\chnum{timeseries}) \\
+$Z$, $z$ & Standard normal variate or z-score (Chapters~\chnum{ml}, \chnum{marketrisk}, \chnum{fraud}); Altman Z-score (Chapter~\chnum{statements}); B{\"u}hlmann credibility weight (Chapter~\chnum{insurance}) \\
+$\varepsilon$ & Regression error term (Chapters~\chnum{ml}, \chnum{timeseries}); exploration rate in $\varepsilon$-greedy learning (Chapter~\chnum{rl}) \\
+$\pi$ & A decision policy (Chapter~\chnum{rl}); the share of informed traders in the Glosten-Milgrom model (Chapter~\chnum{hft}) \\
+$\gamma$ & Discount factor (Chapter~\chnum{rl}); permanent price impact in the Almgren-Chriss model (Chapter~\chnum{algotrading}); a market maker's risk aversion (Chapter~\chnum{hft}); unit-root coefficient of the Dickey-Fuller regression (Chapter~\chnum{timeseries}) \\
+$\eta$ & Learning rate (step size) of gradient descent (Chapters~\chnum{ml}, \chnum{altdata}); temporary price-impact coefficient in the Almgren-Chriss model (Chapters~\chnum{algotrading}, \chnum{rl}) \\
+$\theta$ & A model's parameters (Chapters~\chnum{ml}, \chnum{rl}); moving-average coefficient (Chapter~\chnum{timeseries}); intensity of choice (Chapter~\chnum{abm}) \\
+$\tau$ & Length of one trading interval (Chapters~\chnum{algotrading}, \chnum{rl}); average treatment effect (Chapter~\chnum{ml}); Black-Litterman prior scaling (Chapter~\chnum{portfolio}); softmax temperature (Chapter~\chnum{altdata}) \\
+$\delta$ & A market maker's quoted spread (Chapters~\chnum{algotrading}, \chnum{hft}); covariance shrinkage intensity (Chapter~\chnum{portfolio}) \\
+$\kappa$ & Almgren-Chriss urgency parameter (Chapter~\chnum{algotrading}); order-arrival decay in the Avellaneda-Stoikov model (Chapter~\chnum{hft}) \\
+$\Sigma$ & Covariance matrix of asset returns (Chapters~\chnum{python}, \chnum{marketrisk}, \chnum{portfolio}) \\
+$w$, $w_i$ & Portfolio weights (Chapters~\chnum{python}, \chnum{marketrisk}, \chnum{portfolio}); weights of a linear model or neural network (Chapters~\chnum{ml}, \chnum{altdata}) \\
+$K$, $k$ & Option strike price (Chapters~\chnum{valuation}, \chnum{marketrisk}); number of neighbors in $k$-nearest neighbors (Chapters~\chnum{ml}, \chnum{creditrisk}); key matrix of attention (Chapters~\chnum{nlp}, \chnum{altdata}) \\
+$Q$ & Action-value function (Chapter~\chnum{rl}); query matrix of attention (Chapters~\chnum{nlp}, \chnum{altdata}); Ljung-Box statistic (Chapter~\chnum{timeseries}); size of a metaorder (Chapter~\chnum{algotrading}); Black-Litterman view returns (Chapter~\chnum{portfolio}) \\
+$T$ & Option maturity or time horizon (Chapters~\chnum{valuation}, \chnum{marketrisk}, \chnum{algotrading}); number of observations (Chapter~\chnum{timeseries}) \\
+$\mathbb{E}[\cdot]$ & Expectation (written $\mathbb{E}$ throughout, never a plain $E$) \\
+PD, LGD, EAD & Probability of default, loss given default, exposure at default (Chapter~\chnum{creditrisk}) \\
+VaR, ES & Value at Risk and Expected Shortfall (Chapter~\chnum{marketrisk}) \\
+\end{longtable}
+
+\clearpage
+\cleardoublepage\phantomsection
+\addcontentsline{toc}{chapter}{Abbreviations}
+\chapter*{Abbreviations}
+\markboth{ABBREVIATIONS}{ABBREVIATIONS}
+
+The abbreviations below are those the text defines and uses more than in passing, collected in one alphabetical list for a reader who meets one before, or long after, the passage that spells it out. Ticker symbols, dataset and product names, and abbreviations used only within a single paragraph are left out.
+
+{\small
+\begin{longtable}{@{}lL{11.6cm}@{}}
+\toprule
+Abbreviation & Meaning \\
+\midrule
+\endfirsthead
+\toprule
+Abbreviation & Meaning \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+ABM & agent-based model \\
+ACF & autocorrelation function \\
+ACH & automated clearing house \\
+ADF & augmented Dickey-Fuller (test) \\
+AFS & available for sale \\
+AI & artificial intelligence \\
+AIC & Akaike information criterion \\
+ALM & asset-liability management \\
+AML & anti-money laundering \\
+AMLA & Anti-Money Laundering Authority \\
+API & application programming interface \\
+APO & Absolute Price Oscillator \\
+APP & authorized push payment (fraud) \\
+AR & autoregressive (model) \\
+ARCH & autoregressive conditional heteroskedasticity \\
+ARIMA & autoregressive integrated moving average \\
+ARMA & autoregressive moving average \\
+ARR & alternative reference rate \\
+AUC & area under the curve \\
+BIC & Bayesian information criterion \\
+BISG & Bayesian Improved Surname Geocoding \\
+BPE & byte-pair encoding \\
+BSA & Bank Secrecy Act \\
+CAPM & capital asset pricing model \\
+CBDC & central bank digital currency \\
+CCAR & Comprehensive Capital Analysis and Review \\
+CCF & credit conversion factor \\
+CCP & central counterparty \\
+CDD & customer due diligence \\
+CDO & collateralized debt obligation \\
+CDS & credit default swap \\
+CECL & Current Expected Credit Losses \\
+CFPB & Consumer Financial Protection Bureau \\
+CNN & convolutional neural network \\
+COGS & cost of goods sold \\
+CRO & chief risk officer \\
+CRSP & Center for Research in Security Prices \\
+CTR & Currency Transaction Report \\
+CVA & credit valuation adjustment \\
+DCF & discounted cash flow \\
+DDM & dividend discount model \\
+DORA & Digital Operational Resilience Act \\
+DQN & deep Q-network \\
+EAD & exposure at default \\
+EBIT & earnings before interest and taxes \\
+EBITDA & earnings before interest, taxes, depreciation, and amortization \\
+EBM & explainable boosting machine \\
+ECOA & Equal Credit Opportunity Act \\
+EDD & enhanced due diligence \\
+EE & expected exposure \\
+EMA & exponentially weighted moving average \\
+EMH & efficient market hypothesis \\
+ERC & equal risk contribution \\
+ES & Expected Shortfall \\
+ESG & environmental, social, and governance \\
+ETF & exchange-traded fund \\
+EVE & economic value of equity \\
+EVPI & expected value of perfect information \\
+FATF & Financial Action Task Force \\
+FCF & free cash flow \\
+FCFE & free cash flow to equity \\
+FCFF & free cash flow to the firm \\
+FDIC & Federal Deposit Insurance Corporation \\
+FinCEN & Financial Crimes Enforcement Network \\
+FINRA & Financial Industry Regulatory Authority \\
+FRTB & Fundamental Review of the Trading Book \\
+GAAP & generally accepted accounting principles \\
+GAM & generalized additive model \\
+GAN & generative adversarial network \\
+GARCH & generalized autoregressive conditional heteroskedasticity \\
+GDPR & General Data Protection Regulation \\
+GLM & generalized linear model \\
+GNN & graph neural network \\
+GPD & generalized Pareto distribution \\
+HCC & hierarchical condition categories \\
+HFT & high-frequency trading \\
+HHI & Herfindahl-Hirschman Index \\
+HMDA & Home Mortgage Disclosure Act \\
+HRP & hierarchical risk parity \\
+HTM & held to maturity \\
+IBNR & incurred but not reported \\
+IFRS & International Financial Reporting Standards \\
+IPO & initial public offering \\
+IRB & internal ratings-based (approach) \\
+IRRBB & interest-rate risk in the banking book \\
+KNN & $k$-nearest neighbors \\
+KRI & key risk indicator \\
+KYC & know your customer \\
+LCR & Liquidity Coverage Ratio \\
+LDI & liability-driven investment \\
+LDTI & long-duration targeted improvements \\
+LGD & loss given default \\
+LIME & local interpretable model-agnostic explanations \\
+LLM & large language model \\
+LoRA & Low-Rank Adaptation \\
+LSTM & long short-term memory \\
+LTCM & Long-Term Capital Management \\
+LVaR & liquidity-adjusted VaR \\
+MAE & mean absolute error \\
+MAPE & mean absolute percentage error \\
+MARL & multi-agent reinforcement learning \\
+MAS & Monetary Authority of Singapore \\
+MCP & Model Context Protocol \\
+MDP & Markov decision process \\
+MiCA & Markets in Crypto-Assets Regulation \\
+MoE & mixture of experts \\
+MSE & mean squared error \\
+NBBO & National Best Bid and Offer \\
+NGFS & Network for Greening the Financial System \\
+NII & net interest income \\
+NLP & natural language processing \\
+NOPAT & net operating profit after tax \\
+NPV & net present value \\
+NSFR & Net Stable Funding Ratio \\
+OFAC & Office of Foreign Assets Control \\
+OFI & order flow imbalance \\
+OLS & ordinary least squares \\
+OTC & over-the-counter (market) \\
+P/E & price-to-earnings ratio \\
+PACF & partial autocorrelation function \\
+PCA & principal component analysis \\
+PD & probability of default \\
+PEP & politically exposed person \\
+PFE & potential future exposure \\
+PIN & Probability of Informed Trading \\
+POF & proportion of failures (test) \\
+POT & peaks over threshold \\
+PPO & Proximal Policy Optimization \\
+PSI & population stability index \\
+PV & present value \\
+RAG & retrieval-augmented generation \\
+RLHF & reinforcement learning from human feedback \\
+RMSE & root mean squared error \\
+RNN & recurrent neural network \\
+ROA & return on assets \\
+ROC & receiver operating characteristic (curve) \\
+ROE & return on equity \\
+ROIC & return on invested capital \\
+RSI & Relative Strength Index \\
+RTGS & real-time gross settlement \\
+RWA & risk-weighted assets \\
+SA-CCR & standardized approach for counterparty credit risk \\
+SAR & Suspicious Activity Report \\
+SEC & Securities and Exchange Commission \\
+SHAP & Shapley additive explanations \\
+SIP & Securities Information Processor \\
+SMOTE & synthetic minority oversampling technique \\
+SOFR & Secured Overnight Financing Rate \\
+SVM & support vector machine \\
+SWES & system-wide exploratory scenario \\
+TCA & transaction cost analysis \\
+TF-IDF & term frequency-inverse document frequency \\
+TWAP & time-weighted average price \\
+UCB & upper confidence bound \\
+VAR & vector autoregression \\
+VaR & Value at Risk \\
+ViT & Vision Transformer \\
+VIX & CBOE Volatility Index \\
+VWAP & volume-weighted average price \\
+WACC & weighted average cost of capital \\
+WCDR & worst-case default rate \\
+WOE & weight of evidence \\
+\end{longtable}
+}
 
 \mainmatter
+% The three parts named in the preface ("How This Book Is Organized"). Chapter
+% numbering runs straight through them; \part does not reset the chapter counter.
+\part{Foundations}
 \subfile{chapters/chapter1}
 \subfile{chapters/chapter2}
 \subfile{chapters/chapter3}
@@ -392,6 +916,7 @@ VaR, ES & Value at Risk and Expected Shortfall (Chapter 8) \\
 \subfile{chapters/chapter5}
 \subfile{chapters/chapter6}
 \subfile{chapters/chapter7}
+\part{Applications}
 \subfile{chapters/chapter8}
 \subfile{chapters/chapter9}
 \subfile{chapters/chapter10}
@@ -402,17 +927,31 @@ VaR, ES & Value at Risk and Expected Shortfall (Chapter 8) \\
 \subfile{chapters/chapter15}
 \subfile{chapters/chapter16}
 \subfile{chapters/chapter17}
+\part{Advanced Topics}
 \subfile{chapters/chapter18}
 \subfile{chapters/chapter19}
 \subfile{chapters/chapter20}
 \subfile{chapters/chapter21}
 
-\addtocontents{toc}{\string\renewcommand{\string\cftchappresnum}{Appendix }}
+% The appendices are not part of Part III. They get no part page of their own,
+% but an unnumbered part-level "Appendices" heading in the Contents (and in the
+% PDF bookmarks), so they visibly sit outside Part III there. The heading is
+% added after \cleardoublepage, so its page number and link are Appendix A's
+% first page (Appendix A's own \chapter then finds the page already fresh).
+\cleardoublepage\phantomsection
+\addcontentsline{toc}{part}{Appendices}
+\addtocontents{toc}{\string\renewcommand{\string\cftchappresnum}{Appendix }\string\setlength{\string\cftchapnumwidth}{7.2em}}
 \subfile{chapters/appendix_datasets}
 \subfile{chapters/appendix_glossary}
 \subfile{chapters/appendix_careers}
 
 \backmatter
+% Bibliography and Index: set apart from the appendices in the Contents by a
+% part-sized gap, and made top-level PDF bookmarks (rather than children of the
+% "Appendices" bookmark) by lowering hyperref's bookmark level for chapter-level
+% entries from here on. This affects only the bookmarks, not the Contents.
+\addtocontents{toc}{\protect\addvspace{2.25em}}
+\makeatletter\def\toclevel@chapter{-1}\makeatother
 
 \clearpage
 \cleardoublepage\phantomsection
@@ -420,198 +959,14 @@ VaR, ES & Value at Risk and Expected Shortfall (Chapter 8) \\
 \chapter*{Bibliography}
 \markboth{BIBLIOGRAPHY}{BIBLIOGRAPHY}
 
-Every chapter's own ``Further Reading'' section lists sources with a short note on how each connects to that chapter's material. This appendix consolidates all of them into a single alphabetized list, without the per-chapter annotations, as a stand-alone bibliography a reader can consult directly; several sources are cited in more than one chapter and appear here only once. Full author names, publishers, editions, and (for articles) volume/issue/page numbers were added by verifying each source rather than guessing; a handful of entries for which no single edition, page range, or exact date could be confirmed with confidence are given in the fullest form that could be verified, without an invented specific detail.
+Every chapter's own ``Further Reading'' section lists sources with a short note on how each connects to that chapter's material. This bibliography consolidates every source cited in the book into a single alphabetized list; several sources are cited in more than one chapter and appear here only once. Full author names, publishers, editions, and (for articles) volume, issue and page numbers were verified rather than guessed; a handful of entries for which no single edition, page range or exact date could be confirmed are given in the fullest form that could be verified, without an invented detail.
 
-\begin{itemize}
-    \item Abbeel, P., and A. Y. Ng, ``Apprenticeship Learning via Inverse Reinforcement Learning,'' \emph{Proceedings of the Twenty-First International Conference on Machine Learning}, 2004, pp. 1--8.
-    \item Acemoglu, D., A. Ozdaglar, and A. Tahbaz-Salehi, ``Systemic Risk and Stability in Financial Networks,'' \emph{American Economic Review}, vol. 105, no. 2, 2015, pp. 564--608.
-    \item Adams, H., N. Zinsmeister, and D. Robinson, ``Uniswap v2 Core,'' 2020. Available at: \url{https://uniswap.org/whitepaper.pdf}.
-    \item Aldridge, I., \emph{High-Frequency Trading: A Practical Guide to Algorithmic Strategies and Trading Systems}, 2nd ed., Wiley, Hoboken, NJ, 2013.
-    \item Almgren, R., and N. Chriss, ``Optimal Execution of Portfolio Transactions,'' \emph{Journal of Risk}, vol. 3, no. 2, 2001, pp. 5--39.
-    \item Ang, A., \emph{Asset Management: A Systematic Approach to Factor Investing}, Oxford University Press, New York, 2014.
-    \item Ansari, A. F., et al., ``Chronos: Learning the Language of Time Series,'' \emph{Transactions on Machine Learning Research}, 2024.
-    \item Appel, G., \emph{Technical Analysis: Power Tools for Active Investors}, Financial Times Prentice Hall, Upper Saddle River, NJ, 2005.
-    \item Arthur, W. B., J. H. Holland, B. LeBaron, R. Palmer, and P. Tayler, ``Asset Pricing Under Endogenous Expectations in an Artificial Stock Market,'' in \emph{The Economy as an Evolving Complex System II}, W. B. Arthur, S. N. Durlauf, and D. A. Lane, eds., Addison-Wesley, Reading, MA, 1997, pp. 15--44.
-    \item Avellaneda, M., and S. Stoikov, ``High-Frequency Trading in a Limit Order Book,'' \emph{Quantitative Finance}, vol. 8, no. 3, 2008, pp. 217--224.
-    \item Axtell, R. L., and J. D. Farmer, ``Agent-Based Modeling in Economics and Finance: Past, Present, and Future,'' \emph{Journal of Economic Literature}, vol. 63, no. 1, 2025, pp. 197--287.
-    \item Bailey, D. H., and M. L\'opez de Prado, ``The Deflated Sharpe Ratio: Correcting for Selection Bias, Backtest Overfitting, and Non-Normality,'' \emph{Journal of Portfolio Management}, vol. 40, no. 5, 2014, pp. 94--107.
-    \item Bank of England (O. Burrows, D. Learmonth, and J. McKeown), ``RAMSI: A Top-Down Stress-Testing Model,'' Bank of England Financial Stability Paper No. 17, 2012.
-    \item Barocas, S., M. Hardt, and A. Narayanan, \emph{Fairness and Machine Learning: Limitations and Opportunities}, MIT Press, Cambridge, MA, 2023.
-    \item Basel Committee on Banking Supervision, \emph{Basel III: A Global Regulatory Framework for More Resilient Banks and Banking Systems}, Bank for International Settlements, Basel, Switzerland, December 2010 (rev.\ June 2011).
-    \item Basel Committee on Banking Supervision, \emph{Minimum Capital Requirements for Market Risk}, Bank for International Settlements, Basel, Switzerland, January 2016 (rev.\ February 2019). The standard produced by the Fundamental Review of the Trading Book (FRTB), replacing Value at Risk with Expected Shortfall and introducing the sensitivities-based capital charge.
-    \item Basel Committee on Banking Supervision, \emph{Guidance on Credit Risk and Accounting for Expected Credit Losses}, Bank for International Settlements, Basel, 2015.
-    \item Baydin, A. G., B. A. Pearlmutter, A. A. Radul, and J. M. Siskind, ``Automatic Differentiation in Machine Learning: A Survey,'' \emph{Journal of Machine Learning Research}, vol. 18, no. 153, 2018, pp. 1--43.
-    \item Bellotti, T., and J. Crook, ``Credit Scoring with Macroeconomic Variables Using Survival Analysis,'' \emph{Journal of the Operational Research Society}, vol. 60, no. 12, 2009, pp. 1699--1707.
-    \item Berg, F., J. F. Kölbel, and R. Rigobon, ``Aggregate Confusion: The Divergence of ESG Ratings,'' \emph{Review of Finance}, vol. 26, no. 6, 2022, pp. 1315--1344.
-    \item Black, F., ``Studies of Stock Price Volatility Changes,'' \emph{Proceedings of the 1976 Meetings of the Business and Economics Statistics Section, American Statistical Association}, 1976, pp. 177--181.
-    \item Black, F., and R. Litterman, ``Global Portfolio Optimization,'' \emph{Financial Analysts Journal}, vol. 48, no. 5, 1992, pp. 28--43.
-    \item Board of Governors of the Federal Reserve System and Office of the Comptroller of the Currency, \emph{Supervisory Guidance on Model Risk Management}, SR 11-7, April 4, 2011.
-    \item Bodie, Z., A. Kane, and A. Marcus, \emph{Investments}, 13th ed., McGraw Hill, New York, 2024.
-    \item Bollinger, J. A., \emph{Bollinger on Bollinger Bands}, McGraw-Hill, New York, 2001.
-    \item Bolton, R. J., and D. J. Hand, ``Statistical Fraud Detection: A Review,'' \emph{Statistical Science}, vol. 17, no. 3, 2002, pp. 235--255.
-    \item Brealey, R. A., S. C. Myers, F. Allen, and A. Edmans, \emph{Principles of Corporate Finance}, 15th ed., McGraw Hill, New York, 2025.
-    \item Britten-Jones, M., and A. Neuberger, ``Option Prices, Implied Price Processes, and Stochastic Volatility,'' \emph{Journal of Finance}, vol. 55, no. 2, 2000, pp. 839--866.
-    \item Brock, W. A., and C. H. Hommes, ``A Rational Route to Randomness,'' \emph{Econometrica}, vol. 65, no. 5, 1997, pp. 1059--1095.
-    \item Bruun \& Hjejle, \emph{Report on the Non-Resident Portfolio at Danske Bank's Estonian Branch}, law firm report commissioned by Danske Bank A/S, September 2018.
-    \item Budish, E., P. Cramton, and J. Shim, ``The High-Frequency Trading Arms Race: Frequent Batch Auctions as a Market Design Response,'' \emph{Quarterly Journal of Economics}, vol. 130, no. 4, 2015, pp. 1547--1621.
-    \item Buehler, H., L. Gonon, J. Teichmann, and B. Wood, ``Deep Hedging,'' \emph{Quantitative Finance}, vol. 19, no. 8, 2019, pp. 1271--1291.
-    \item B{\"u}hlmann, H., and A. Gisler, \emph{A Course in Credibility Theory and its Applications}, Springer, Berlin, 2005.
-    \item Buolamwini, J., and T. Gebru, ``Gender Shades: Intersectional Accuracy Disparities in Commercial Gender Classification,'' \emph{Proceedings of Machine Learning Research}, vol. 81, 2018, pp. 77--91.
-    \item Campbell, J. Y., A. W. Lo, and A. C. MacKinlay, \emph{The Econometrics of Financial Markets}, Princeton University Press, Princeton, NJ, 1997.
-    \item Campbell, J. Y., and S. B. Thompson, ``Predicting Excess Stock Returns Out of Sample: Can Anything Beat the Historical Average?'' \emph{The Review of Financial Studies}, vol. 21, no. 4, 2008, pp. 1509--1531.
-    \item Chan, E. P., \emph{Algorithmic Trading: Winning Strategies and Their Rationale}, Wiley, Hoboken, NJ, 2013.
-    \item Chan, E. P., \emph{Machine Trading: Deploying Computer Algorithms to Conquer the Markets}, Wiley, Hoboken, NJ, 2017.
-    \item Chawla, N. V., K. W. Bowyer, L. O. Hall, and W. P. Kegelmeyer, ``SMOTE: Synthetic Minority Over-sampling Technique,'' \emph{Journal of Artificial Intelligence Research}, vol. 16, 2002, pp. 321--357.
-    \item Chen, T., and C. Guestrin, ``XGBoost: A Scalable Tree Boosting System,'' \emph{Proceedings of the 22nd ACM SIGKDD International Conference on Knowledge Discovery and Data Mining}, 2016, pp. 785--794.
-    \item Chen, T., S. Kornblith, M. Norouzi, and G. Hinton, ``A Simple Framework for Contrastive Learning of Visual Representations,'' \emph{Proceedings of the 37th International Conference on Machine Learning}, PMLR vol. 119, 2020, pp. 1597--1607.
-    \item Chopra, V. K., and W. T. Ziemba, ``The Effect of Errors in Means, Variances, and Covariances on Optimal Portfolio Choice,'' \emph{Journal of Portfolio Management}, vol. 19, no. 2, 1993, pp. 6--11.
-    \item Chouldechova, A., ``Fair Prediction with Disparate Impact: A Study of Bias in Recidivism Prediction Instruments,'' \emph{Big Data}, vol. 5, no. 2, 2017, pp. 153--163.
-    \item Consumer Financial Protection Bureau, ``CFPB Announces First No-Action Letter to Upstart Network,'' press release, September 14, 2017.
-    \item Counts, L., ``How Hedge Funds Use Satellite Images to Beat Wall Street, and Main Street,'' UC Berkeley Haas Newsroom, May 28, 2019 (reporting on research co-authored by Panos N. Patatoukas and Zsolt Katona).
-    \item Cristianini, N., and J. Shawe-Taylor, \emph{An Introduction to Support Vector Machines and Other Kernel-based Learning Methods}, Cambridge University Press, Cambridge, UK, 2000.
-    \item Crouhy, M., D. Galai, and R. Mark, \emph{The Essentials of Risk Management}, 2nd ed., McGraw-Hill, New York, 2014.
-    \item Cruz, M. G., G. W. Peters, and P. V. Shevchenko, \emph{Fundamental Aspects of Operational Risk and Insurance Analytics: A Handbook of Operational Risk}, Wiley, Hoboken, NJ, 2015.
-    \item D'Acunto, F., N. Prabhala, and A. G. Rossi, ``The Promises and Pitfalls of Robo-Advising,'' \emph{The Review of Financial Studies}, vol. 32, no. 5, 2019, pp. 1983--2020.
-    \item Damodaran, A., \emph{Investment Valuation: Tools and Techniques for Determining the Value of Any Asset}, 3rd ed., Wiley, Hoboken, NJ, 2012.
-    \item Denuit, M., D. Hainaut, and J. Trufin, \emph{Effective Statistical Learning Methods for Actuaries} (3 vols.), Springer, Cham, 2019--2020.
-    \item Dickson, D. C. M., M. R. Hardy, and H. R. Waters, \emph{Actuarial Mathematics for Life Contingent Risks}, 3rd ed., Cambridge University Press, Cambridge, UK, 2020.
-    \item Doshi-Velez, F., and B. Kim, ``Towards a Rigorous Science of Interpretable Machine Learning,'' arXiv:1702.08608, 2017.
-    \item Dosovitskiy, A., L. Beyer, A. Kolesnikov, D. Weissenborn, X. Zhai, T. Unterthiner, M. Dehghani, M. Minderer, G. Heigold, S. Gelly, J. Uszkoreit, and N. Houlsby, ``An Image Is Worth 16x16 Words: Transformers for Image Recognition at Scale,'' \emph{International Conference on Learning Representations}, 2021.
-    \item Dua, D., and C. Graff, \emph{UCI Machine Learning Repository}, University of California, Irvine, School of Information and Computer Sciences, 2019.
-    \item Dwork, C., M. Hardt, T. Pitassi, O. Reingold, and R. Zemel, ``Fairness Through Awareness,'' \emph{Proceedings of the 3rd Innovations in Theoretical Computer Science Conference}, 2012, pp. 214--226.
-    \item Eisenberg, L., and T. H. Noe, ``Systemic Risk in Financial Systems,'' \emph{Management Science}, vol. 47, no. 2, 2001, pp. 236--249.
-    \item Engle, R. F., ``Autoregressive Conditional Heteroscedasticity with Estimates of the Variance of United Kingdom Inflation,'' \emph{Econometrica}, vol. 50, no. 4, 1982, pp. 987--1007.
-    \item Engle, R. F., and C. W. J. Granger, ``Co-integration and Error Correction: Representation, Estimation, and Testing,'' \emph{Econometrica}, vol. 55, no. 2, 1987, pp. 251--276.
-    \item Fabozzi, F. J., \emph{Fixed Income Analysis}, 2nd ed., CFA Institute Investment Series, Wiley, Hoboken, NJ, 2007.
-    \item Fama, E. F., and K. R. French, ``Common Risk Factors in the Returns on Stocks and Bonds,'' \emph{Journal of Financial Economics}, vol. 33, no. 1, 1993, pp. 3--56.
-    \item Farmer, J. D., and D. Foley, ``The Economy Needs Agent-Based Modelling,'' \emph{Nature}, vol. 460, 2009, pp. 685--686.
-    \item Federal Reserve Bank of St. Louis, \emph{FRED API Documentation}, fred.stlouisfed.org.
-    \item Feng, C., and S. Fay, ``An Empirical Investigation of Forward-Looking Retailer Performance Using Parking Lot Traffic Data Derived from Satellite Imagery,'' \emph{Journal of Retailing}, vol. 98, no. 4, 2022, pp. 633--646.
-    \item Financial Action Task Force (FATF), \emph{International Standards on Combating Money Laundering and the Financing of Terrorism \& Proliferation: The FATF Recommendations}, FATF, Paris, May 2012.
-    \item Frees, E. W., \emph{Regression Modeling with Actuarial and Financial Applications}, Cambridge University Press, Cambridge, UK, 2010.
-    \item French, K. R., \emph{Data Library}, Tuck School of Business, Dartmouth College, mba.tuck.dartmouth.edu.
-    \item Giles, M., and P. Glasserman, ``Smoking Adjoints: Fast Monte Carlo Greeks,'' \emph{Risk}, vol. 19, no. 1, January 2006, pp. 88--92.
-    \item Gode, D. K., and S. Sunder, ``Allocative Efficiency of Markets with Zero-Intelligence Traders: Market as a Partial Substitute for Individual Rationality,'' \emph{Journal of Political Economy}, vol. 101, no. 1, 1993, pp. 119--137.
-    \item Goldburd, M., A. Khare, D. Tebaldi, and D. Modlin, \emph{Generalized Linear Models for Insurance Rating}, 2nd ed., CAS Monograph No. 5, Casualty Actuarial Society, Arlington, VA, 2020.
-    \item Goodfellow, I., Y. Bengio, and A. Courville, \emph{Deep Learning}, MIT Press, Cambridge, MA, 2016.
-    \item Goodfellow, I., J. Shlens, and C. Szegedy, ``Explaining and Harnessing Adversarial Examples,'' \emph{International Conference on Learning Representations}, 2015.
-    \item Goodfellow, I., J. Pouget-Abadie, M. Mirza, B. Xu, D. Warde-Farley, S. Ozair, A. Courville, and Y. Bengio, ``Generative Adversarial Networks,'' \emph{Communications of the ACM}, vol. 63, no. 11, 2020, pp. 139--144.
-    \item Grinold, R. C., and R. N. Kahn, \emph{Active Portfolio Management: A Quantitative Approach for Producing Superior Returns and Controlling Risk}, 2nd ed., McGraw-Hill, New York, 2000.
-    \item Grossi, P., and H. Kunreuther, eds., \emph{Catastrophe Modeling: A New Approach to Managing Risk}, Springer, New York, 2005.
-    \item Gu, S., B. Kelly, and D. Xiu, ``Empirical Asset Pricing via Machine Learning,'' \emph{The Review of Financial Studies}, vol. 33, no. 5, 2020, pp. 2223--2273.
-    \item Guéant, O., C.-A. Lehalle, and J. Fernandez-Tapia, ``Dealing with the Inventory Risk: A Solution to the Market Making Problem,'' \emph{Mathematics and Financial Economics}, vol. 7, no. 4, 2013, pp. 477--507.
-    \item Gupton, G. M., C. C. Finger, and M. Bhatia, \emph{CreditMetrics---Technical Document}, J.P. Morgan \& Co. Incorporated, New York, April 2, 1997.
-    \item Hamilton, J. D., \emph{Time Series Analysis}, Princeton University Press, Princeton, NJ, 1994.
-    \item Hand, D. J., and W. E. Henley, ``Statistical Classification Methods in Consumer Credit Scoring: A Review,'' \emph{Journal of the Royal Statistical Society, Series A}, vol. 160, no. 3, 1997, pp. 523--541.
-    \item Hansen, S., and M. McMahon, ``Shocking Language: Understanding the Macroeconomic Effects of Central Bank Communication,'' \emph{Journal of International Economics}, vol. 99, suppl. 1, 2016, pp. S114--S133.
-    \item Harris, L., \emph{Trading and Exchanges: Market Microstructure for Practitioners}, Oxford University Press, New York, 2003.
-    \item Hastie, T., R. Tibshirani, and J. Friedman, \emph{The Elements of Statistical Learning: Data Mining, Inference, and Prediction}, 2nd ed., Springer, New York, 2009.
-    \item He, K., X. Zhang, S. Ren, and J. Sun, ``Deep Residual Learning for Image Recognition,'' \emph{2016 IEEE Conference on Computer Vision and Pattern Recognition}, 2016, pp. 770--778.
-    \item Hilpisch, Y., \emph{Python for Algorithmic Trading: From Idea to Cloud Deployment}, O'Reilly Media, Sebastopol, CA, 2020.
-    \item Hilpisch, Y., \emph{Python for Finance: Mastering Data-Driven Finance}, 2nd ed., O'Reilly Media, Sebastopol, CA, 2018.
-    \item Hinton, G. E., and R. R. Salakhutdinov, ``Reducing the Dimensionality of Data with Neural Networks,'' \emph{Science}, vol. 313, no. 5786, 2006, pp. 504--507.
-    \item Ho, J., A. Jain, and P. Abbeel, ``Denoising Diffusion Probabilistic Models,'' \emph{Advances in Neural Information Processing Systems 33}, 2020, pp. 6840--6851.
-    \item Hochreiter, S., and J. Schmidhuber, ``Long Short-Term Memory,'' \emph{Neural Computation}, vol. 9, no. 8, 1997, pp. 1735--1780.
-    \item Hull, J. C., \emph{Options, Futures, and Other Derivatives}, 11th ed., Pearson, New York, 2022.
-    \item Hull, J. C., \emph{Risk Management and Financial Institutions}, 6th ed., Wiley, Hoboken, NJ, 2023.
-    \item Hull, J. C., J. Chen, Z. Poulos, and J. Yuan, \emph{Machine Learning in Business: 
-    An Introduction to the World of Data Science}, 4th ed., self-published, 2025.
-    \item Hyndman, R. J., and G. Athanasopoulos, \emph{Forecasting: Principles and Practice}, 3rd ed., OTexts, Melbourne, Australia, 2021.
-    \item Institute of Internal Auditors, \emph{The IIA's Three Lines Model: An Update of the Three Lines of Defense}, Institute of Internal Auditors, Lake Mary, FL, 2020.
-    \item Jain, S., and B. C. Wallace, ``Attention is not Explanation,'' \emph{Proceedings of the 2019 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies}, 2019, pp. 3543--3556.
-    \item James, G., D. Witten, T. Hastie, R. Tibshirani, and J. Taylor, \emph{An Introduction to Statistical Learning: with Applications in Python}, Springer, New York, 2023.
-    \item Jorion, P., \emph{Value at Risk: The New Benchmark for Managing Financial Risk}, 3rd ed., McGraw-Hill, New York, 2007.
-    \item Jurafsky, D., and J. H. Martin, \emph{Speech and Language Processing: An Introduction to Natural Language Processing, Computational Linguistics, and Speech Recognition}, 3rd ed.\ (online draft), Stanford University.
-    \item Kaggle, \emph{Datasets and Public API Documentation}, kaggle.com.
-    \item Katona, Z., M. O. Painter, P. N. Patatoukas, and J. Zeng, ``On the Capital Market Consequences of Big Data: Evidence from Outer Space,'' \emph{Journal of Financial and Quantitative Analysis}, vol. 60, no. 2, 2025, pp. 551--579.
-    \item Kipf, T. N., and M. Welling, ``Semi-Supervised Classification with Graph Convolutional Networks,'' \emph{International Conference on Learning Representations}, 2017.
-    \item Kissell, R., \emph{The Science of Algorithmic Trading and Portfolio Management}, Academic Press, Amsterdam, 2013.
-    \item Klein, J. P., and M. L. Moeschberger, \emph{Survival Analysis: Techniques for Censored and Truncated Data}, 2nd ed., Springer, New York, 2003.
-    \item Kleinberg, J., S. Mullainathan, and M. Raghavan, ``Inherent Trade-Offs in the Fair Determination of Risk Scores,'' \emph{8th Innovations in Theoretical Computer Science Conference}, LIPIcs vol. 67, article 43, 2017.
-    \item Kolanovic, M., and R. T. Krishnamachari, ``Big Data and AI Strategies: Machine Learning and Alternative Data Approach to Investing,'' J.P.\ Morgan, Global Quantitative \& Derivatives Strategy, May 2017.
-    \item Kusner, M. J., J. R. Loftus, C. Russell, and R. Silva, ``Counterfactual Fairness,'' \emph{Advances in Neural Information Processing Systems 30}, 2017, pp. 4066--4076.
-    \item Kyle, A. S., ``Continuous Auctions and Insider Trading,'' \emph{Econometrica}, vol. 53, no. 6, 1985, pp. 1315--1335.
-    \item LeBaron, B., ``Agent-Based Computational Finance,'' in \emph{Handbook of Computational Economics, Volume 2}, L. Tesfatsion and K. L. Judd, eds., Elsevier, Amsterdam, 2006, pp. 1187--1233.
-    \item LeCun, Y., Y. Bengio, and G. Hinton, ``Deep Learning,'' \emph{Nature}, vol. 521, no. 7553, 2015, pp. 436--444.
-    \item Ledoit, O., and M. Wolf, ``Honey, I Shrunk the Sample Covariance Matrix,'' \emph{Journal of Portfolio Management}, vol. 30, no. 4, 2004, pp. 110--119.
-    \item Lewis, M., \emph{Flash Boys: A Wall Street Revolt}, W.W. Norton \& Company, New York, 2014.
-    \item Lewis, P., E. Perez, A. Piktus, F. Petroni, V. Karpukhin, N. Goyal, H. Küttler, M. Lewis, W. Yih, T. Rocktäschel, S. Riedel, and D. Kiela, ``Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks,'' \emph{Advances in Neural Information Processing Systems 33}, 2020, pp. 9459--9474.
-    \item Li, D. X., ``On Default Correlation: A Copula Function Approach,'' \emph{Journal of Fixed Income}, vol. 9, no. 4, 2000, pp. 43--54.
-    \item Li, F., ``The Information Content of Forward-Looking Statements in Corporate Filings---A Na\"ive Bayesian Machine Learning Approach,'' \emph{Journal of Accounting Research}, vol. 48, no. 5, 2010, pp. 1049--1102.
-    \item Litterman, R., and J. Scheinkman, ``Common Factors Affecting Bond Returns,'' \emph{Journal of Fixed Income}, vol. 1, no. 1, 1991, pp. 54--61.
-    \item LOBSTER, \emph{Limit Order Book Data Documentation}, lobsterdata.com.
-    \item L\'opez de Prado, M., \emph{Advances in Financial Machine Learning}, Wiley, Hoboken, NJ, 2018.
-    \item Lou, Y., R. Caruana, and J. Gehrke, ``Intelligible Models for Classification and Regression,'' \emph{Proceedings of the 18th ACM SIGKDD International Conference on Knowledge Discovery and Data Mining}, 2012, pp. 150--158.
-    \item Loughran, T., and B. McDonald, ``When Is a Liability Not a Liability? Textual Analysis, Dictionaries, and 10-Ks,'' \emph{Journal of Finance}, vol. 66, no. 1, 2011, pp. 35--65.
-    \item Lundberg, S. M., and S.-I. Lee, ``A Unified Approach to Interpreting Model Predictions,'' \emph{Advances in Neural Information Processing Systems 30}, 2017, pp. 4765--4774.
-    \item Lux, T., and M. Marchesi, ``Scaling and Criticality in a Stochastic Multi-Agent Model of a Financial Market,'' \emph{Nature}, vol. 397, 1999, pp. 498--500.
-    \item Markowitz, H., ``Portfolio Selection,'' \emph{Journal of Finance}, vol. 7, no. 1, 1952, pp. 77--91.
-    \item McDonald, R. L., \emph{Derivatives Markets}, 3rd ed., Pearson, Boston, 2012.
-    \item McKinney, W., \emph{Python for Data Analysis}, 3rd ed., O'Reilly Media, Sebastopol, CA, 2022.
-    \item McLean, R. D., and J. Pontiff, ``Does Academic Research Destroy Stock Return Predictability?'' \emph{The Journal of Finance}, vol. 71, no. 1, 2016, pp. 5--32.
-    \item McNeil, A. J., R. Frey, and P. Embrechts, \emph{Quantitative Risk Management: Concepts, Techniques and Tools}, rev.\ ed., Princeton University Press, Princeton, NJ, 2015.
-    \item Menkveld, A. J., ``High-Frequency Trading and the New Market Makers,'' \emph{Journal of Financial Markets}, vol. 16, no. 4, 2013, pp. 712--740.
-    \item Merton, R. C., ``On the Pricing of Corporate Debt: The Risk Structure of Interest Rates,'' \emph{Journal of Finance}, vol. 29, no. 2, 1974, pp. 449--470.
-    \item Michaud, R. O., and R. O. Michaud, \emph{Efficient Asset Management: A Practical Guide to Stock Portfolio Optimization and Asset Allocation}, 2nd ed., Oxford University Press, New York, 2008.
-    \item Mikolov, T., K. Chen, G. Corrado, and J. Dean, ``Efficient Estimation of Word Representations in Vector Space,'' arXiv:1301.3781, 2013.
-    \item Mnih, V., K. Kavukcuoglu, D. Silver, A. A. Rusu, J. Veness, M. G. Bellemare, A. Graves, M. Riedmiller, A. K. Fidjeland, G. Ostrovski, et al., ``Human-Level Control through Deep Reinforcement Learning,'' \emph{Nature}, vol. 518, 2015, pp. 529--533.
-    \item Molnar, C., \emph{Interpretable Machine Learning: A Guide for Making Black Box Models Explainable}, 2nd ed., christophm.github.io/interpretable-ml-book, 2022.
-    \item Morgan Stanley, ``Key Milestone in Innovation Journey with OpenAI'' and ``Launch of AI @ Morgan Stanley Debrief'' (press releases).
-    \item Murphy, K. P., \emph{Machine Learning: A Probabilistic Perspective}, MIT Press, Cambridge, MA, 2012.
-    \item National Institute of Standards and Technology, \emph{Artificial Intelligence Risk Management Framework (AI RMF 1.0)}, NIST AI 100-1, U.S. Department of Commerce, January 2023.
-    \item Nevmyvaka, Y., Y. Feng, and M. Kearns, ``Reinforcement Learning for Optimized Trade Execution,'' \emph{Proceedings of the 23rd International Conference on Machine Learning}, 2006, pp. 673--680.
-    \item New York State Department of Financial Services, \emph{Report on Apple Card Investigation}, March 2021.
-    \item Niculescu-Mizil, A., and R. Caruana, ``Predicting Good Probabilities with Supervised Learning,'' \emph{Proceedings of the 22nd International Conference on Machine Learning}, 2005, pp. 625--632.
-    \item O'Hara, M., \emph{Market Microstructure Theory}, Blackwell Publishers, Cambridge, MA, 1995.
-    \item O'Hara, M., ``High Frequency Market Microstructure,'' \emph{Journal of Financial Economics}, vol. 116, no. 2, 2015, pp. 257--270.
-    \item Ohlsson, E., and B. Johansson, \emph{Non-Life Insurance Pricing with Generalized Linear Models}, Springer, Berlin, 2010.
-    \item Ouyang, L., J. Wu, X. Jiang, D. Almeida, C. Wainwright, P. Mishkin, C. Zhang, S. Agarwal, K. Slama, A. Ray, J. Schulman, J. Hilton, F. Kelton, L. Miller, M. Simens, A. Askell, P. Welinder, P. Christiano, J. Leike, and R. Lowe, ``Training Language Models to Follow Instructions with Human Feedback,'' \emph{Advances in Neural Information Processing Systems 35}, 2022, pp. 27730--27744.
-    \item Palepu, K. G., P. M. Healy, and E. Peek, \emph{Business Analysis and Valuation: IFRS Edition}, Cengage Learning EMEA.
-    \item Pan, S. J., and Q. Yang, ``A Survey on Transfer Learning,'' \emph{IEEE Transactions on Knowledge and Data Engineering}, vol. 22, no. 10, 2010, pp. 1345--1359.
-    \item Patterson, S., \emph{Dark Pools: The Rise of the Machine Traders and the Rigging of the U.S. Stock Market}, Crown Business, New York, 2012.
-    \item Penman, S. H., \emph{Financial Statement Analysis and Security Valuation}, 5th ed., McGraw-Hill, New York, 2013.
-    \item Provost, F., and T. Fawcett, \emph{Data Science for Business: What You Need to Know about Data Mining and Data-Analytic Thinking}, O'Reilly Media, Sebastopol, CA, 2013.
-    \item Ribeiro, M. T., S. Singh, and C. Guestrin, ```Why Should I Trust You?': Explaining the Predictions of Any Classifier,'' \emph{Proceedings of the 22nd ACM SIGKDD International Conference on Knowledge Discovery and Data Mining}, 2016, pp. 1135--1144.
-    \item Roll, R., ``A Simple Implicit Measure of the Effective Bid-Ask Spread in an Efficient Market,'' \emph{Journal of Finance}, vol. 39, no. 4, 1984, pp. 1127--1139.
-    \item Rubinstein, M., ``Implied Binomial Trees,'' \emph{Journal of Finance}, vol. 49, no. 3, 1994, pp. 771--818.
-    \item Salmon, F., ``Recipe for Disaster: The Formula That Killed Wall Street,'' \emph{Wired}, February 23, 2009.
-    \item Saunders, A., and L. Allen, \emph{Credit Risk Management In and Out of the Financial Crisis: New Approaches to Value at Risk and Other Paradigms}, 3rd ed., Wiley, Hoboken, NJ, 2010.
-    \item Schelling, T. C., ``Dynamic Models of Segregation,'' \emph{Journal of Mathematical Sociology}, vol. 1, no. 2, 1971, pp. 143--186.
-    \item Schulman, J., F. Wolski, P. Dhariwal, A. Radford, and O. Klimov, ``Proximal Policy Optimization Algorithms,'' arXiv:1707.06347, 2017.
-    \item Shapley, L. S., ``A Value for $n$-Person Games,'' in \emph{Contributions to the Theory of Games (AM-28), Volume II}, H.\,W.\ Kuhn and A.\,W.\ Tucker, eds., Annals of Mathematics Studies no. 28, Princeton University Press, Princeton, NJ, 1953, pp. 307--318.
-    \item Sharpe, W. F., ``Capital Asset Prices: A Theory of Market Equilibrium under Conditions of Risk,'' \emph{Journal of Finance}, vol. 19, no. 3, 1964, pp. 425--442.
-    \item Shazeer, N., A. Mirhoseini, K. Maziarz, A. Davis, Q. Le, G. Hinton, and J. Dean, ``Outrageously Large Neural Networks: The Sparsely-Gated Mixture-of-Experts Layer,'' \emph{International Conference on Learning Representations}, 2017.
-    \item Shevchenko, P. V., \emph{Modelling Operational Risk Using Bayesian Inference}, Springer, Berlin, 2011.
-    \item Shleifer, A., \emph{Inefficient Markets: An Introduction to Behavioral Finance}, Oxford University Press, Oxford, 2000.
-    \item Sims, C. A., ``Macroeconomics and Reality,'' \emph{Econometrica}, vol. 48, no. 1, 1980, pp. 1--48.
-    \item Sundararajan, M., A. Taly, and Q. Yan, ``Axiomatic Attribution for Deep Networks,'' \emph{Proceedings of the 34th International Conference on Machine Learning}, PMLR vol. 70, 2017, pp. 3319--3328.
-    \item Sutton, R. S., and A. G. Barto, \emph{Reinforcement Learning: An Introduction}, 2nd ed., MIT Press, Cambridge, MA, 2018.
-    \item Tsay, R. S., \emph{Analysis of Financial Time Series}, 3rd ed., Wiley, Hoboken, NJ, 2010.
-    \item Turpin, M., J. Michael, E. Perez, and S. R. Bowman, ``Language Models Don't Always Say What They Think: Unfaithful Explanations in Chain-of-Thought Prompting,'' \emph{Advances in Neural Information Processing Systems 36}, 2023.
-    \item UCI Machine Learning Repository, \emph{Default of Credit Card Clients Data Set}, University of California, Irvine.
-    \item U.S. Financial Crimes Enforcement Network (FinCEN), \emph{Bank Secrecy Act Regulations and Guidance}, U.S. Department of the Treasury.
-    \item U.S. Securities and Exchange Commission, \emph{A Plain English Handbook: How to Create Clear SEC Disclosure Documents}, August 1998.
-    \item U.S. Securities and Exchange Commission, \emph{EDGAR Application Programming Interfaces}, sec.gov.
-    \item U.S. Securities and Exchange Commission, \emph{Regulation NMS}, Release No.\ 34-51808, File No.\ S7-10-04, 2005.
-    \item U.S. Securities and Exchange Commission, ``Schwab Subsidiaries Misled Robo-Adviser Clients about Absence of Hidden Fees,'' press release 2022-104, June 13, 2022.
-    \item U.S. Securities and Exchange Commission and Commodity Futures Trading Commission, \emph{Findings Regarding the Market Events of May 6, 2010: Report of the Staffs of the CFTC and SEC to the Joint Advisory Committee on Emerging Regulatory Issues}, Washington, DC, September 30, 2010.
-    \item Ustun, B., A. Spangher, and Y. Liu, ``Actionable Recourse in Linear Classification,'' \emph{Proceedings of the Conference on Fairness, Accountability, and Transparency}, 2019, pp. 10--19.
-    \item van der Aalst, W. M. P., \emph{Process Mining: Data Science in Action}, 2nd ed., Springer, Berlin, 2016.
-    \item VanderPlas, J., \emph{Python Data Science Handbook: Essential Tools for Working with Data}, 2nd ed., O'Reilly Media, Sebastopol, CA, 2022.
-    \item Vasicek, O. A., ``The Distribution of Loan Portfolio Value,'' \emph{Risk}, vol. 15, no. 12, 2002, pp. 160--162.
-    \item Vaswani, A., N. Shazeer, N. Parmar, J. Uszkoreit, L. Jones, A. N. Gomez, {\L}. Kaiser, and I. Polosukhin, ``Attention Is All You Need,'' \emph{Advances in Neural Information Processing Systems 30}, 2017, pp. 5998--6008.
-    \item Wei, J., X. Wang, D. Schuurmans, M. Bosma, B. Ichter, F. Xia, E. Chi, Q. Le, and D. Zhou, ``Chain-of-Thought Prompting Elicits Reasoning in Large Language Models,'' \emph{Advances in Neural Information Processing Systems 35}, 2022, pp. 24824--24837.
-    \item Wilder, J. W., Jr., \emph{New Concepts in Technical Trading Systems}, Trend Research, Greensboro, NC, 1978.
-    \item Wu, S., O. Irsoy, S. Lu, V. Dabravolski, M. Dredze, S. Gehrmann, P. Kambadur, D. Rosenberg, and G. Mann, ``BloombergGPT: A Large Language Model for Finance,'' arXiv:2303.17564, 2023.
-    \item W{\"u}thrich, M. V., and M. Merz, \emph{Statistical Foundations of Actuarial Learning and its Applications}, Springer, Cham, 2023.
-    \item Yao, S., J. Zhao, D. Yu, N. Du, I. Shafran, K. Narasimhan, and Y. Cao, ``ReAct: Synergizing Reasoning and Acting in Language Models,'' \emph{International Conference on Learning Representations}, 2023.
-    \item Yeh, I.-C., and C.-H. Lien, ``The Comparisons of Data Mining Techniques for the Predictive Accuracy of Probability of Default of Credit Card Clients,'' \emph{Expert Systems with Applications}, vol. 36, no. 2, 2009, pp. 2473--2480.
-    \item Zhang, K., Z. Yang, and T. Ba\c{s}ar, ``Multi-Agent Reinforcement Learning: A Selective Overview of Theories and Algorithms,'' in \emph{Handbook of Reinforcement Learning and Control}, K. G. Vamvoudakis, Y. Wan, F. L. Lewis, and D. Cansever, eds., Springer, Cham, 2021, pp. 321--384.
-\end{itemize}
+\printbibliography[heading=none]
 
 \clearpage
 \cleardoublepage\phantomsection
 \addcontentsline{toc}{chapter}{Index}
+\input{index_xrefs}
 \printindex
 
 \end{document}

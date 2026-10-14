@@ -20,36 +20,35 @@
 
 \begin{document}
 
+\chapterkey{python}
 \chapter{Python for Financial Analysis}
 
-\section{Introduction}
+\notocsection{Introduction}
 
-Python has become one of the most important tools in modern finance. It is flexible, readable, and supported by a rich ecosystem of libraries for data analysis, visualization, statistics, and machine learning. For quantitative researchers, analysts, and practitioners, Python offers a practical way to turn financial data into insight. It is also a natural gateway into the wider world of data science, because many of the techniques used in finance are identical to those used in business analytics, scientific computing, and artificial intelligence.
+Python has become one of the most important tools in modern finance. It is flexible, readable, and supported by a rich ecosystem of libraries for data analysis, visualization, statistics, and machine learning. For quantitative researchers, analysts, and practitioners, Python offers a practical way to turn financial data into insight. It is also a gateway into data science more broadly, because many techniques used in finance are the same ones used in business analytics, scientific computing, and artificial intelligence.
 
-This chapter introduces Python from a financial perspective. Instead of treating programming as an abstract skill, it explains how Python helps with common financial tasks such as reading market data, cleaning historical prices, calculating returns, visualizing trends, and preparing data for modeling. Every concept in this chapter is tied to a single running numerical example, a two-asset portfolio of five trading days, so that the reader can check every computation by hand and reproduce it exactly in code. The emphasis is on building intuition and practical fluency rather than on purely theoretical computer science.
+This chapter introduces Python from a financial perspective, through common tasks: reading market data, cleaning historical prices, calculating returns, visualizing trends, and preparing data for modeling. Every concept is tied to one running numerical example, a two-asset portfolio over five trading days, so that the reader can check each computation by hand and reproduce it in code. The emphasis is on intuition and practical fluency rather than computer science theory.
 
-The chapter builds up in layers, each introduced through the same two-asset AssetA/AssetB price history so that no new example ever has to be learned from scratch. It starts with the language mechanics themselves, a first interactive session, conditionals and loops, and the core data structures (lists, dictionaries, tuples, and NumPy arrays) that everything downstream depends on.
+The chapter builds up in layers, all on the same AssetA/AssetB price history. It starts with a one-page refresher of the language (functions, conditionals, loops, and the built-in containers) for readers who already program, then introduces the \texttt{DataFrame} and NumPy arrays that everything downstream depends on.
 
-It then turns to pandas, the library that does most of the practical work in the rest of this book: boolean indexing, merging and grouping, resampling to a coarser frequency, and cleaning a simulated missing observation. A dedicated worked example builds and evaluates the two-asset portfolio in full, computing its mean, variance, and covariance by hand and in code, then scales the same computation up to a third asset to show that none of the underlying logic changes as a portfolio grows.
+It then turns to pandas, the library that does most of the practical work in this book: boolean indexing, merging and grouping, resampling to a coarser frequency, and cleaning a simulated missing observation. A worked example builds and evaluates the two-asset portfolio in full, computing its mean, variance, and covariance by hand and in code, then adds a third asset to show that the logic does not change as a portfolio grows. A further section turns those daily statistics into the numbers a performance report quotes: log returns, annualized volatility, the Sharpe ratio, maximum drawdown, and returns computed from prices adjusted for splits and dividends.
 
-The chapter closes with two practical concerns every quantitative workflow eventually meets: why vectorized NumPy code can be tens of times faster than an equivalent Python loop, and how to keep a numerical workflow reproducible enough that another person, or a future version of oneself, can rerun it and get the same answer.
+The chapter closes with two practical concerns: why vectorized NumPy code can be tens of times faster than an equivalent Python loop, and how to keep a numerical workflow reproducible so that someone else, or a future self, can rerun it and get the same answer.
 
-This progression matters beyond the mechanics of Python itself. Sections~\ref{sec:first-session} through~\ref{sec:vectorization} establish the vocabulary, loops, arrays, and vectorized operations, that later chapters assume without re-explaining; Section~\ref{sec:worked-example}'s two-asset portfolio recurs by name in Chapters 8 and 12, so the covariance matrix and correlation computed here are worth internalizing rather than skimming; and Sections~\ref{sec:data-cleaning} and~\ref{sec:vectorization-performance} anticipate two problems, messy real-world data and slow, unvectorized code, that resurface in nearly every applied chapter that follows.
+Sections~\ref{sec:first-session} through~\ref{sec:vectorization} establish the vocabulary (loops, arrays, vectorized operations) that later chapters assume. Section~\ref{sec:worked-example}'s two-asset portfolio recurs by name in Chapters~\chnum{marketrisk} and~\chnum{portfolio}, so its covariance matrix and correlation are worth internalizing. Section~\ref{sec:python-returns-risk} defines the return and performance measures later chapters quote, and Sections~\ref{sec:data-cleaning} and~\ref{sec:vectorization-performance} anticipate two problems, messy data and slow unvectorized code, that resurface in nearly every applied chapter.
 
 \section{The Python Language}
 
-Everything later in this book is expressed in code, so the language itself has to come first. This part moves from why Python won the quantitative-finance argument to the syntax a reader needs before any financial idea can be written down: sessions, control flow, and the built-in data structures.
+Everything later in this book is expressed in code, so the language itself has to come first. This part moves from why Python won the quantitative-finance argument to a brief refresher of its syntax and to the \texttt{DataFrame} that holds the chapter's running example.
 
-\subsection{Why Python Matters in Finance}
+\subsection{Why Python Matters in Finance}\index{Python!why Python in finance}
 
-A financial analyst often works with large, messy, and changing datasets. Prices arrive continuously, statements are published irregularly, and news can affect markets within seconds. This environment creates a strong need for tools that are fast, reproducible, and easy to adapt. Python excels in these areas. Scripts can be rerun, workflows can be automated, and models can be validated systematically.
+A financial analyst often works with large, messy, and changing datasets. Prices arrive continuously, statements are published irregularly, and news can affect markets within seconds. This environment needs tools that are fast, reproducible, and easy to adapt, which is where Python excels: scripts can be rerun, workflows automated, and models validated systematically.
 
-Python is also attractive because it has a large scientific community. Libraries such as NumPy, pandas, Matplotlib, SciPy, and scikit-learn make it possible to perform numerical work efficiently. This ecosystem lowers the barrier to entry for researchers who want to move from a spreadsheet workflow to a more scalable and transparent pipeline. Table~\ref{tab:python_libs} summarizes the libraries used throughout this chapter and the role each one plays.
+Python also has a large scientific community. Libraries such as NumPy, pandas, Matplotlib, SciPy, and scikit-learn make numerical work efficient and lower the barrier for researchers moving from spreadsheets to a more scalable and transparent pipeline. Table~\ref{tab:python_libs} summarizes the libraries used throughout this chapter and the role each one plays.\index{SciPy}\index{scikit-learn}
 
-\begin{table}[htbp]
-\centering
-\begin{lrbox}{\bookmeasuredbox}
-\begin{tabular}{p{2.6cm}p{9.5cm}}
+\begin{booktable}[htbp]{Core Python libraries for financial analysis}{tab:python_libs}
+\begin{tabular}{L{2.6cm}L{9.5cm}}
 \toprule
 Library & Role in financial analysis \\
 \midrule
@@ -61,50 +60,20 @@ statsmodels & Regression, time series models (e.g., ARIMA), and statistical infe
 scikit-learn & Machine learning models, preprocessing, and model evaluation \\
 \bottomrule
 \end{tabular}
-\end{lrbox}
-\ifdim\wd\bookmeasuredbox<0.65\linewidth
-\setlength{\bookcapwidth}{0.65\linewidth}
-\else
-\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
-\fi
-\floatbox[\capbot]{table}[\bookcapwidth]{
-\usebox{\bookmeasuredbox}
-}{
-\caption{Core Python libraries for financial analysis}
-\label{tab:python_libs}
-}
-\end{table}
+\end{booktable}
 
-\subsection{A First Python Session}
-\label{sec:first-session}
+\subsection{A One-Page Python Refresher}
+\label{sec:first-session}\label{sec:python-control-flow}\index{Python}\index{Python!control flow}
 
-Suppose an analyst needs to know what a \$100 investment earning 8\% will be worth after one year, a calculation simple enough to do on paper once, but tedious and error-prone to redo by hand for every price, rate, and holding period a real portfolio might contain. Python solves this by turning a value into a variable, a rule into a function, and a decision into a piece of control flow, so the same calculation can be reused rather than retyped: variables store values, functions transform inputs, and control flow allows the program to make decisions. A small example computes the future value of an investment:
-
-\begin{verbatim}
-price = 100.0
-return_rate = 0.08
-future_value = price * (1 + return_rate)
-print(future_value)
-# 108.0
-\end{verbatim}
-
-This simple snippet shows how a financial quantity can be represented in code. A price can be stored as a number, a return can be expressed as a decimal, and a future value can be computed directly. Wrapping this logic in a function makes it reusable across many holding periods:
+This book assumes a reader who already programs, so the language needs only a refresher, built around calculations that recur in finance. A function turns a rule into something reusable, here the future value of \$100 earning 8\% a year;\index{time value of money!future value} an \texttt{if}/\texttt{elif}/\texttt{else} chain classifies an outcome; a \texttt{for} loop repeats a step. Python's built-in containers (dictionaries for lookups, immutable tuples for fixed pairs, list comprehensions for compact filtering)\index{Python!data structures}\index{Python!list comprehensions} hold the data before it is tidy enough for a \texttt{DataFrame}:
 
 \begin{verbatim}
 def future_value(price, rate, periods=1):
     return price * (1 + rate) ** periods
 
-print(future_value(100.0, 0.08, periods=3))
-# 125.97120000000001
-\end{verbatim}
+print(future_value(100.0, 0.08))             # 108.0
+print(future_value(100.0, 0.08, periods=3))  # 125.97120000000001
 
-In finance, such arithmetic appears constantly. Interest rates, discount factors, portfolio weights, and transaction costs are all quantities that can be represented naturally in Python, and wrapping repeated calculations in functions avoids copying formulas by hand and reduces the chance of arithmetic mistakes.
-
-\subsection{Control Flow: Conditionals and Loops}
-
-Beyond simple arithmetic, most financial calculations require making decisions and repeating operations. An \texttt{if}/\texttt{elif}/\texttt{else} block lets a program branch based on a condition, which is useful for classifying outcomes:
-
-\begin{verbatim}
 def classify_return(r):
     if r > 0.01:
         return "strong gain"
@@ -115,36 +84,30 @@ def classify_return(r):
     else:
         return "loss"
 
-for r in [0.02, 0.004, 0.0, -0.015]:
-    print(r, "->", classify_return(r))
-# 0.02 -> strong gain
-# 0.004 -> small gain
-# 0.0 -> flat
-# -0.015 -> loss
+print([classify_return(r) for r in [0.02, 0.004, 0.0, -0.015]])
+# ['strong gain', 'small gain', 'flat', 'loss']
+
+balance = 0.0                  # $200 deposited monthly at 0.4% a month
+for month in range(12):
+    balance = balance * (1 + 0.004) + 200.0
+print(round(balance, 2))       # 2453.51
+
+security_info = {"ticker": "AAPL", "sector": "Technology", "price": 190.50}
+quote = (100.20, 100.35)       # (bid, ask): a tuple cannot be modified
+prices_list = [190.50, 145.20, 102.75]
+expensive = [p for p in prices_list if p > 150]
+print(security_info["sector"], round(quote[1] - quote[0], 2), expensive)
+# Technology 0.15 [190.5]
 \end{verbatim}
 
-The \texttt{for} loop here iterates over a list of returns and applies the classification function to each one. Loops are also the natural way to express a calculation that depends on its own previous result, which arithmetic on a whole array cannot easily do. A cumulative running balance with periodic deposits is a simple example:
-
-\begin{verbatim}
-balance = 0.0
-monthly_deposit = 200.0
-monthly_rate = 0.004  # roughly 5% annual, compounded monthly
-
-for month in range(1, 13):
-    balance = balance * (1 + monthly_rate) + monthly_deposit
-
-print(round(balance, 2))
-# 2453.51
-\end{verbatim}
-
-This is an inherently sequential calculation, next month's balance depends on this month's balance, so a loop (or an equivalent recursive formula) is the natural way to express it, in contrast to the vectorized return calculations in Section~\ref{sec:vectorization} below, which apply the same independent operation to every element of an array at once.
-Recognizing which category a calculation falls into, independent across observations versus sequentially dependent, is one of the most useful judgment calls a financial programmer makes, since applying a loop where vectorization would work is a common and avoidable source of slow code, discussed further in Section~\ref{sec:vectorization-performance}.
+One distinction in this block matters for the rest of the chapter. The deposit loop is sequential, since next month's balance depends on this month's, so a loop (or an equivalent closed-form formula) is the natural way to express it. Most return calculations are the opposite: the same independent operation applied to every observation. For those, the vectorized array operations of Section~\ref{sec:vectorization} are far faster than a loop, as Section~\ref{sec:vectorization-performance} measures. Recognizing which kind of calculation is at hand is one of the most useful judgment calls a financial programmer makes.
 
 \subsection{Core Data Structures}
+\label{sec:python-data-structures}\index{Python!data structures}
 
-An analyst tracking even a handful of securities quickly needs more than single numbers: an ordered run of daily closing prices, a lookup from ticker symbol to sector, a fixed set of open/high/low/close values for one trading day that should never accidentally be reordered. Python provides several data structures built for these different needs. Lists store ordered collections of values. Dictionaries store mappings from keys to values. Tuples are immutable sequences, often used for fixed collections of quantities. For most financial analysis, however, the most important structure is the pandas \texttt{DataFrame}, which organizes tabular data in rows and columns.
+An analyst tracking even a handful of securities quickly needs more than lists and dictionaries: an ordered run of daily closing prices for several assets, aligned on the same dates. For most financial analysis the key structure is therefore the pandas \texttt{DataFrame}, which organizes tabular data in rows and columns.\index{pandas!DataFrame}
 
-A \texttt{DataFrame} is ideal for financial data because it resembles a spreadsheet. One column may contain dates, another may contain prices, and another may contain trading volume. The running example for this chapter is a small two-asset price history, built directly from Python lists so that it is fully self-contained and reproducible without any external file or internet connection:
+A \texttt{DataFrame} suits financial data because it resembles a spreadsheet: one column may contain dates, another prices, another trading volume. The chapter's running example is a small two-asset price history, built from Python lists so that it is self-contained and reproducible without any external file or internet connection:
 
 \begin{verbatim}
 import numpy as np
@@ -167,56 +130,7 @@ print(prices)
 # 2024-01-08  103.00   52.02
 \end{verbatim}
 
-This makes it easy to filter observations, compute statistics, and merge datasets. For example, this \texttt{DataFrame} can hold daily closing prices for two assets, allowing analysts to compare their performance and, later in the chapter, to combine them into a portfolio.
-
-\subsection{Dictionaries, Tuples, and List Comprehensions}
-
-Suppose an analyst has just pulled together a handful of facts about one security, its ticker, sector, share count, whether it pays a dividend, long before that information is tidy enough to belong in a full \texttt{DataFrame}. Before every dataset becomes a \texttt{DataFrame}, it often starts life as a simpler Python structure. A dictionary maps descriptive keys to values and is a natural way to store metadata about a security:
-
-\begin{verbatim}
-security_info = {
-    "ticker": "AAPL",
-    "sector": "Technology",
-    "shares_outstanding": 15_500_000_000,
-    "is_dividend_payer": True,
-}
-print(security_info["sector"])
-# Technology
-\end{verbatim}
-
-A list of such dictionaries, one per security, is a common intermediate format before assembling a \texttt{DataFrame}, and \texttt{pandas} can convert it directly:
-
-\begin{verbatim}
-securities = [
-    {"ticker": "AAPL", "sector": "Technology", "price": 190.50},
-    {"ticker": "JPM", "sector": "Financials", "price": 145.20},
-    {"ticker": "XOM", "sector": "Energy", "price": 102.75},
-]
-securities_df = pd.DataFrame(securities)
-print(securities_df)
-#   ticker      sector   price
-# 0   AAPL  Technology  190.50
-# 1    JPM  Financials  145.20
-# 2    XOM      Energy  102.75
-\end{verbatim}
-
-A tuple is similar to a list but immutable, meaning it cannot be modified after creation; this makes tuples a natural choice for representing a fixed pair of quantities that should never accidentally change, such as a $(\text{bid}, \text{ask})$ quote, \texttt{quote = (100.20, 100.35)}.
-
-List comprehensions provide a compact way to build a new list by applying an expression to each element of an existing one, and are used constantly in financial code as a more readable alternative to a short loop:
-
-\begin{verbatim}
-prices_list = [190.50, 145.20, 102.75]
-price_labels = [f"${p:,.2f}" for p in prices_list]
-print(price_labels)
-# ['$190.50', '$145.20', '$102.75']
-
-# a comprehension with a condition: tickers priced above $150
-expensive = [s["ticker"] for s in securities if s["price"] > 150]
-print(expensive)
-# ['AAPL']
-\end{verbatim}
-
-The pattern \texttt{[expression for item in iterable if condition]} reads almost like a sentence, and translating a plain-language filtering rule directly into a list comprehension is a skill that pays off constantly when preparing financial data for further analysis.
+This makes it easy to filter observations, compute statistics, and merge datasets. Here the \texttt{DataFrame} holds daily closing prices for two assets, so their performance can be compared and, later in the chapter, combined into a portfolio.
 
 \section{Numerical Computing with NumPy}
 
@@ -225,12 +139,12 @@ Python's built-in containers are general-purpose and, for numerical work, slow. 
 \subsection{Working with Numerical Arrays}
 \label{sec:vectorization}
 
-Computing a return one day at a time in a Python loop works fine for the four prices used so far, but a real price history can span thousands of trading days across hundreds of securities, and a Python-level loop over every one of them is far slower than it needs to be. NumPy is the foundational package for numerical computation in Python. It provides arrays that are efficient and support vectorized operations. In finance, vectorization is very useful because many tasks involve applying the same operation to large collections of prices or returns, without writing explicit loops.
+Computing a return one day at a time in a Python loop works for the four prices used so far, but a real price history can span thousands of trading days across hundreds of securities, and a Python-level loop over all of them is far slower than it needs to be. NumPy, the foundational package for numerical computation in Python, provides efficient arrays that support vectorized operations.\index{NumPy!arrays} Vectorization suits finance because many tasks apply the same operation to large collections of prices or returns, with no explicit loop.\index{vectorization}\index{NumPy!vectorization}
 
-Given a series of daily prices $P_0, P_1, \dots, P_T$, the simple (arithmetic) return in period $t$ is
-\begin{equation*}
-R_t = \frac{P_t - P_{t-1}}{P_{t-1}}.
-\end{equation*}
+Given a series of daily prices $P_0, P_1, \dots, P_T$, the simple (arithmetic) return in period $t$ is\index{returns!simple}
+\begin{equation}
+R_t = \frac{P_t - P_{t-1}}{P_{t-1}}.\label{eq:python-simple-return}
+\end{equation}
 Applied to AssetA's five prices, this produces four daily returns:
 \begin{equation*}
 R_1 = \frac{102.00 - 100.00}{100.00} = 2.00\%, \quad
@@ -240,7 +154,7 @@ R_2 = \frac{101.00 - 102.00}{102.00} = -0.98\%,
 R_3 = \frac{104.00 - 101.00}{101.00} = 2.97\%, \quad
 R_4 = \frac{103.00 - 104.00}{104.00} = -0.96\%.
 \end{equation*}
-The mean of these four returns is $0.76\%$, and their sample standard deviation (with $n-1=3$ in the denominator) is $2.03\%$. In NumPy, this is computed directly on the underlying array without a Python-level loop:
+The mean of these four returns is $0.76\%$\index{descriptive statistics!mean}, and their sample standard deviation (with $n-1=3$ in the denominator) is $2.03\%$. In NumPy\index{descriptive statistics!standard deviation}, this is computed directly on the underlying array without a Python-level loop:
 
 \begin{verbatim}
 asset_a = prices["AssetA"].to_numpy()
@@ -251,11 +165,12 @@ print(round(returns_a.mean(), 4), round(returns_a.std(ddof=1), 4))
 # 0.0076 0.0203
 \end{verbatim}
 
-This is much faster and more readable than writing explicit loops for each element, and the use of arrays aligns well with the mathematical structure of quantitative finance, where calculations often operate on vectors of observations rather than single numbers.
+This is faster and more readable than an explicit loop, and arrays match the mathematical structure of quantitative finance, where calculations operate on vectors of observations rather than single numbers.
 
 \subsection{Boolean Indexing and Vectorized Conditionals}
+\label{sec:python-boolean-indexing}\index{boolean indexing}\index{NumPy!boolean indexing}
 
-The classification function in Section 2.2.3 used an \texttt{if}/\texttt{elif} chain applied one return at a time, the kind of loop the previous section warned scales poorly once a price history grows large. NumPy and pandas offer a vectorized alternative that avoids the loop entirely. A boolean mask, an array of \texttt{True}/\texttt{False} values produced by comparing an array to a condition, can be used to select or count observations directly:
+The classification function in Section~\ref{sec:python-control-flow} applied an \texttt{if}/\texttt{elif} chain one return at a time, the kind of loop that scales poorly as a price history grows. NumPy and pandas offer a vectorized alternative. A boolean mask, an array of \texttt{True}/\texttt{False} values produced by comparing an array to a condition, selects or counts observations directly:
 
 \begin{verbatim}
 up_days = returns_a > 0
@@ -277,15 +192,15 @@ print(labels)
 # ['strong gain' 'loss' 'strong gain' 'loss']
 \end{verbatim}
 
-This produces the same classifications as the loop-based \texttt{classify\_return} function in Section 2.2.3, applied to all four returns at once rather than one at a time. As datasets grow from a handful of observations to millions of rows of tick data, this difference, a single vectorized expression instead of a Python-level loop, becomes the difference between a script that runs in milliseconds and one that takes minutes, a point developed further in Section~\ref{sec:vectorization-performance}.
+This produces the same classifications as the loop-based \texttt{classify\_return} function, applied to all four returns at once. As datasets grow from a handful of observations to millions of rows of tick data, a single vectorized expression instead of a Python-level loop is the difference between a script that runs in milliseconds and one that takes minutes (Section~\ref{sec:vectorization-performance}).
 
 \section{Handling Data with pandas}
 
-Financial data arrives as tables that are misaligned, differently sampled, and incomplete. This part covers the library built for exactly that: reshaping and joining tables, plotting what they contain, and cleaning what is wrong with them before any model sees it.
+Financial data arrives as tables that are misaligned, differently sampled, and incomplete. This part covers the library built for that: reshaping and joining tables, plotting what they contain, and cleaning what is wrong with them before any model sees it.
 
-\subsection{Data Manipulation with pandas}\index{Data Manipulation with pandas}
+\subsection{Data Manipulation with pandas}\index{pandas}
 
-Real market data rarely arrives as clean as the toy price arrays used so far: a downloaded CSV may have gaps for holidays, dates out of order, or entire days missing for one security but not another, and none of the NumPy tools introduced so far know what to do with a date. pandas is the workhorse library for handling time series and structured data. It allows the analyst to load data from CSV files, databases, or online sources; to index by date; to sort observations; to handle missing values; and to compute rolling statistics. These capabilities are essential in finance because market data are often irregular and incomplete.
+Real market data rarely arrives as clean as the toy price arrays used so far: a downloaded CSV may have gaps for holidays, dates out of order, or days missing for one security but not another, and NumPy knows nothing about dates. pandas is the workhorse library for time series and structured data. It loads data from CSV files, databases, or online sources; indexes by date; sorts observations; handles missing values; and computes rolling statistics, all essential because market data are often irregular and incomplete.
 
 The pandas method \texttt{pct\_change()} computes the same simple returns shown above, applied automatically to every column:
 
@@ -299,13 +214,14 @@ print(returns.round(4))
 # 2024-01-08 -0.0096  0.0200
 \end{verbatim}
 
-Notice that AssetB's returns (0.0100, 0.0150, $-$0.0051, 0.0200) move in almost the opposite direction from AssetA's returns (0.0200, $-$0.0098, 0.0297, $-$0.0096) on three of the four days. This pattern will reappear as a strong negative correlation later in the chapter, and it is the entire reason diversification will turn out to help so much in this example, although, as Section~\ref{sec:worked-example} will show, four observations pin that correlation down only very loosely.
+Notice that AssetB's returns (0.0100, 0.0150, $-$0.0051, 0.0200) move in the opposite direction from AssetA's returns (0.0200, $-$0.0098, 0.0297, $-$0.0096) on three of the four days. This pattern reappears as a strong negative correlation later in the chapter, and it is why diversification helps so much in this example, although, as Section~\ref{sec:worked-example} shows, four observations pin that correlation down only loosely.
 
-This simple transformation, from a series of price levels to a series of returns, underlies much of modern empirical finance. Returns are more convenient than levels for many statistical models, especially because they are approximately stationary and easier to compare across assets of very different price scales.
+This transformation from price levels to returns underlies much of empirical finance. Returns suit many statistical models better than levels because they are approximately stationary\index{returns}\index{stationarity} and easier to compare across assets with very different price scales.
 
 \subsection{Combining and Reshaping Data: merge, groupby, and resample}
+\label{sec:python-merge-groupby}
 
-Real analyses rarely involve a single tidy table; more often, data about the same securities arrives from several sources and must be combined before it is useful. Suppose one table holds each security's sector and price, and a second holds the number of shares held in a portfolio:
+Real analyses rarely involve a single tidy table; data about the same securities usually arrives from several sources and must be combined. Suppose one table holds each security's sector and price, and a second holds the number of shares held in a portfolio:
 
 \begin{verbatim}
 securities_df = pd.DataFrame([
@@ -329,7 +245,7 @@ print(merged)
 # 3   MSFT  Technology  375.10           30         11253.0
 \end{verbatim}
 
-The \texttt{merge} method aligns the two tables on the shared \texttt{ticker} column, the same logic as a SQL join, and is the standard way to combine data that arrives from different sources or systems. Once combined, \texttt{groupby} aggregates the result by a categorical column, here computing total position value by sector:
+The \texttt{merge} method aligns the two tables on the shared \texttt{ticker} column, the same logic as a SQL join\index{pandas!merge}, and is the standard way to combine data that arrives from different sources or systems. Once combined, \texttt{groupby} aggregates the result by a categorical column\index{pandas!groupby}, here computing total position value by sector:
 
 \begin{verbatim}
 sector_summary = merged.groupby("sector")["position_value"].sum()
@@ -341,9 +257,9 @@ print(sector_summary)
 # Name: position_value, dtype: float64
 \end{verbatim}
 
-This immediately reveals that the portfolio's Technology exposure (\$30,303, combining AAPL and MSFT) is its largest sector concentration, a question that would require considerably more manual bookkeeping without \texttt{groupby}.
+This shows at once that the portfolio's Technology exposure (\$30,303, combining AAPL and MSFT) is its largest sector concentration, which would take considerably more manual bookkeeping without \texttt{groupby}.
 
-A related operation, \texttt{resample}, aggregates a time-indexed series to a coarser frequency, for example converting daily prices to weekly prices by taking the last observation in each week:
+A related operation, \texttt{resample}, aggregates a time-indexed series to a coarser frequency\index{pandas!resample}, for example converting daily prices to weekly prices by taking the last observation in each week:
 
 \begin{verbatim}
 extended_dates = pd.date_range("2024-01-02", periods=10, freq="B")
@@ -364,13 +280,13 @@ print(weekly_return.round(4))
 # 2024-01-19    0.0185
 \end{verbatim}
 
-Computing weekly returns this way, from resampled weekly prices, gives exactly the same answer as compounding the underlying daily simple returns within each week, $\prod_t (1+r_t) - 1$; for the week ending January 12, both give $0.0385$. It is not the same as summing the daily returns, which gives $0.0384$ here and is only an approximation for simple returns. Resampling is typically the more direct and less error-prone method when the analysis genuinely only needs the coarser frequency.
+Computing weekly returns from resampled weekly prices gives the same answer as compounding the daily simple returns within each week, $\prod_t (1+r_t) - 1$; for the week ending January 12, both give $0.0385$. It is not the same as summing the daily returns, which gives $0.0384$ here and is only an approximation for simple returns. Resampling is the more direct and less error-prone method when the analysis needs only the coarser frequency.
 
-\subsection{Visualization}\index{Visualization}
+\subsection{Visualization}\index{data visualization}
 
-A table of a hundred daily returns is hard to read at a glance; a suspicion that two assets tend to move in opposite directions, or that a return series has grown more volatile recently, is often invisible in a column of numbers but obvious the instant it is plotted. Visualization is a critical part of financial analysis. Charts help reveal patterns in returns, volatility, trends, and correlations. Matplotlib is the standard library for creating static plots.
+A table of a hundred daily returns is hard to read at a glance. That two assets tend to move in opposite directions, or that a return series has grown more volatile, is often invisible in a column of numbers but obvious once plotted. Charts reveal patterns in returns, volatility, trends, and correlations, and Matplotlib is the standard library for static plots.\index{matplotlib}
 
-The chapter's own \texttt{AssetA}/\texttt{AssetB} example has only four daily returns, enough to illustrate the portfolio formulas in Section~\ref{sec:worked-example} by hand, but too few to make a histogram or scatter plot visually informative. To show what these chart types actually look like, this section simulates a longer, one-year (252 trading day) two-asset price history with a similar negative correlation between the assets, used only for the three plots below:
+The chapter's \texttt{AssetA}/\texttt{AssetB} example has only four daily returns, enough to illustrate the portfolio formulas in Section~\ref{sec:worked-example} by hand, but too few for an informative histogram or scatter plot. To show what these charts look like, this section simulates a longer, one-year (252 trading day) two-asset price history with a similar negative correlation between the assets, used only for the three plots below:
 
 \begin{verbatim}
 rng = np.random.default_rng(6)
@@ -390,7 +306,7 @@ prices_viz = pd.DataFrame({
 })
 \end{verbatim}
 
-A simple line chart of the two price series and their cumulative returns can quickly reveal whether the assets move together or apart. Because AssetA and AssetB start at very different price levels (\$100 versus \$50), the left panel plots each on its own y-axis, using \texttt{twinx()}, so that both series' fluctuations remain visible rather than one dwarfing the other on a shared scale:
+A line chart of the two price series and their cumulative returns\index{data visualization!price-growth chart} shows whether the assets move together or apart. Because AssetA and AssetB start at different price levels (\$100 versus \$50), the left panel gives each its own y-axis with \texttt{twinx()}, so that neither series dwarfs the other on a shared scale:
 
 \begin{verbatim}
 import matplotlib.pyplot as plt
@@ -416,27 +332,13 @@ plt.tight_layout()
 plt.savefig("ch2_fig_prices_growth.png", dpi=150)
 \end{verbatim}
 
-\begin{figure}[htbp]
-\centering
-\begin{lrbox}{\bookmeasuredbox}
-    \includegraphics[width=\linewidth]{ch2_fig_prices_growth.png}
-\end{lrbox}
-\ifdim\wd\bookmeasuredbox<0.65\linewidth
-\setlength{\bookcapwidth}{0.65\linewidth}
-\else
-\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
-\fi
-\ffigbox[\bookcapwidth]{
-\usebox{\bookmeasuredbox}
-}{
-    \caption{Simulated AssetA and AssetB prices, each on its own y-axis (left); cumulative growth of \$1 invested in each (right), over a 252-day history}
-    \label{fig:ch2-prices-growth}
-}
-\end{figure}
+\begin{bookfigure}[htbp]{Simulated AssetA and AssetB prices, each on its own y-axis (left); cumulative growth of \$1 invested in each (right), over a 252-day history}{fig:ch2-prices-growth}
+    \includegraphics[width=\linewidth]{ch2_fig_prices_growth.pdf}
+\end{bookfigure}
 
-Visualization is not merely decorative. It is part of the analytical process. A model may appear strong in a statistical summary, but a plot may reveal outliers, regime shifts, or data problems that would otherwise go unnoticed. In finance, where data quality and market context matter greatly, visualization is an essential discipline, and it is often the fastest way to notice that two return series are moving in opposite directions, as AssetA and AssetB do here.
+Visualization is part of the analysis, not decoration. A model may look strong in a statistical summary while a plot reveals outliers, regime shifts, or data problems that would otherwise go unnoticed. It is often the fastest way to see that two return series move in opposite directions, as AssetA and AssetB do here.
 
-Two other chart types are used constantly in financial analysis. A histogram of returns shows the shape of the return distribution, revealing skewness or heavy tails that summary statistics alone can obscure:
+Two other chart types are used constantly in financial analysis. A histogram of returns shows the shape of the return distribution\index{data visualization!histogram}, revealing skewness or heavy tails that summary statistics alone can obscure:
 
 \begin{verbatim}
 fig, ax = plt.subplots(figsize=(6, 4))
@@ -446,27 +348,13 @@ ax.set_xlabel("Return")
 plt.tight_layout()
 \end{verbatim}
 
-\begin{figure}[htbp]
-\centering
-\begin{lrbox}{\bookmeasuredbox}
-    \includegraphics[width=0.55\linewidth]{ch2_fig_histogram.png}
-\end{lrbox}
-\ifdim\wd\bookmeasuredbox<0.65\linewidth
-\setlength{\bookcapwidth}{0.65\linewidth}
-\else
-\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
-\fi
-\ffigbox[\bookcapwidth]{
-\usebox{\bookmeasuredbox}
-}{
-    \caption{Distribution of AssetA's simulated daily returns over the 252-day history}
-    \label{fig:ch2-histogram}
-}
-\end{figure}
+\begin{bookfigure}[htbp]{Distribution of AssetA's simulated daily returns over the 252-day history}{fig:ch2-histogram}
+    \includegraphics[width=0.55\linewidth]{ch2_fig_histogram.pdf}
+\end{bookfigure}
 
-Because the simulated returns are drawn from a normal distribution, Figure~\ref{fig:ch2-histogram} can show neither skewness nor heavy tails, only sampling noise around a bell shape. Real daily returns typically have noticeably heavier tails than a normal distribution, which is exactly the feature a histogram of real data would expose, and the one the market-risk measures of Chapter 8 have to contend with.
+Because the simulated returns are drawn from a normal distribution, Figure~\ref{fig:ch2-histogram} can show neither skewness nor heavy tails, only sampling noise around a bell shape. Real daily returns typically have noticeably heavier tails than a normal distribution\index{stylized facts!fat tails}, the feature a histogram of real data would expose and the market-risk measures of Chapter~\chnum{marketrisk} must contend with.
 
-A scatter plot of one asset's returns against another's is the most direct way to visualize a correlation like the one computed numerically in Section~\ref{sec:worked-example}:
+A scatter plot of one asset's returns against another's\index{data visualization!scatter plot} is the most direct way to visualize a correlation like the one computed numerically in Section~\ref{sec:worked-example}:
 
 \begin{verbatim}
 fig, ax = plt.subplots(figsize=(5, 5))
@@ -481,32 +369,18 @@ plt.tight_layout()
 % floats onto a figures-only float page, which it did -- an entire page holding
 % just these two figures and no text, most of it white. 'htb' forces each onto a
 % page that also carries text.
-\begin{figure}[htb]
-\centering
-\begin{lrbox}{\bookmeasuredbox}
-    \includegraphics[width=0.5\linewidth]{ch2_fig_scatter.png}
-\end{lrbox}
-\ifdim\wd\bookmeasuredbox<0.65\linewidth
-\setlength{\bookcapwidth}{0.65\linewidth}
-\else
-\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
-\fi
-\ffigbox[\bookcapwidth]{
-\usebox{\bookmeasuredbox}
-}{
-    \caption{Simulated AssetA daily returns plotted against simulated AssetB daily returns}
-    \label{fig:ch2-scatter}
-}
-\end{figure}
+\begin{bookfigure}[htb]{Simulated AssetA daily returns plotted against simulated AssetB daily returns}{fig:ch2-scatter}
+    \includegraphics[width=0.5\linewidth]{ch2_fig_scatter.pdf}
+\end{bookfigure}
 
-Figure~\ref{fig:ch2-scatter} shows the cloud of 252 points sloping visibly downward, consistent with the simulated correlation of $-0.641$ printed in the plot title: a negative correlation means the two assets tend to move in opposite directions. With a real analysis, the same chart becomes a genuinely useful diagnostic for spotting nonlinear relationships or clusters that a single correlation number, a linear summary, cannot capture. The chapter's own four-observation example (Section~\ref{sec:worked-example}) shows the same qualitative pattern with an even stronger correlation of $-0.896$, but has too few points to plot informatively.
+Figure~\ref{fig:ch2-scatter} shows the cloud of 252 points sloping visibly downward, consistent with the simulated correlation of $-0.641$ printed in the plot title: the two assets tend to move in opposite directions. In a real analysis, the same chart is a useful diagnostic for nonlinear relationships or clusters that a single, linear correlation number cannot capture. The chapter's four-observation example (Section~\ref{sec:worked-example}) shows the same pattern with an even stronger correlation of $-0.896$, but has too few points to plot informatively.
 
-\subsection{Data Cleaning and Preparation}\index{Data Cleaning and Preparation}
+\subsection{Data Cleaning and Preparation}\index{data cleaning}
 \label{sec:data-cleaning}
 
-Raw financial data often contains issues: missing entries, duplicate observations, outliers, inconsistent dates, or formatting errors. Data cleaning is therefore a major part of practical work. A well-designed pipeline may involve aligning multiple time series, filling missing observations carefully, adjusting for corporate actions such as dividends and splits, and removing clearly erroneous values.
+Raw financial data often contains missing entries, duplicate observations, outliers, inconsistent dates, or formatting errors, so data cleaning is a major part of practical work. A well-designed pipeline may align multiple time series, fill missing observations carefully, adjust for corporate actions such as dividends and splits, and remove clearly erroneous values.
 
-Figure~\ref{fig:data_pipeline} shows a simple financial data workflow, and the code below shows a typical cleaning step: forward-filling a small gap in a price series (for example, caused by a data feed outage) rather than silently dropping the observation, which would misalign the two return series.
+Figure~\ref{fig:data_pipeline} shows a simple financial data workflow, and the code below shows a typical cleaning step: forward-filling a small gap in a price series\index{data cleaning!missing values}\index{missing data} (for example, caused by a data feed outage) rather than silently dropping the observation, which would misalign the two return series.
 
 \begin{verbatim}
 raw = prices.copy()
@@ -518,9 +392,7 @@ print(cleaned["AssetB"].isna().sum(), "missing value(s) after cleaning")
 # 0 missing value(s) after cleaning
 \end{verbatim}
 
-\begin{figure}[htb]
-\centering
-\begin{lrbox}{\bookmeasuredbox}
+\begin{bookfigure}[htb]{A typical financial data pipeline moves from raw data to cleaned inputs and then to modeling}{fig:data_pipeline}
     \begin{tikzpicture}[>=latex,thick,node distance=0.9cm]
         \node[draw,rounded corners,minimum width=2.2cm,minimum height=0.8cm] (raw) {Raw Data};
         \node[draw,rounded corners,minimum width=2.2cm,minimum height=0.8cm,right=of raw] (clean) {Clean Data};
@@ -528,30 +400,18 @@ print(cleaned["AssetB"].isna().sum(), "missing value(s) after cleaning")
         \draw[->] (raw) -- (clean);
         \draw[->] (clean) -- (model);
     \end{tikzpicture}
-\end{lrbox}
-\ifdim\wd\bookmeasuredbox<0.65\linewidth
-\setlength{\bookcapwidth}{0.65\linewidth}
-\else
-\setlength{\bookcapwidth}{\wd\bookmeasuredbox}
-\fi
-\ffigbox[\bookcapwidth]{
-\usebox{\bookmeasuredbox}
-}{
-    \caption{A typical financial data pipeline moves from raw data to cleaned inputs and then to modeling}
-    \label{fig:data_pipeline}
-}
-\end{figure}
+\end{bookfigure}
 
-Forward-filling is appropriate for a short gap in an otherwise liquid series, but it is not always the right choice: forward-filling an illiquid security for many consecutive days can create the false impression of zero volatility. A price series for a stock must also often be adjusted for splits and dividends to produce a consistent total return series; otherwise, the historical performance may be distorted by mechanical price drops that have nothing to do with economic losses. This is an important lesson for quantitative finance: even a sophisticated model is only as good as the data that feed it.
+Forward-filling suits a short gap in an otherwise liquid series, but forward-filling an illiquid security for many consecutive days can create the false impression of zero volatility. A stock's price series must also often be adjusted for splits and dividends to produce a consistent total return series; otherwise mechanical price drops that are not economic losses distort its history, as Section~\ref{sec:python-returns-risk} shows on the running example. Even a sophisticated model is only as good as the data that feed it.
 
 \section{Portfolio Analysis in Python}
 
 With the tools in place, this part puts them to work on the problem the rest of the book returns to repeatedly: constructing a portfolio from return data, evaluating it, and scaling the same code from two assets to many.
 
-\subsection{A Worked Example: Building and Evaluating a Two-Asset Portfolio}
-\label{sec:worked-example}
+\weheading{\subsection}{two-asset-portfolio}{Building and Evaluating a Two-Asset Portfolio}
+\label{sec:worked-example}\index{two-asset portfolio}
 
-This section ties the chapter's running example together into a small but complete analysis, the kind of workflow an analyst repeats constantly, just at a larger scale. Suppose an analyst wants to evaluate an equally weighted portfolio of AssetA and AssetB.
+This section ties the running example together into a small but complete analysis, the kind of workflow an analyst repeats constantly at larger scale. Suppose an analyst wants to evaluate an equally weighted portfolio of AssetA and AssetB.\index{portfolio!return}
 
 \begin{verbatim}
 weights = np.array([0.5, 0.5])
@@ -569,7 +429,7 @@ print(round(port_mean, 4), round(port_vol, 4))
 # 0.0088 0.0058
 \end{verbatim}
 
-Compare the portfolio's volatility of 0.58\% to the weighted average of the two assets' individual volatilities, $0.5 \times 2.03\% + 0.5 \times 1.08\% = 1.56\%$. The portfolio is far less volatile than either asset alone, and much less volatile than a naive average of their volatilities would suggest. This is the diversification effect introduced conceptually in Chapter 1, and it can now be made precise. The covariance between the two return series is
+Compare the portfolio's volatility of 0.58\% to the weighted average of the two assets' individual volatilities, $0.5 \times 2.03\% + 0.5 \times 1.08\% = 1.56\%$. The portfolio is far less volatile than either asset alone, and than a naive average of their volatilities would suggest. This is the diversification effect introduced in Chapter~\chnum{intro}, now made precise.\index{diversification!two-asset portfolio} The covariance between the two return series is\index{covariance matrix}
 
 \begin{verbatim}
 cov_matrix = returns.cov()
@@ -582,21 +442,21 @@ corr = returns.corr().iloc[0, 1]
 print(round(corr, 3))
 # -0.896
 \end{verbatim}
-so the two assets have a strong negative correlation of about $-0.90$. That estimate rests on only four pairs of returns, however, and a correlation estimated from so few observations is very imprecise: the standard Fisher-$z$ 95\% confidence interval runs from about $-0.998$ to $+0.467$, wide enough to include zero and even a moderately positive correlation. The example is chosen so that every number can be checked by hand, not as evidence about any real pair of assets, and Chapter 12 returns to the damage that this kind of estimation error does to portfolio optimization. The variance of an equally weighted two-asset portfolio is given by
-\begin{equation*}
-\sigma_p^2 = w_A^2 \sigma_A^2 + w_B^2 \sigma_B^2 + 2 w_A w_B \sigma_{AB},
-\end{equation*}
+so the two assets have a strong negative correlation of about $-0.90$\index{correlation}. That estimate rests on only four pairs of returns, however, and is very imprecise: the standard Fisher-$z$ 95\% confidence interval runs from about $-0.998$ to $+0.467$, wide enough to include zero and even a moderately positive correlation. The example is chosen so that every number can be checked by hand, not as evidence about any real pair of assets; Chapter~\chnum{portfolio} returns to the damage this kind of estimation error does to portfolio optimization\index{covariance matrix!estimation error}. The variance of an equally weighted two-asset portfolio is given by\index{portfolio variance}
+\begin{equation}
+\sigma_p^2 = w_A^2 \sigma_A^2 + w_B^2 \sigma_B^2 + 2 w_A w_B \sigma_{AB},\label{eq:python-portfolio-variance}
+\end{equation}
 and substituting $w_A = w_B = 0.5$, $\sigma_A^2 = 0.000414$, $\sigma_B^2 = 0.000118$, and $\sigma_{AB} = -0.000198$ gives
 \begin{equation*}
 \sigma_p^2 = 0.25(0.000414) + 0.25(0.000118) + 2(0.25)(-0.000198) = 0.000034,
 \end{equation*}
-so $\sigma_p = \sqrt{0.000034} \approx 0.58\%$, exactly matching the value computed directly from the portfolio return series. This equivalence, between the formula and the code, is a useful checkpoint: whenever a hand-derived formula and a direct computation on the data disagree, there is a bug somewhere, either in the formula or in the code, and reconciling the two is one of the most valuable debugging habits a quantitative analyst can build.
+so $\sigma_p = \sqrt{0.000034} \approx 0.58\%$, matching the value computed directly from the portfolio return series. Agreement between the formula and the code is a useful checkpoint: whenever a hand-derived formula and a direct computation disagree, there is a bug in one of them, and reconciling the two is one of the most valuable debugging habits a quantitative analyst can build.
 
-The ability to conduct such analyses quickly, and to extend them immediately to many more assets and much longer histories, is one reason Python is widely used in finance. It allows researchers to iterate quickly, test ideas, and communicate results in a reproducible way. In a domain where decisions are often made under time pressure, this speed matters.
+Running such analyses quickly, and extending them to many more assets and longer histories, is one reason Python is widely used in finance: researchers can iterate, test ideas, and communicate results reproducibly, which matters where decisions are made under time pressure.
 
 \subsection{Scaling Up: From Two Assets to a Small Portfolio Universe}
 
-The two-asset example above was deliberately small so that every number could be checked by hand. The code, however, is written in a way that scales to any number of assets without modification, which is worth demonstrating explicitly. Adding a third asset, AssetC, requires only adding a column to the original DataFrame:
+The two-asset example was kept small so that every number could be checked by hand, but the code scales to any number of assets without modification. Adding a third asset, AssetC, requires only a new column in the original DataFrame:
 
 \begin{verbatim}
 prices["AssetC"] = [200.00, 198.00, 202.00, 199.00, 203.00]
@@ -609,7 +469,7 @@ print(returns3.round(4))
 # 2024-01-08 -0.0096  0.0200  0.0201
 \end{verbatim}
 
-Not a single line of the return, covariance, or portfolio-variance calculation needs to change; \texttt{pct\_change()}, \texttt{.cov()}, and matrix multiplication all operate the same way regardless of how many columns the DataFrame has:
+No line of the return, covariance, or portfolio-variance calculation changes; \texttt{pct\_change()}, \texttt{.cov()}, and matrix multiplication work the same way however many columns the DataFrame has:
 
 \begin{verbatim}
 weights3 = np.array([1/3, 1/3, 1/3])
@@ -626,12 +486,12 @@ print(f"Equal-weighted 3-asset portfolio volatility: {np.sqrt(port_var3):.4f}")
 # Equal-weighted 3-asset portfolio volatility: 0.0030
 \end{verbatim}
 
-The expression \texttt{weights3 @ cov3.values @ weights3} is the matrix form of the portfolio variance formula, $w^\top \Sigma w$, which Section 2.6.3 restates for $n$ assets, and it works identically whether $w$ has 2, 3, or 200 entries. This is the practical payoff of writing analysis code in terms of vectors and matrices rather than named variables for each individual asset: a script built this way for a two-asset illustration is already, without any rewriting, the same script a researcher would use on a portfolio of hundreds of securities, which is the setting Chapter 12's portfolio optimization methods are built to handle.
+The expression \texttt{weights3 @ cov3.values @ weights3} is the matrix form of the portfolio variance formula\index{portfolio variance}, $w^\top \Sigma w$, which Section~\ref{sec:python-descriptive-stats} restates for $n$ assets, and it works identically whether $w$ has 2, 3, or 200 entries. This is the payoff of writing analysis code in vectors and matrices rather than a named variable per asset: a script built for a two-asset illustration is, without rewriting, the script a researcher would run on hundreds of securities, the setting Chapter~\chnum{portfolio}'s optimization methods are built for.
 
-\subsubsection*{Object-Oriented Programming: A Reusable \texttt{Portfolio} Class}\index{Object-Oriented Programming}
+\subsubsection*{Object-Oriented Programming: A Reusable \texttt{Portfolio} Class}\index{object-oriented programming}
 
-The procedural style used throughout this chapter, a sequence of variable assignments and function calls, works well for a single, one-off analysis, but repeating the same mean, volatility, and variance calculations for every new portfolio a researcher wants to evaluate invites the kind of copy-paste duplication Section~\ref{sec:vectorization-performance}'s performance discussion and this chapter's reproducibility section both warn against.
-Object-oriented programming addresses this with a \texttt{class}: a template, defined once, that bundles a set of related data (here, a portfolio's returns and weights) together with the functions, called \emph{methods} when they belong to a class, that operate on that data, so that every new portfolio can be built from the same reusable blueprint instead of copying and re-editing the same calculations by hand each time:
+The procedural style used so far, a sequence of variable assignments and function calls, works for a one-off analysis. Repeating the same mean, volatility, and variance calculations for every new portfolio, however, invites the copy-paste duplication that this chapter's reproducibility section warns against.
+Object-oriented programming addresses this with a \texttt{class}\index{object-oriented programming!Portfolio class}: a template, defined once, that bundles related data (here, a portfolio's returns and weights) with the functions that operate on it, called \emph{methods}. Every new portfolio is then built from the same reusable blueprint rather than by copying and re-editing calculations:
 
 \begin{verbatim}
 class Portfolio:
@@ -656,7 +516,7 @@ class Portfolio:
         return self.weights @ cov @ self.weights
 \end{verbatim}
 
-Instantiating this class on the same two-asset data used throughout the chapter reproduces every number already computed by hand,
+Instantiating this class on the two-asset data reproduces every number already computed by hand,
 \begin{verbatim}
 portfolio = Portfolio(returns, weights)
 print(round(portfolio.mean, 4), round(portfolio.volatility, 4))
@@ -664,12 +524,12 @@ print(round(portfolio.mean, 4), round(portfolio.volatility, 4))
 print(round(portfolio.variance_from_formula(), 6))
 # 3.4e-05
 \end{verbatim}
-but the real payoff appears when evaluating the three-asset portfolio built above: \texttt{Portfolio(returns3, weights3)} produces the correct mean, volatility, and formula-based variance for the three-asset case using the identical class definition, with no new code written at all.
-This is precisely what ``scaling up'' means in an object-oriented codebase: the \texttt{Portfolio} class is a single, tested abstraction that every future portfolio, of any size, can reuse, rather than a script that must be copied and re-edited each time a new set of assets needs evaluating, the kind of reusable component a production research or trading system is built from.
+but the payoff appears with the three-asset portfolio: \texttt{Portfolio(returns3, weights3)} produces the correct mean, volatility, and formula-based variance from the same class definition, with no new code.
+This is what ``scaling up'' means in an object-oriented codebase: the \texttt{Portfolio} class is a single, tested abstraction that every future portfolio, of any size, can reuse, the kind of reusable component a production research or trading system is built from.
 
-\subsection{Working with Time Series and Financial Data}
+\subsection{Working with Time Series and Financial Data}\index{time series!financial data}
 
-An analyst comparing two securities that trade on different exchanges, or trying to line up daily prices with a monthly economic release, quickly runs into a problem ordinary rows and columns do not solve on their own: which date does each observation actually belong to, and what should happen when one series has an entry for a day the other is missing? Many financial datasets are time series, meaning that observations are indexed by time and ordered sequentially. Stock prices, interest rates, exchange rates, and macroeconomic indicators all arrive as time-dependent data. Working with such data requires careful handling of date indexes, alignment, and missing observations. In Python, pandas is particularly useful because it provides a time-indexed data structure that makes these operations natural, including resampling to a different frequency and computing rolling statistics:
+An analyst comparing two securities that trade on different exchanges, or lining up daily prices with a monthly economic release, meets a problem that rows and columns alone do not solve: which date does each observation belong to, and what happens when one series has an entry for a day the other lacks? Many financial datasets are time series, with observations indexed by time and ordered sequentially: stock prices, interest rates, exchange rates, and macroeconomic indicators. Such data require careful handling of date indexes, alignment, and missing observations. pandas provides a time-indexed data structure that makes these operations natural\index{pandas!time-series indexing}, including resampling to a different frequency and computing rolling statistics\index{volatility!realized}:
 
 \begin{verbatim}
 rolling_vol = returns["AssetA"].rolling(window=2).std()
@@ -681,16 +541,140 @@ print(rolling_vol.round(4))
 # dtype: float64
 \end{verbatim}
 
-A common workflow is to import historical prices, convert them into a time series, compute returns, and then study autocorrelation, volatility clustering, and trends. These steps are essential because many financial models depend on the idea that the future is not independent of the past. Yet the time dependence in financial data is often subtle and nonstationary, which makes careful analysis, and the topics of Chapter 7, necessary.
+A common workflow imports historical prices, converts them into a time series, computes returns, and then studies autocorrelation, volatility clustering, and trends. Many financial models depend on the future not being independent of the past, yet that dependence is often subtle and nonstationary, which is why Chapter~\chnum{timeseries} is needed.
+
+\subsection{Returns, Risk, and Performance in pandas}
+\label{sec:python-returns-risk}\index{performance metrics}
+
+Every statistic computed so far is a daily figure on simple returns from unadjusted prices. A performance report quotes something else: returns aggregated over time, risk and return stated per year, return per unit of risk, and the worst loss along the way, all computed from prices corrected for splits and dividends. This section defines each of these on the running example; later chapters use them without re-deriving them.
+
+\subsubsection*{Simple and Log Returns}
+
+The log (continuously compounded) return\index{returns!logarithmic} over period $t$ is
+\begin{equation}
+r_t = \ln\frac{P_t}{P_{t-1}} = \ln(1 + R_t),\label{eq:python-log-return}
+\end{equation}
+where $R_t$ is the simple return of Equation~\eqref{eq:python-simple-return}. The two are close for small moves, $r_t \approx R_t - R_t^2/2$, but they aggregate differently. Log returns add over time, because $\sum_t r_t = \ln(P_T/P_0)$, while simple returns compound: $\prod_t(1+R_t) - 1 = P_T/P_0 - 1$. Simple returns, on the other hand, add across assets: a portfolio's simple return is exactly the weighted average $\sum_i w_i R_{i,t}$ of its holdings' simple returns, and no such identity holds for log returns.
+
+\begin{verbatim}
+log_returns = np.log1p(returns)          # r_t = ln(1 + R_t)
+print(log_returns.round(6))
+print(round(log_returns["AssetA"].sum(), 6), round(np.log(103 / 100), 6))
+print(round(returns["AssetA"].sum(), 6),
+      round((1 + returns["AssetA"]).prod() - 1, 6))
+
+day1 = returns.iloc[0]                   # weights = [0.5, 0.5]
+print(round(day1 @ weights, 6), round(np.log1p(day1) @ weights, 6),
+      round(np.log1p(day1 @ weights), 6))
+#               AssetA    AssetB
+# 2024-01-03  0.019803  0.009950
+# 2024-01-04 -0.009852  0.014937
+# 2024-01-05  0.029270 -0.005085
+# 2024-01-08 -0.009662  0.019803
+# 0.029559 0.029559
+# 0.030284 0.03
+# 0.015 0.014876 0.014889
+\end{verbatim}
+
+AssetA's four log returns sum to exactly $\ln(103/100) = 0.029559$, while its four simple returns sum to $0.030284$, overstating the true 3.00\% gain that compounding them recovers. On the first day the portfolio's simple return, $1.50\%$, is exactly the average of the two assets' simple returns; the average of their log returns, $0.014876$, misses the portfolio's own log return, $0.014889$. Hence the working rule this book follows: log returns for aggregating one series through time and for the statistical models of Chapter~\chnum{timeseries}, simple returns whenever assets are combined into a portfolio.
+
+\subsubsection*{Annualization and the Square-Root-of-Time Rule}
+
+Returns and volatilities are conventionally quoted per year, using about 252 trading days. If daily returns have mean $\mu_d$ and standard deviation $\sigma_d$, then\index{returns!annualizing}\index{volatility!annualized}
+\begin{equation}
+\mu_{\text{ann}} = 252\,\mu_d, \qquad \sigma_{\text{ann}} = \sqrt{252}\,\sigma_d.\label{eq:python-annualize}
+\end{equation}
+The mean scales with time because expected returns add; the standard deviation scales with the square root of time\index{square-root-of-time rule} because the variance of a sum of 252 \emph{independent} daily returns with a common variance is $252\sigma_d^2$. Both scalings lean on assumptions. The rule is exact for log returns that are independent and identically distributed; it is wrong to the extent that daily returns are autocorrelated (positive autocorrelation makes $\sqrt{252}\,\sigma_d$ understate annual risk, negative autocorrelation overstate it) or that volatility itself clusters in calm and turbulent spells, the subject of Chapter~\chnum{timeseries}'s GARCH models. It is a convention for comparing numbers on a common scale, not a forecast of next year's range.
+
+\subsubsection*{The Sharpe Ratio}
+
+Return alone says nothing about the risk taken to earn it. The Sharpe ratio\index{Sharpe ratio} divides the average excess return over the risk-free rate\index{risk-free rate} $r_f$ by the volatility of returns,
+\begin{equation}
+\text{SR} = \frac{\bar R - r_f}{\sigma},\label{eq:python-sharpe}
+\end{equation}
+with every quantity measured at the same frequency. A daily Sharpe ratio is annualized by multiplying by $\sqrt{252}$, which follows from Equation~\eqref{eq:python-annualize} and inherits its independence assumption. For orientation, the whole US stock market has earned an annualized Sharpe ratio of roughly $0.4$ over the past century, and a strategy that sustains $1$ after costs is considered good. Chapter~\chnum{portfolio} builds portfolio choice around this ratio, and Chapter~\chnum{algotrading} shows how easily a search over many strategies manufactures a high one by luck.
+
+\subsubsection*{Maximum Drawdown}
+
+Volatility treats a gain and a loss of the same size alike, and it ignores the order in which they occur. An investor experiences the path: how far the account falls from its previous high before it recovers. If $V_t$ is the value of \$1 invested at the start, the maximum drawdown\index{maximum drawdown} is the largest such fall,
+\begin{equation}
+\text{MDD} = \max_{t}\,\frac{\max_{s\le t} V_s - V_t}{\max_{s \le t} V_s},\label{eq:python-max-drawdown}
+\end{equation}
+a path-dependent measure that Chapter~\chnum{marketrisk} develops alongside Value at Risk.
+
+\weheading{\subsubsection*}{python-performance}{Performance of AssetA, AssetB, and the Portfolio}
+\index{performance metrics!Sharpe ratio}\index{performance metrics!drawdown}
+
+The code below puts the three measures together for the two assets and the equally weighted portfolio of Section~\ref{sec:worked-example}, with the risk-free rate set to zero for this five-day illustration, as Chapter~\chnum{portfolio} also does:
+
+\begin{verbatim}
+TRADING_DAYS = 252
+series = pd.concat([returns, portfolio_returns.rename("Portfolio")], axis=1)
+perf = pd.DataFrame({"mean_d": series.mean(), "vol_d": series.std(ddof=1)})
+perf["mean_a"] = perf["mean_d"] * TRADING_DAYS
+perf["vol_a"] = perf["vol_d"] * np.sqrt(TRADING_DAYS)
+perf["SR_d"] = perf["mean_d"] / perf["vol_d"]        # risk-free rate set to 0
+perf["SR_a"] = perf["SR_d"] * np.sqrt(TRADING_DAYS)
+print(perf.round(4))
+print(round(np.sqrt(TRADING_DAYS / len(series)), 2))  # rough std. error of SR_a
+#            mean_d   vol_d  mean_a   vol_a    SR_d     SR_a
+# AssetA     0.0076  0.0203  1.9079  0.3229  0.3722   5.9078
+# AssetB     0.0100  0.0108  2.5186  0.1721  0.9218  14.6329
+# Portfolio  0.0088  0.0058  2.2132  0.0925  1.5064  23.9138
+# 7.94
+
+def max_drawdown(r):
+    wealth = np.concatenate([[1.0], (1 + r).cumprod().to_numpy()])
+    running_peak = np.maximum.accumulate(wealth)
+    return ((running_peak - wealth) / running_peak).max()
+
+for name in series:
+    print(f"{name:9s} maximum drawdown: {max_drawdown(series[name]):.2%}")
+# AssetA    maximum drawdown: 0.98%
+# AssetB    maximum drawdown: 0.51%
+# Portfolio maximum drawdown: 0.00%
+\end{verbatim}
+
+Every entry can be checked by hand. AssetA's daily volatility of $2.03\%$ annualizes to $2.03\% \times \sqrt{252} = 32.3\%$, a plausible figure for a single stock. Its daily mean of $0.76\%$ annualizes to $191\%$, and the portfolio's daily Sharpe ratio of $0.88\%/0.58\% = 1.51$, the figure Chapter~\chnum{portfolio} quotes, annualizes to $1.51 \times \sqrt{252} = 23.9$. Those last two numbers are arithmetically correct and economically meaningless. Four observations cannot pin down a mean, and the standard error of an annualized Sharpe ratio is roughly $1/\sqrt{\text{years of data}}$, here $\sqrt{252/4} = 7.94$, so even $23.9$ is barely three standard errors from zero; Chapter~\chnum{algotrading} derives this standard error and shows how badly it bites on far longer samples. The drawdowns tell the same diversification story as the volatilities: AssetA's worst fall is from \$102 to \$101, $0.98\%$; AssetB's is from \$51.26 to \$51.00, $0.51\%$; and the portfolio, which rose on all four days, never fell below a previous high at all.
+
+\subsubsection*{Adjusted versus Raw Prices}
+\index{price adjustment for corporate actions}
+
+A raw closing price series records what a share traded for, which changes for reasons that are not gains or losses to the holder. In a 2-for-1 stock split each share becomes two, and the price halves overnight; on an ex-dividend date the price drops by roughly the dividend\index{dividend}, which the holder receives in cash. Returns computed from raw prices count both as losses. Data vendors therefore publish an adjusted price series in which every price before such an event is multiplied by a factor: the split ratio (0.5 for a 2-for-1 split), and $1 - D/P$ for a dividend $D$ paid after a close of $P$. Yahoo Finance, for example, applies these split and dividend multipliers following the standards of the Center for Research in Security Prices (CRSP). The code below applies both adjustments to AssetA, first imagining that its last two prices had been reported after a 2-for-1 split, then that the \$1 fall on January 8 was the stock going ex-dividend on a \$1.00 dividend:
+
+\begin{verbatim}
+raw_a = pd.Series([100.00, 102.00, 101.00, 52.00, 51.50], index=prices.index)
+split_factor = pd.Series([0.5, 0.5, 0.5, 1.0, 1.0], index=prices.index)
+adj_a = raw_a * split_factor             # 2-for-1 split before the Jan 5 open
+print(pd.DataFrame({"raw": raw_a.pct_change(),
+                    "adjusted": adj_a.pct_change()}).dropna().round(4))
+
+dividend = 1.00                          # AssetA goes ex-dividend on Jan 8
+div_factor = 1 - dividend / 104.00       # applied to every close before then
+adj_close = prices["AssetA"] * np.where(prices.index < "2024-01-08",
+                                        div_factor, 1.0)
+print(round(div_factor, 6), adj_close.round(4).tolist())
+print(round(103.00 / 104.00 - 1, 4),
+      round(adj_close.iloc[-1] / adj_close.iloc[-2] - 1, 4))
+#                raw  adjusted
+# 2024-01-03  0.0200    0.0200
+# 2024-01-04 -0.0098   -0.0098
+# 2024-01-05 -0.4851    0.0297
+# 2024-01-08 -0.0096   -0.0096
+# 0.990385 [99.0385, 101.0192, 100.0288, 103.0, 103.0]
+# -0.0096 0.0
+\end{verbatim}
+
+The raw series shows a $48.5\%$ crash on January 5 that never happened to anyone's wealth; the adjusted series recovers AssetA's true $2.97\%$ gain. In the dividend case the raw price return on January 8 is $-0.96\%$, but the holder's total return, $(103 + 1)/104 - 1$, is zero, which the adjusted series shows. Because the factor multiplies all earlier prices by the same constant, every earlier return is unchanged. Only the level of the old prices moves, and it moves again with each new dividend, which is why an adjusted price downloaded today will not match one downloaded last year even though the returns agree. Use adjusted prices for returns and performance measures, and raw prices for anything tied to the actual traded price, such as an order's limit price or an option's strike. The \texttt{yfinance} library used in this chapter's last exercise returns split- and dividend-adjusted prices in its \texttt{Close} column by default (\texttt{auto\_adjust=True}); pass \texttt{auto\_adjust=False} to see the raw close alongside the adjusted one.
 
 \section{Code That Holds Up}
 
 Code that produces the right number once is not the same as code that can be trusted, rerun, and handed to somebody else. This part covers performance, the errors financial data reliably provokes, the summary statistics worth computing, and the practices that make a result reproducible.
 
 \subsection{Why Vectorization Matters: A Performance Comparison}
-\label{sec:vectorization-performance}
+\label{sec:vectorization-performance}\index{vectorization!performance comparison}
 
-Section~\ref{sec:vectorization} claimed that vectorized array operations are faster than an equivalent Python-level loop; it is worth demonstrating this claim rather than only asserting it. Consider computing the cumulative growth of \$1 across 100,000 simulated daily returns, once with an explicit loop and once with NumPy's vectorized \texttt{cumprod}:
+Section~\ref{sec:vectorization} claimed that vectorized array operations are faster than an equivalent Python-level loop. To demonstrate it, consider computing the cumulative growth of \$1 across 100,000 simulated daily returns, once with an explicit loop and once with NumPy's vectorized \texttt{cumprod}:
 
 \begin{verbatim}
 import time
@@ -715,12 +699,12 @@ print(f"Loop: {loop_time:.4f}s, Vectorized: {vector_time:.4f}s, "
 # Loop: 0.0394s, Vectorized: 0.0010s, speedup: 39x
 \end{verbatim}
 
-Both approaches produce identical final values, since they compute the same mathematical quantity, but the vectorized version is roughly 39 times faster on this test (the exact figure is machine-dependent and will vary, but a factor of 10 to 100 is typical for this kind of calculation).
-The reason is that the Python-level loop pays interpreter overhead, argument checking, dynamic type dispatch, on every single one of the 100,000 iterations, while \texttt{cumprod} executes the equivalent loop once, in compiled C code, over contiguous memory. This gap widens, not narrows, as the dataset grows, which is precisely why Section 2.7's discussion of performance at scale emphasizes vectorized NumPy and pandas operations as the default approach, reserving explicit loops for calculations, like the sequential compounding example in Section 2.2.3, that are genuinely path-dependent and cannot be vectorized.
+Both approaches produce identical final values, but the vectorized version is roughly 39 times faster on this test (the figure is machine-dependent, but a factor of 10 to 100 is typical for this kind of calculation).
+The Python-level loop pays interpreter overhead (argument checking, dynamic type dispatch) on each of the 100,000 iterations, while \texttt{cumprod} executes the equivalent loop once, in compiled C code, over contiguous memory. The gap widens as the dataset grows, which is why Section~\ref{sec:python-challenges} treats vectorized NumPy and pandas operations as the default, reserving explicit loops for path-dependent calculations, like the sequential compounding example in Section~\ref{sec:python-control-flow}, that cannot be vectorized.
 
-\subsection{Handling Errors and Common Pitfalls}
+\subsection{Handling Errors and Common Pitfalls}\index{Python!error handling}
 
-Financial data pipelines fail constantly, in small, mundane ways: a data feed returns a missing value, a ticker is misspelled, a division produces infinity because a denominator was zero. Python's \texttt{try}/\texttt{except} block lets a program catch such errors and respond deliberately rather than crashing outright:
+Financial data pipelines fail constantly in small, mundane ways: a data feed returns a missing value, a ticker is misspelled, a division produces infinity because a denominator was zero. Python's \texttt{try}/\texttt{except} block lets a program catch such errors and respond deliberately rather than crash:
 
 \begin{verbatim}
 def safe_return(price_now, price_before):
@@ -735,18 +719,19 @@ print(safe_return(105.0, 0.0))
 # nan
 \end{verbatim}
 
-Returning \texttt{nan} (not-a-number) rather than letting the program crash allows downstream code, and pandas in particular, to continue processing the rest of a dataset while clearly marking the problematic observation, exactly like the missing-value handling in Section~\ref{sec:data-cleaning}. A few pitfalls recur often enough in financial Python code to be worth naming explicitly:
+Returning \texttt{nan} (not-a-number) rather than crashing lets downstream code, and pandas in particular, continue processing the rest of a dataset while marking the problematic observation, like the missing-value handling in Section~\ref{sec:data-cleaning}. A few pitfalls recur often in financial Python code:
 
 \begin{itemize}
-    \item \textbf{Silent \texttt{NaN} propagation.} Almost any arithmetic operation involving \texttt{NaN} produces another \texttt{NaN} rather than an error, so a single bad data point can silently spread through an entire calculation (a covariance matrix, for example) without any visible warning.
-    \item \textbf{Comparing floating-point numbers for exact equality.} Because of how computers represent decimal numbers, a calculation that should mathematically equal \texttt{0.3} may instead equal \texttt{0.30000\allowbreak 00000\allowbreak 00000\allowbreak 04}; use a tolerance-based comparison (\texttt{np.isclose}) rather than \texttt{==} when checking floating-point results.
-    \item \textbf{Mutating a DataFrame while iterating over it.} Modifying rows of a DataFrame inside a loop over that same DataFrame can produce confusing, order-dependent results; it is almost always better to build a new column or DataFrame with a vectorized expression instead.
-    \item \textbf{Off-by-one errors in lagged calculations.} Return, rolling-window, and lag calculations are especially prone to off-by-one mistakes, using today's price where yesterday's was intended, which can silently introduce look-ahead bias into a backtest, a problem Section 2.7 takes up below.
+    \item \textbf{Silent \texttt{NaN} propagation.}\index{missing data} Almost any arithmetic operation involving \texttt{NaN} produces another \texttt{NaN} rather than an error, so a single bad data point can spread through an entire calculation (a covariance matrix, for example) without warning.
+    \item \textbf{Comparing floating-point numbers for exact equality.} Because of how computers represent decimal numbers, a calculation that should equal \texttt{0.3} may instead equal \texttt{0.30000\allowbreak 00000\allowbreak 00000\allowbreak 04}; use a tolerance-based comparison (\texttt{np.isclose}) rather than \texttt{==} when checking floating-point results.
+    \item \textbf{Mutating a DataFrame while iterating over it.} Modifying rows of a DataFrame inside a loop over that same DataFrame can produce confusing, order-dependent results; it is almost always better to build a new column or DataFrame with a vectorized expression.
+    \item \textbf{Off-by-one errors in lagged calculations.} Return, rolling-window, and lag calculations are prone to off-by-one mistakes, such as using today's price where yesterday's was intended, which can silently introduce look-ahead bias into a backtest\index{look-ahead bias} (Section~\ref{sec:python-challenges}).
 \end{itemize}
 
 \subsection{Descriptive Statistics and Portfolio Analytics}
+\label{sec:python-descriptive-stats}\index{descriptive statistics}
 
-A return series that has been imported, cleaned, and plotted still leaves an obvious question unanswered: how risky does this asset actually look, in numbers precise enough to compare against another asset or feed into a portfolio calculation? Once data are imported and cleaned, Python can be used to calculate descriptive statistics such as averages, standard deviations, skewness, and kurtosis. These statistics summarize the distribution of returns and provide a starting point for risk analysis:
+A return series that has been imported, cleaned, and plotted still leaves an obvious question: how risky does this asset look, in numbers precise enough to compare against another asset or feed into a portfolio calculation? Descriptive statistics such as averages, standard deviations, skewness, and kurtosis\index{descriptive statistics!skewness}\index{descriptive statistics!kurtosis} summarize the distribution of returns and are the starting point for risk analysis:
 
 \begin{verbatim}
 summary = returns.describe().round(4)
@@ -762,28 +747,28 @@ print(summary)
 # max    0.0297  0.0200
 \end{verbatim}
 
-For a portfolio, one may also compute correlations between assets, covariance matrices, and portfolio volatility, just as in the worked example above. These quantities are central to diversification and asset allocation, and they generalize directly to portfolios with many assets: with $n$ assets, weights $w \in \mathbb{R}^n$, and covariance matrix $\Sigma$, portfolio variance is $\sigma_p^2 = w^\top \Sigma w$, which is precisely the two-asset formula written in matrix form.
+For a portfolio, one also computes correlations, covariance matrices, and portfolio volatility, as in the worked example above. These quantities are central to diversification and asset allocation, and they generalize directly to many assets: with $n$ assets, weights $w \in \mathbb{R}^n$, and covariance matrix $\Sigma$, portfolio variance is $\sigma_p^2 = w^\top \Sigma w$, the two-asset formula in matrix form.
 
-The advantage of Python here is that the same code applies unchanged whether there are 2 assets or 200. A single script can compute rolling volatilities, drawdowns, and Sharpe-like performance measures across a whole universe of securities. This efficiency is crucial when a researcher wants to compare strategies, evaluate risk, or test whether a signal remains useful after transaction costs.
+The same code applies unchanged whether there are 2 assets or 200. A single script can compute rolling volatilities and the annualized volatilities, Sharpe ratios, and drawdowns of Section~\ref{sec:python-returns-risk} across a whole universe of securities, which matters when a researcher compares strategies, evaluates risk, or tests whether a signal survives transaction costs.
 
-\subsection{Reproducibility, Version Control, and Good Practice}
+\subsection{Reproducibility, Version Control, and Good Practice}\index{reproducibility}
 
-One of the most important lessons in computational finance is that analysis must be reproducible. A model or result that cannot be rerun by another analyst, or by the same analyst six months later, is of limited value. Python supports reproducibility through scripts, notebooks, and package management. A clear workflow includes:
+Analysis in computational finance must be reproducible. A result that cannot be rerun by another analyst, or by the same analyst six months later, is of limited value. Python supports reproducibility through scripts, notebooks, and package management. A clear workflow includes:
 
 \begin{itemize}
-    \item Recording exact package versions, for example in a \texttt{requirements.txt} or \texttt{environment.yml} file, so that a colleague (or a future you) can recreate the same environment.
+    \item Recording exact package versions\index{reproducibility!environments}, for example in a \texttt{requirements.txt} or \texttt{environment.yml} file, so that a colleague (or a future you) can recreate the same environment.
     \item Saving raw data separately from cleaned or derived data, so that a cleaning step can be re-run or audited without re-fetching from the original source.
     \item Documenting transformations, ideally in code and comments rather than in a separate document that can drift out of sync with the script.
     \item Separating analysis from presentation, so that a notebook used to explore an idea is not the same artifact used to report a result to a manager or regulator.
-    \item Using version control (such as Git) to track changes to code over time, including the ability to identify exactly which version of the code produced a given historical result.
-    \item Fixing random seeds (as in \texttt{np.random.default\_rng(0)} in Section~\ref{sec:vectorization-performance}) whenever a calculation involves simulation, so that two runs of the same script on the same data produce identical results rather than only similar ones.
-    \item Writing small checks directly into a script or notebook, such as the put-call parity check used in Chapter 5 or the accounting-identity check used in Chapter 4, so that a silent bug is caught immediately rather than discovered much later when it has already propagated into a report or a trading decision.
+    \item Using version control (such as Git)\index{version control}\index{reproducibility!version control} to track changes to code over time, including which version of the code produced a given historical result.
+    \item Fixing random seeds\index{reproducibility!random seeds} (as in \texttt{np.random.default\_rng(0)} in Section~\ref{sec:vectorization-performance}) whenever a calculation involves simulation, so that two runs of the same script on the same data produce identical results.
+    \item Writing small checks into a script or notebook, such as the put-call parity check of Chapter~\chnum{valuation} or the accounting-identity check of Chapter~\chnum{statements}, so that a silent bug is caught immediately rather than after it has propagated into a report or a trading decision.
 \end{itemize}
 
-\subsection{Unit Testing: Making Checks Automatic}\index{Unit Testing}
+\subsection{Unit Testing: Making Checks Automatic}\index{unit testing}
 \label{sec:unit-testing}
 
-The ``small checks'' in the list above become far more valuable once they are written as an actual, automatically run test rather than a one-off \texttt{print} statement an analyst has to remember to inspect. A unit test is simply a function that exercises a piece of code and uses Python's \texttt{assert} statement to fail loudly if the result is not what is expected. Section~\ref{sec:worked-example}'s own observation, that the portfolio-variance formula and the direct computation from the return series agree, is exactly the kind of invariant worth encoding this way:
+The ``small checks'' above become far more valuable once written as automatically run tests rather than one-off \texttt{print} statements an analyst must remember to inspect. A unit test is a function that exercises a piece of code and uses Python's \texttt{assert} statement to fail loudly if the result is not what is expected. Section~\ref{sec:worked-example}'s observation that the portfolio-variance formula and the direct computation agree is the kind of invariant worth encoding this way:
 
 \begin{verbatim}
 def test_portfolio_variance_matches_formula():
@@ -803,70 +788,75 @@ test_portfolio_variance_matches_formula()
 # Test passed: formula-based and direct portfolio variance agree.
 \end{verbatim}
 
-The specific tolerance, $10^{-10}$, matters: it is loose enough to absorb ordinary floating-point rounding but tight enough to catch a genuine error, for example an accidentally transposed covariance term or a forgotten factor of two on the cross term, the kind of subtle bug that otherwise slips through silently. Python's own \texttt{statistics.mean} offers an example of how quietly such bugs arise: handed a list of NumPy integers such as prices of 100, 101, and 103, it returns the truncated integer 101 rather than 101.3333, with no error or warning, a wrong answer that only a check against an independently computed value, here \texttt{np.mean}, would catch.
-A single test like this one costs a few lines to write and runs in a fraction of a second, but it converts a fact an analyst has verified once, by hand, into a fact that is re-verified automatically every single time the surrounding code changes, catching a regression immediately rather than only when a downstream number looks suspicious.
-Production financial codebases typically collect dozens or hundreds of such tests, run automatically before any code change is accepted, using a dedicated testing framework such as \texttt{pytest} rather than calling test functions manually as shown here, but the underlying principle, encode a known-correct result as an executable check rather than a comment, is the same at any scale.
+The tolerance, $10^{-10}$, is loose enough to absorb ordinary floating-point rounding but tight enough to catch a real error, such as a transposed covariance term or a forgotten factor of two on the cross term. Python's own \texttt{statistics.mean} shows how quietly such bugs arise: handed a list of NumPy integers such as prices of 100, 101, and 103, it returns the truncated integer 101 rather than 101.3333, with no error or warning, a wrong answer that only a check against an independently computed value, here \texttt{np.mean}, would catch.
+A test like this costs a few lines and runs in a fraction of a second, but it turns a fact verified once by hand into one re-verified every time the surrounding code changes, catching a regression immediately rather than when a downstream number looks suspicious.
+Production financial codebases collect dozens or hundreds of such tests, run automatically before any code change is accepted with a framework such as \texttt{pytest}, but the principle is the same at any scale: encode a known-correct result as an executable check rather than a comment.
 
-Reproducibility is not a bureaucratic nicety layered on top of the real analytical work; in a financial setting it is frequently a legal and professional requirement. A regulator investigating a trading loss, an auditor reviewing a valuation, or a portfolio manager questioning a backtested strategy will all expect to be able to trace a reported number back to the exact code and data that produced it. A workflow that cannot support this kind of retrospective scrutiny is a liability regardless of how sophisticated its underlying models are.
+Reproducibility is not a bureaucratic nicety; in finance it is often a legal and professional requirement. A regulator investigating a trading loss, an auditor reviewing a valuation, or a portfolio manager questioning a backtest will expect to trace a reported number back to the code and data that produced it, possibly months or years after the fact. A workflow that cannot support this scrutiny is a liability however sophisticated its models.
 
-Good practice also means writing code that is understandable. Financial projects often involve several collaborators, long time horizons, and changing requirements. A readable function, a clear variable name, and a documented transformation can prevent errors and make the analysis easier to audit. In a regulated environment, this discipline is not optional; it is a professional necessity, since a regulator or auditor may ask exactly how a number was produced months or years after the fact.
+Good practice also means writing code that others can understand. Financial projects often involve several collaborators, long time horizons, and changing requirements, and a readable function, a clear variable name, and a documented transformation prevent errors and make the analysis easier to audit.
 
 \section{Challenges in Applying Python to Financial Data}
+\label{sec:python-challenges}
 
-Several practical challenges arise repeatedly when Python is used for financial analysis, and they are worth naming explicitly before moving on to statistical and machine learning methods.
+Several practical challenges recur when Python is used for financial analysis.
 
 \textbf{Data quality and vendor discrepancies.} Different data vendors can report slightly different prices, adjust for corporate actions differently, or use different conventions for holidays and time zones. A workflow that silently trusts a single source can propagate vendor-specific errors into every downstream result.
 
-\textbf{Look-ahead and survivorship bias.} It is easy to accidentally use information that would not have been available at the time of a decision, for example by using a company's current list of index constituents to study its past performance, which silently excludes firms that were delisted or went bankrupt. Both issues can make a backtest look far more profitable than any strategy could actually have been in real time.
+\textbf{Look-ahead and survivorship bias.}\index{look-ahead bias}\index{survivorship bias} It is easy to use information that would not have been available at the time of a decision, for example by studying past performance with a company's current list of index constituents, which silently excludes firms that were delisted or went bankrupt. Both biases can make a backtest look far more profitable than any strategy could have been in real time.
 
-\textbf{Non-stationarity and changing data schemas.} Return distributions, volatility regimes, and even the format of vendor data feeds change over time. Code written for one period's data conventions may silently produce wrong answers, rather than an error, when applied to a later period with a slightly different schema.
+\textbf{Non-stationarity and changing data schemas.} Return distributions, volatility regimes, and even the format of vendor data feeds change over time. Code written for one period's conventions may silently produce wrong answers, rather than an error, on a later period with a slightly different schema.
 
-\textbf{Performance at scale.} A script that works well on five days of data for two assets, as in this chapter's example, may become far too slow when applied to years of tick-by-tick data across thousands of instruments. Vectorized NumPy and pandas operations help, but some tasks genuinely require more specialized tools, such as columnar file formats, database systems, or distributed computing frameworks.
+\textbf{Performance at scale.} A script that works on five days of data for two assets may be far too slow on years of tick-by-tick data across thousands of instruments. Vectorized NumPy and pandas operations help, but some tasks require more specialized tools, such as columnar file formats, database systems, or distributed computing frameworks.
 
-\textbf{Environment and dependency drift.} A notebook that runs correctly today may fail in a year if underlying libraries change their behavior or drop support for older syntax. This is why pinning dependency versions and periodically re-validating old code are standard practice in production financial systems.
+\textbf{Environment and dependency drift.} A notebook that runs correctly today may fail in a year if underlying libraries change their behavior or drop older syntax, which is why pinning dependency versions and periodically re-validating old code are standard practice in production financial systems.
 
-\textbf{Latency and real-time constraints.} Some applications, particularly in trading, require code to execute within milliseconds or microseconds. Python's convenience often comes at the cost of raw execution speed, which is why performance-critical components are sometimes implemented in compiled languages or accelerated with tools such as Numba or Cython, while Python remains the layer used for research, orchestration, and analysis.
+\textbf{Latency and real-time constraints.} Some applications, particularly in trading, require code to execute within milliseconds or microseconds. Python trades raw execution speed for convenience, so performance-critical components are sometimes written in compiled languages or accelerated with tools such as Numba or Cython, while Python remains the layer for research, orchestration, and analysis.
 
-\textbf{Dependency and library version conflicts.} A pandas or NumPy upgrade can silently change the default behavior of a function (for example, how missing values are handled in an aggregation), which means code that has not been re-tested against a new library version should not be assumed to still behave identically, even if it runs without raising an error.
+\textbf{Dependency and library version conflicts.} A pandas or NumPy upgrade can silently change a function's default behavior (for example, how an aggregation handles missing values), so code not re-tested against a new library version should not be assumed to behave identically, even if it runs without error.
 
-\textbf{The gap between exploratory and production code.} Code written quickly in a notebook to explore an idea is rarely suitable, unmodified, for a system that will run unattended in production; exploratory code typically lacks the error handling, logging, and automated testing that a production financial system requires, and treating the two as interchangeable is a common source of operational incidents.
+\textbf{The gap between exploratory and production code.} Code written quickly in a notebook to explore an idea is rarely suitable, unmodified, for a system that runs unattended in production. Exploratory code typically lacks the error handling, logging, and automated testing a production financial system requires, and treating the two as interchangeable is a common source of operational incidents.
 
-\section{Key Takeaways}
+\notocsection{Key Takeaways}
 
-Python is a practical and powerful tool for financial analysis because it supports efficient computation, flexible data handling, and reproducible workflows. The libraries in the Python ecosystem make it possible to move from raw market data to descriptive analysis, forecasting, and machine learning.
+Python is a practical tool for financial analysis because it supports efficient computation, flexible data handling, and reproducible workflows, and its libraries take an analyst from raw market data to descriptive analysis, forecasting, and machine learning.
 
-The chapter's worked example showed how a handful of pandas and NumPy operations, applied to just five days of prices, can reveal a meaningful diversification effect and how a formula derived on paper should match a direct computation on the data. For readers who aim to apply AI in finance, Python is not optional; it is a core capability, and the habits introduced here, vectorized computation, careful data cleaning, and reproducible workflows, scale directly to the much larger datasets used in later chapters.
+The worked example showed how a handful of pandas and NumPy operations on five days of prices reveal a meaningful diversification effect, and how a formula derived on paper should match a direct computation on the data. The habits introduced here (vectorized computation, careful data cleaning, reproducible workflows) scale directly to the much larger datasets of later chapters.
 
-A few distinctions from this chapter are worth restating because they recur, largely unchanged, in every later chapter. First, the choice between a loop and a vectorized operation is not a stylistic preference; it is a question of whether a calculation is independent across observations (vectorize it) or genuinely sequential, like the compounding balance example (a loop, or an equivalent closed-form formula, is required).
-Second, combining data from multiple sources, the \texttt{merge} and \texttt{groupby} operations in Section 2.4.2, is not a peripheral skill but a central one, since almost no real financial analysis works from a single, already-tidy table.
-Third, every code example in this chapter was written to be checked, either by hand, as with the four AssetA and AssetB returns, or by running the companion notebook and comparing outputs line by line; this habit of verifying rather than trusting a computation is the discipline that later chapters rely on when the calculations become too complex to check by hand at all, such as the maximum-likelihood-estimated GARCH model\index{GARCH model}s in Chapter 7 or the gradient-boosted trees in Chapter 6.
+Four distinctions recur, largely unchanged, in every later chapter. First, the choice between a loop and a vectorized operation is not a matter of style: it depends on whether a calculation is independent across observations (vectorize it) or sequential, like the compounding balance example (a loop, or an equivalent closed-form formula, is required).
+Second, a performance number is only as meaningful as the choices behind it: simple or log returns, adjusted or raw prices, and an annualization that assumes independent returns and, on a short sample, turns a lucky week into an implausible Sharpe ratio. Third, combining data from multiple sources, the \texttt{merge} and \texttt{groupby} operations of Section~\ref{sec:python-merge-groupby}, is a central skill, since almost no real financial analysis works from a single tidy table.
+Fourth, every code example in this chapter was written to be checked, by hand, as with the four AssetA and AssetB returns, or by running the companion notebook and comparing outputs line by line. Later chapters rely on this habit of verifying rather than trusting a computation once calculations become too complex to check by hand, such as the maximum-likelihood-estimated GARCH model\index{GARCH model}s of Chapter~\chnum{timeseries} or the gradient-boosted trees of Chapter~\chnum{ml}.
 
-\section{Suggested Exercises}
+\notocsection{Suggested Exercises}
 
-\begin{enumerate}
+\begin{enumerate}[exercises]
     \item Write a Python function that computes the future value of an investment given a price, an annual rate, and a number of years, and use it to verify the two examples in Section~\ref{sec:first-session}.
-    \item Recreate the \texttt{prices} DataFrame from Section 2.2.4, add a third asset, \texttt{AssetC}, with your own five prices, and compute its returns using \texttt{pct\_change()}.
-    \item Using the covariance formula for portfolio variance, compute the volatility of a portfolio with weights 0.7 on AssetA and 0.3 on AssetB, and check your answer against a direct computation on \texttt{portfolio\_returns}.
+    \item Recreate the \texttt{prices} DataFrame from Section~\ref{sec:python-data-structures}, add a third asset, \texttt{AssetC}, with your own five prices, and compute its returns using \texttt{pct\_change()}.
+    \item\label{ex:python-portfolio-vol} Using the covariance formula for portfolio variance, compute the volatility of a portfolio with weights 0.7 on AssetA and 0.3 on AssetB, and check your answer against a direct computation on \texttt{portfolio\_returns}.
     \item Modify the data-cleaning example to simulate two consecutive missing values in AssetB, apply forward-fill, and discuss whether this is still a reasonable choice.
     \item Plot the cumulative growth of \$1 invested in AssetA, AssetB, and the equally weighted portfolio on the same chart, and describe what the chart shows about diversification that the summary statistics alone do not.
     \item Explain why a positive correlation between two assets would change the diversification benefit computed in Section~\ref{sec:worked-example}, and recompute the portfolio volatility assuming a correlation of $+0.90$ instead of $-0.896$, holding the individual volatilities fixed.
     \item Describe one concrete situation in which look-ahead bias could enter a Python backtesting script without the analyst noticing, and propose a coding practice that would prevent it.
-    \item Rewrite the \texttt{classify\_return} function from Section 2.2.3 as a single list comprehension using a conditional expression, and verify it produces the same labels for the four AssetA returns.
-    \item Using \texttt{np.select} as in Section 2.3.2, classify AssetB's four returns into ``strong gain'' ($>1\%$), ``small gain'' ($>0\%$), ``flat,'' or ``loss,'' and compare the result to AssetA's classification.
-    \item Extend the \texttt{securities\_df} and \texttt{shares} example in Section 2.4.2 with one more security of your choosing, recompute \texttt{position\_value}, and recompute the sector summary.
-    \item Extend the \texttt{extended\_prices} series in Section 2.4.2 with five more business days of your own prices, and resample the full series to weekly frequency using both \texttt{.last()} and \texttt{.mean()}; explain when each aggregation would be the more appropriate choice.
-    \item Using the pattern in Section~\ref{sec:vectorization-performance}, describe (without necessarily running the code) why a loop that appends to a Python list one element at a time is typically slower than pre-allocating a NumPy array and filling it by index, even though both avoid calling a vectorized function.
-    \item Using this chapter's \texttt{Portfolio} class, instantiate it with weights $0.7$ on AssetA and $0.3$ on AssetB, and verify that \texttt{portfolio.volatility} matches the answer you computed by hand in Exercise 3.
+    \item Rewrite the \texttt{classify\_return} function from Section~\ref{sec:python-control-flow} as a single list comprehension using a conditional expression, and verify it produces the same labels for the four AssetA returns.
+    \item Using \texttt{np.select} as in Section~\ref{sec:python-boolean-indexing}, classify AssetB's four returns into ``strong gain'' ($>1\%$), ``small gain'' ($>0\%$), ``flat,'' or ``loss,'' and compare the result to AssetA's classification.
+    \item Extend the \texttt{securities\_df} and \texttt{shares} example in Section~\ref{sec:python-merge-groupby} with one more security of your choosing, recompute \texttt{position\_value}, and recompute the sector summary.
+    \item Extend the \texttt{extended\_prices} series in Section~\ref{sec:python-merge-groupby} with five more business days of your own prices, and resample the full series to weekly frequency using both \texttt{.last()} and \texttt{.mean()}; explain when each aggregation would be the more appropriate choice.
+    \item Using the pattern in Section~\ref{sec:vectorization-performance}, describe (without necessarily running the code) why a loop that appends to a Python list one element at a time is typically slower than filling a pre-allocated NumPy array by index, although neither calls a vectorized function.
+    \item Using this chapter's \texttt{Portfolio} class, instantiate it with weights $0.7$ on AssetA and $0.3$ on AssetB, and verify that \texttt{portfolio.volatility} matches the answer you computed by hand in Exercise~\ref{ex:python-portfolio-vol}.
     \item Add a second unit test, \texttt{test\_weights\_sum\_to\_one}, that asserts a portfolio's weights sum to $1.0$ within a small tolerance, and explain what kind of real coding mistake this test would catch that the variance-formula test would not.
+    \item Using Section~\ref{sec:python-returns-risk}, compute AssetB's four log returns and verify that they sum to $\ln(52.02/50.00)$. Then compute the equally weighted portfolio's return on the second day three ways, as the average of the two simple returns, as the average of the two log returns, and as the log of the portfolio's gross return, and explain which two of the three must agree exactly.
+    \item For the 70/30 portfolio of Exercise~\ref{ex:python-portfolio-vol}, compute the daily mean, the daily volatility, the annualized volatility, and the daily and annualized Sharpe ratios (risk-free rate zero). State the two assumptions behind the annualization, and use the approximation $1/\sqrt{\text{years of data}}$ to judge how much the annualized Sharpe ratio actually tells you.
+    \item Suppose AssetB paid a \$0.50 dividend and went ex-dividend on January 5, the day its price fell from \$51.26 to \$51.00. Compute that day's price return and total return, the dividend adjustment factor, and AssetB's maximum drawdown computed from raw and from adjusted prices. What does the comparison say about drawdowns measured on unadjusted data?
+    \item \textbf{Challenge (real data).} Download daily prices for two exchange-traded funds, the SPDR S\&P 500 ETF (\texttt{SPY}) and the iShares 20+ Year Treasury Bond ETF (\texttt{TLT}), from January 1, 2015 through December 31, 2024 with \texttt{yfinance} (\texttt{yf.download(["SPY", "TLT"], start="2015-01-01", end="2025-01-01")}, which returns adjusted prices). (a) Compute each fund's annualized mean return, annualized volatility, and annualized Sharpe ratio, using a constant risk-free rate of 2\% a year, and each fund's maximum drawdown. (b) Compute the 63-trading-day (roughly quarterly) rolling correlation between the two funds' daily returns, plot it, and describe how it changed over the decade, in particular after 2021. (c) Repeat part (a) with \texttt{auto\_adjust=False} and the raw \texttt{Close} column, and explain which fund's numbers move more, and why.
 \end{enumerate}
 
-\section{Further Reading}
+\notocsection{Further Reading}
 
 \begin{itemize}
-    \item McKinney, \emph{Python for Data Analysis}. Written by pandas' original author, this is the definitive reference for the DataFrame, groupby, merge, and resample operations introduced in this chapter, covering many more edge cases and options than a single chapter can.
-    \item VanderPlas, \emph{Python Data Science Handbook}. A broader tour of NumPy, pandas, and visualization that fills in the general-purpose Python and data-science background this chapter assumes, alongside its finance-specific examples.
-    \item Hilpisch, \emph{Python for Finance}. Extends this chapter's two-asset portfolio example toward the derivatives pricing, risk management, and algorithmic trading applications covered later in this book, using the same core pandas and NumPy toolkit.
-    \item Hilpisch, \emph{Python for Algorithmic Trading}. A practical, code-heavy treatment of building and backtesting trading systems in Python, a natural next step after this chapter's vectorization and performance material for readers headed toward Chapters 13 and 14.
+    \item \frcite{mckinney2022python} Written by pandas' original author, this is the definitive reference for the DataFrame, groupby, merge, and resample operations introduced in this chapter, covering many more edge cases and options than a single chapter can.
+    \item \frcite{vanderplas2022python} A broader tour of NumPy, pandas, and visualization that fills in the general-purpose Python and data-science background this chapter assumes, alongside its finance-specific examples.
+    \item \frcite{hilpisch2018python} Extends this chapter's two-asset portfolio example toward the derivatives pricing, risk management, and algorithmic trading applications covered later in this book, using the same core pandas and NumPy toolkit.
+    \item \frcite{hilpisch2020python} A practical, code-heavy treatment of building and backtesting trading systems in Python, a natural next step after this chapter's vectorization and performance material for readers headed toward Chapters~\chnum{algotrading} and~\chnum{hft}.
 \end{itemize}
 
 \end{document}

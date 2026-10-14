@@ -1,0 +1,12 @@
+# Conda environment for the "AI in Finance" companion notebooks.
+#     conda env create -f environment.yml
+#     conda activate ai-in-finance
+# Versions match requirements.txt, which lists what produced the committed outputs.
+name: ai-in-finance
+channels:
+  - conda-forge
+dependencies:
+  - python=3.14
+  - pip
+  - pip:
+      - -r requirements.txt

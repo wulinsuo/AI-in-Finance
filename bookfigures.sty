@@ -1,0 +1,48 @@
+% bookfigures.sty -- shared TikZ styles for the figures of "AI in Finance"
+% (2026-10-13). Loaded by ai_in_finance.tex; the Chinese repository carries an
+% identical copy at zh/bookfigures.sty, loaded by ai_in_finance_zh.tex. Because
+% subfiles loads the master preamble even for a standalone chapter compile,
+% chapters never load this file themselves.
+%
+% Design rule: a figure must stay readable when printed in greyscale. So the
+% series colours differ strongly in lightness, not just in hue (in greyscale,
+% navy prints near black, green as dark grey, orange as mid grey; see the
+% lightness values below), and every second or third series also differs in line style
+% (solid, dashed, dotted). The four box fills step from light to dark, so
+% a process diagram's stages stay distinguishable without colour. Captions and
+% prose refer to line styles and labels ("dashed", "the shaded tail"), never to
+% colours.
+% Read with \input (see the masters), so it identifies itself with \ProvidesFile.
+\ProvidesFile{bookfigures.sty}[2026/10/13 Shared figure styles for AI in Finance]
+\RequirePackage{tikz}
+
+% Series colours. Greyscale lightness (0 = black, 100 = white) in brackets.
+\definecolor{bkA}{RGB}{23,55,94}    % navy        [~20]
+\definecolor{bkB}{RGB}{200,90,10}   % orange      [~44]
+\definecolor{bkC}{RGB}{40,120,40}   % green       [~34]
+\definecolor{bkD}{RGB}{170,40,40}   % brick red   [~31]
+
+\tikzset{
+  % Data series: colour + line style, so they survive greyscale printing.
+  bk series A/.style={color=bkA, thick},
+  bk series B/.style={color=bkB, thick, dashed},
+  bk series C/.style={color=bkC, thick, dotted},
+  % Point markers for the same series (use with \fill ... circle).
+  % Fill only: a label node attached to the marker keeps black text.
+  bk dot A/.style={fill=bkA},
+  bk dot B/.style={fill=bkB},
+  bk dot C/.style={fill=bkC},
+  % Bars of a single series.
+  bk bar/.style={draw=bkA, thick, fill=bkA!30},
+  % Box fills, light to dark in greyscale (~94, ~84, ~75, ~69).
+  bk fill 1/.style={fill=bkA!8},
+  bk fill 2/.style={fill=bkC!25},
+  bk fill 3/.style={fill=bkB!45},
+  bk fill 4/.style={fill=bkD!45},
+  % One cell singled out from a row of otherwise identical cells (a test fold).
+  bk highlight/.style={fill=bkB!60},
+  % Common node shapes.
+  bk box/.style={draw, rounded corners, align=center},
+  bk stage/.style={draw, rounded corners, align=center, minimum height=0.9cm},
+}
+\endinput

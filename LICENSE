@@ -1,0 +1,18 @@
+Copyright (c) 2026 Wulin Suo. All rights reserved.
+
+This repository contains the draft manuscript of "AI in Finance: Finance for
+Engineers, Scientists, and Data Scientists": the LaTeX sources and compiled PDFs
+of the book, its companion Jupyter notebooks, technical notes, figures, data
+files and supporting code.
+
+No part of this repository may be reproduced, distributed, transmitted, or
+used to create derivative works, in any form or by any means, without the prior
+written permission of the author, except for brief quotations in reviews and as
+otherwise permitted by applicable law (including fair dealing and fair use).
+
+Readers may view the materials on GitHub, download a copy for their own
+personal study, and run the companion notebooks on their own computers for that
+purpose.
+
+For permission requests, including use in teaching, contact:
+Wulin.Suo@Queensu.ca
