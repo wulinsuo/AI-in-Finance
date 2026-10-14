@@ -387,6 +387,29 @@
 %
 % hidelinks: no colored text and no boxes, so the printed page is byte-for-byte
 % the same design as before; only the annotations underneath are new.
+% Heading sizes (2026-10-14, author's request): sections \large and
+% subsections \normalsize instead of the book-class \Large/\large. Chapter
+% heads keep the book-class defaults (\huge number, \Huge title): they were
+% briefly reduced too, and restored the same day at the author's request.
+% The \@startsection arguments are book.cls's own, with only the font size
+% changed. The Chinese master sets the same sizes through \ctexset.
+\makeatletter
+\renewcommand\section{\@startsection {section}{1}{\z@}%
+  {-3.5ex \@plus -1ex \@minus -.2ex}{2.3ex \@plus.2ex}{\normalfont\large\bfseries}}
+\renewcommand\subsection{\@startsection{subsection}{2}{\z@}%
+  {-3.25ex\@plus -1ex \@minus -.2ex}{1.5ex \@plus .2ex}{\normalfont\normalsize\bfseries}}
+\makeatother
+
+\usepackage{multicol}
+% Abbreviations list: two columns of hanging entries (2026-10-14). The
+% abbreviation sits in a 5em box; a wider one pushes its meaning along
+% by an en space instead of overprinting it.
+\newcommand{\abbrentry}[2]{%
+  \par\noindent\hangindent=5em\hangafter=1
+  \sbox0{\textbf{#1}}%
+  \ifdim\wd0>4.7em \usebox0\enspace\else\makebox[5em][l]{\usebox0}\fi
+  #2\par}
+
 \usepackage{hyperref}
 \hypersetup{
   hidelinks,
@@ -729,180 +752,172 @@ VaR, ES & Value at Risk and Expected Shortfall (Chapter~\chnum{marketrisk}) \\
 The abbreviations below are those the text defines and uses more than in passing, collected in one alphabetical list for a reader who meets one before, or long after, the passage that spells it out. Ticker symbols, dataset and product names, and abbreviations used only within a single paragraph are left out.
 
 {\small
-\begin{longtable}{@{}lL{11.6cm}@{}}
-\toprule
-Abbreviation & Meaning \\
-\midrule
-\endfirsthead
-\toprule
-Abbreviation & Meaning \\
-\midrule
-\endhead
-\bottomrule
-\endfoot
-ABM & agent-based model \\
-ACF & autocorrelation function \\
-ACH & automated clearing house \\
-ADF & augmented Dickey-Fuller (test) \\
-AFS & available for sale \\
-AI & artificial intelligence \\
-AIC & Akaike information criterion \\
-ALM & asset-liability management \\
-AML & anti-money laundering \\
-AMLA & Anti-Money Laundering Authority \\
-API & application programming interface \\
-APO & Absolute Price Oscillator \\
-APP & authorized push payment (fraud) \\
-AR & autoregressive (model) \\
-ARCH & autoregressive conditional heteroskedasticity \\
-ARIMA & autoregressive integrated moving average \\
-ARMA & autoregressive moving average \\
-ARR & alternative reference rate \\
-AUC & area under the curve \\
-BIC & Bayesian information criterion \\
-BISG & Bayesian Improved Surname Geocoding \\
-BPE & byte-pair encoding \\
-BSA & Bank Secrecy Act \\
-CAPM & capital asset pricing model \\
-CBDC & central bank digital currency \\
-CCAR & Comprehensive Capital Analysis and Review \\
-CCF & credit conversion factor \\
-CCP & central counterparty \\
-CDD & customer due diligence \\
-CDO & collateralized debt obligation \\
-CDS & credit default swap \\
-CECL & Current Expected Credit Losses \\
-CFPB & Consumer Financial Protection Bureau \\
-CNN & convolutional neural network \\
-COGS & cost of goods sold \\
-CRO & chief risk officer \\
-CRSP & Center for Research in Security Prices \\
-CTR & Currency Transaction Report \\
-CVA & credit valuation adjustment \\
-DCF & discounted cash flow \\
-DDM & dividend discount model \\
-DORA & Digital Operational Resilience Act \\
-DQN & deep Q-network \\
-EAD & exposure at default \\
-EBIT & earnings before interest and taxes \\
-EBITDA & earnings before interest, taxes, depreciation, and amortization \\
-EBM & explainable boosting machine \\
-ECOA & Equal Credit Opportunity Act \\
-EDD & enhanced due diligence \\
-EE & expected exposure \\
-EMA & exponentially weighted moving average \\
-EMH & efficient market hypothesis \\
-ERC & equal risk contribution \\
-ES & Expected Shortfall \\
-ESG & environmental, social, and governance \\
-ETF & exchange-traded fund \\
-EVE & economic value of equity \\
-EVPI & expected value of perfect information \\
-FATF & Financial Action Task Force \\
-FCF & free cash flow \\
-FCFE & free cash flow to equity \\
-FCFF & free cash flow to the firm \\
-FDIC & Federal Deposit Insurance Corporation \\
-FinCEN & Financial Crimes Enforcement Network \\
-FINRA & Financial Industry Regulatory Authority \\
-FRTB & Fundamental Review of the Trading Book \\
-GAAP & generally accepted accounting principles \\
-GAM & generalized additive model \\
-GAN & generative adversarial network \\
-GARCH & generalized autoregressive conditional heteroskedasticity \\
-GDPR & General Data Protection Regulation \\
-GLM & generalized linear model \\
-GNN & graph neural network \\
-GPD & generalized Pareto distribution \\
-HCC & hierarchical condition categories \\
-HFT & high-frequency trading \\
-HHI & Herfindahl-Hirschman Index \\
-HMDA & Home Mortgage Disclosure Act \\
-HRP & hierarchical risk parity \\
-HTM & held to maturity \\
-IBNR & incurred but not reported \\
-IFRS & International Financial Reporting Standards \\
-IPO & initial public offering \\
-IRB & internal ratings-based (approach) \\
-IRRBB & interest-rate risk in the banking book \\
-KNN & $k$-nearest neighbors \\
-KRI & key risk indicator \\
-KYC & know your customer \\
-LCR & Liquidity Coverage Ratio \\
-LDI & liability-driven investment \\
-LDTI & long-duration targeted improvements \\
-LGD & loss given default \\
-LIME & local interpretable model-agnostic explanations \\
-LLM & large language model \\
-LoRA & Low-Rank Adaptation \\
-LSTM & long short-term memory \\
-LTCM & Long-Term Capital Management \\
-LVaR & liquidity-adjusted VaR \\
-MAE & mean absolute error \\
-MAPE & mean absolute percentage error \\
-MARL & multi-agent reinforcement learning \\
-MAS & Monetary Authority of Singapore \\
-MCP & Model Context Protocol \\
-MDP & Markov decision process \\
-MiCA & Markets in Crypto-Assets Regulation \\
-MoE & mixture of experts \\
-MSE & mean squared error \\
-NBBO & National Best Bid and Offer \\
-NGFS & Network for Greening the Financial System \\
-NII & net interest income \\
-NLP & natural language processing \\
-NOPAT & net operating profit after tax \\
-NPV & net present value \\
-NSFR & Net Stable Funding Ratio \\
-OFAC & Office of Foreign Assets Control \\
-OFI & order flow imbalance \\
-OLS & ordinary least squares \\
-OTC & over-the-counter (market) \\
-P/E & price-to-earnings ratio \\
-PACF & partial autocorrelation function \\
-PCA & principal component analysis \\
-PD & probability of default \\
-PEP & politically exposed person \\
-PFE & potential future exposure \\
-PIN & Probability of Informed Trading \\
-POF & proportion of failures (test) \\
-POT & peaks over threshold \\
-PPO & Proximal Policy Optimization \\
-PSI & population stability index \\
-PV & present value \\
-RAG & retrieval-augmented generation \\
-RLHF & reinforcement learning from human feedback \\
-RMSE & root mean squared error \\
-RNN & recurrent neural network \\
-ROA & return on assets \\
-ROC & receiver operating characteristic (curve) \\
-ROE & return on equity \\
-ROIC & return on invested capital \\
-RSI & Relative Strength Index \\
-RTGS & real-time gross settlement \\
-RWA & risk-weighted assets \\
-SA-CCR & standardized approach for counterparty credit risk \\
-SAR & Suspicious Activity Report \\
-SEC & Securities and Exchange Commission \\
-SHAP & Shapley additive explanations \\
-SIP & Securities Information Processor \\
-SMOTE & synthetic minority oversampling technique \\
-SOFR & Secured Overnight Financing Rate \\
-SVM & support vector machine \\
-SWES & system-wide exploratory scenario \\
-TCA & transaction cost analysis \\
-TF-IDF & term frequency-inverse document frequency \\
-TWAP & time-weighted average price \\
-UCB & upper confidence bound \\
-VAR & vector autoregression \\
-VaR & Value at Risk \\
-ViT & Vision Transformer \\
-VIX & CBOE Volatility Index \\
-VWAP & volume-weighted average price \\
-WACC & weighted average cost of capital \\
-WCDR & worst-case default rate \\
-WOE & weight of evidence \\
-\end{longtable}
+\setlength{\parskip}{1pt}
+\begin{multicols}{2}
+\raggedright
+\abbrentry{ABM}{agent-based model}
+\abbrentry{ACF}{autocorrelation function}
+\abbrentry{ACH}{automated clearing house}
+\abbrentry{ADF}{augmented Dickey-Fuller (test)}
+\abbrentry{AFS}{available for sale}
+\abbrentry{AI}{artificial intelligence}
+\abbrentry{AIC}{Akaike information criterion}
+\abbrentry{ALM}{asset-liability management}
+\abbrentry{AML}{anti-money laundering}
+\abbrentry{AMLA}{Anti-Money Laundering Authority}
+\abbrentry{API}{application programming interface}
+\abbrentry{APO}{Absolute Price Oscillator}
+\abbrentry{APP}{authorized push payment (fraud)}
+\abbrentry{AR}{autoregressive (model)}
+\abbrentry{ARCH}{autoregressive conditional heteroskedasticity}
+\abbrentry{ARIMA}{autoregressive integrated moving average}
+\abbrentry{ARMA}{autoregressive moving average}
+\abbrentry{ARR}{alternative reference rate}
+\abbrentry{AUC}{area under the curve}
+\abbrentry{BIC}{Bayesian information criterion}
+\abbrentry{BISG}{Bayesian Improved Surname Geocoding}
+\abbrentry{BPE}{byte-pair encoding}
+\abbrentry{BSA}{Bank Secrecy Act}
+\abbrentry{CAPM}{capital asset pricing model}
+\abbrentry{CBDC}{central bank digital currency}
+\abbrentry{CCAR}{Comprehensive Capital Analysis and Review}
+\abbrentry{CCF}{credit conversion factor}
+\abbrentry{CCP}{central counterparty}
+\abbrentry{CDD}{customer due diligence}
+\abbrentry{CDO}{collateralized debt obligation}
+\abbrentry{CDS}{credit default swap}
+\abbrentry{CECL}{Current Expected Credit Losses}
+\abbrentry{CFPB}{Consumer Financial Protection Bureau}
+\abbrentry{CNN}{convolutional neural network}
+\abbrentry{COGS}{cost of goods sold}
+\abbrentry{CRO}{chief risk officer}
+\abbrentry{CRSP}{Center for Research in Security Prices}
+\abbrentry{CTR}{Currency Transaction Report}
+\abbrentry{CVA}{credit valuation adjustment}
+\abbrentry{DCF}{discounted cash flow}
+\abbrentry{DDM}{dividend discount model}
+\abbrentry{DORA}{Digital Operational Resilience Act}
+\abbrentry{DQN}{deep Q-network}
+\abbrentry{EAD}{exposure at default}
+\abbrentry{EBIT}{earnings before interest and taxes}
+\abbrentry{EBITDA}{earnings before interest, taxes, depreciation, and amortization}
+\abbrentry{EBM}{explainable boosting machine}
+\abbrentry{ECOA}{Equal Credit Opportunity Act}
+\abbrentry{EDD}{enhanced due diligence}
+\abbrentry{EE}{expected exposure}
+\abbrentry{EMA}{exponentially weighted moving average}
+\abbrentry{EMH}{efficient market hypothesis}
+\abbrentry{ERC}{equal risk contribution}
+\abbrentry{ES}{Expected Shortfall}
+\abbrentry{ESG}{environmental, social, and governance}
+\abbrentry{ETF}{exchange-traded fund}
+\abbrentry{EVE}{economic value of equity}
+\abbrentry{EVPI}{expected value of perfect information}
+\abbrentry{FATF}{Financial Action Task Force}
+\abbrentry{FCF}{free cash flow}
+\abbrentry{FCFE}{free cash flow to equity}
+\abbrentry{FCFF}{free cash flow to the firm}
+\abbrentry{FDIC}{Federal Deposit Insurance Corporation}
+\abbrentry{FinCEN}{Financial Crimes Enforcement Network}
+\abbrentry{FINRA}{Financial Industry Regulatory Authority}
+\abbrentry{FRTB}{Fundamental Review of the Trading Book}
+\abbrentry{GAAP}{generally accepted accounting principles}
+\abbrentry{GAM}{generalized additive model}
+\abbrentry{GAN}{generative adversarial network}
+\abbrentry{GARCH}{generalized autoregressive conditional heteroskedasticity}
+\abbrentry{GDPR}{General Data Protection Regulation}
+\abbrentry{GLM}{generalized linear model}
+\abbrentry{GNN}{graph neural network}
+\abbrentry{GPD}{generalized Pareto distribution}
+\abbrentry{HCC}{hierarchical condition categories}
+\abbrentry{HFT}{high-frequency trading}
+\abbrentry{HHI}{Herfindahl-Hirschman Index}
+\abbrentry{HMDA}{Home Mortgage Disclosure Act}
+\abbrentry{HRP}{hierarchical risk parity}
+\abbrentry{HTM}{held to maturity}
+\abbrentry{IBNR}{incurred but not reported}
+\abbrentry{IFRS}{International Financial Reporting Standards}
+\abbrentry{IPO}{initial public offering}
+\abbrentry{IRB}{internal ratings-based (approach)}
+\abbrentry{IRRBB}{interest-rate risk in the banking book}
+\abbrentry{KNN}{$k$-nearest neighbors}
+\abbrentry{KRI}{key risk indicator}
+\abbrentry{KYC}{know your customer}
+\abbrentry{LCR}{Liquidity Coverage Ratio}
+\abbrentry{LDI}{liability-driven investment}
+\abbrentry{LDTI}{long-duration targeted improvements}
+\abbrentry{LGD}{loss given default}
+\abbrentry{LIME}{local interpretable model-agnostic explanations}
+\abbrentry{LLM}{large language model}
+\abbrentry{LoRA}{Low-Rank Adaptation}
+\abbrentry{LSTM}{long short-term memory}
+\abbrentry{LTCM}{Long-Term Capital Management}
+\abbrentry{LVaR}{liquidity-adjusted VaR}
+\abbrentry{MAE}{mean absolute error}
+\abbrentry{MAPE}{mean absolute percentage error}
+\abbrentry{MARL}{multi-agent reinforcement learning}
+\abbrentry{MAS}{Monetary Authority of Singapore}
+\abbrentry{MCP}{Model Context Protocol}
+\abbrentry{MDP}{Markov decision process}
+\abbrentry{MiCA}{Markets in Crypto-Assets Regulation}
+\abbrentry{MoE}{mixture of experts}
+\abbrentry{MSE}{mean squared error}
+\abbrentry{NBBO}{National Best Bid and Offer}
+\abbrentry{NGFS}{Network for Greening the Financial System}
+\abbrentry{NII}{net interest income}
+\abbrentry{NLP}{natural language processing}
+\abbrentry{NOPAT}{net operating profit after tax}
+\abbrentry{NPV}{net present value}
+\abbrentry{NSFR}{Net Stable Funding Ratio}
+\abbrentry{OFAC}{Office of Foreign Assets Control}
+\abbrentry{OFI}{order flow imbalance}
+\abbrentry{OLS}{ordinary least squares}
+\abbrentry{OTC}{over-the-counter (market)}
+\abbrentry{P/E}{price-to-earnings ratio}
+\abbrentry{PACF}{partial autocorrelation function}
+\abbrentry{PCA}{principal component analysis}
+\abbrentry{PD}{probability of default}
+\abbrentry{PEP}{politically exposed person}
+\abbrentry{PFE}{potential future exposure}
+\abbrentry{PIN}{Probability of Informed Trading}
+\abbrentry{POF}{proportion of failures (test)}
+\abbrentry{POT}{peaks over threshold}
+\abbrentry{PPO}{Proximal Policy Optimization}
+\abbrentry{PSI}{population stability index}
+\abbrentry{PV}{present value}
+\abbrentry{RAG}{retrieval-augmented generation}
+\abbrentry{RLHF}{reinforcement learning from human feedback}
+\abbrentry{RMSE}{root mean squared error}
+\abbrentry{RNN}{recurrent neural network}
+\abbrentry{ROA}{return on assets}
+\abbrentry{ROC}{receiver operating characteristic (curve)}
+\abbrentry{ROE}{return on equity}
+\abbrentry{ROIC}{return on invested capital}
+\abbrentry{RSI}{Relative Strength Index}
+\abbrentry{RTGS}{real-time gross settlement}
+\abbrentry{RWA}{risk-weighted assets}
+\abbrentry{SA-CCR}{standardized approach for counterparty credit risk}
+\abbrentry{SAR}{Suspicious Activity Report}
+\abbrentry{SEC}{Securities and Exchange Commission}
+\abbrentry{SHAP}{Shapley additive explanations}
+\abbrentry{SIP}{Securities Information Processor}
+\abbrentry{SMOTE}{synthetic minority oversampling technique}
+\abbrentry{SOFR}{Secured Overnight Financing Rate}
+\abbrentry{SVM}{support vector machine}
+\abbrentry{SWES}{system-wide exploratory scenario}
+\abbrentry{TCA}{transaction cost analysis}
+\abbrentry{TF-IDF}{term frequency-inverse document frequency}
+\abbrentry{TWAP}{time-weighted average price}
+\abbrentry{UCB}{upper confidence bound}
+\abbrentry{VAR}{vector autoregression}
+\abbrentry{VaR}{Value at Risk}
+\abbrentry{ViT}{Vision Transformer}
+\abbrentry{VIX}{CBOE Volatility Index}
+\abbrentry{VWAP}{volume-weighted average price}
+\abbrentry{WACC}{weighted average cost of capital}
+\abbrentry{WCDR}{worst-case default rate}
+\abbrentry{WOE}{weight of evidence}
+\end{multicols}
 }
 
 \mainmatter
