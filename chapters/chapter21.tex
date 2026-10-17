@@ -24,8 +24,6 @@
 \chapterkey{capstone}
 \chapter{Case Studies and Capstone Projects}
 
-\notocsection{Introduction}
-
 Every dataset used so far in this book, Cascade Home\index{Cascade Home \& Garden} \& Garden's satellite-derived car counts, Meridian Fabrication\index{Meridian Fabrication Inc.}'s financial statements, the ten-transaction fraud-scoring sample, was built for one purpose: to make a method's mechanics checkable by hand, free of the mess real data carries. That was the right choice for teaching each method in isolation, but it leaves a gap this closing chapter fills. A real financial dataset, of the kind a data scientist downloads from a public repository such as the UCI Machine Learning Repository or Kaggle\index{UCI Machine Learning Repository}\index{Kaggle}, arrives with undocumented category codes, an imbalanced target, correlated and redundant features, and no guarantee that the model that wins on one metric also wins on every other metric that matters.
 
 This chapter works one such dataset end to end, using only tools this book has already built: feature engineering and a model bake-off spanning linear and tree-based methods, from Chapter~\chnum{ml}; Chapter~\chnum{xai}'s SHAP\index{SHAP} and permutation-importance methods, now run with the actual \texttt{shap} library rather than by hand; a cost-sensitive threshold choice extending Chapter~\chnum{fraud}'s alert economics; and a fairness audit extending Chapter~\chnum{xai}'s synthetic two-group example to real data. One topic is new, calibration\index{calibration}, motivated by Chapter~\chnum{creditrisk}'s caveat that a credit score is meaningful only if the probability underneath it is accurate. The chapter closes with governance considerations and further capstone project ideas for the reader.

@@ -1,4 +1,6 @@
-\documentclass{book}
+\documentclass[openany]{book}
+% openany lets a chapter start on either page; part pages are still forced onto
+% a recto by \part below, and the front matter by explicit \cleardoublepage.
 % T1-encoded, scalable Latin Modern rather than the default OT1 Computer Modern
 % bitmaps: the cover's 32pt title used to be silently downsized to 24.88pt (OT1
 % cmr/bx has no larger design size), and OT1 also broke search, copy-paste and
@@ -126,8 +128,8 @@
 \SetWatermarkAngle{0}
 \SetWatermarkVerCenter{0.955\paperheight}
 
-% Blank versos (the page \cleardoublepage inserts before a recto chapter or part
-% opener, and the page after a part page) carry no running head, no folio and
+% Blank versos (the page \cleardoublepage inserts before a part page or a recto
+% front-matter opener, and the page after a part page) carry no running head, no folio and
 % no watermark. emptypage handles the page style; the watermark is a
 % shipout/background hook that ignores page styles, so the inserted page is
 % also shipped inside a group in which draftwatermark's stamp switch is off.
@@ -141,12 +143,13 @@
   \endgroup}
 \let\emptypage@emptypage\bookblankpage
 
-% Part divisions. As book.cls, but: the part page itself is set in the empty
-% style (no folio under the title), the page after it goes through
-% \bookblankpage, and the Contents entry reads "Part I  Foundations" rather
-% than a bare "I  Foundations".
+% Part divisions. As book.cls, but: the part page always starts on a recto and
+% is followed by a blank verso even under openany (so each part's first chapter
+% is also a recto), the part page itself is set in the empty style (no folio
+% under the title), the page after it goes through \bookblankpage, and the
+% Contents entry reads "Part I  Foundations" rather than a bare "I  Foundations".
 \renewcommand{\part}{%
-  \if@openright\cleardoublepage\else\clearpage\fi
+  \cleardoublepage
   \thispagestyle{empty}%
   \@tempswafalse
   \null\vfil
@@ -170,7 +173,7 @@
    \Huge \bfseries #2\par}%
   \@endpart}
 \def\@endpart{\vfil\newpage
-  \if@twoside\if@openright\bookblankpage\fi\fi}
+  \if@twoside\bookblankpage\fi}
 \makeatother
 
 % Page breaking: never leave a single line of a paragraph alone at the top or
@@ -920,6 +923,9 @@ The abbreviations below are those the text defines and uses more than in passing
 \end{multicols}
 }
 
+% Under openany \mainmatter only does \clearpage; reach a recto first so that
+% page 1 is a right-hand page.
+\cleardoublepage
 \mainmatter
 % The three parts named in the preface ("How This Book Is Organized"). Chapter
 % numbering runs straight through them; \part does not reset the chapter counter.

@@ -22,8 +22,6 @@
 \chapterkey{abm}
 \chapter{Agent-Based Models in Finance}
 
-\notocsection{Introduction}
-
 Every model in this book so far has taken one of two forms. Chapter~\chnum{ml}'s machine learning models estimate a function from a fixed dataset, implicitly assuming that the data-generating process does not change while the model learns. Chapter~\chnum{portfolio}'s portfolio theory and Chapter~\chnum{rl}'s reinforcement-learning agents each reason about a single decision-maker, or a small number of them, optimizing against an environment that is either fixed or, at most, adapts slowly.
 
 Neither approach is built to answer a question that matters a great deal in practice: what happens when many participants, each following a simple, individually reasonable rule, interact repeatedly in the same market? Agent-based models\index{agent-based model (ABM)} (ABMs) answer that question. Rather than solving for an equilibrium in closed form or estimating a statistical relationship from historical data, an ABM specifies a population of heterogeneous agents, each governed by a simple behavioral rule, lets them interact in a simulated market, and studies whatever aggregate pattern emerges: a stable price, a bubble, a crash, a cascade of defaults.
@@ -425,7 +423,7 @@ Now apply the same $\$45$ shock used against Bank A in Section~\ref{sec:abm-cont
         gone/.style={bank,very thick,fill=gray!25},
         amt/.style={font=\scriptsize,align=center},
         nw/.style={font=\scriptsize,align=center}]
-        % (a) the chain of Section 20.3.2
+        % (a) the chain of Section 20.2.2
         \node[font=\small\bfseries] at (2.5,2.30) {(a) Chain};
         \node[gone] (a) at (0,0) {A};
         \node[gone] (b) at (2.5,0) {B};

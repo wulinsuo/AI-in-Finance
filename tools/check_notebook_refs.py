@@ -4,8 +4,8 @@ Notebook markdown cites the book by hard-coded section number ("Section 8.2.2",
 "Sections 1.5.1 through 1.5.4"; in the Chinese edition "第8.2.2节",
 "第1.5.1至1.5.4节"). Those numbers go stale silently whenever a chapter gains or
 loses a section. This script numbers every chapter's headings the way LaTeX does
-(\\section and \\subsection, including \\weheading{\\section}/{\\subsection}; starred
-headings and \\subsubsection are unnumbered) and checks each cited number:
+(\\section, \\notocsection and \\subsection, including the \\weheading and
+\\vignetteheading wrappers; starred headings and \\subsubsection are unnumbered) and checks each cited number:
 
   * MISSING  the number does not exist in the chapter: always an error;
   * SUSPECT  the number exists but the notebook heading that cites it shares no
@@ -35,7 +35,7 @@ SEP_EN = r"(?:\s*(?:,|and|or|through|to|&|-|–|—)\s*)"
 EN_REF = re.compile(rf"(?:Sections?|Secs?\.|§§?)\s*(?:~|\s)*({NUM}(?:{SEP_EN}(?:Sections?\s*)?{NUM})*)")
 SEP_ZH = r"(?:\s*(?:、|，|,|和|与|及|至|到|或|-|–|—)\s*)"
 ZH_REF = re.compile(rf"第?({NUM}(?:{SEP_ZH}第?{NUM})*)\s*节")
-HEADING = re.compile(r"^\s*(?:\\weheading\{\\(section|subsection)\}\{[^}]*\}|\\(section|subsection))(\*?)\s*(?:\[[^\]]*\])?\s*\{(.*)")
+HEADING = re.compile(r"^\s*(?:\\(?:weheading|vignetteheading)\{\\(section|subsection)\}\{[^}]*\}|\\(notocsection|section|subsection))(\*?)\s*(?:\[[^\]]*\])?\s*\{(.*)")
 CHAPTER = re.compile(r"^\s*\\chapter\*?\s*\{")
 STOP = set("""a an the of and or in on to for with from by as at its is are be vs versus via into
 section sections example examples worked chapter notebook numerical model models using use""".split())
@@ -89,7 +89,7 @@ def numbering(tex: Path) -> dict[str, str]:
         title = balanced(m.group(4))
         if m.group(1):  # \weheading{...}{key}{Title}: group 4 is the title already
             pass
-        if level == "section":
+        if level in ("section", "notocsection"):
             sec, sub = sec + 1, 0
             table[f"{sec}"] = title
         else:

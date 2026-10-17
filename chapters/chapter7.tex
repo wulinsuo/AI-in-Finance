@@ -22,8 +22,6 @@
 \chapterkey{timeseries}
 \chapter{Time Series Analysis and Forecasting}
 
-\notocsection{Introduction}
-
 Almost every dataset encountered so far in this book, prices in Chapter~\chnum{python}, financial statement line items in Chapter~\chnum{statements}, credit spreads in Chapter~\chnum{valuation}, has a time dimension: observations arrive in a sequence that usually carries information a model ignoring order would throw away.
 
 This chapter makes time itself part of the model. It introduces the statistical vocabulary for describing dependence across time, stationarity, autocorrelation, and volatility clustering, and the classical models built on that vocabulary: autoregressive and moving-average models, ARIMA, GARCH, and state-space models.
@@ -169,7 +167,7 @@ Every autoregressive forecast works this way: the fitted relationship, applied t
 
 A point estimate such as $\hat\phi = 0.71$ is half the story; without knowing how precisely $\hat\phi$ is estimated, one cannot say whether the mean reversion is a feature of the process or an artifact of a short, noisy sample.
 
-Section~\chnum{ml}.3.2 built the standard-error, $t$-statistic, $p$-value, and confidence-interval machinery, including how (and how not) to state what a confidence interval means. It applies unchanged, since $\hat\phi$ is an OLS slope of $X_t$ on $X_{t-1}$. For the AR(1) regression fitted above, with $n=7$ usable pairs and $2$ estimated parameters (so $n-2=5$ residual degrees of freedom),
+Section~\chnum{ml}.2.2 built the standard-error, $t$-statistic, $p$-value, and confidence-interval machinery, including how (and how not) to state what a confidence interval means. It applies unchanged, since $\hat\phi$ is an OLS slope of $X_t$ on $X_{t-1}$. For the AR(1) regression fitted above, with $n=7$ usable pairs and $2$ estimated parameters (so $n-2=5$ residual degrees of freedom),
 \begin{equation*}
 SE(\hat\phi) = \sqrt{\frac{\hat\sigma^2}{\sum_t (X_{t-1}-\bar X_{\text{lag}})^2}} \approx 0.259, \qquad \hat\sigma^2 = \frac{\text{SSR}}{n-2} \approx 1.187, \qquad t = \frac{\hat\phi}{SE(\hat\phi)} = \frac{0.71}{0.259} \approx 2.74,
 \end{equation*}
@@ -181,7 +179,7 @@ is wide, spanning nearly the whole range from very weak to very strong mean reve
 
 This is the small-sample fragility behind the Dickey-Fuller result of Section~\ref{sec:adf-test}, which failed to reject a unit root despite $\hat\phi = 0.71$: a $t$-statistic, a $p$-value, and a confidence interval are three views of the same estimation uncertainty, which with $8$ observations is large. Applying the identical method to the intercept gives $SE(\hat c) \approx 1.750$, $t \approx 0.68$, and $p \approx 0.526$, so the intercept is not statistically distinguishable from zero at conventional significance levels, a much weaker result than the slope's.
 
-Section~\chnum{ml}.3.2's two warnings apply unchanged: statistical significance is not economic significance, and testing many coefficients or models against the same data raises the chance that one crosses the $5\%$ threshold by luck.
+Section~\chnum{ml}.2.2's two warnings apply unchanged: statistical significance is not economic significance, and testing many coefficients or models against the same data raises the chance that one crosses the $5\%$ threshold by luck.
 The second is the multiple-testing problem\index{multiple testing} that Section~\ref{sec:cointegration}'s discussion of pairs selection takes up: a $p$-value below $0.05$ is far less persuasive when it is the best of twenty candidate pairs than when it is the only pair considered.
 
 \subsection{Multi-Step Forecasting and the Growth of Uncertainty}
