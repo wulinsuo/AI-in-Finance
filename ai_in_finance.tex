@@ -348,6 +348,25 @@
 
 \usepackage{makeidx}
 \makeindex
+% Page-saving layout (2026-10-17). The index is set small, ragged-right, in three
+% columns (multicols balances the last page), replacing book.cls's two-column
+% \twocolumn index; the bibliography is set small with tighter entry spacing; and
+% list items sit closer together (book.cls puts about 8pt between items, which
+% across ~60 items per chapter costs well over half a page). None of this changes
+% the text or any number; pages only.
+\makeatletter
+\renewenvironment{theindex}
+  {\chapter*{\indexname}%
+   \@mkboth{\MakeUppercase\indexname}{\MakeUppercase\indexname}%
+   \small\raggedright\setlength{\emergencystretch}{2em}%
+   \parindent\z@ \parskip\z@ \@plus .3\p@\relax
+   \columnsep 1.5em\columnseprule\z@
+   \begin{multicols}{3}\let\item\@idxitem}
+  {\end{multicols}\clearpage}
+\makeatother
+\renewcommand*{\bibfont}{\small}
+\setlength{\bibitemsep}{2pt}
+\setlist{itemsep=1pt plus 1pt, parsep=2pt plus 1pt}
 
 % Running headers: "AI in Finance" on even pages, the current chapter's name on odd
 % pages (replacing the default section-name running head, whose length varies too
