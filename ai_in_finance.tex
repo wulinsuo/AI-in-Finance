@@ -208,11 +208,10 @@
 \setlength{\cftfignumwidth}{3.2em}
 \setlength{\cfttabnumwidth}{3.2em}
 
-% Contents lists chapters, sections and subsections. It listed sections only until
-% 2026-10-12; the heading-structure repair of that date promoted the book's real
-% topics (Merton, IFRS 9, LDA, RNNs, robo-advisors...) to numbered subsections, and
-% with tocdepth=1 they stayed invisible. Set this counter back to 1 to revert.
-\setcounter{tocdepth}{2}
+% Contents lists chapters and sections only, at the author's request (2026-10-25).
+% From 2026-10-12 to 2026-10-25 it also listed subsections (tocdepth=2). To list
+% them again, set this counter to 2, and the reset at the end of \briefcontents too.
+\setcounter{tocdepth}{1}
 
 % ---------------------------------------------------------------------------
 % Stable anchors (added 2026-10-12): chapter keys, numbered worked examples,
@@ -317,7 +316,7 @@
     \setcounter{tocdepth}{0}%
     \makeatletter\@input{\jobname.toc}%
   \endgroup
-  \setcounter{tocdepth}{2}}
+  \setcounter{tocdepth}{1}}
 \makeatother
 %
 % Numbered exercises: \begin{enumerate}[exercises] numbers items 9.1, 9.2, ...
