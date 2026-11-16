@@ -11,6 +11,11 @@ with the output committed in the notebook:
     last-digit platform noise is not reported as drift;
   * images and stderr (warnings carry machine-specific paths) are ignored;
   * cells tagged "nbcheck-skip" (e.g. wall-clock timings) are skipped;
+  * a notebook whose outputs depend on the operating system declares the
+    platforms it was produced on in its metadata, e.g.
+    "nbcheck": {"compare_on": ["win32"]} (chapter 21: XGBoost's subsampling
+    draws differ between the Windows and Linux C++ libraries). Elsewhere it is
+    still executed, so errors are caught, but its outputs are not compared;
   * a cell that raises an error is always a failure.
 
 Notebooks that download data (yfinance, urllib) are detected automatically and
@@ -141,6 +146,10 @@ def check(nb_path: Path, args) -> tuple[str, list[str], float]:
         except Exception as exc:  # execution error: report the first line
             return "ERROR", [f"    execution failed: {str(exc).strip().splitlines()[-1][:200]}"], time.time() - t0
         elapsed = time.time() - t0
+        compare_on = committed.metadata.get("nbcheck", {}).get("compare_on")
+        if compare_on and sys.platform not in compare_on:
+            return "RAN", [f"    executed without errors; outputs depend on the platform and are "
+                           f"compared only on {', '.join(compare_on)} (this is {sys.platform})"], elapsed
         problems = []
         old_cells = [c for c in committed.cells if c.cell_type == "code"]
         new_cells = [c for c in nb.cells if c.cell_type == "code"]
@@ -180,7 +189,7 @@ def main() -> int:
         print(f"{status:<6} {f}  ({secs:.0f}s)")
         for line in problems:
             print(line)
-        failures += status != "OK"
+        failures += status not in ("OK", "RAN")
         sys.stdout.flush()
     print(f"\n{len(files)} notebooks, {failures} failing")
     return 1 if failures else 0
